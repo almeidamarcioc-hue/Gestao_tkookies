@@ -1,21 +1,46 @@
+import { useState, useEffect } from "react";
 import { Box, Typography, Button, Container, Paper, Grid } from "@mui/material";
 import { Link } from "react-router-dom";
 import { AddCircleOutline, ListAlt, Inventory2, People, RestaurantMenu, PointOfSale } from "@mui/icons-material";
+import api from "../services/api";
 
 export default function Home({ isLoggedIn, onLoginClick }) {
+  const [config, setConfig] = useState({
+    home_title: "TKookies",
+    home_subtitle: "🍪 Um pedacinho de felicidade em cada mordida.",
+    home_location: "📍 Apenas delivery / Três de Maio - RS",
+    home_bg: ""
+  });
+
+  useEffect(() => {
+    api.get("/configuracoes").then(res => {
+      if (res.data && Object.keys(res.data).length > 0) {
+        setConfig(prev => ({ ...prev, ...res.data }));
+      }
+    }).catch(err => console.log("Usando configurações padrão"));
+  }, []);
+
   return (
-    <Box sx={{ minHeight: '80vh', display: 'flex', alignItems: 'center', py: 4 }}>
+    <Box sx={{ 
+      minHeight: '80vh', 
+      display: 'flex', 
+      alignItems: 'center', 
+      py: 4,
+      backgroundImage: config.home_bg ? `url(${config.home_bg})` : 'none',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center'
+    }}>
       <Container maxWidth="sm">
         <Paper elevation={3} sx={{ p: 4, borderRadius: 4, textAlign: 'center', bgcolor: 'rgba(255, 255, 255, 0.9)' }}>
           <Box mb={4}>
             <Typography variant="h2" fontWeight="900" color="primary" sx={{ letterSpacing: '-1px', textShadow: '2px 2px 0px #D7CCC8', mb: 1 }}>
-              TKookies
+              {config.home_title}
             </Typography>
             <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 500 }}>
-              🍪 Um pedacinho de felicidade em cada mordida.
+              {config.home_subtitle}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              📍 Apenas delivery / Três de Maio - RS
+              {config.home_location}
             </Typography>
           </Box>
           

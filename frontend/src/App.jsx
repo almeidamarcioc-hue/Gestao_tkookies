@@ -15,6 +15,7 @@ import OrderForm from "./pages/OrderForm";
 import Combos from "./pages/Combos";
 import ComboForm from "./pages/ComboForm";
 import Inventory from "./pages/Inventory";
+import Settings from "./pages/Settings";
 
 const theme = createTheme({
   palette: {
@@ -142,6 +143,7 @@ export default function App() {
                   <MenuItem component={Link} to="/clientes" onClick={handleClose}>Clientes</MenuItem>
                   <MenuItem component={Link} to="/combos" onClick={handleClose}>Combos</MenuItem>
                   <MenuItem component={Link} to="/estoque" onClick={handleClose}>Estoque</MenuItem>
+                  <MenuItem component={Link} to="/configuracoes" onClick={handleClose}>Configurações</MenuItem>
                 </Menu>
 
                 {/* Menu Pedidos */}
@@ -177,6 +179,7 @@ export default function App() {
               <Route path="/combos/novo" element={<ComboForm />} />
               <Route path="/combos/:id" element={<ComboForm />} />
               <Route path="/estoque" element={<Inventory />} />
+              <Route path="/configuracoes" element={<Settings />} />
               <Route path="/production" element={<Production />} />
             </>
           ) : (

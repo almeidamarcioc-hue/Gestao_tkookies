@@ -7,6 +7,7 @@ import ordersRouter from "./routes/orders.js";
 import productionRouter from "./routes/production.js";
 import combosRouter from "./routes/combos.js";
 import inventoryRouter from "./routes/inventory.js";
+import settingsRouter from "./routes/settings.js";
 
 const app = express();
 
@@ -36,5 +37,6 @@ app.use("/pedidos", ordersRouter);
 app.use("/producao", productionRouter);
 app.use("/combos", combosRouter);
 app.use("/estoque", inventoryRouter);
+app.use("/configuracoes", settingsRouter);
 
 export default app;

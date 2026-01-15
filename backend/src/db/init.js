@@ -120,6 +120,15 @@ export async function initDatabase() {
       )
     `);
 
+    // Tabela de Configurações do Sistema
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS configuracoes (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        chave VARCHAR(50) NOT NULL UNIQUE,
+        valor LONGTEXT
+      )
+    `);
+
     // Migração para adicionar a coluna caso a tabela já exista
     try {
       await pool.query("ALTER TABLE ingredientes ADD COLUMN IF NOT EXISTS usado_para_revenda BOOLEAN DEFAULT TRUE");
