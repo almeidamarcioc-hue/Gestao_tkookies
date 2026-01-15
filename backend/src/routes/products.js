@@ -30,7 +30,7 @@ router.get("/", async (req, res) => {
     `);
     res.json(result.rows);
   } catch (error) {
-    console.error(error);
+    console.error("Erro detalhado ao listar produtos:", error);
     res.status(500).json({ error: "Erro ao procurar produtos" });
   }
 });

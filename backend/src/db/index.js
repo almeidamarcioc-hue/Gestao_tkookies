@@ -10,7 +10,7 @@ const dbConfig = {
   port: Number(process.env.DB_PORT) || 4000,
   ssl: {
     minVersion: 'TLSv1.2',
-    rejectUnauthorized: true
+    rejectUnauthorized: false // Alterado para false para evitar problemas com CAs auto-assinados ou genéricos em serverless, a menos que tenha o CA exato
   },
   waitForConnections: true,
   connectionLimit: 10,
@@ -48,7 +48,7 @@ const executeQuery = async (executor, text, params) => {
 
     return { rows: [], rowCount: 0 };
   } catch (error) {
-    console.error("Erro na query MySQL:", sql, error);
+    console.error("Erro na query MySQL:", sql, "Params:", params, "Erro:", error);
     throw error;
   }
 };
