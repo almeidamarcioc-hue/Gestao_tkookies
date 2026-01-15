@@ -23,8 +23,9 @@ initDatabase().then(() => {
   app.use("/combos", combosRouter);
   app.use("/estoque", inventoryRouter);
 
-  app.listen(3333, () => {
-    console.log("🚀 Backend rodando em http://localhost:3333");
+  const port = process.env.PORT || 3333;
+  app.listen(port, () => {
+    console.log(`🚀 Backend rodando na porta ${port}`);
   });
 }).catch(err => {
   console.error("Falha ao iniciar o servidor:", err);

@@ -8,7 +8,7 @@ export async function initDatabase() {
     // Tabela de Ingredientes
     await pool.query(`
       CREATE TABLE IF NOT EXISTS ingredientes (
-        id SERIAL PRIMARY KEY,
+        id INT AUTO_INCREMENT PRIMARY KEY,
         nome VARCHAR(255) NOT NULL,
         unidade VARCHAR(50) NOT NULL,
         estoque DECIMAL(10, 2) DEFAULT 0,
@@ -21,7 +21,7 @@ export async function initDatabase() {
     // Tabela de Produtos
     await pool.query(`
       CREATE TABLE IF NOT EXISTS produtos (
-        id SERIAL PRIMARY KEY,
+        id INT AUTO_INCREMENT PRIMARY KEY,
         nome VARCHAR(255) NOT NULL,
         preco_venda DECIMAL(10, 2) NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -31,18 +31,20 @@ export async function initDatabase() {
     // Tabela de Ligação (Composição)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS produto_ingredientes (
-        id SERIAL PRIMARY KEY,
-        produto_id INTEGER REFERENCES produtos(id) ON DELETE CASCADE,
-        ingrediente_id INTEGER REFERENCES ingredientes(id) ON DELETE CASCADE,
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        produto_id INT,
+        ingrediente_id INT,
         quantidade DECIMAL(10, 2) NOT NULL,
-        apenas_revenda BOOLEAN DEFAULT FALSE
+        apenas_revenda BOOLEAN DEFAULT FALSE,
+        FOREIGN KEY (produto_id) REFERENCES produtos(id) ON DELETE CASCADE,
+        FOREIGN KEY (ingrediente_id) REFERENCES ingredientes(id) ON DELETE CASCADE
       )
     `);
 
     // Tabela de Clientes
     await pool.query(`
       CREATE TABLE IF NOT EXISTS clientes (
-        id SERIAL PRIMARY KEY,
+        id INT AUTO_INCREMENT PRIMARY KEY,
         nome VARCHAR(255) NOT NULL,
         telefone VARCHAR(50),
         endereco VARCHAR(255),
@@ -57,34 +59,37 @@ export async function initDatabase() {
     // Tabela de Pedidos
     await pool.query(`
       CREATE TABLE IF NOT EXISTS pedidos (
-        id SERIAL PRIMARY KEY,
-        cliente_id INTEGER REFERENCES clientes(id),
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        cliente_id INT,
         data_pedido TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         valor_total DECIMAL(10, 2) DEFAULT 0,
         forma_pagamento VARCHAR(50),
         observacao TEXT,
         frete DECIMAL(10, 2) DEFAULT 0,
         status VARCHAR(20) DEFAULT 'Novo',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (cliente_id) REFERENCES clientes(id)
       )
     `);
 
     // Tabela de Itens do Pedido
     await pool.query(`
       CREATE TABLE IF NOT EXISTS itens_pedido (
-        id SERIAL PRIMARY KEY,
-        pedido_id INTEGER REFERENCES pedidos(id) ON DELETE CASCADE,
-        produto_id INTEGER REFERENCES produtos(id),
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        pedido_id INT,
+        produto_id INT,
         quantidade DECIMAL(10, 2) NOT NULL,
         valor_unitario DECIMAL(10, 2) NOT NULL,
-        valor_total DECIMAL(10, 2) NOT NULL
+        valor_total DECIMAL(10, 2) NOT NULL,
+        FOREIGN KEY (pedido_id) REFERENCES pedidos(id) ON DELETE CASCADE,
+        FOREIGN KEY (produto_id) REFERENCES produtos(id)
       )
     `);
 
     // Tabela de Combos
     await pool.query(`
       CREATE TABLE IF NOT EXISTS combos (
-        id SERIAL PRIMARY KEY,
+        id INT AUTO_INCREMENT PRIMARY KEY,
         nome VARCHAR(255) NOT NULL,
         preco_venda DECIMAL(10, 2) NOT NULL,
         estoque DECIMAL(10, 2) DEFAULT 0,
@@ -95,10 +100,12 @@ export async function initDatabase() {
     // Tabela de Itens do Combo
     await pool.query(`
       CREATE TABLE IF NOT EXISTS itens_combo (
-        id SERIAL PRIMARY KEY,
-        combo_id INTEGER REFERENCES combos(id) ON DELETE CASCADE,
-        produto_id INTEGER REFERENCES produtos(id),
-        quantidade DECIMAL(10, 2) NOT NULL
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        combo_id INT,
+        produto_id INT,
+        quantidade DECIMAL(10, 2) NOT NULL,
+        FOREIGN KEY (combo_id) REFERENCES combos(id) ON DELETE CASCADE,
+        FOREIGN KEY (produto_id) REFERENCES produtos(id)
       )
     `);
 

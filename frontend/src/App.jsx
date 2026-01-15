@@ -93,7 +93,7 @@ export default function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
     <BrowserRouter>
-      <AppBar position="static">
+      <AppBar position="sticky" sx={{ top: 0, zIndex: 1100 }}>
         <Toolbar>
           <Typography variant="h5" component={Link} to="/" sx={{ flexGrow: 1, fontWeight: '900', textDecoration: 'none', color: 'primary.main', letterSpacing: '-0.5px' }}>
             🍪 Gestão Tkookies

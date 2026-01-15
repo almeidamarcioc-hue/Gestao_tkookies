@@ -17,7 +17,7 @@
     "escpos": "^3.0.0-alpha.6",
     "escpos-usb": "^3.0.0-alpha.4",
     "express": "^5.2.1",
-    "pg": "^8.16.3"
+    "mysql2": "^3.9.2"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"
