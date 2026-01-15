@@ -83,116 +83,116 @@ export default function Home({ isLoggedIn, onLoginClick }) {
     }}>
       <Container maxWidth="lg">
         <Box display="flex" justifyContent="center" mb={4}>
-        <Paper elevation={3} sx={{ p: 4, borderRadius: 4, textAlign: 'center', bgcolor: 'rgba(255, 255, 255, 0.9)' }}>
-          <Box mb={4}>
-            <Typography variant="h2" fontWeight="900" color="primary" sx={{ letterSpacing: '-1px', textShadow: '2px 2px 0px #D7CCC8', mb: 1 }}>
-              {config.home_title}
-            </Typography>
-            <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 500 }}>
-              {config.home_subtitle}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              {config.home_location}
-            </Typography>
-          </Box>
-          
-          {isLoggedIn ? (
-            <Grid container spacing={2}>
-              <Grid size={12}>
-                <Button 
-                  variant="contained" 
-                  size="large" 
-                  fullWidth 
-                  component={Link} 
-                  to="/pedidos/novo" 
-                  startIcon={<AddCircleOutline />}
-                  sx={{ py: 2, fontSize: '1.1rem', borderRadius: 3 }}
-                >
-                  Novo Pedido
-                </Button>
-              </Grid>
-              
-              <Grid size={6}>
-                <Button 
-                  variant="outlined" 
-                  size="large" 
-                  fullWidth 
-                  component={Link} 
-                  to="/pedidos" 
-                  startIcon={<ListAlt />}
-                  sx={{ py: 1.5, borderRadius: 3, height: '100%' }}
-                >
-                  Pedidos
-                </Button>
-              </Grid>
-              <Grid size={6}>
-                <Button 
-                  variant="outlined" 
-                  size="large" 
-                  fullWidth 
-                  component={Link} 
-                  to="/combos" 
-                  startIcon={<PointOfSale />}
-                  sx={{ py: 1.5, borderRadius: 3, height: '100%' }}
-                >
-                  Combos
-                </Button>
-              </Grid>
-
-              <Grid size={6}>
-                <Button 
-                  variant="outlined" 
-                  size="large" 
-                  fullWidth 
-                  component={Link} 
-                  to="/produtos" 
-                  startIcon={<RestaurantMenu />}
-                  sx={{ py: 1.5, borderRadius: 3, height: '100%' }}
-                >
-                  Produtos
-                </Button>
-              </Grid>
-              <Grid size={6}>
-                <Button 
-                  variant="outlined" 
-                  size="large" 
-                  fullWidth 
-                  component={Link} 
-                  to="/estoque" 
-                  startIcon={<Inventory2 />}
-                  sx={{ py: 1.5, borderRadius: 3, height: '100%' }}
-                >
-                  Estoque
-                </Button>
-              </Grid>
-              
-              <Grid size={12}>
-                <Button 
-                  variant="outlined" 
-                  size="large" 
-                  fullWidth 
-                  component={Link} 
-                  to="/clientes" 
-                  startIcon={<People />}
-                  sx={{ py: 1.5, borderRadius: 3 }}
-                >
-                  Gerenciar Clientes
-                </Button>
-              </Grid>
-            </Grid>
-          ) : (
-            <Box mt={4}>
-              <Typography variant="caption" color="text.disabled">
-                Todos o direitos reservados - TKookies © {new Date().getFullYear()}
+          <Paper elevation={3} sx={{ p: 4, borderRadius: 4, textAlign: 'center', bgcolor: 'rgba(255, 255, 255, 0.9)' }}>
+            <Box mb={4}>
+              <Typography variant="h2" fontWeight="900" color="primary" sx={{ letterSpacing: '-1px', textShadow: '2px 2px 0px #D7CCC8', mb: 1 }}>
+                {config.home_title}
+              </Typography>
+              <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 500 }}>
+                {config.home_subtitle}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                {config.home_location}
               </Typography>
             </Box>
-          )}
-        </Paper>
+            
+            {isLoggedIn ? (
+              <Grid container spacing={2}>
+                <Grid size={12}>
+                  <Button 
+                    variant="contained" 
+                    size="large" 
+                    fullWidth 
+                    component={Link} 
+                    to="/pedidos/novo" 
+                    startIcon={<AddCircleOutline />}
+                    sx={{ py: 2, fontSize: '1.1rem', borderRadius: 3 }}
+                  >
+                    Novo Pedido
+                  </Button>
+                </Grid>
+                
+                <Grid size={6}>
+                  <Button 
+                    variant="outlined" 
+                    size="large" 
+                    fullWidth 
+                    component={Link} 
+                    to="/pedidos" 
+                    startIcon={<ListAlt />}
+                    sx={{ py: 1.5, borderRadius: 3, height: '100%' }}
+                  >
+                    Pedidos
+                  </Button>
+                </Grid>
+                <Grid size={6}>
+                  <Button 
+                    variant="outlined" 
+                    size="large" 
+                    fullWidth 
+                    component={Link} 
+                    to="/combos" 
+                    startIcon={<PointOfSale />}
+                    sx={{ py: 1.5, borderRadius: 3, height: '100%' }}
+                  >
+                    Combos
+                  </Button>
+                </Grid>
+
+                <Grid size={6}>
+                  <Button 
+                    variant="outlined" 
+                    size="large" 
+                    fullWidth 
+                    component={Link} 
+                    to="/produtos" 
+                    startIcon={<RestaurantMenu />}
+                    sx={{ py: 1.5, borderRadius: 3, height: '100%' }}
+                  >
+                    Produtos
+                  </Button>
+                </Grid>
+                <Grid size={6}>
+                  <Button 
+                    variant="outlined" 
+                    size="large" 
+                    fullWidth 
+                    component={Link} 
+                    to="/estoque" 
+                    startIcon={<Inventory2 />}
+                    sx={{ py: 1.5, borderRadius: 3, height: '100%' }}
+                  >
+                    Estoque
+                  </Button>
+                </Grid>
+                
+                <Grid size={12}>
+                  <Button 
+                    variant="outlined" 
+                    size="large" 
+                    fullWidth 
+                    component={Link} 
+                    to="/clientes" 
+                    startIcon={<People />}
+                    sx={{ py: 1.5, borderRadius: 3 }}
+                  >
+                    Gerenciar Clientes
+                  </Button>
+                </Grid>
+              </Grid>
+            ) : (
+              <Box mt={4}>
+                <Typography variant="caption" color="text.disabled">
+                  Todos o direitos reservados - TKookies © {new Date().getFullYear()}
+                </Typography>
+              </Box>
+            )}
+          </Paper>
         </Box>
 
         {/* CARDÁPIO */}
         <Box mb={8}>
-          <Typography variant="h4" gutterBottom color="primary" fontWeight="bold" textAlign="center" sx={{ textShadow: '1px 1px 0px #fff' }}>
+          <Typography variant="h4" gutterBottom color="primary" fontWeight="bold" textAlign="center" sx={{ textShadow: '1px 1px 0px #fff', mb: 4 }}>
             Nosso Cardápio
           </Typography>
           <Grid container spacing={3}>
