@@ -6,29 +6,56 @@ const router = Router();
 // LISTAR PRODUTOS (Com ingredientes e custos base)
 router.get("/", async (req, res) => {
   try {
+    // Busca dados planos para evitar incompatibilidade de funções JSON entre Postgres e MySQL/TiDB
     const result = await pool.query(`
       SELECT p.*, 
-      COALESCE(
-        json_agg(
-          json_build_object(
-            'ingrediente_id', i.id, 
-            'nome', i.nome, 
-            'quantidade', pi.quantidade, 
-            'unidade', i.unidade,
-            'custo_base', i.custo,
-            'estoque_base', i.estoque,
-            'usado_para_revenda', i.usado_para_revenda,
-            'apenas_revenda', pi.apenas_revenda
-          )
-        ) FILTER (WHERE i.id IS NOT NULL), '[]'
-      ) as ingredientes
+             i.id as ing_id, 
+             i.nome as ing_nome, 
+             pi.quantidade as ing_quantidade, 
+             i.unidade as ing_unidade,
+             i.custo as ing_custo, 
+             i.estoque as ing_estoque, 
+             i.usado_para_revenda as ing_usado_para_revenda,
+             pi.apenas_revenda as ing_apenas_revenda
       FROM produtos p
       LEFT JOIN produto_ingredientes pi ON p.id = pi.produto_id
       LEFT JOIN ingredientes i ON pi.ingrediente_id = i.id
-      GROUP BY p.id
       ORDER BY p.nome ASC
     `);
-    res.json(result.rows);
+
+    // Agrupa os ingredientes por produto via Javascript
+    const productsMap = new Map();
+
+    result.rows.forEach(row => {
+      if (!productsMap.has(row.id)) {
+        productsMap.set(row.id, {
+          id: row.id,
+          nome: row.nome,
+          preco_venda: row.preco_venda,
+          margem_revenda: row.margem_revenda,
+          preco_revenda: row.preco_revenda,
+          rendimento: row.rendimento,
+          estoque: row.estoque,
+          created_at: row.created_at,
+          ingredientes: []
+        });
+      }
+
+      if (row.ing_id) {
+        productsMap.get(row.id).ingredientes.push({
+          ingrediente_id: row.ing_id,
+          nome: row.ing_nome,
+          quantidade: row.ing_quantidade,
+          unidade: row.ing_unidade,
+          custo_base: row.ing_custo,
+          estoque_base: row.ing_estoque,
+          usado_para_revenda: row.ing_usado_para_revenda === 1 || row.ing_usado_para_revenda === true,
+          apenas_revenda: row.ing_apenas_revenda === 1 || row.ing_apenas_revenda === true
+        });
+      }
+    });
+
+    res.json(Array.from(productsMap.values()));
   } catch (error) {
     console.error("Erro detalhado ao listar produtos:", error);
     res.status(500).json({ error: "Erro ao procurar produtos" });

@@ -8,23 +8,41 @@ router.get("/", async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT c.*, 
-      COALESCE(
-        json_agg(
-          json_build_object(
-            'produto_id', p.id, 
-            'nome', p.nome, 
-            'quantidade', ic.quantidade,
-            'preco_original', p.preco_venda
-          )
-        ) FILTER (WHERE p.id IS NOT NULL), '[]'
-      ) as itens
+             p.id as prod_id, 
+             p.nome as prod_nome, 
+             ic.quantidade as prod_quantidade,
+             p.preco_venda as prod_preco_original
       FROM combos c
       LEFT JOIN itens_combo ic ON c.id = ic.combo_id
       LEFT JOIN produtos p ON ic.produto_id = p.id
-      GROUP BY c.id
       ORDER BY c.nome ASC
     `);
-    res.json(result.rows);
+
+    const combosMap = new Map();
+
+    result.rows.forEach(row => {
+      if (!combosMap.has(row.id)) {
+        combosMap.set(row.id, {
+          id: row.id,
+          nome: row.nome,
+          preco_venda: row.preco_venda,
+          estoque: row.estoque,
+          created_at: row.created_at,
+          itens: []
+        });
+      }
+
+      if (row.prod_id) {
+        combosMap.get(row.id).itens.push({
+          produto_id: row.prod_id,
+          nome: row.prod_nome,
+          quantidade: row.prod_quantidade,
+          preco_original: row.prod_preco_original
+        });
+      }
+    });
+
+    res.json(Array.from(combosMap.values()));
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Erro ao listar combos" });
@@ -37,25 +55,39 @@ router.get("/:id", async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT c.*, 
-      COALESCE(
-        json_agg(
-          json_build_object(
-            'produto_id', p.id, 
-            'nome', p.nome, 
-            'quantidade', ic.quantidade,
-            'preco_original', p.preco_venda
-          )
-        ) FILTER (WHERE p.id IS NOT NULL), '[]'
-      ) as itens
+             p.id as prod_id, 
+             p.nome as prod_nome, 
+             ic.quantidade as prod_quantidade,
+             p.preco_venda as prod_preco_original
       FROM combos c
       LEFT JOIN itens_combo ic ON c.id = ic.combo_id
       LEFT JOIN produtos p ON ic.produto_id = p.id
       WHERE c.id = $1
-      GROUP BY c.id
     `, [id]);
     
     if (result.rows.length === 0) return res.status(404).json({ error: "Combo não encontrado" });
-    res.json(result.rows[0]);
+    
+    const combo = {
+      id: result.rows[0].id,
+      nome: result.rows[0].nome,
+      preco_venda: result.rows[0].preco_venda,
+      estoque: result.rows[0].estoque,
+      created_at: result.rows[0].created_at,
+      itens: []
+    };
+
+    result.rows.forEach(row => {
+      if (row.prod_id) {
+        combo.itens.push({
+          produto_id: row.prod_id,
+          nome: row.prod_nome,
+          quantidade: row.prod_quantidade,
+          preco_original: row.prod_preco_original
+        });
+      }
+    });
+
+    res.json(combo);
   } catch (error) {
     res.status(500).json({ error: "Erro ao buscar combo" });
   }
