@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import api from "../services/api";
 import { 
   Box, Button, TextField, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, 
@@ -10,6 +10,7 @@ import { printOrder } from "../utils/printOrder";
 
 export default function OrderForm() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams(); // Se tiver ID, é edição
 
   // Dados do Pedido
@@ -39,7 +40,11 @@ export default function OrderForm() {
   useEffect(() => {
     carregarDados();
     if (id) carregarPedido(id);
-  }, [id]);
+    else if (location.state?.items) {
+      // Se veio da Home com itens selecionados
+      setItens(location.state.items);
+    }
+  }, [id, location.state]);
 
   async function carregarDados() {
     const [resCli, resProd] = await Promise.all([
