@@ -46,8 +46,8 @@ export default function OrderForm() {
       api.get("/clientes"),
       api.get("/produtos")
     ]);
-    setListaClientes(resCli.data);
-    setListaProdutos(resProd.data);
+    setListaClientes(Array.isArray(resCli.data) ? resCli.data : []);
+    setListaProdutos(Array.isArray(resProd.data) ? resProd.data : []);
   }
 
   async function carregarPedido(pedidoId) {

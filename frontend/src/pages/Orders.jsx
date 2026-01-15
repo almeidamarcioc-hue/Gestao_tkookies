@@ -11,7 +11,7 @@ export default function Orders() {
   const [pedidos, setPedidos] = useState([]);
 
   useEffect(() => {
-    api.get("/pedidos").then(res => setPedidos(res.data));
+    api.get("/pedidos").then(res => setPedidos(Array.isArray(res.data) ? res.data : []));
   }, []);
 
   const getStatusColor = (status) => {

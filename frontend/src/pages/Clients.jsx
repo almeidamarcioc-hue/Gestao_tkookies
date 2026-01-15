@@ -17,7 +17,7 @@ export default function Clients() {
   }, []);
 
   function carregarClientes() {
-    api.get("/clientes").then(res => setClientes(res.data));
+    api.get("/clientes").then(res => setClientes(Array.isArray(res.data) ? res.data : []));
   }
 
   function handleEdit(item) {

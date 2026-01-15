@@ -19,7 +19,7 @@ export default function ClientForm() {
   }, []);
 
   function carregarLista() {
-    api.get("/clientes").then(res => setListaClientes(res.data));
+    api.get("/clientes").then(res => setListaClientes(Array.isArray(res.data) ? res.data : []));
   }
 
   async function salvarCliente() {

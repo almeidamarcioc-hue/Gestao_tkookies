@@ -16,7 +16,7 @@ export default function Inventory() {
   }, []);
 
   function carregarEstoque() {
-    api.get("/estoque").then(res => setProdutos(res.data));
+    api.get("/estoque").then(res => setProdutos(Array.isArray(res.data) ? res.data : []));
   }
 
   function handleOpenLancamento(prod) {

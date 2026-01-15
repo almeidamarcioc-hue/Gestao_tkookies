@@ -15,7 +15,7 @@ export default function IngredientForm() {
   }, []);
 
   function carregarLista() {
-    api.get("/ingredientes").then(res => setListaIngredientes(res.data));
+    api.get("/ingredientes").then(res => setListaIngredientes(Array.isArray(res.data) ? res.data : []));
   }
 
   async function salvarIngrediente() {

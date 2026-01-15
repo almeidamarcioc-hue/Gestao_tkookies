@@ -27,8 +27,9 @@ export default function ComboForm() {
   async function carregarProdutos() {
     try {
       const res = await api.get("/produtos");
+      const dadosProdutos = Array.isArray(res.data) ? res.data : [];
       // Calcula o custo unitário de cada produto para usar no cálculo do combo
-      const produtosComCusto = res.data.map(prod => {
+      const produtosComCusto = dadosProdutos.map(prod => {
         const rendimento = Number(prod.rendimento) || 1;
         const custoReceita = prod.ingredientes.reduce((acc, ing) => {
           if (ing.apenas_revenda) return acc;

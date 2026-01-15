@@ -14,7 +14,7 @@ export default function Combos() {
   }, []);
 
   function carregarCombos() {
-    api.get("/combos").then(res => setCombos(res.data));
+    api.get("/combos").then(res => setCombos(Array.isArray(res.data) ? res.data : []));
   }
 
   async function handleDelete(id) {
