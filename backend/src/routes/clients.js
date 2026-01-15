@@ -16,6 +16,7 @@ router.get("/", async (req, res) => {
 // CRIAR
 router.post("/", async (req, res) => {
   const { nome, telefone, endereco, numero, complemento, bairro, cidade } = req.body;
+  console.log("Criando cliente:", nome);
   try {
     await pool.query(
       "INSERT INTO clientes (nome, telefone, endereco, numero, complemento, bairro, cidade) VALUES ($1, $2, $3, $4, $5, $6, $7)",
@@ -32,6 +33,7 @@ router.post("/", async (req, res) => {
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
   const { nome, telefone, endereco, numero, complemento, bairro, cidade } = req.body;
+  console.log("Atualizando cliente:", id);
   try {
     await pool.query(
       "UPDATE clientes SET nome = $1, telefone = $2, endereco = $3, numero = $4, complemento = $5, bairro = $6, cidade = $7 WHERE id = $8",

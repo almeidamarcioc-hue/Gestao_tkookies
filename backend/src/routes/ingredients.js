@@ -45,15 +45,21 @@ router.put("/:id", async (req, res) => {
 // DELETAR
 router.delete("/:id", async (req, res) => {
   const { id } = req.params;
+  const client = await pool.connect();
   try {
+    await client.query("BEGIN");
     // Remove referências na tabela de ligação primeiro (caso o CASCADE não esteja configurado no banco)
-    await pool.query("DELETE FROM produto_ingredientes WHERE ingrediente_id = $1", [id]);
+    await client.query("DELETE FROM produto_ingredientes WHERE ingrediente_id = $1", [id]);
     
-    await pool.query("DELETE FROM ingredientes WHERE id = $1", [id]);
+    await client.query("DELETE FROM ingredientes WHERE id = $1", [id]);
+    await client.query("COMMIT");
     res.json({ message: "Ingrediente removido!" });
   } catch (error) {
-    console.error(error);
+    await client.query("ROLLBACK");
+    console.error("Erro ao deletar ingrediente:", error);
     res.status(500).json({ error: "Erro ao remover ingrediente" });
+  } finally {
+    client.release();
   }
 });
 
