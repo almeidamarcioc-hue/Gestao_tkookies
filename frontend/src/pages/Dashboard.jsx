@@ -41,8 +41,8 @@ export default function Dashboard() {
   const [newIngApenasRevenda, setNewIngApenasRevenda] = useState(false);
 
   const loadData = () => {
-    api.get("/produtos").then((res) => setProdutos(res.data));
-    api.get("/ingredientes").then((res) => setAllIngredientes(res.data));
+    api.get("/produtos").then((res) => setProdutos(Array.isArray(res.data) ? res.data : []));
+    api.get("/ingredientes").then((res) => setAllIngredientes(Array.isArray(res.data) ? res.data : []));
   };
 
   useEffect(() => {
@@ -171,6 +171,7 @@ export default function Dashboard() {
 
   const handleAddIngredientToEdit = () => {
     if (!newIngId || !newIngQtd) return;
+    if (!Array.isArray(allIngredientes)) return;
     const ingOriginal = allIngredientes.find(i => i.id === newIngId);
     if (!ingOriginal) return;
 
@@ -385,9 +386,9 @@ export default function Dashboard() {
                 <Autocomplete
                   fullWidth
                   size="small"
-                  options={allIngredientes}
+                  options={Array.isArray(allIngredientes) ? allIngredientes : []}
                   getOptionLabel={(option) => `${option.nome} (${option.unidade})`}
-                  value={allIngredientes.find((i) => i.id === newIngId) || null}
+                  value={(Array.isArray(allIngredientes) ? allIngredientes.find((i) => i.id === newIngId) : null) || null}
                   onChange={(event, newValue) => {
                     setNewIngId(newValue ? newValue.id : "");
                   }}

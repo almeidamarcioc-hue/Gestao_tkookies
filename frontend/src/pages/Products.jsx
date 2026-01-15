@@ -42,9 +42,9 @@ export default function Products() {
     async function carregar() {
       try {
         const res = await api.get("/ingredientes");
-        setIngredientes(res.data || []);
+        setIngredientes(Array.isArray(res.data) ? res.data : []);
         const resProd = await api.get("/produtos");
-        setListaProdutos(resProd.data || []);
+        setListaProdutos(Array.isArray(resProd.data) ? resProd.data : []);
       } catch (err) {
         console.error("Erro ao carregar ingredientes:", err);
       }
@@ -55,6 +55,8 @@ export default function Products() {
   useEffect(() => {
     let somaCusto = 0;
     let somaRevenda = 0;
+    
+    if (Array.isArray(ingredientes)) {
     itens.forEach((item) => {
       const ing = ingredientes.find(i => Number(i.id) === Number(item.ingrediente_id));
       if (ing) {
@@ -76,6 +78,8 @@ export default function Products() {
         }
       }
     });
+    }
+
     setCustoTotal(somaCusto);
     setCustoRevenda(somaRevenda);
     
@@ -122,6 +126,7 @@ export default function Products() {
 
   function adicionarIngrediente() {
     if (!ingredienteSelecionado || !quantidadeIngrediente) return;
+    if (!Array.isArray(ingredientes)) return;
     const ing = ingredientes.find(i => Number(i.id) === Number(ingredienteSelecionado));
     if (!ing) return;
 
@@ -179,7 +184,7 @@ export default function Products() {
       
       // Recarrega a lista
       const resProd = await api.get("/produtos");
-      setListaProdutos(resProd.data || []);
+      setListaProdutos(Array.isArray(resProd.data) ? resProd.data : []);
     } catch (err) {
       // LOG DETALHADO PARA IDENTIFICARMOS O QUE O BACKEND REJEITOU
       console.error("ERRO COMPLETO DO AXIOS:", err);
@@ -241,9 +246,9 @@ export default function Products() {
         <Box display="flex" gap={2} mb={3}>
           <Autocomplete
             fullWidth
-            options={ingredientes}
+            options={Array.isArray(ingredientes) ? ingredientes : []}
             getOptionLabel={(option) => option.nome}
-            value={ingredientes.find((i) => i.id === ingredienteSelecionado) || null}
+            value={(Array.isArray(ingredientes) ? ingredientes.find((i) => i.id === ingredienteSelecionado) : null) || null}
             onChange={(event, newValue) => {
               setIngredienteSelecionado(newValue ? newValue.id : "");
             }}
