@@ -41,6 +41,17 @@ export async function initDatabase() {
       )
     `);
 
+    // Tabela de Imagens do Produto
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS produto_imagens (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        produto_id INT,
+        imagem LONGTEXT,
+        eh_capa BOOLEAN DEFAULT FALSE,
+        FOREIGN KEY (produto_id) REFERENCES produtos(id) ON DELETE CASCADE
+      )
+    `);
+
     // Tabela de Clientes
     await pool.query(`
       CREATE TABLE IF NOT EXISTS clientes (

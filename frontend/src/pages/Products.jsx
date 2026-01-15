@@ -20,7 +20,7 @@ import {
   Checkbox
 } from "@mui/material";
 
-import { Delete, CloudUpload } from "@mui/icons-material";
+import { Delete, CloudUpload, Star, StarBorder } from "@mui/icons-material";
 
 export default function Products() {
   const [ingredientes, setIngredientes] = useState([]);
@@ -38,7 +38,6 @@ export default function Products() {
   const [precoRevenda, setPrecoRevenda] = useState(0);
   const [listaProdutos, setListaProdutos] = useState([]);
   const [imagens, setImagens] = useState([]);
-  const [previewImagens, setPreviewImagens] = useState([]);
 
   useEffect(() => {
     async function carregar() {
@@ -126,7 +125,7 @@ export default function Products() {
     }
   };
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     if (e.target.files) {
       const filesArray = Array.from(e.target.files);
       if (filesArray.length + imagens.length > 4) {
@@ -134,23 +133,47 @@ export default function Products() {
         return;
       }
 
-      const newImagens = [...imagens, ...filesArray];
-      setImagens(newImagens);
+      const newImagesPromises = filesArray.map(file => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => resolve({
+            imagem: reader.result,
+            eh_capa: false,
+            _tempId: Math.random()
+          });
+          reader.onerror = error => reject(error);
+        });
+      });
 
-      const newPreviews = filesArray.map((file) => URL.createObjectURL(file));
-      setPreviewImagens((prev) => [...prev, ...newPreviews]);
+      const newImages = await Promise.all(newImagesPromises);
+      
+      // Se for a primeira imagem, define como capa automaticamente
+      if (imagens.length === 0 && newImages.length > 0) {
+        newImages[0].eh_capa = true;
+      }
+
+      setImagens([...imagens, ...newImages]);
     }
   };
 
   const handleRemoveImage = (index) => {
     const newImagens = [...imagens];
+    const wasCapa = newImagens[index].eh_capa;
     newImagens.splice(index, 1);
+    // Se removeu a capa e ainda tem imagens, define a primeira como capa
+    if (wasCapa && newImagens.length > 0) {
+      newImagens[0].eh_capa = true;
+    }
     setImagens(newImagens);
+  };
 
-    const newPreviews = [...previewImagens];
-    URL.revokeObjectURL(newPreviews[index]);
-    newPreviews.splice(index, 1);
-    setPreviewImagens(newPreviews);
+  const handleSetCapa = (index) => {
+    const newImagens = imagens.map((img, i) => ({
+      ...img,
+      eh_capa: i === index
+    }));
+    setImagens(newImagens);
   };
 
   function adicionarIngrediente() {
@@ -194,7 +217,8 @@ export default function Products() {
         ingrediente_id: i.ingrediente_id,
         quantidade: Number(i.quantidade),
         apenas_revenda: i.apenas_revenda
-      }))
+      })),
+      imagens: imagens.map(img => ({ imagem: img.imagem, eh_capa: img.eh_capa }))
     };
 
     try {
@@ -211,7 +235,6 @@ export default function Products() {
       setPrecoVenda(0);
       setPrecoRevenda(0);
       setImagens([]);
-      setPreviewImagens([]);
       
       // Recarrega a lista
       const resProd = await api.get("/produtos");
@@ -238,9 +261,9 @@ export default function Products() {
         <Box mb={3}>
           <Typography variant="subtitle2" gutterBottom>Imagens do Produto (Máx. 4)</Typography>
           <Box display="flex" gap={2} flexWrap="wrap">
-            {previewImagens.map((src, index) => (
+            {imagens.map((img, index) => (
               <Box key={index} position="relative" width={100} height={100} sx={{ border: '1px solid #ddd', borderRadius: 2, overflow: 'hidden' }}>
-                <img src={src} alt={`Preview ${index}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={img.imagem} alt={`Preview ${index}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 <IconButton 
                   size="small" 
                   color="error" 
@@ -248,6 +271,14 @@ export default function Products() {
                   sx={{ position: 'absolute', top: 0, right: 0, bgcolor: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: 'white' }, p: 0.5 }}
                 >
                   <Delete fontSize="small" />
+                </IconButton>
+                <IconButton 
+                  size="small" 
+                  color={img.eh_capa ? "warning" : "default"}
+                  onClick={() => handleSetCapa(index)}
+                  sx={{ position: 'absolute', bottom: 0, left: 0, bgcolor: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: 'white' }, p: 0.5 }}
+                >
+                  {img.eh_capa ? <Star fontSize="small" /> : <StarBorder fontSize="small" />}
                 </IconButton>
               </Box>
             ))}
