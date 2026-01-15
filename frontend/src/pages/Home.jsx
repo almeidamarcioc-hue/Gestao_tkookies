@@ -9,7 +9,7 @@ export default function Home({ isLoggedIn, onLoginClick }) {
         <Paper elevation={3} sx={{ p: 4, borderRadius: 4, textAlign: 'center', bgcolor: 'rgba(255, 255, 255, 0.9)' }}>
           <Box mb={4}>
             <Typography variant="h2" fontWeight="900" color="primary" sx={{ letterSpacing: '-1px', textShadow: '2px 2px 0px #D7CCC8', mb: 1 }}>
-              Tkookies
+              TKookies
             </Typography>
             <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 500 }}>
               🍪 Um pedacinho de felicidade em cada mordida.
@@ -120,7 +120,7 @@ export default function Home({ isLoggedIn, onLoginClick }) {
           
           <Box mt={4}>
              <Typography variant="caption" color="text.disabled">
-               Gestão Tkookies © {new Date().getFullYear()}
+               Todos o direitos reservados - TKookies © {new Date().getFullYear()}
              </Typography>
           </Box>
         </Paper>

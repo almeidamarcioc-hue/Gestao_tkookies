@@ -377,7 +377,7 @@ router.post("/:id/imprimir", async (req, res) => {
         .align('ct')
         .style('b')
         .size(1, 1)
-        .text('Tkookies')
+        .text('TKokies')
         .style('normal')
         .size(1, 1) // Retornando ao tamanho padrão para o corpo do texto
         .text(`Pedido #${pedido.id}`)
@@ -427,7 +427,7 @@ p.font('a'); // Retorna para a fonte padrão se desejar
           if (Number(pedido.frete) > 0) p.text(`Frete: R$ ${Number(pedido.frete).toFixed(2)}`);
           p.style('b').size(1, 1).text(`TOTAL: R$ ${Number(pedido.valor_total).toFixed(2)}`);
           
-          p.align('ct').text('').text('Tkookies');
+          p.align('ct').text('').text('TKookies');
           p.align('ct').text('').text('');
           
           p.cut().close();

@@ -118,7 +118,7 @@ export default function App() {
       <AppBar position="sticky" sx={{ top: 0, zIndex: 1100 }}>
         <Toolbar>
           <Typography variant="h5" component={Link} to="/" sx={{ flexGrow: 1, fontWeight: '900', textDecoration: 'none', color: 'primary.main', letterSpacing: '-0.5px' }}>
-            🍪 Gestão Tkookies
+            🍪 TKookies
           </Typography>
           <Box display="flex" gap={1}>
             <Button color="inherit" component={Link} to="/">HOME</Button>

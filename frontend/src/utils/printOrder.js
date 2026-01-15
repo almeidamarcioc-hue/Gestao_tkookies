@@ -45,7 +45,7 @@ export function printOrder(pedido) {
       </head>
       <body>
         <div class="header">
-          <div class="title">Gestão Tkookies</div>
+          <div class="title">TKookies</div>
           <div>Pedido #${pedido.id || '---'}</div>
         </div>
         
