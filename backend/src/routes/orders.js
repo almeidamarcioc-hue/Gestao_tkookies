@@ -377,7 +377,7 @@ router.post("/:id/imprimir", async (req, res) => {
         .align('ct')
         .style('b')
         .size(1, 1)
-        .text('Gestao Tkookies')
+        .text('Tkookies')
         .style('normal')
         .size(1, 1) // Retornando ao tamanho padrão para o corpo do texto
         .text(`Pedido #${pedido.id}`)
