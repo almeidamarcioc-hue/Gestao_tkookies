@@ -98,6 +98,7 @@ export default function Dashboard() {
       ...ing,
       _tempId: `existing-${ing.ingrediente_id}-${i}`
     }));
+    prodCopy.imagens = prodCopy.imagens || [];
     
     setEditRendimento(rendimento);
     setEditProduct(prodCopy);

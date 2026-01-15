@@ -150,10 +150,12 @@ router.put("/:id", async (req, res) => {
     
     if (imagens && imagens.length > 0) {
       for (const img of imagens) {
-        await client.query(
-          "INSERT INTO produto_imagens (produto_id, imagem, eh_capa) VALUES ($1, $2, $3)",
-          [id, img.imagem, img.eh_capa || false]
-        );
+        if (img.imagem) {
+          await client.query(
+            "INSERT INTO produto_imagens (produto_id, imagem, eh_capa) VALUES ($1, $2, $3)",
+            [id, img.imagem, img.eh_capa || false]
+          );
+        }
       }
     }
 
