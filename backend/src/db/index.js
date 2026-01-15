@@ -20,8 +20,8 @@ const dbConfig = {
 const mysqlPool = mysql.createPool(dbConfig);
 
 // Wrapper para emular o comportamento do 'pg' (PostgreSQL) usando 'mysql2'
-// Isso evita ter que reescrever todas as queries do sistema.
-const queryWrapper = async (text, params) => {
+// Aceita um 'executor' (pode ser o pool ou uma conexão específica)
+const executeQuery = async (executor, text, params) => {
   // 1. Remove RETURNING id (sintaxe PG não suportada no MySQL)
   let sql = text.replace(/RETURNING\s+id/i, "");
   
@@ -29,7 +29,7 @@ const queryWrapper = async (text, params) => {
   sql = sql.replace(/\$\d+/g, "?");
 
   try {
-    const [results] = await mysqlPool.query(sql, params);
+    const [results] = await executor.query(sql, params);
 
     // 3. Adapta o retorno para o formato do 'pg' { rows: [], rowCount: 0 }
     
@@ -54,7 +54,10 @@ const queryWrapper = async (text, params) => {
 };
 
 export const pool = {
-  query: queryWrapper,
+  // Query simples usando o pool (pega uma conexão, executa e devolve)
+  query: (text, params) => executeQuery(mysqlPool, text, params),
+  
+  // Conexão dedicada para transações (BEGIN/COMMIT/ROLLBACK)
   connect: async () => {
     const connection = await mysqlPool.getConnection();
     return {
@@ -63,23 +66,7 @@ export const pool = {
         if (text === 'COMMIT') return connection.commit();
         if (text === 'ROLLBACK') return connection.rollback();
         
-        // Reutiliza a lógica de adaptação
-        return queryWrapper.call({ query: connection.query.bind(connection) }, text, params)
-          .catch(err => {
-             // Fallback caso o bind acima falhe ou para simplificar, chamamos direto
-             // Na verdade, precisamos reimplementar a lógica de replace aqui para usar a 'connection' da transação
-             return queryWrapper(text, params).then(res => res); 
-             // Nota: O ideal seria refatorar o wrapper para aceitar o executor, mas para manter simples:
-             // O mysql2 pool.query e connection.query têm assinaturas similares.
-             // Vamos confiar que o pool.query global funciona ou ajustar se necessário.
-             // CORREÇÃO: Para transações funcionarem, TEMOS que usar 'connection'.
-             // Vou replicar a lógica simples aqui dentro:
-             let sql = text.replace(/RETURNING\s+id/i, "").replace(/\$\d+/g, "?");
-             const [results] = await connection.query(sql, params);
-             if (results && 'insertId' in results) return { rows: results.insertId ? [{ id: results.insertId }] : [], rowCount: results.affectedRows };
-             if (Array.isArray(results)) return { rows: results, rowCount: results.length };
-             return { rows: [], rowCount: 0 };
-          });
+        return executeQuery(connection, text, params);
       },
       release: () => connection.release()
     };
