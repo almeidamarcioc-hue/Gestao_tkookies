@@ -19,6 +19,15 @@ app.use((req, res, next) => {
   next();
 });
 
+// Middleware de CSP para evitar erros de bloqueio no navegador
+app.use((req, res, next) => {
+  res.setHeader(
+    "Content-Security-Policy",
+    "default-src 'self'; style-src 'self' 'unsafe-inline' https://www.gstatic.com https://fonts.googleapis.com; script-src 'self' 'unsafe-inline' https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https:;"
+  );
+  next();
+});
+
 app.use("/ingredientes", ingredientRoutes);
 app.use("/produtos", productRoutes);
 app.use("/clientes", clientsRouter);
