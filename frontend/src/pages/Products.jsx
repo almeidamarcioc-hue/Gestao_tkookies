@@ -20,7 +20,7 @@ import {
   Checkbox
 } from "@mui/material";
 
-import { Delete } from "@mui/icons-material";
+import { Delete, CloudUpload } from "@mui/icons-material";
 
 export default function Products() {
   const [ingredientes, setIngredientes] = useState([]);
@@ -37,6 +37,8 @@ export default function Products() {
   const [custoRevenda, setCustoRevenda] = useState(0);
   const [precoRevenda, setPrecoRevenda] = useState(0);
   const [listaProdutos, setListaProdutos] = useState([]);
+  const [imagens, setImagens] = useState([]);
+  const [previewImagens, setPreviewImagens] = useState([]);
 
   useEffect(() => {
     async function carregar() {
@@ -124,6 +126,33 @@ export default function Products() {
     }
   };
 
+  const handleImageChange = (e) => {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      if (filesArray.length + imagens.length > 4) {
+        alert("Máximo de 4 imagens permitido.");
+        return;
+      }
+
+      const newImagens = [...imagens, ...filesArray];
+      setImagens(newImagens);
+
+      const newPreviews = filesArray.map((file) => URL.createObjectURL(file));
+      setPreviewImagens((prev) => [...prev, ...newPreviews]);
+    }
+  };
+
+  const handleRemoveImage = (index) => {
+    const newImagens = [...imagens];
+    newImagens.splice(index, 1);
+    setImagens(newImagens);
+
+    const newPreviews = [...previewImagens];
+    URL.revokeObjectURL(newPreviews[index]);
+    newPreviews.splice(index, 1);
+    setPreviewImagens(newPreviews);
+  };
+
   function adicionarIngrediente() {
     if (!ingredienteSelecionado || !quantidadeIngrediente) return;
     if (!Array.isArray(ingredientes)) return;
@@ -181,6 +210,8 @@ export default function Products() {
       setCustoTotal(0);
       setPrecoVenda(0);
       setPrecoRevenda(0);
+      setImagens([]);
+      setPreviewImagens([]);
       
       // Recarrega a lista
       const resProd = await api.get("/produtos");
@@ -202,6 +233,36 @@ export default function Products() {
         <Box display="flex" gap={2} mb={3}>
           <TextField label="Nome do Produto" fullWidth value={nome} onChange={(e) => setNome(e.target.value)} />
           <TextField label="Rendimento (Qtd Cookies)" type="number" sx={{ width: 200 }} value={rendimento} onChange={(e) => setRendimento(e.target.value)} />
+        </Box>
+
+        <Box mb={3}>
+          <Typography variant="subtitle2" gutterBottom>Imagens do Produto (Máx. 4)</Typography>
+          <Box display="flex" gap={2} flexWrap="wrap">
+            {previewImagens.map((src, index) => (
+              <Box key={index} position="relative" width={100} height={100} sx={{ border: '1px solid #ddd', borderRadius: 2, overflow: 'hidden' }}>
+                <img src={src} alt={`Preview ${index}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <IconButton 
+                  size="small" 
+                  color="error" 
+                  onClick={() => handleRemoveImage(index)}
+                  sx={{ position: 'absolute', top: 0, right: 0, bgcolor: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: 'white' }, p: 0.5 }}
+                >
+                  <Delete fontSize="small" />
+                </IconButton>
+              </Box>
+            ))}
+            {imagens.length < 4 && (
+              <Button
+                component="label"
+                variant="outlined"
+                sx={{ width: 100, height: 100, borderRadius: 2, display: 'flex', flexDirection: 'column', gap: 1, textTransform: 'none', borderStyle: 'dashed' }}
+              >
+                <CloudUpload color="action" />
+                <Typography variant="caption" color="text.secondary">Adicionar</Typography>
+                <input type="file" hidden multiple accept="image/*" onChange={handleImageChange} />
+              </Button>
+            )}
+          </Box>
         </Box>
         
         <Grid container spacing={3} mb={4}>
