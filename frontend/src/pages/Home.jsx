@@ -103,19 +103,20 @@ export default function Home({ isLoggedIn, onLoginClick }) {
                 </Button>
               </Grid>
             </Grid>
-          ) : (
-            <Box mt={4}>
-              <Button 
-                variant="contained" 
-                size="large" 
-                onClick={onLoginClick} 
-                fullWidth
-                sx={{ py: 2, borderRadius: 50, fontSize: '1.2rem', px: 6 }}
-              >
-                Acessar Sistema
-              </Button>
-            </Box>
-          )}
+          ) : //(
+            //<Box mt={4}>
+             // <Button 
+              //  variant="contained" 
+              //  size="large" 
+              //  onClick={onLoginClick} 
+               // fullWidth
+               // sx={{ py: 2, borderRadius: 50, fontSize: '1.2rem', px: 6 }}
+             // >
+               //</Box> Acessar Sistema
+             //</Paper> </Button>
+           // </Box>
+          //)}
+
           
           <Box mt={4}>
              <Typography variant="caption" color="text.disabled">
