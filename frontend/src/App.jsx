@@ -153,7 +153,7 @@ export default function App() {
                 <Button color="inherit" onClick={handleLogout}>SAIR</Button>
               </>
             ) : (
-              <Button color="inherit" onClick={() => setLoginOpen(true)}>LOGIN</Button>
+              <Button color="inherit" onClick={() => setLoginOpen(true)}>Acesso Restrito</Button>
             )}
           </Box>
         </Toolbar>
