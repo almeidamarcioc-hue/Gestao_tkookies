@@ -103,26 +103,22 @@ export default function Home({ isLoggedIn, onLoginClick }) {
                 </Button>
               </Grid>
             </Grid>
-          ) : //(
-            //<Box mt={4}>
-             // <Button 
-              //  variant="contained" 
-              //  size="large" 
-              //  onClick={onLoginClick} 
-               // fullWidth
-               // sx={{ py: 2, borderRadius: 50, fontSize: '1.2rem', px: 6 }}
-             // >
-               //</Box> Acessar Sistema
-             //</Paper> </Button>
-           // </Box>
-          //)}
-
-          
-          <Box mt={4}>
-             <Typography variant="caption" color="text.disabled">
-               Todos o direitos reservados - TKookies © {new Date().getFullYear()}
-             </Typography>
-          </Box>
+          ) : (
+            <Box mt={4}>
+              <Button 
+                variant="contained" 
+                size="large" 
+                onClick={onLoginClick} 
+                fullWidth
+                sx={{ py: 2, borderRadius: 50, fontSize: '1.2rem', px: 6, mb: 2 }}
+              >
+                Acessar Sistema
+              </Button>
+              <Typography variant="caption" color="text.disabled">
+                Todos o direitos reservados - TKookies © {new Date().getFullYear()}
+              </Typography>
+            </Box>
+          )}
         </Paper>
       </Container>
     </Box>
