@@ -23,6 +23,17 @@ router.get("/", async (req, res) => {
   }
 });
 
+// OBTER VALOR DO FRETE (Configuração)
+router.get("/config/frete", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT valor FROM configuracoes WHERE chave = 'valor_frete'");
+    const valor = result.rows.length > 0 ? Number(result.rows[0].valor) : 0;
+    res.json({ valor });
+  } catch (error) {
+    res.status(500).json({ error: "Erro ao buscar valor do frete" });
+  }
+});
+
 // OBTER UM PEDIDO (para edição)
 router.get("/:id", async (req, res) => {
   const { id } = req.params;

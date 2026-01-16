@@ -1,8 +1,8 @@
 // App.jsx
 import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Link, Navigate, useNavigate } from "react-router-dom";
-import { AppBar, Toolbar, Button, Box, Typography, Menu, MenuItem, createTheme, ThemeProvider, CssBaseline, TextField, IconButton, Drawer, List, ListItem, ListItemButton, ListItemText, Divider, Container, Grid } from "@mui/material";
-import { Menu as MenuIcon, Instagram, WhatsApp, Facebook, AccountCircle } from "@mui/icons-material";
+import { AppBar, Toolbar, Button, Box, Typography, Menu, MenuItem, createTheme, ThemeProvider, CssBaseline, TextField, IconButton, Drawer, List, ListItem, ListItemButton, ListItemText, Divider, Container, Grid, Badge } from "@mui/material";
+import { Menu as MenuIcon, Instagram, WhatsApp, Facebook, AccountCircle, ShoppingCart } from "@mui/icons-material";
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
 import Ingredients from "./pages/Ingredients";
@@ -19,6 +19,7 @@ import Inventory from "./pages/Inventory";
 import Settings from "./pages/Settings";
 import ClientRegister from "./pages/ClientRegister";
 import ClientProfile from "./pages/ClientProfile";
+import Cart from "./pages/Cart";
 import api from "./services/api";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AccessDenied from "./pages/AccessDenied";
@@ -105,6 +106,7 @@ export default function App() {
   const [clientUser, setClientUser] = useState(null); // Objeto do cliente logado
   const [clientLoginData, setClientLoginData] = useState({ login: "", senha: "" });
   const [redirectTo, setRedirectTo] = useState(null);
+  const [cart, setCart] = useState([]);
 
   const openCad = Boolean(anchorCad);
   const openCons = Boolean(anchorCons);
@@ -148,6 +150,30 @@ export default function App() {
       alert(msg);
     }
   };
+
+  // Funções do Carrinho
+  const addToCart = (product) => {
+    setCart((prev) => {
+      const existing = prev.find((item) => item.id === product.id);
+      if (existing) {
+        return prev.map((item) =>
+          item.id === product.id ? { ...item, quantidade: item.quantidade + 1 } : item
+        );
+      }
+      return [...prev, { ...product, quantidade: 1 }];
+    });
+  };
+
+  const removeFromCart = (productId) => {
+    setCart((prev) => prev.filter((item) => item.id !== productId));
+  };
+
+  const updateCartQuantity = (productId, newQty) => {
+    if (newQty < 1) return;
+    setCart((prev) => prev.map((item) => item.id === productId ? { ...item, quantidade: newQty } : item));
+  };
+
+  const clearCart = () => setCart([]);
 
   return (
     <ThemeProvider theme={theme}>
@@ -219,6 +245,13 @@ export default function App() {
                 )}
               </>
             )}
+            
+            {/* Ícone do Carrinho (Sempre visível ou apenas para clientes) */}
+            {!isLoggedIn && (
+              <IconButton color="inherit" component={Link} to="/carrinho">
+                <Badge badgeContent={cart.reduce((acc, item) => acc + item.quantidade, 0)} color="error"><ShoppingCart /></Badge>
+              </IconButton>
+            )}
           </Box>
         </Toolbar>
       </AppBar>
@@ -262,15 +295,17 @@ export default function App() {
                  <ListItem disablePadding><ListItemButton onClick={() => setClientLoginOpen(true)}><ListItemText primary="Login" /></ListItemButton></ListItem>
                )
             )}
+            <ListItem disablePadding><ListItemButton component={Link} to="/carrinho"><ListItemText primary="Carrinho" /></ListItemButton></ListItem>
           </List>
         </Box>
       </Drawer>
 
       <Box component="main" sx={{ flexGrow: 1, py: 4 }}>
         <Routes>
-          <Route path="/" element={<Home isLoggedIn={isLoggedIn} onLoginClick={() => setClientLoginOpen(true)} clientUser={clientUser} />} />
+          <Route path="/" element={<Home isLoggedIn={isLoggedIn} onLoginClick={() => setClientLoginOpen(true)} clientUser={clientUser} addToCart={addToCart} />} />
           <Route path="/cadastro" element={<ClientRegister />} />
           <Route path="/perfil" element={<ClientProfile user={clientUser} onUserUpdate={setClientUser} />} />
+          <Route path="/carrinho" element={<Cart cart={cart} updateQuantity={updateCartQuantity} removeFromCart={removeFromCart} clearCart={clearCart} clientUser={clientUser} />} />
           <Route path="/acesso-negado" element={<AccessDenied isLoggedIn={isLoggedIn || !!clientUser} onLoginClick={() => setClientLoginOpen(true)} />} />
           
           {/* Rotas Administrativas Protegidas */}
