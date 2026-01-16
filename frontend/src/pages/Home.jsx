@@ -222,8 +222,8 @@ export default function Home({ isLoggedIn, onLoginClick }) {
       {featuredProduct && (
         <Container maxWidth="lg" sx={{ mb: 6 }}>
           <Paper elevation={4} sx={{ p: 3, bgcolor: '#fff3e0', border: '2px solid #ffb74d', borderRadius: 4, position: 'relative', overflow: 'hidden' }}>
-            <Box sx={{ position: 'absolute', top: 0, right: 0, bgcolor: '#ff9800', color: 'white', px: 2, py: 0.5, borderBottomLeftRadius: 8 }}>
-              <Typography fontWeight="bold" variant="caption">OFERTA ESPECIAL</Typography>
+            <Box sx={{ position: 'absolute', top: 0, right: 0, bgcolor: '#ff9800', color: 'white', px: 4, py: 1, borderBottomLeftRadius: 16, boxShadow: 2, zIndex: 1 }}>
+              <Typography fontWeight="900" variant="h6" sx={{ letterSpacing: 1 }}>OFERTA ESPECIAL</Typography>
             </Box>
             <Grid container spacing={4} alignItems="center">
               <Grid item xs={12} md={4}>
@@ -238,14 +238,16 @@ export default function Home({ isLoggedIn, onLoginClick }) {
                   <LocalOffer sx={{ verticalAlign: 'middle', mr: 1 }} />
                   {featuredProduct.nome}
                 </Typography>
-                <Box display="flex" alignItems="center" gap={2} mb={2}>
-                  <Typography variant="h5" sx={{ textDecoration: 'line-through', color: 'text.secondary' }}>
+                <Box display="flex" alignItems="center" gap={2} mb={2} flexWrap="wrap">
+                  <Typography variant="h5" sx={{ textDecoration: 'line-through', color: 'text.secondary', opacity: 0.7 }}>
                     R$ {Number(featuredProduct.preco_venda).toFixed(2)}
                   </Typography>
-                  <Typography variant="h4" color="error" fontWeight="bold">
+                  <Typography variant="h3" color="error" fontWeight="900">
                     R$ {(Number(featuredProduct.preco_venda) * (1 - Number(featuredProduct.desconto_destaque) / 100)).toFixed(2)}
                   </Typography>
-                  <Badge color="error" badgeContent={`-${featuredProduct.desconto_destaque}%`} />
+                  <Box sx={{ bgcolor: '#d32f2f', color: 'white', px: 1.5, py: 0.5, borderRadius: 2, fontWeight: 'bold', fontSize: '1.2rem', boxShadow: 1 }}>
+                    -{featuredProduct.desconto_destaque}% OFF
+                  </Box>
                 </Box>
                 <Typography variant="body1" mb={3}>
                   Aproveite esta oferta por tempo limitado! Restam apenas <strong>{Number(featuredProduct.estoque)}</strong> unidades.
