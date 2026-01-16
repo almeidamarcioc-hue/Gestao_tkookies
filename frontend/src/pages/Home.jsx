@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { AddCircleOutline, ListAlt, Inventory2, People, RestaurantMenu, PointOfSale, Add, Remove, ShoppingBag, LocalOffer } from "@mui/icons-material";
 import api from "../services/api";
 
-export default function Home({ isLoggedIn, onLoginClick }) {
+export default function Home({ isLoggedIn, onLoginClick, clientUser }) {
   const navigate = useNavigate();
   const [config, setConfig] = useState({
     home_title: "TKookies",
@@ -75,7 +75,7 @@ export default function Home({ isLoggedIn, onLoginClick }) {
   };
 
   const handleCheckout = () => {
-    if (!isLoggedIn) {
+    if (!isLoggedIn && !clientUser) {
       onLoginClick();
       return;
     }
@@ -234,13 +234,7 @@ export default function Home({ isLoggedIn, onLoginClick }) {
                     </Button>
                   </Grid>
                 </Grid>
-              ) : (
-                <Box mt={4}>
-                  <Typography variant="caption" color="text.disabled">
-                    Todos o direitos reservados - TKookies © {new Date().getFullYear()}
-                  </Typography>
-                </Box>
-              )}
+            ) : null}
             </Paper>
           </Box>
         </Container>

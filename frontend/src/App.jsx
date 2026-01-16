@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { BrowserRouter, Routes, Route, Link, Navigate } from "react-router-dom";
 import { AppBar, Toolbar, Button, Box, Typography, Menu, MenuItem, createTheme, ThemeProvider, CssBaseline, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, Drawer, List, ListItem, ListItemButton, ListItemText, Divider, Container, Grid } from "@mui/material";
-import { Menu as MenuIcon, Instagram, WhatsApp, Facebook } from "@mui/icons-material";
+import { Menu as MenuIcon, Instagram, WhatsApp, Facebook, AccountCircle } from "@mui/icons-material";
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
 import Ingredients from "./pages/Ingredients";
@@ -17,6 +17,8 @@ import Combos from "./pages/Combos";
 import ComboForm from "./pages/ComboForm";
 import Inventory from "./pages/Inventory";
 import Settings from "./pages/Settings";
+import ClientRegister from "./pages/ClientRegister";
+import ClientProfile from "./pages/ClientProfile";
 
 const theme = createTheme({
   palette: {
@@ -87,6 +89,11 @@ export default function App() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
+  
+  // Estados Login Cliente
+  const [clientLoginOpen, setClientLoginOpen] = useState(false);
+  const [clientUser, setClientUser] = useState(null); // Objeto do cliente logado
+  const [clientLoginData, setClientLoginData] = useState({ login: "", senha: "" });
 
   const openCad = Boolean(anchorCad);
   const openCons = Boolean(anchorCons);
@@ -118,6 +125,23 @@ export default function App() {
     handleClose();
   };
 
+  const handleClientLogin = async () => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:3333"}/clientes/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(clientLoginData)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setClientUser(data);
+        setClientLoginOpen(false);
+      } else {
+        alert(data.error || "Erro no login");
+      }
+    } catch (err) { alert("Erro de conexão"); }
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -138,7 +162,7 @@ export default function App() {
             🍪 TKookies
           </Typography>
           <Box display={{ xs: 'none', md: 'flex' }} gap={1}>
-            <Button color="inherit" component={Link} to="/">HOME</Button>
+            <Button color="inherit" component={Link} to="/">Início</Button>
             
             {isLoggedIn ? (
               <>
@@ -171,7 +195,18 @@ export default function App() {
                 <Button color="inherit" onClick={handleLogout}>SAIR</Button>
               </>
             ) : (
-              <Button color="inherit" onClick={() => setLoginOpen(true)}>Acesso Restrito</Button>
+              <>
+                {clientUser ? (
+                  <Button color="inherit" startIcon={<AccountCircle />} component={Link} to="/perfil">
+                    Olá, {clientUser.nome.split(' ')[0]}
+                  </Button>
+                ) : (
+                  <Button color="inherit" onClick={() => setClientLoginOpen(true)}>
+                    Login / Cadastro
+                  </Button>
+                )}
+                <Button color="inherit" onClick={() => setLoginOpen(true)} sx={{ opacity: 0.7, fontSize: '0.8rem' }}>Admin</Button>
+              </>
             )}
           </Box>
         </Toolbar>
@@ -215,7 +250,9 @@ export default function App() {
 
       <Box component="main" sx={{ flexGrow: 1, py: 4 }}>
         <Routes>
-          <Route path="/" element={<Home isLoggedIn={isLoggedIn} onLoginClick={() => setLoginOpen(true)} />} />
+          <Route path="/" element={<Home isLoggedIn={isLoggedIn} onLoginClick={() => setLoginOpen(true)} clientUser={clientUser} />} />
+          <Route path="/cadastro" element={<ClientRegister />} />
+          <Route path="/perfil" element={<ClientProfile user={clientUser} onUserUpdate={setClientUser} />} />
           
           {isLoggedIn ? (
             <>
@@ -280,7 +317,7 @@ export default function App() {
           </Grid>
           <Divider sx={{ my: 3, bgcolor: 'rgba(255,255,255,0.2)' }} />
           <Typography variant="body2" align="center" sx={{ opacity: 0.6 }}>
-            © {new Date().getFullYear()} TKookies. Todos os direitos reservados.
+            Todos o direitos reservados - TKookies © {new Date().getFullYear()}
           </Typography>
         </Container>
       </Box>
@@ -314,6 +351,29 @@ export default function App() {
           <Button onClick={handleLogin} variant="contained">Entrar</Button>
         </DialogActions>
       </Dialog>
+
+      {/* Drawer Login Cliente */}
+      <Drawer anchor="right" open={clientLoginOpen} onClose={() => setClientLoginOpen(false)}>
+        <Box sx={{ width: 300, p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Typography variant="h5" fontWeight="bold">Login Cliente</Typography>
+          <TextField 
+            label="Login" 
+            fullWidth 
+            value={clientLoginData.login} 
+            onChange={(e) => setClientLoginData({...clientLoginData, login: e.target.value})} 
+          />
+          <TextField 
+            label="Senha" 
+            type="password" 
+            fullWidth 
+            value={clientLoginData.senha} 
+            onChange={(e) => setClientLoginData({...clientLoginData, senha: e.target.value})} 
+          />
+          <Button variant="contained" fullWidth onClick={handleClientLogin}>ENTRAR</Button>
+          <Button color="primary" onClick={() => { setClientLoginOpen(false); }}>Esqueci minha senha</Button>
+          <Button variant="outlined" fullWidth component={Link} to="/cadastro" onClick={() => setClientLoginOpen(false)}>CRIAR CONTA</Button>
+        </Box>
+      </Drawer>
     </BrowserRouter>
     </ThemeProvider>
   );
