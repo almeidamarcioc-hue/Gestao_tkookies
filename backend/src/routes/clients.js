@@ -9,7 +9,8 @@ router.get("/", async (req, res) => {
     const result = await pool.query("SELECT * FROM clientes ORDER BY nome ASC");
     res.json(result.rows);
   } catch (error) {
-    res.status(500).json({ error: "Erro ao listar clientes" });
+    console.error("Erro ao listar clientes:", error);
+    res.status(500).json({ error: "Erro ao listar clientes", details: error.message });
   }
 });
 
@@ -85,7 +86,8 @@ router.put("/:id", async (req, res) => {
     }
     res.json({ message: "Cliente atualizado!" });
   } catch (error) {
-    res.status(500).json({ error: "Erro ao atualizar cliente" });
+    console.error("Erro ao atualizar cliente:", error);
+    res.status(500).json({ error: "Erro ao atualizar cliente", details: error.message });
   }
 });
 
@@ -96,7 +98,8 @@ router.delete("/:id", async (req, res) => {
     await pool.query("DELETE FROM clientes WHERE id = $1", [id]);
     res.json({ message: "Cliente removido!" });
   } catch (error) {
-    res.status(500).json({ error: "Erro ao remover cliente" });
+    console.error("Erro ao remover cliente:", error);
+    res.status(500).json({ error: "Erro ao remover cliente", details: error.message });
   }
 });
 
