@@ -191,10 +191,12 @@ export default function App() {
             ) : (
               <>
                 {clientUser ? (
-                  <Button color="inherit" startIcon={<AccountCircle />} component={Link} to="/perfil">
-                    Olá, {clientUser.nome.split(' ')[0]}
-                  </Button>
-                  <Button color="inherit" onClick={handleLogout}>SAIR</Button>
+                  <>
+                    <Button color="inherit" startIcon={<AccountCircle />} component={Link} to="/perfil">
+                      Olá, {clientUser.nome.split(' ')[0]}
+                    </Button>
+                    <Button color="inherit" onClick={handleLogout}>SAIR</Button>
+                  </>
                 ) : (
                   <Button color="inherit" onClick={() => setClientLoginOpen(true)}>
                     Login
