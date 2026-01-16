@@ -28,9 +28,15 @@ echo "💾 Criando commit..."
 git commit -m "$1" || echo "⚠️  Nada para commitar."
 
 echo "⬇️  Atualizando com o remoto (Pull)..."
-git pull origin main --rebase || echo "⚠️  Falha no pull (pode não haver remoto ainda ou conflitos)."
+if ! git pull origin main --rebase; then
+    echo "❌ Erro ao atualizar (Pull). Resolva os conflitos e tente novamente."
+    exit 1
+fi
 
 echo "🚀 Enviando para o GitHub..."
-git push -u origin main
+if ! git push -u origin main; then
+    echo "❌ Erro ao enviar (Push). Verifique permissões ou conexão."
+    exit 1
+fi
 
 echo "✅ Processo finalizado."
