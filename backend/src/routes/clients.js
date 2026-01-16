@@ -36,6 +36,9 @@ router.post("/", async (req, res) => {
     res.status(201).json({ message: "Cliente criado!" });
   } catch (error) {
     console.error("Erro ao criar cliente:", error);
+    if (error.code === 'ER_DUP_ENTRY' || (error.message && error.message.includes('Duplicate entry'))) {
+      return res.status(409).json({ error: "Este login já está em uso. Escolha outro." });
+    }
     res.status(500).json({ error: "Erro ao criar cliente", details: error.message });
   }
 });

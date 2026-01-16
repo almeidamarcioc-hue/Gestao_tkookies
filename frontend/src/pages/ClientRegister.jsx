@@ -23,7 +23,8 @@ export default function ClientRegister() {
       alert("Cadastro realizado com sucesso! Faça login para continuar.");
       navigate("/");
     } catch (err) {
-      alert("Erro ao cadastrar. Verifique se o login já existe.");
+      const msg = err.response?.data?.error || err.response?.data?.details || "Erro ao cadastrar.";
+      alert(msg);
     }
   };
 
@@ -44,10 +45,13 @@ export default function ClientRegister() {
           <Grid item xs={12} sm={3}>
             <TextField label="Número" name="numero" fullWidth value={formData.numero} onChange={handleChange} />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12} sm={4}>
+            <TextField label="Complemento" name="complemento" fullWidth value={formData.complemento} onChange={handleChange} />
+          </Grid>
+          <Grid item xs={12} sm={4}>
             <TextField label="Bairro" name="bairro" fullWidth value={formData.bairro} onChange={handleChange} />
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12} sm={4}>
             <TextField label="Cidade" name="cidade" fullWidth value={formData.cidade} onChange={handleChange} />
           </Grid>
           <Grid item xs={12}>
