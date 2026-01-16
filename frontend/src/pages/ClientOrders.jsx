@@ -55,7 +55,7 @@ export default function ClientOrders({ clientUser }) {
                   </TableCell>
                   <TableCell align="right" sx={{ fontWeight: 'bold' }}>R$ {Number(pedido.valor_total).toFixed(2)}</TableCell>
                   <TableCell align="center">
-                    <Button size="small" variant="outlined" component={Link} to={`/pedidos/${pedido.id}`}>
+                    <Button size="small" variant="outlined" component={Link} to={`/meus-pedidos/${pedido.id}`}>
                       Detalhes
                     </Button>
                   </TableCell>

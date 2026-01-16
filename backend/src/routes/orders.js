@@ -48,7 +48,8 @@ router.get("/:id", async (req, res) => {
     if (pedidoRes.rows.length === 0) return res.status(404).json({ error: "Pedido não encontrado" });
 
     const itensRes = await pool.query(`
-      SELECT ip.*, p.nome as produto_nome
+      SELECT ip.*, p.nome as produto_nome,
+      (SELECT imagem FROM produto_imagens pi WHERE pi.produto_id = p.id ORDER BY pi.eh_capa DESC LIMIT 1) as imagem
       FROM itens_pedido ip
       LEFT JOIN produtos p ON ip.produto_id = p.id
       WHERE ip.pedido_id = $1
