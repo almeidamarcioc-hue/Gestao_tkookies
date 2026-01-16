@@ -8,15 +8,19 @@ async function addColumnSafe(table, columnDef) {
   try {
     await pool.query(`ALTER TABLE ${table} ADD COLUMN ${columnDef}`);
     console.log(`✅ Coluna adicionada em ${table}: ${columnDef}`);
+    return `[${table}] Sucesso: ${columnDef}`;
   } catch (e) {
     // Ignora erro 1060 (Duplicate column name) e erros similares
     if (e.code !== 'ER_DUP_FIELDNAME' && !e.message.includes("Duplicate column") && !e.message.includes("already exists")) {
       console.log(`Nota sobre migração em ${table}:`, e.message);
+      return `[${table}] Erro: ${e.message}`;
     }
+    return `[${table}] Já existe: ${columnDef}`;
   }
 }
 
 export async function initDatabase() {
+  const logs = [];
   try {
     // Tabela de Ingredientes
     await pool.query(`
@@ -145,19 +149,31 @@ export async function initDatabase() {
     `);
 
     // Migrações (Colunas novas) - Executa uma por uma de forma segura
-    await addColumnSafe("ingredientes", "usado_para_revenda BOOLEAN DEFAULT TRUE");
-    await addColumnSafe("produtos", "margem_revenda DECIMAL(10, 2) DEFAULT 0");
-    await addColumnSafe("produtos", "preco_revenda DECIMAL(10, 2) DEFAULT 0");
-    await addColumnSafe("produtos", "rendimento INTEGER DEFAULT 1");
-    await addColumnSafe("produto_ingredientes", "apenas_revenda BOOLEAN DEFAULT FALSE");
-    await addColumnSafe("produtos", "estoque DECIMAL(10, 2) DEFAULT 0");
-    await addColumnSafe("produtos", "eh_destaque BOOLEAN DEFAULT FALSE");
-    await addColumnSafe("produtos", "desconto_destaque DECIMAL(10, 2) DEFAULT 0");
-    await addColumnSafe("clientes", "login VARCHAR(100) UNIQUE");
-    await addColumnSafe("clientes", "senha VARCHAR(255)");
-    await addColumnSafe("clientes", "complemento VARCHAR(255)");
+    logs.push(await addColumnSafe("ingredientes", "usado_para_revenda BOOLEAN DEFAULT TRUE"));
+    logs.push(await addColumnSafe("produtos", "margem_revenda DECIMAL(10, 2) DEFAULT 0"));
+    logs.push(await addColumnSafe("produtos", "preco_revenda DECIMAL(10, 2) DEFAULT 0"));
+    logs.push(await addColumnSafe("produtos", "rendimento INTEGER DEFAULT 1"));
+    logs.push(await addColumnSafe("produto_ingredientes", "apenas_revenda BOOLEAN DEFAULT FALSE"));
+    logs.push(await addColumnSafe("produtos", "estoque DECIMAL(10, 2) DEFAULT 0"));
+    logs.push(await addColumnSafe("produtos", "eh_destaque BOOLEAN DEFAULT FALSE"));
+    logs.push(await addColumnSafe("produtos", "desconto_destaque DECIMAL(10, 2) DEFAULT 0"));
+    
+    // Tenta adicionar login SEM unique primeiro para garantir a coluna
+    logs.push(await addColumnSafe("clientes", "login VARCHAR(100)"));
+    
+    // Tenta adicionar o índice único separadamente
+    try {
+      await pool.query("CREATE UNIQUE INDEX idx_clientes_login ON clientes(login)");
+      logs.push("[clientes] Index UNIQUE login criado");
+    } catch (e) {
+      logs.push(`[clientes] Index UNIQUE login ignorado/erro: ${e.message}`);
+    }
+
+    logs.push(await addColumnSafe("clientes", "senha VARCHAR(255)"));
+    logs.push(await addColumnSafe("clientes", "complemento VARCHAR(255)"));
 
     console.log("✅ Base de dados inicializada com sucesso");
+    return logs;
   } catch (error) {
     console.error("❌ Erro na inicialização:", error.message);
     throw error;

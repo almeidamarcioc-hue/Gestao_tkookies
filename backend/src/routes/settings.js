@@ -7,12 +7,13 @@ const router = Router();
 // ROTA DE MIGRAÇÃO (Para garantir que tabelas/colunas existam no Vercel)
 router.get("/migrate", async (req, res) => {
   try {
-    await initDatabase();
+    const logs = await initDatabase();
     
     // Diagnóstico: Retorna as colunas da tabela clientes para confirmar
     const columnsRes = await pool.query("SHOW COLUMNS FROM clientes");
     res.json({ 
       message: "Banco de dados atualizado com sucesso!",
+      logs: logs,
       estrutura_clientes: columnsRes.rows
     });
   } catch (error) {
