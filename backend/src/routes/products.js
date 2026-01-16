@@ -182,6 +182,32 @@ router.put("/:id", async (req, res) => {
   }
 });
 
+// ALTERAR DESTAQUE (PATCH)
+router.patch("/:id/destaque", async (req, res) => {
+  const { id } = req.params;
+  const { eh_destaque } = req.body;
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    if (eh_destaque) {
+      // Se estiver ativando, desativa todos os outros primeiro
+      await client.query("UPDATE produtos SET eh_destaque = FALSE");
+    }
+
+    await client.query("UPDATE produtos SET eh_destaque = $1 WHERE id = $2", [eh_destaque, id]);
+
+    await client.query("COMMIT");
+    res.json({ message: "Destaque atualizado!" });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    res.status(500).json({ error: "Erro ao atualizar destaque" });
+  } finally {
+    client.release();
+  }
+});
+
 // DELETAR PRODUTO
 router.delete("/:id", async (req, res) => {
   const { id } = req.params;

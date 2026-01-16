@@ -32,7 +32,7 @@ export default function Home({ isLoggedIn, onLoginClick }) {
       setProducts(availableProducts);
       
       // Encontra o produto destaque
-      const featured = availableProducts.find(p => p.eh_destaque);
+      const featured = allProducts.find(p => p.eh_destaque);
       setFeaturedProduct(featured);
     });
   }, []);

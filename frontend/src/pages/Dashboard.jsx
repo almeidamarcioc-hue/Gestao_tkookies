@@ -277,6 +277,15 @@ export default function Dashboard() {
     loadData();
   };
 
+  const handleToggleDestaque = async (prod) => {
+    try {
+      await api.patch(`/produtos/${prod.id}/destaque`, { eh_destaque: !prod.eh_destaque });
+      loadData(); // Recarrega a lista para atualizar os ícones
+    } catch (err) {
+      alert("Erro ao alterar destaque.");
+    }
+  };
+
   return (
     <Container maxWidth="xl">
       <Typography variant="h4" mb={3} fontWeight="bold">Consulta Produto</Typography>
@@ -296,6 +305,7 @@ export default function Dashboard() {
             <TableRow>
               <TableCell rowSpan={2} sx={{ bgcolor: '#FFF', borderBottom: '1px solid #D7CCC8' }}><strong>Produto / Estoque</strong></TableCell>
               <TableCell rowSpan={2} align="center" sx={{ bgcolor: '#FFF', borderBottom: '1px solid #D7CCC8' }}><strong>Imagem</strong></TableCell>
+              <TableCell rowSpan={2} align="center" sx={{ bgcolor: '#FFF', borderBottom: '1px solid #D7CCC8' }}><strong>Destaque</strong></TableCell>
               <TableCell colSpan={3} align="center" sx={{ bgcolor: '#FFF8E1', color: '#F57F17', borderBottom: '1px solid #FFE0B2' }}><strong>REVENDA</strong></TableCell>
               <TableCell colSpan={3} align="center" sx={{ bgcolor: '#EFEBE9', color: '#3E2723', borderBottom: '1px solid #D7CCC8' }}><strong>VENDA</strong></TableCell>
               <TableCell rowSpan={2} align="center" sx={{ bgcolor: '#FFF', borderBottom: '1px solid #D7CCC8' }}><strong>Ações</strong></TableCell>
@@ -336,6 +346,11 @@ export default function Dashboard() {
                   </TableCell>
                   <TableCell align="center">
                     {capa ? <img src={capa.imagem} alt={prod.nome} style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 4 }} /> : '-'}
+                  </TableCell>
+                  <TableCell align="center">
+                    <IconButton onClick={() => handleToggleDestaque(prod)} color={prod.eh_destaque ? "warning" : "default"}>
+                      {prod.eh_destaque ? <Star /> : <StarBorder />}
+                    </IconButton>
                   </TableCell>
                   <TableCell align="right" sx={{ bgcolor: '#FFF8E1', color: '#E65100' }}>R$ {custoUnitarioRevenda.toFixed(2)}</TableCell>
                   <TableCell align="right" sx={{ bgcolor: '#FFF8E1', color: "secondary.main", fontWeight: 'bold' }}>R$ {precoRevenda.toFixed(2)}</TableCell>
