@@ -3,6 +3,18 @@ import { pool } from "./index.js";
 // Importante: exportar para que os outros ficheiros vejam o pool
 export { pool };
 
+// Função auxiliar para adicionar colunas de forma segura (compatível com MySQL 5.7/TiDB)
+async function addColumnSafe(table, columnDef) {
+  try {
+    await pool.query(`ALTER TABLE ${table} ADD COLUMN ${columnDef}`);
+  } catch (e) {
+    // Ignora erro 1060 (Duplicate column name) e erros similares
+    if (e.code !== 'ER_DUP_FIELDNAME' && !e.message.includes("Duplicate column")) {
+      console.log(`Nota sobre migração em ${table}:`, e.message);
+    }
+  }
+}
+
 export async function initDatabase() {
   try {
     // Tabela de Ingredientes
@@ -63,6 +75,8 @@ export async function initDatabase() {
         complemento VARCHAR(255),
         bairro VARCHAR(100),
         cidade VARCHAR(100),
+        login VARCHAR(100) UNIQUE,
+        senha VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -129,22 +143,18 @@ export async function initDatabase() {
       )
     `);
 
-    // Migração para adicionar a coluna caso a tabela já exista
-    try {
-      await pool.query("ALTER TABLE ingredientes ADD COLUMN IF NOT EXISTS usado_para_revenda BOOLEAN DEFAULT TRUE");
-      await pool.query("ALTER TABLE produtos ADD COLUMN IF NOT EXISTS margem_revenda DECIMAL(10, 2) DEFAULT 0");
-      await pool.query("ALTER TABLE produtos ADD COLUMN IF NOT EXISTS preco_revenda DECIMAL(10, 2) DEFAULT 0");
-      await pool.query("ALTER TABLE produtos ADD COLUMN IF NOT EXISTS rendimento INTEGER DEFAULT 1");
-      await pool.query("ALTER TABLE produto_ingredientes ADD COLUMN IF NOT EXISTS apenas_revenda BOOLEAN DEFAULT FALSE");
-      await pool.query("ALTER TABLE produtos ADD COLUMN IF NOT EXISTS estoque DECIMAL(10, 2) DEFAULT 0");
-      await pool.query("ALTER TABLE produtos ADD COLUMN IF NOT EXISTS eh_destaque BOOLEAN DEFAULT FALSE");
-      await pool.query("ALTER TABLE produtos ADD COLUMN IF NOT EXISTS desconto_destaque DECIMAL(10, 2) DEFAULT 0");
-      await pool.query("ALTER TABLE clientes ADD COLUMN IF NOT EXISTS login VARCHAR(100) UNIQUE");
-      await pool.query("ALTER TABLE clientes ADD COLUMN IF NOT EXISTS senha VARCHAR(255)");
-      await pool.query("ALTER TABLE clientes ADD COLUMN IF NOT EXISTS complemento VARCHAR(255)");
-    } catch (e) {
-      console.log("Nota: Verificação de coluna 'usado_para_revenda' concluída.");
-    }
+    // Migrações (Colunas novas) - Executa uma por uma de forma segura
+    await addColumnSafe("ingredientes", "usado_para_revenda BOOLEAN DEFAULT TRUE");
+    await addColumnSafe("produtos", "margem_revenda DECIMAL(10, 2) DEFAULT 0");
+    await addColumnSafe("produtos", "preco_revenda DECIMAL(10, 2) DEFAULT 0");
+    await addColumnSafe("produtos", "rendimento INTEGER DEFAULT 1");
+    await addColumnSafe("produto_ingredientes", "apenas_revenda BOOLEAN DEFAULT FALSE");
+    await addColumnSafe("produtos", "estoque DECIMAL(10, 2) DEFAULT 0");
+    await addColumnSafe("produtos", "eh_destaque BOOLEAN DEFAULT FALSE");
+    await addColumnSafe("produtos", "desconto_destaque DECIMAL(10, 2) DEFAULT 0");
+    await addColumnSafe("clientes", "login VARCHAR(100) UNIQUE");
+    await addColumnSafe("clientes", "senha VARCHAR(255)");
+    await addColumnSafe("clientes", "complemento VARCHAR(255)");
 
     console.log("✅ Base de dados inicializada com sucesso");
   } catch (error) {

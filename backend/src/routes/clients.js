@@ -17,7 +17,7 @@ router.get("/", async (req, res) => {
 // CRIAR
 router.post("/", async (req, res) => {
   const { nome, telefone, endereco, numero, complemento, bairro, cidade, login, senha } = req.body;
-  console.log("Criando cliente:", nome);
+  console.log("Criando cliente:", nome, "Login:", login);
   try {
     await pool.query(
       "INSERT INTO clientes (nome, telefone, endereco, numero, complemento, bairro, cidade, login, senha) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
