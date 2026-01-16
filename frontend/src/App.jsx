@@ -99,6 +99,7 @@ export default function App() {
   const [anchorCad, setAnchorCad] = useState(null);
   const [anchorCons, setAnchorCons] = useState(null);
   const [anchorPed, setAnchorPed] = useState(null);
+  const [anchorClient, setAnchorClient] = useState(null);
 
   // Estados de Autenticação
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -114,11 +115,13 @@ export default function App() {
   const openCad = Boolean(anchorCad);
   const openCons = Boolean(anchorCons);
   const openPed = Boolean(anchorPed);
+  const openClient = Boolean(anchorClient);
 
   const handleClose = () => {
     setAnchorCad(null);
     setAnchorCons(null);
     setAnchorPed(null);
+    setAnchorClient(null);
   };
 
   const handleDrawerToggle = () => {
@@ -236,10 +239,14 @@ export default function App() {
               <>
                 {clientUser ? (
                   <>
-                    <Button color="inherit" startIcon={<AccountCircle />} component={Link} to="/perfil">
+                    <Button color="inherit" startIcon={<AccountCircle />} onClick={(e) => setAnchorClient(e.currentTarget)}>
                       Olá, {clientUser.nome.split(' ')[0]}
                     </Button>
-                    <Button color="inherit" onClick={handleLogout}>SAIR</Button>
+                    <Menu anchorEl={anchorClient} open={openClient} onClose={handleClose}>
+                      <MenuItem component={Link} to="/perfil" onClick={handleClose}>Meu Perfil</MenuItem>
+                      <MenuItem component={Link} to="/meus-pedidos" onClick={handleClose}>Meus Pedidos</MenuItem>
+                      <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>Sair</MenuItem>
+                    </Menu>
                   </>
                 ) : (
                   <Button color="inherit" onClick={() => setClientLoginOpen(true)}>
