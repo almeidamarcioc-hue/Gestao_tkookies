@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { AddCircleOutline, ListAlt, Inventory2, People, RestaurantMenu, PointOfSale, Add, Remove, ShoppingBag, LocalOffer } from "@mui/icons-material";
 import api from "../services/api";
 
-export default function Home({ isLoggedIn, onLoginClick, clientUser }) {
+export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addToCart, updateCartQuantity, removeFromCart }) {
   const navigate = useNavigate();
   const [config, setConfig] = useState({
     home_title: "TKookies",
@@ -15,7 +15,6 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser }) {
 
   const [products, setProducts] = useState([]);
   const [featuredProduct, setFeaturedProduct] = useState(null);
-  const [cart, setCart] = useState({}); // { id: quantidade }
   const [crossSellOpen, setCrossSellOpen] = useState(false);
   const [crossSellItems, setCrossSellItems] = useState([]);
   const [animateBag, setAnimateBag] = useState(false);
@@ -41,22 +40,22 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser }) {
     });
   }, []);
 
-  const handleQtyChange = (prodId, delta) => {
-    setCart(prev => {
-      const current = prev[prodId] || 0;
-      const prod = products.find(p => p.id === prodId);
-      const maxStock = Number(prod?.estoque) || 0;
-      
-      let next = current + delta;
-      if (next < 0) next = 0;
-      if (next > maxStock) next = maxStock; // Limita ao estoque
+  const getQty = (prodId) => {
+    const item = cart.find(i => i.id === prodId);
+    return item ? item.quantidade : 0;
+  };
 
-      if (next === 0) {
-        const { [prodId]: _, ...rest } = prev;
-        return rest;
-      }
-      return { ...prev, [prodId]: next };
-    });
+  const handleQtyChange = (prodId, delta) => {
+    const prod = products.find(p => p.id === prodId);
+    if (!prod) return;
+    const currentQty = getQty(prodId);
+    const maxStock = Number(prod.estoque) || 0;
+    let next = currentQty + delta;
+    if (next < 0) next = 0;
+    if (next > maxStock) next = maxStock;
+    if (next === 0) removeFromCart(prodId);
+    else if (currentQty === 0 && delta > 0) addToCart(prod);
+    else updateCartQuantity(prodId, next);
   };
 
   const handleAddFeatured = () => {
@@ -75,39 +74,15 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser }) {
   };
 
   const handleCheckout = () => {
-    if (!isLoggedIn && !clientUser) {
-      onLoginClick();
-      return;
-    }
-
-    const orderItems = Object.entries(cart).map(([id, qty]) => {
-      const prod = products.find(p => p.id === Number(id));
-      if (!prod) return null;
-      
-      const precoFinal = prod.eh_destaque && prod.desconto_destaque > 0 
-        ? Number(prod.preco_venda) * (1 - Number(prod.desconto_destaque) / 100)
-        : Number(prod.preco_venda);
-
-      return {
-        produto_id: prod.id,
-        nome: prod.nome,
-        quantidade: qty,
-        valor_unitario: precoFinal,
-        valor_total: qty * precoFinal,
-        _tempId: Math.random()
-      };
-    }).filter(Boolean);
-
-    navigate("/pedidos/novo", { state: { items: orderItems } });
+    navigate("/carrinho");
   };
 
-  const totalItems = Object.values(cart).reduce((a, b) => a + b, 0);
-  const totalPrice = Object.entries(cart).reduce((acc, [id, qty]) => {
-    const prod = products.find(p => p.id === Number(id));
-    const preco = prod?.eh_destaque && prod?.desconto_destaque > 0 
-        ? Number(prod.preco_venda) * (1 - Number(prod.desconto_destaque) / 100)
-        : Number(prod?.preco_venda) || 0;
-    return acc + (qty * preco);
+  const totalItems = cart.reduce((acc, item) => acc + item.quantidade, 0);
+  const totalPrice = cart.reduce((acc, item) => {
+    const price = item.eh_destaque && item.desconto_destaque > 0
+      ? Number(item.preco_venda) * (1 - Number(item.desconto_destaque) / 100)
+      : Number(item.preco_venda);
+    return acc + (item.quantidade * price);
   }, 0);
 
   useEffect(() => {
@@ -314,7 +289,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser }) {
           <Grid container spacing={3}>
             {products.map(prod => {
               const coverImage = prod.imagens?.find(img => img.eh_capa)?.imagem || prod.imagens?.[0]?.imagem;
-              const qty = cart[prod.id] || 0;
+              const qty = getQty(prod.id);
               const isPromo = prod.eh_destaque && prod.desconto_destaque > 0;
               const precoFinal = isPromo 
                 ? Number(prod.preco_venda) * (1 - Number(prod.desconto_destaque) / 100)

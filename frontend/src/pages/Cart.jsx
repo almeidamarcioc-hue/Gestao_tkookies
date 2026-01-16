@@ -17,7 +17,14 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
       .catch((err) => console.error("Erro ao buscar frete", err));
   }, []);
 
-  const totalItems = cart.reduce((acc, item) => acc + (Number(item.preco_venda) * item.quantidade), 0);
+  const getItemPrice = (item) => {
+    if (item.eh_destaque && item.desconto_destaque > 0) {
+      return Number(item.preco_venda) * (1 - Number(item.desconto_destaque) / 100);
+    }
+    return Number(item.preco_venda);
+  };
+
+  const totalItems = cart.reduce((acc, item) => acc + (getItemPrice(item) * item.quantidade), 0);
   const finalFreight = deliveryType === "entrega" ? freightValue : 0;
   const totalOrder = totalItems + finalFreight;
 
@@ -42,7 +49,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
       itens: cart.map(item => ({
         produto_id: item.id,
         quantidade: item.quantidade,
-        valor_unitario: item.preco_venda
+        valor_unitario: getItemPrice(item)
       }))
     };
 
@@ -93,8 +100,15 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
                     <Button size="small" onClick={() => updateQuantity(item.id, item.quantidade + 1)}>+</Button>
                   </Box>
                 </TableCell>
-                <TableCell align="right">R$ {Number(item.preco_venda).toFixed(2)}</TableCell>
-                <TableCell align="right">R$ {(item.quantidade * item.preco_venda).toFixed(2)}</TableCell>
+                <TableCell align="right">
+                  R$ {getItemPrice(item).toFixed(2)}
+                  {item.eh_destaque && item.desconto_destaque > 0 && (
+                    <Typography variant="caption" display="block" sx={{ textDecoration: 'line-through', color: 'text.secondary' }}>
+                      R$ {Number(item.preco_venda).toFixed(2)}
+                    </Typography>
+                  )}
+                </TableCell>
+                <TableCell align="right">R$ {(item.quantidade * getItemPrice(item)).toFixed(2)}</TableCell>
                 <TableCell align="center">
                   <IconButton color="error" onClick={() => removeFromCart(item.id)}>
                     <Delete />
