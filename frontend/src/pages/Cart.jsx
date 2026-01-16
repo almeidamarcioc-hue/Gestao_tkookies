@@ -7,6 +7,8 @@ import api from "../services/api";
 export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, clientUser }) {
   const [deliveryType, setDeliveryType] = useState("retira"); // 'retira' ou 'entrega'
   const [paymentMethod, setPaymentMethod] = useState("Pix");
+  const [addressOption, setAddressOption] = useState("cadastrado");
+  const [customAddress, setCustomAddress] = useState({ endereco: "", numero: "", bairro: "", cidade: "" });
   const [freightValue, setFreightValue] = useState(0);
   const [observacao, setObservacao] = useState("");
   const navigate = useNavigate();
@@ -40,11 +42,26 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
       return;
     }
 
+    let obsFinal = observacao;
+    if (deliveryType === "entrega") {
+      if (addressOption === "outro") {
+        if (!customAddress.endereco || !customAddress.numero || !customAddress.bairro) {
+          alert("Por favor, preencha o endereço de entrega completo.");
+          return;
+        }
+        obsFinal += ` | Entrega: ${customAddress.endereco}, ${customAddress.numero}, ${customAddress.bairro} - ${customAddress.cidade || ""}`;
+      } else {
+        obsFinal += ` | Entrega: ${clientUser.endereco}, ${clientUser.numero}, ${clientUser.bairro}`;
+      }
+    } else {
+      obsFinal += " (Retirada)";
+    }
+
     const payload = {
       cliente_id: clientUser.id,
       data_pedido: new Date(),
       forma_pagamento: paymentMethod,
-      observacao: observacao + (deliveryType === "entrega" ? " (Entrega)" : " (Retirada)"),
+      observacao: obsFinal,
       frete: finalFreight,
       status: "Novo",
       itens: cart.map(item => ({
@@ -172,11 +189,41 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
                <FormControlLabel value="entrega" control={<Radio size="small" />} label={<Box display="flex" alignItems="center" gap={1}><LocalShipping fontSize="small" color="action"/><Typography variant="body2">Entrega (+ R$ {Number(freightValue).toFixed(2)})</Typography></Box>} />
             </RadioGroup>
             
-            {deliveryType === "entrega" && clientUser && (
-                <Box mt={1} mb={2} p={1.5} bgcolor="#fff" border="1px solid #eee" borderRadius={1}>
-                  <Typography variant="caption" color="text.secondary" display="block" fontWeight="bold">Endereço:</Typography>
-                  <Typography variant="caption" color="text.secondary">{clientUser.endereco}, {clientUser.numero} - {clientUser.bairro}</Typography>
-                </Box>
+            {deliveryType === "entrega" && (
+              <Box mt={2} p={2} bgcolor="#fff" border="1px solid #eee" borderRadius={2}>
+                {clientUser && (
+                  <RadioGroup value={addressOption} onChange={(e) => setAddressOption(e.target.value)}>
+                    <FormControlLabel 
+                      value="cadastrado" 
+                      control={<Radio size="small" />} 
+                      label={
+                        <Box>
+                          <Typography variant="body2" fontWeight="bold">Usar endereço cadastrado</Typography>
+                          <Typography variant="caption" color="text.secondary" display="block">
+                            {clientUser.endereco}, {clientUser.numero} - {clientUser.bairro}
+                          </Typography>
+                        </Box>
+                      } 
+                    />
+                    <FormControlLabel 
+                      value="outro" 
+                      control={<Radio size="small" />} 
+                      label={<Typography variant="body2" fontWeight="bold">Entregar em outro endereço</Typography>} 
+                    />
+                  </RadioGroup>
+                )}
+
+                {(addressOption === "outro" || !clientUser) && (
+                  <Box mt={2} display="flex" flexDirection="column" gap={2}>
+                    <TextField label="Endereço" size="small" fullWidth value={customAddress.endereco} onChange={(e) => setCustomAddress({...customAddress, endereco: e.target.value})} />
+                    <Box display="flex" gap={2}>
+                      <TextField label="Número" size="small" value={customAddress.numero} onChange={(e) => setCustomAddress({...customAddress, numero: e.target.value})} />
+                      <TextField label="Bairro" size="small" fullWidth value={customAddress.bairro} onChange={(e) => setCustomAddress({...customAddress, bairro: e.target.value})} />
+                    </Box>
+                    <TextField label="Cidade" size="small" fullWidth value={customAddress.cidade} onChange={(e) => setCustomAddress({...customAddress, cidade: e.target.value})} />
+                  </Box>
+                )}
+              </Box>
             )}
 
             <Divider sx={{ my: 2 }} />

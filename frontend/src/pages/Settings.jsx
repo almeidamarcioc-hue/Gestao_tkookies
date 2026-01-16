@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../services/api";
 import { 
-  Box, Button, TextField, Typography, Paper, Container, Grid, IconButton 
+  Box, Button, TextField, Typography, Paper, Container, Grid, IconButton, InputAdornment 
 } from "@mui/material";
 import { CloudUpload, Delete } from "@mui/icons-material";
 
@@ -10,6 +10,7 @@ export default function Settings() {
   const [homeSubtitle, setHomeSubtitle] = useState("");
   const [homeLocation, setHomeLocation] = useState("");
   const [homeBg, setHomeBg] = useState("");
+  const [valorFrete, setValorFrete] = useState("");
 
   useEffect(() => {
     api.get("/configuracoes").then(res => {
@@ -19,6 +20,7 @@ export default function Settings() {
         setHomeSubtitle(cfg.home_subtitle || "");
         setHomeLocation(cfg.home_location || "");
         setHomeBg(cfg.home_bg || "");
+        setValorFrete(cfg.valor_frete || "");
       }
     });
   }, []);
@@ -38,7 +40,8 @@ export default function Settings() {
         home_title: homeTitle,
         home_subtitle: homeSubtitle,
         home_location: homeLocation,
-        home_bg: homeBg
+        home_bg: homeBg,
+        valor_frete: valorFrete
       });
       alert("Configurações salvas!");
     } catch (err) {
@@ -88,6 +91,18 @@ export default function Settings() {
               value={homeLocation} 
               onChange={e => setHomeLocation(e.target.value)} 
               placeholder="Ex: Apenas delivery / Três de Maio - RS"
+            />
+          </Grid>
+
+          <Grid size={12}>
+            <TextField 
+              label="Valor do Frete (Entrega)" 
+              fullWidth 
+              type="number"
+              value={valorFrete} 
+              onChange={e => setValorFrete(e.target.value)} 
+              placeholder="0.00"
+              InputProps={{ startAdornment: <InputAdornment position="start">R$</InputAdornment> }}
             />
           </Grid>
           
