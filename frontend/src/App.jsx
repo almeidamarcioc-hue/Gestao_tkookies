@@ -20,6 +20,7 @@ import Settings from "./pages/Settings";
 import ClientRegister from "./pages/ClientRegister";
 import ClientProfile from "./pages/ClientProfile";
 import Cart from "./pages/Cart";
+import OrderConfirmation from "./pages/OrderConfirmation";
 import api from "./services/api";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AccessDenied from "./pages/AccessDenied";
@@ -306,6 +307,7 @@ export default function App() {
           <Route path="/cadastro" element={<ClientRegister />} />
           <Route path="/perfil" element={<ClientProfile user={clientUser} onUserUpdate={setClientUser} />} />
           <Route path="/carrinho" element={<Cart cart={cart} updateQuantity={updateCartQuantity} removeFromCart={removeFromCart} clearCart={clearCart} clientUser={clientUser} />} />
+          <Route path="/pedido-confirmado" element={<OrderConfirmation />} />
           <Route path="/acesso-negado" element={<AccessDenied isLoggedIn={isLoggedIn || !!clientUser} onLoginClick={() => setClientLoginOpen(true)} />} />
           
           {/* Rotas Administrativas Protegidas */}
