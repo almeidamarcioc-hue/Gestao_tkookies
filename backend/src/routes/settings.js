@@ -8,7 +8,13 @@ const router = Router();
 router.get("/migrate", async (req, res) => {
   try {
     await initDatabase();
-    res.json({ message: "Banco de dados atualizado com sucesso!" });
+    
+    // Diagnóstico: Retorna as colunas da tabela clientes para confirmar
+    const columnsRes = await pool.query("SHOW COLUMNS FROM clientes");
+    res.json({ 
+      message: "Banco de dados atualizado com sucesso!",
+      estrutura_clientes: columnsRes.rows
+    });
   } catch (error) {
     console.error("Erro na migração:", error);
     res.status(500).json({ error: "Erro ao migrar banco", details: error.message });

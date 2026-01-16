@@ -7,9 +7,10 @@ export { pool };
 async function addColumnSafe(table, columnDef) {
   try {
     await pool.query(`ALTER TABLE ${table} ADD COLUMN ${columnDef}`);
+    console.log(`✅ Coluna adicionada em ${table}: ${columnDef}`);
   } catch (e) {
     // Ignora erro 1060 (Duplicate column name) e erros similares
-    if (e.code !== 'ER_DUP_FIELDNAME' && !e.message.includes("Duplicate column")) {
+    if (e.code !== 'ER_DUP_FIELDNAME' && !e.message.includes("Duplicate column") && !e.message.includes("already exists")) {
       console.log(`Nota sobre migração em ${table}:`, e.message);
     }
   }

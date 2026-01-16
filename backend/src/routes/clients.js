@@ -23,14 +23,14 @@ router.post("/", async (req, res) => {
       "INSERT INTO clientes (nome, telefone, endereco, numero, complemento, bairro, cidade, login, senha) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
       [
         nome, 
-        telefone || null, 
-        endereco || null, 
-        numero || null, 
-        complemento || null, 
-        bairro || null, 
-        cidade || null, 
-        login || null, 
-        senha || null
+        telefone || null,
+        endereco || null,
+        numero || null,
+        complemento || null,
+        bairro || null,
+        cidade || null,
+        (login && login.trim()) ? login : null,
+        (senha && senha.trim()) ? senha : null
       ]
     );
     res.status(201).json({ message: "Cliente criado!" });
