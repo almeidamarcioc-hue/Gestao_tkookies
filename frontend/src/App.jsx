@@ -143,9 +143,9 @@ export default function App() {
                   <MenuItem component={Link} to="/clientes" onClick={handleClose}>Clientes</MenuItem>
                   <MenuItem component={Link} to="/combos" onClick={handleClose}>Combos</MenuItem>
                   <MenuItem component={Link} to="/estoque" onClick={handleClose}>Estoque</MenuItem>
-                  <MenuItem component={Link} to="/configuracoes" onClick={handleClose}>Configurações</MenuItem>
                 </Menu>
 
+                <Button color="inherit" component={Link} to="/configuracoes">Configurações</Button>
                 {/* Menu Pedidos */}
                 <Button color="inherit" onClick={(e) => setAnchorPed(e.currentTarget)}>PEDIDOS</Button>
                 <Menu anchorEl={anchorPed} open={openPed} onClose={handleClose}>

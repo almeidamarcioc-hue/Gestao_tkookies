@@ -257,7 +257,9 @@ export default function Dashboard() {
           quantidade: Number(ing.quantidade),
           apenas_revenda: ing.apenas_revenda
         })),
-        imagens: editProduct.imagens || []
+        imagens: editProduct.imagens || [],
+        eh_destaque: editProduct.eh_destaque,
+        desconto_destaque: Number(editProduct.desconto_destaque)
       };
       await api.put(`/produtos/${editProduct.id}`, payload);
       alert("Produto atualizado!");
@@ -405,6 +407,16 @@ export default function Dashboard() {
                     </Button>
                   )}
                 </Box>
+              </Box>
+
+              <Box display="flex" gap={2} mb={3} alignItems="center" sx={{ bgcolor: '#f5f5f5', p: 2, borderRadius: 2 }}>
+                <FormControlLabel 
+                  control={<Checkbox checked={editProduct.eh_destaque || false} onChange={(e) => setEditProduct({...editProduct, eh_destaque: e.target.checked})} />} 
+                  label="Produto Destaque (Promoção)" 
+                />
+                {editProduct.eh_destaque && (
+                  <TextField label="% Desconto" type="number" size="small" sx={{ width: 150 }} value={editProduct.desconto_destaque || 0} onChange={(e) => setEditProduct({...editProduct, desconto_destaque: e.target.value})} />
+                )}
               </Box>
 
               <Grid container spacing={2} mb={3}>

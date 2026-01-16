@@ -40,6 +40,8 @@ router.get("/", async (req, res) => {
           preco_revenda: row.preco_revenda,
           rendimento: row.rendimento,
           estoque: row.estoque,
+          eh_destaque: row.eh_destaque === 1 || row.eh_destaque === true,
+          desconto_destaque: row.desconto_destaque,
           created_at: row.created_at,
           ingredientes: [],
           imagens: []
@@ -77,15 +79,20 @@ router.get("/", async (req, res) => {
 
 // CRIAR PRODUTO
 router.post("/", async (req, res) => {
-  const { nome, preco_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens } = req.body;
+  const { nome, preco_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque } = req.body;
   const client = await pool.connect();
 
   try {
     await client.query("BEGIN");
 
+    // Se for destaque, remove o destaque dos outros
+    if (eh_destaque) {
+      await client.query("UPDATE produtos SET eh_destaque = FALSE");
+    }
+
     const resProd = await client.query(
-      "INSERT INTO produtos (nome, preco_venda, margem_revenda, preco_revenda, rendimento) VALUES ($1, $2, $3, $4, $5) RETURNING id",
-      [nome, preco_venda, margem_revenda || 0, preco_revenda || 0, rendimento || 1]
+      "INSERT INTO produtos (nome, preco_venda, margem_revenda, preco_revenda, rendimento, eh_destaque, desconto_destaque) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id",
+      [nome, preco_venda, margem_revenda || 0, preco_revenda || 0, rendimento || 1, eh_destaque || false, desconto_destaque || 0]
     );
     const produtoId = resProd.rows[0].id;
 
@@ -121,16 +128,21 @@ router.post("/", async (req, res) => {
 // ATUALIZAR PRODUTO (Edição total)
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
-  const { nome, preco_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens } = req.body;
+  const { nome, preco_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque } = req.body;
   const client = await pool.connect();
 
   try {
     await client.query("BEGIN");
 
+    // Se for destaque, remove o destaque dos outros
+    if (eh_destaque) {
+      await client.query("UPDATE produtos SET eh_destaque = FALSE WHERE id != $1", [id]);
+    }
+
     // Atualiza dados básicos do produto
     await client.query(
-      "UPDATE produtos SET nome = $1, preco_venda = $2, margem_revenda = $3, preco_revenda = $4, rendimento = $5 WHERE id = $6",
-      [nome, preco_venda, margem_revenda || 0, preco_revenda || 0, rendimento || 1, id]
+      "UPDATE produtos SET nome = $1, preco_venda = $2, margem_revenda = $3, preco_revenda = $4, rendimento = $5, eh_destaque = $6, desconto_destaque = $7 WHERE id = $8",
+      [nome, preco_venda, margem_revenda || 0, preco_revenda || 0, rendimento || 1, eh_destaque || false, desconto_destaque || 0, id]
     );
 
     // Remove ingredientes antigos para reinserir os atualizados

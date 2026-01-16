@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Box, Typography, Button, Container, Paper, Grid, Card, CardMedia, CardContent, CardActions, IconButton, Badge } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
-import { AddCircleOutline, ListAlt, Inventory2, People, RestaurantMenu, PointOfSale, Add, Remove, ShoppingCart } from "@mui/icons-material";
+import { AddCircleOutline, ListAlt, Inventory2, People, RestaurantMenu, PointOfSale, Add, Remove, ShoppingCart, LocalOffer } from "@mui/icons-material";
 import api from "../services/api";
 
 export default function Home({ isLoggedIn, onLoginClick }) {
@@ -14,6 +14,7 @@ export default function Home({ isLoggedIn, onLoginClick }) {
   });
 
   const [products, setProducts] = useState([]);
+  const [featuredProduct, setFeaturedProduct] = useState(null);
   const [cart, setCart] = useState({}); // { id: quantidade }
 
   useEffect(() => {
@@ -25,14 +26,27 @@ export default function Home({ isLoggedIn, onLoginClick }) {
 
     // Carregar produtos para o cardápio
     api.get("/produtos").then(res => {
-      setProducts(Array.isArray(res.data) ? res.data : []);
+      const allProducts = Array.isArray(res.data) ? res.data : [];
+      // Filtra apenas produtos com estoque positivo
+      const availableProducts = allProducts.filter(p => Number(p.estoque) > 0);
+      setProducts(availableProducts);
+      
+      // Encontra o produto destaque
+      const featured = availableProducts.find(p => p.eh_destaque);
+      setFeaturedProduct(featured);
     });
   }, []);
 
   const handleQtyChange = (prodId, delta) => {
     setCart(prev => {
       const current = prev[prodId] || 0;
-      const next = Math.max(0, current + delta);
+      const prod = products.find(p => p.id === prodId);
+      const maxStock = Number(prod?.estoque) || 0;
+      
+      let next = current + delta;
+      if (next < 0) next = 0;
+      if (next > maxStock) next = maxStock; // Limita ao estoque
+
       if (next === 0) {
         const { [prodId]: _, ...rest } = prev;
         return rest;
@@ -50,12 +64,17 @@ export default function Home({ isLoggedIn, onLoginClick }) {
     const orderItems = Object.entries(cart).map(([id, qty]) => {
       const prod = products.find(p => p.id === Number(id));
       if (!prod) return null;
+      
+      const precoFinal = prod.eh_destaque && prod.desconto_destaque > 0 
+        ? Number(prod.preco_venda) * (1 - Number(prod.desconto_destaque) / 100)
+        : Number(prod.preco_venda);
+
       return {
         produto_id: prod.id,
         nome: prod.nome,
         quantidade: qty,
-        valor_unitario: Number(prod.preco_venda),
-        valor_total: qty * Number(prod.preco_venda),
+        valor_unitario: precoFinal,
+        valor_total: qty * precoFinal,
         _tempId: Math.random()
       };
     }).filter(Boolean);
@@ -66,7 +85,10 @@ export default function Home({ isLoggedIn, onLoginClick }) {
   const totalItems = Object.values(cart).reduce((a, b) => a + b, 0);
   const totalPrice = Object.entries(cart).reduce((acc, [id, qty]) => {
     const prod = products.find(p => p.id === Number(id));
-    return acc + (qty * (Number(prod?.preco_venda) || 0));
+    const preco = prod?.eh_destaque && prod?.desconto_destaque > 0 
+        ? Number(prod.preco_venda) * (1 - Number(prod.desconto_destaque) / 100)
+        : Number(prod?.preco_venda) || 0;
+    return acc + (qty * preco);
   }, 0);
 
   return (
@@ -196,6 +218,47 @@ export default function Home({ isLoggedIn, onLoginClick }) {
         </Container>
       </Box>
 
+      {/* SEÇÃO DESTAQUE */}
+      {featuredProduct && (
+        <Container maxWidth="lg" sx={{ mb: 6 }}>
+          <Paper elevation={4} sx={{ p: 3, bgcolor: '#fff3e0', border: '2px solid #ffb74d', borderRadius: 4, position: 'relative', overflow: 'hidden' }}>
+            <Box sx={{ position: 'absolute', top: 0, right: 0, bgcolor: '#ff9800', color: 'white', px: 2, py: 0.5, borderBottomLeftRadius: 8 }}>
+              <Typography fontWeight="bold" variant="caption">OFERTA ESPECIAL</Typography>
+            </Box>
+            <Grid container spacing={4} alignItems="center">
+              <Grid item xs={12} md={4}>
+                <Box 
+                  component="img" 
+                  src={featuredProduct.imagens?.find(img => img.eh_capa)?.imagem || featuredProduct.imagens?.[0]?.imagem} 
+                  sx={{ width: '100%', height: 250, objectFit: 'cover', borderRadius: 3 }}
+                />
+              </Grid>
+              <Grid item xs={12} md={8}>
+                <Typography variant="h4" fontWeight="bold" color="primary" gutterBottom>
+                  <LocalOffer sx={{ verticalAlign: 'middle', mr: 1 }} />
+                  {featuredProduct.nome}
+                </Typography>
+                <Box display="flex" alignItems="center" gap={2} mb={2}>
+                  <Typography variant="h5" sx={{ textDecoration: 'line-through', color: 'text.secondary' }}>
+                    R$ {Number(featuredProduct.preco_venda).toFixed(2)}
+                  </Typography>
+                  <Typography variant="h4" color="error" fontWeight="bold">
+                    R$ {(Number(featuredProduct.preco_venda) * (1 - Number(featuredProduct.desconto_destaque) / 100)).toFixed(2)}
+                  </Typography>
+                  <Badge color="error" badgeContent={`-${featuredProduct.desconto_destaque}%`} />
+                </Box>
+                <Typography variant="body1" mb={3}>
+                  Aproveite esta oferta por tempo limitado! Restam apenas <strong>{Number(featuredProduct.estoque)}</strong> unidades.
+                </Typography>
+                <Button variant="contained" size="large" onClick={() => handleQtyChange(featuredProduct.id, 1)} startIcon={<Add />}>
+                  Adicionar ao Pedido
+                </Button>
+              </Grid>
+            </Grid>
+          </Paper>
+        </Container>
+      )}
+
       {/* SEÇÃO CARDÁPIO */}
       <Container maxWidth="lg" sx={{ mb: 12 }}>
         <Box mb={8}>
@@ -206,6 +269,10 @@ export default function Home({ isLoggedIn, onLoginClick }) {
             {products.map(prod => {
               const coverImage = prod.imagens?.find(img => img.eh_capa)?.imagem || prod.imagens?.[0]?.imagem;
               const qty = cart[prod.id] || 0;
+              const isPromo = prod.eh_destaque && prod.desconto_destaque > 0;
+              const precoFinal = isPromo 
+                ? Number(prod.preco_venda) * (1 - Number(prod.desconto_destaque) / 100)
+                : Number(prod.preco_venda);
 
               return (
                 <Grid item xs={12} sm={6} md={4} key={prod.id}>
@@ -222,8 +289,14 @@ export default function Home({ isLoggedIn, onLoginClick }) {
                       <Typography gutterBottom variant="h6" component="div" fontWeight="bold">
                         {prod.nome}
                       </Typography>
-                      <Typography variant="h6" color="primary">
-                        R$ {Number(prod.preco_venda).toFixed(2)}
+                      <Box display="flex" justifyContent="space-between" alignItems="center">
+                        <Typography variant="h6" color={isPromo ? "error" : "primary"}>
+                          R$ {precoFinal.toFixed(2)}
+                        </Typography>
+                        {isPromo && <Typography variant="caption" sx={{ textDecoration: 'line-through' }}>R$ {Number(prod.preco_venda).toFixed(2)}</Typography>}
+                      </Box>
+                      <Typography variant="caption" color="text.secondary" display="block" mt={1}>
+                        Disponível: {Number(prod.estoque)}
                       </Typography>
                     </CardContent>
                     <CardActions sx={{ justifyContent: 'space-between', px: 2, pb: 2 }}>
@@ -232,7 +305,7 @@ export default function Home({ isLoggedIn, onLoginClick }) {
                           <Remove />
                         </IconButton>
                         <Typography fontWeight="bold">{qty}</Typography>
-                        <IconButton size="small" onClick={() => handleQtyChange(prod.id, 1)} color="primary">
+                        <IconButton size="small" onClick={() => handleQtyChange(prod.id, 1)} disabled={qty >= Number(prod.estoque)} color="primary">
                           <Add />
                         </IconButton>
                       </Box>

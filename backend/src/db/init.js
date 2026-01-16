@@ -137,6 +137,8 @@ export async function initDatabase() {
       await pool.query("ALTER TABLE produtos ADD COLUMN IF NOT EXISTS rendimento INTEGER DEFAULT 1");
       await pool.query("ALTER TABLE produto_ingredientes ADD COLUMN IF NOT EXISTS apenas_revenda BOOLEAN DEFAULT FALSE");
       await pool.query("ALTER TABLE produtos ADD COLUMN IF NOT EXISTS estoque DECIMAL(10, 2) DEFAULT 0");
+      await pool.query("ALTER TABLE produtos ADD COLUMN IF NOT EXISTS eh_destaque BOOLEAN DEFAULT FALSE");
+      await pool.query("ALTER TABLE produtos ADD COLUMN IF NOT EXISTS desconto_destaque DECIMAL(10, 2) DEFAULT 0");
     } catch (e) {
       console.log("Nota: Verificação de coluna 'usado_para_revenda' concluída.");
     }

@@ -38,6 +38,8 @@ export default function Products() {
   const [precoRevenda, setPrecoRevenda] = useState(0);
   const [listaProdutos, setListaProdutos] = useState([]);
   const [imagens, setImagens] = useState([]);
+  const [ehDestaque, setEhDestaque] = useState(false);
+  const [descontoDestaque, setDescontoDestaque] = useState(0);
 
   useEffect(() => {
     async function carregar() {
@@ -218,7 +220,9 @@ export default function Products() {
         quantidade: Number(i.quantidade),
         apenas_revenda: i.apenas_revenda
       })),
-      imagens: imagens.map(img => ({ imagem: img.imagem, eh_capa: img.eh_capa }))
+      imagens: imagens.map(img => ({ imagem: img.imagem, eh_capa: img.eh_capa })),
+      eh_destaque: ehDestaque,
+      desconto_destaque: Number(descontoDestaque)
     };
 
     try {
@@ -235,6 +239,8 @@ export default function Products() {
       setPrecoVenda(0);
       setPrecoRevenda(0);
       setImagens([]);
+      setEhDestaque(false);
+      setDescontoDestaque(0);
       
       // Recarrega a lista
       const resProd = await api.get("/produtos");
@@ -296,6 +302,16 @@ export default function Products() {
           </Box>
         </Box>
         
+        <Box display="flex" gap={2} mb={3} alignItems="center" sx={{ bgcolor: '#f5f5f5', p: 2, borderRadius: 2 }}>
+          <FormControlLabel 
+            control={<Checkbox checked={ehDestaque} onChange={(e) => setEhDestaque(e.target.checked)} />} 
+            label="Produto Destaque (Promoção)" 
+          />
+          {ehDestaque && (
+            <TextField label="% Desconto" type="number" size="small" sx={{ width: 150 }} value={descontoDestaque} onChange={(e) => setDescontoDestaque(e.target.value)} />
+          )}
+        </Box>
+
         <Grid container spacing={3} mb={4}>
           {/* Bloco de Venda Direta */}
           <Grid size={{ xs: 12, md: 6 }}>
