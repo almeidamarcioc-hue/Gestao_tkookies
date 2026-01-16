@@ -20,12 +20,22 @@ router.post("/", async (req, res) => {
   try {
     await pool.query(
       "INSERT INTO clientes (nome, telefone, endereco, numero, complemento, bairro, cidade, login, senha) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
-      [nome, telefone, endereco, numero, complemento, bairro, cidade, login || null, senha || null]
+      [
+        nome, 
+        telefone || null, 
+        endereco || null, 
+        numero || null, 
+        complemento || null, 
+        bairro || null, 
+        cidade || null, 
+        login || null, 
+        senha || null
+      ]
     );
     res.status(201).json({ message: "Cliente criado!" });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Erro ao criar cliente" });
+    console.error("Erro ao criar cliente:", error);
+    res.status(500).json({ error: "Erro ao criar cliente", details: error.message });
   }
 });
 
@@ -40,7 +50,8 @@ router.post("/login", async (req, res) => {
       res.status(401).json({ error: "Credenciais inválidas" });
     }
   } catch (error) {
-    res.status(500).json({ error: "Erro no login" });
+    console.error("Erro no login:", error);
+    res.status(500).json({ error: "Erro no login", details: error.message });
   }
 });
 

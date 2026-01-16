@@ -1,7 +1,19 @@
 import { Router } from "express";
 import { pool } from "../db/index.js";
+import { initDatabase } from "../db/init.js";
 
 const router = Router();
+
+// ROTA DE MIGRAÇÃO (Para garantir que tabelas/colunas existam no Vercel)
+router.get("/migrate", async (req, res) => {
+  try {
+    await initDatabase();
+    res.json({ message: "Banco de dados atualizado com sucesso!" });
+  } catch (error) {
+    console.error("Erro na migração:", error);
+    res.status(500).json({ error: "Erro ao migrar banco", details: error.message });
+  }
+});
 
 // OBTER CONFIGURAÇÕES
 router.get("/", async (req, res) => {
