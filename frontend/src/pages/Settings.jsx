@@ -46,6 +46,15 @@ export default function Settings() {
     }
   };
 
+  const handleVerifyDb = async () => {
+    try {
+      const res = await api.get("/configuracoes/migrate");
+      alert(JSON.stringify(res.data, null, 2));
+    } catch (err) {
+      alert("Erro ao verificar banco: " + (err.response?.data?.details || err.message));
+    }
+  };
+
   return (
     <Container maxWidth="md">
       <Typography variant="h4" mb={3} fontWeight="bold">Configurações do Sistema</Typography>
@@ -103,9 +112,14 @@ export default function Settings() {
           </Grid>
 
           <Grid size={12}>
-            <Button variant="contained" size="large" onClick={handleSave}>
-              Salvar Configurações
-            </Button>
+            <Box display="flex" gap={2}>
+              <Button variant="contained" size="large" onClick={handleSave}>
+                Salvar Configurações
+              </Button>
+              <Button variant="outlined" size="large" onClick={handleVerifyDb} color="warning">
+                Verificar Banco de Dados
+              </Button>
+            </Box>
           </Grid>
         </Grid>
       </Paper>

@@ -5,12 +5,57 @@ const router = Router();
 
 // LISTAR
 router.get("/", async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const offset = (page - 1) * limit;
+  const search = req.query.search || "";
+
   try {
-    const result = await pool.query("SELECT * FROM clientes ORDER BY nome ASC");
-    res.json(result.rows);
+    let query = "SELECT * FROM clientes";
+    let countQuery = "SELECT COUNT(*) as total FROM clientes";
+    let params = [];
+    
+    if (search) {
+        query += " WHERE nome LIKE $1 OR telefone LIKE $1";
+        countQuery += " WHERE nome LIKE $1 OR telefone LIKE $1";
+        params.push(`%${search}%`);
+    }
+
+    query += " ORDER BY nome ASC LIMIT $" + (params.length + 1) + " OFFSET $" + (params.length + 2);
+    
+    const countRes = await pool.query(countQuery, params);
+    const result = await pool.query(query, [...params, limit, offset]);
+    
+    res.json({
+      data: result.rows,
+      total: Number(countRes.rows[0].total),
+      page,
+      limit
+    });
   } catch (error) {
     console.error("Erro ao listar clientes:", error);
     res.status(500).json({ error: "Erro ao listar clientes", details: error.message });
+  }
+});
+
+// ITENS MAIS COMPRADOS
+router.get("/:id/mais-comprados", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(`
+      SELECT p.id, p.nome, p.preco_venda, SUM(ip.quantidade) as total_comprado
+      FROM itens_pedido ip
+      JOIN pedidos ped ON ip.pedido_id = ped.id
+      JOIN produtos p ON ip.produto_id = p.id
+      WHERE ped.cliente_id = $1
+      GROUP BY p.id, p.nome, p.preco_venda
+      ORDER BY total_comprado DESC
+      LIMIT 5
+    `, [id]);
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Erro ao buscar mais comprados:", error);
+    res.status(500).json({ error: "Erro ao buscar itens mais comprados" });
   }
 });
 
@@ -73,10 +118,21 @@ router.get("/:id/pedidos", async (req, res) => {
 // ATUALIZAR
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
-  const { nome, telefone, endereco, numero, complemento, bairro, cidade, senha } = req.body;
+  const { nome, telefone, endereco, numero, complemento, bairro, cidade, senha, senha_atual } = req.body;
   console.log("Atualizando cliente:", id);
   try {
     if (senha && senha.trim() !== "") {
+      // Validar senha atual
+      if (!senha_atual) {
+          return res.status(400).json({ error: "Senha atual é obrigatória para alterar a senha." });
+      }
+      const userRes = await pool.query("SELECT senha FROM clientes WHERE id = $1", [id]);
+      if (userRes.rows.length === 0) return res.status(404).json({ error: "Cliente não encontrado" });
+      
+      if (userRes.rows[0].senha !== senha_atual) {
+          return res.status(401).json({ error: "Senha atual incorreta." });
+      }
+
       await pool.query(
         "UPDATE clientes SET nome = $1, telefone = $2, endereco = $3, numero = $4, complemento = $5, bairro = $6, cidade = $7, senha = $8 WHERE id = $9",
         [nome, telefone, endereco, numero, complemento, bairro, cidade, senha, id]

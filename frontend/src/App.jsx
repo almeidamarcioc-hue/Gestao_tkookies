@@ -1,6 +1,6 @@
 // App.jsx
-import { useState } from "react";
-import { BrowserRouter, Routes, Route, Link, Navigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route, Link, Navigate, useNavigate } from "react-router-dom";
 import { AppBar, Toolbar, Button, Box, Typography, Menu, MenuItem, createTheme, ThemeProvider, CssBaseline, TextField, IconButton, Drawer, List, ListItem, ListItemButton, ListItemText, Divider, Container, Grid } from "@mui/material";
 import { Menu as MenuIcon, Instagram, WhatsApp, Facebook, AccountCircle } from "@mui/icons-material";
 import Dashboard from "./pages/Dashboard";
@@ -81,6 +81,16 @@ const theme = createTheme({
   },
 });
 
+// Helper component for redirecting
+function RedirectHandler({ to, onReset }) {
+  const navigate = useNavigate();
+  useEffect(() => {
+    navigate(to);
+    onReset();
+  }, [to, navigate, onReset]);
+  return null;
+}
+
 export default function App() {
   const [anchorCad, setAnchorCad] = useState(null);
   const [anchorCons, setAnchorCons] = useState(null);
@@ -94,6 +104,7 @@ export default function App() {
   const [clientLoginOpen, setClientLoginOpen] = useState(false);
   const [clientUser, setClientUser] = useState(null); // Objeto do cliente logado
   const [clientLoginData, setClientLoginData] = useState({ login: "", senha: "" });
+  const [redirectTo, setRedirectTo] = useState(null);
 
   const openCad = Boolean(anchorCad);
   const openCons = Boolean(anchorCons);
@@ -130,6 +141,7 @@ export default function App() {
       setClientUser(res.data);
       setClientLoginOpen(false);
       setClientLoginData({ login: "", senha: "" });
+      setRedirectTo("/pedidos/novo");
     } catch (err) {
       const msg = err.response?.data?.error || "Erro no login";
       alert(msg);
@@ -140,6 +152,7 @@ export default function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
     <BrowserRouter>
+      {redirectTo && <RedirectHandler to={redirectTo} onReset={() => setRedirectTo(null)} />}
       <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <AppBar position="sticky" sx={{ top: 0, zIndex: 1100 }}>
         <Toolbar>
@@ -177,6 +190,7 @@ export default function App() {
                   <MenuItem component={Link} to="/clientes" onClick={handleClose}>Clientes</MenuItem>
                   <MenuItem component={Link} to="/combos" onClick={handleClose}>Combos</MenuItem>
                   <MenuItem component={Link} to="/estoque" onClick={handleClose}>Estoque</MenuItem>
+                  <MenuItem component={Link} to="/status" onClick={handleClose}>Status do Sistema</MenuItem>
                 </Menu>
 
                 <Button color="inherit" component={Link} to="/configuracoes">Configurações</Button>
@@ -270,12 +284,12 @@ export default function App() {
           {/* Pedidos: Acessível por Admin OU Cliente Logado */}
           <Route path="/pedidos/novo" element={
             <ProtectedRoute isAllowed={isLoggedIn || !!clientUser}>
-              <OrderForm />
+              <OrderForm clientUser={clientUser} isAdmin={isLoggedIn} />
             </ProtectedRoute>
           } />
           <Route path="/pedidos/:id" element={
             <ProtectedRoute isAllowed={isLoggedIn || !!clientUser}>
-              <OrderForm />
+              <OrderForm clientUser={clientUser} isAdmin={isLoggedIn} />
             </ProtectedRoute>
           } />
 

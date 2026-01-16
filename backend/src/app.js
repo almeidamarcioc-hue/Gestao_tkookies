@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import { pool } from "./db/index.js";
 import ingredientRoutes from "./routes/ingredients.js";
 import productRoutes from "./routes/products.js";
 import clientsRouter from "./routes/clients.js";
@@ -28,6 +29,17 @@ app.use((req, res, next) => {
     "default-src 'self'; style-src 'self' 'unsafe-inline' https://www.gstatic.com https://fonts.googleapis.com; script-src 'self' 'unsafe-inline' https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https:;"
   );
   next();
+});
+
+// Health Check
+app.get("/api/health", async (req, res) => {
+  try {
+    await pool.query("SELECT 1");
+    res.json({ status: "ok", database: "connected" });
+  } catch (error) {
+    console.error("Health check failed:", error);
+    res.status(500).json({ status: "error", database: "disconnected", error: error.message });
+  }
 });
 
 app.use("/ingredientes", ingredientRoutes);

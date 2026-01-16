@@ -8,7 +8,7 @@ import {
 import { Delete, Add, Print, Usb } from "@mui/icons-material";
 import { printOrder } from "../utils/printOrder";
 
-export default function OrderForm() {
+export default function OrderForm({ clientUser, isAdmin }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams(); // Se tiver ID, é edição
@@ -40,19 +40,28 @@ export default function OrderForm() {
   useEffect(() => {
     carregarDados();
     if (id) carregarPedido(id);
-    else if (location.state?.items) {
-      // Se veio da Home com itens selecionados
-      setItens(location.state.items);
+    else {
+      if (location.state?.items) {
+        // Se veio da Home com itens selecionados
+        setItens(location.state.items);
+      }
+      // Se for cliente (não admin), pré-seleciona
+      if (!isAdmin && clientUser) {
+        setCliente(clientUser);
+      }
     }
-  }, [id, location.state]);
+  }, [id, location.state, isAdmin, clientUser]);
 
   async function carregarDados() {
-    const [resCli, resProd] = await Promise.all([
-      api.get("/clientes"),
-      api.get("/produtos")
-    ]);
-    setListaClientes(Array.isArray(resCli.data) ? resCli.data : []);
+    const resProd = await api.get("/produtos");
     setListaProdutos(Array.isArray(resProd.data) ? resProd.data : []);
+
+    if (isAdmin) {
+      const resCli = await api.get("/clientes");
+      setListaClientes(Array.isArray(resCli.data) ? resCli.data : []);
+    } else if (clientUser) {
+      setListaClientes([clientUser]);
+    }
   }
 
   async function carregarPedido(pedidoId) {
@@ -257,7 +266,7 @@ export default function OrderForm() {
             <Box display="flex" gap={1}>
               <Autocomplete
                 fullWidth
-                disabled={isCancelled}
+                disabled={isCancelled || (!isAdmin && !!clientUser)}
                 options={listaClientes}
                 getOptionLabel={(option) => option.nome || ""}
                 isOptionEqualToValue={(option, value) => option.id === value.id}
@@ -265,7 +274,9 @@ export default function OrderForm() {
                 onChange={(e, newValue) => setCliente(newValue)}
                 renderInput={(params) => <TextField {...params} label="Cliente" />}
               />
-              <Button variant="outlined" onClick={() => setOpenClientModal(true)} disabled={isCancelled}><Add /></Button>
+              {isAdmin && (
+                <Button variant="outlined" onClick={() => setOpenClientModal(true)} disabled={isCancelled}><Add /></Button>
+              )}
             </Box>
             {cliente && (
               <Typography variant="caption" display="block" mt={1} color="text.secondary">

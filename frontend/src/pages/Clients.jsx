@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import api from "../services/api";
 import { 
   Box, Button, TextField, Typography, Paper, Table, TableBody, TableCell, 
-  TableHead, TableRow, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Container, Grid 
+  TableHead, TableRow, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Container, Grid, TablePagination 
 } from "@mui/material";
 import { Edit, Delete } from "@mui/icons-material";
 
@@ -11,13 +11,26 @@ export default function Clients() {
   const [open, setOpen] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  
+  // Paginação
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
     carregarClientes();
-  }, []);
+  }, [page, rowsPerPage, searchTerm]);
 
   function carregarClientes() {
-    api.get("/clientes").then(res => setClientes(Array.isArray(res.data) ? res.data : []));
+    // O backend espera page=1, mas o MUI usa page=0
+    api.get(`/clientes?page=${page + 1}&limit=${rowsPerPage}&search=${searchTerm}`)
+      .then(res => {
+        setClientes(res.data.data || []);
+        setTotal(res.data.total || 0);
+      })
+      .catch(() => {
+        setClientes([]);
+      });
   }
 
   function handleEdit(item) {
@@ -56,7 +69,10 @@ export default function Clients() {
         fullWidth 
         sx={{ mb: 3 }} 
         value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
+        onChange={(e) => {
+          setSearchTerm(e.target.value);
+          setPage(0); // Volta para a primeira página ao pesquisar
+        }}
       />
 
       <Paper sx={{ width: '100%', overflowX: 'auto' }}>
@@ -73,7 +89,6 @@ export default function Clients() {
           </TableHead>
           <TableBody>
             {clientes
-              .filter(cli => cli.nome.toLowerCase().includes(searchTerm.toLowerCase()))
               .map(cli => (
               <TableRow key={cli.id}>
                 <TableCell>{cli.nome}</TableCell>
@@ -89,6 +104,15 @@ export default function Clients() {
             ))}
           </TableBody>
         </Table>
+        <TablePagination
+          component="div"
+          count={total}
+          page={page}
+          onPageChange={(e, newPage) => setPage(newPage)}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
+          labelRowsPerPage="Linhas por página"
+        />
       </Paper>
 
       {/* Modal de Edição */}
