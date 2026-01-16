@@ -1,7 +1,7 @@
 // App.jsx
 import { useState } from "react";
 import { BrowserRouter, Routes, Route, Link, Navigate } from "react-router-dom";
-import { AppBar, Toolbar, Button, Box, Typography, Menu, MenuItem, createTheme, ThemeProvider, CssBaseline, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, Drawer, List, ListItem, ListItemButton, ListItemText, Divider, Container, Grid } from "@mui/material";
+import { AppBar, Toolbar, Button, Box, Typography, Menu, MenuItem, createTheme, ThemeProvider, CssBaseline, TextField, IconButton, Drawer, List, ListItem, ListItemButton, ListItemText, Divider, Container, Grid } from "@mui/material";
 import { Menu as MenuIcon, Instagram, WhatsApp, Facebook, AccountCircle } from "@mui/icons-material";
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
@@ -20,6 +20,8 @@ import Settings from "./pages/Settings";
 import ClientRegister from "./pages/ClientRegister";
 import ClientProfile from "./pages/ClientProfile";
 import api from "./services/api";
+import ProtectedRoute from "./components/ProtectedRoute";
+import AccessDenied from "./pages/AccessDenied";
 
 const theme = createTheme({
   palette: {
@@ -86,9 +88,6 @@ export default function App() {
 
   // Estados de Autenticação
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [loginOpen, setLoginOpen] = useState(false);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
   
   // Estados Login Cliente
@@ -110,27 +109,27 @@ export default function App() {
     setMobileOpen(!mobileOpen);
   };
 
-  const handleLogin = () => {
-    if (username === "tkookies_" && password === "TKookies") {
-      setIsLoggedIn(true);
-      setLoginOpen(false);
-      setUsername("");
-      setPassword("");
-    } else {
-      alert("Usuário ou senha incorretos!");
-    }
-  };
-
   const handleLogout = () => {
     setIsLoggedIn(false);
+    setClientUser(null);
     handleClose();
   };
 
   const handleClientLogin = async () => {
+    // 1. Verifica se é Admin
+    if (clientLoginData.login === "tkookies_" && clientLoginData.senha === "TKookies") {
+      setIsLoggedIn(true);
+      setClientLoginOpen(false);
+      setClientLoginData({ login: "", senha: "" });
+      return;
+    }
+
+    // 2. Tenta login como Cliente
     try {
       const res = await api.post("/clientes/login", clientLoginData);
       setClientUser(res.data);
       setClientLoginOpen(false);
+      setClientLoginData({ login: "", senha: "" });
     } catch (err) {
       const msg = err.response?.data?.error || "Erro no login";
       alert(msg);
@@ -195,12 +194,12 @@ export default function App() {
                   <Button color="inherit" startIcon={<AccountCircle />} component={Link} to="/perfil">
                     Olá, {clientUser.nome.split(' ')[0]}
                   </Button>
+                  <Button color="inherit" onClick={handleLogout}>SAIR</Button>
                 ) : (
                   <Button color="inherit" onClick={() => setClientLoginOpen(true)}>
-                    Login / Cadastro
+                    Login
                   </Button>
                 )}
-                <Button color="inherit" onClick={() => setLoginOpen(true)} sx={{ opacity: 0.7, fontSize: '0.8rem' }}>Admin</Button>
               </>
             )}
           </Box>
@@ -237,7 +236,14 @@ export default function App() {
                 <ListItem disablePadding><ListItemButton onClick={handleLogout}><ListItemText primary="SAIR" sx={{ color: 'error.main' }} /></ListItemButton></ListItem>
               </>
             ) : (
-              <ListItem disablePadding><ListItemButton onClick={() => setLoginOpen(true)}><ListItemText primary="Acesso Restrito" /></ListItemButton></ListItem>
+               clientUser ? (
+                 <>
+                   <ListItem disablePadding><ListItemButton component={Link} to="/perfil"><ListItemText primary="Meu Perfil" /></ListItemButton></ListItem>
+                   <ListItem disablePadding><ListItemButton onClick={handleLogout}><ListItemText primary="SAIR" sx={{ color: 'error.main' }} /></ListItemButton></ListItem>
+                 </>
+               ) : (
+                 <ListItem disablePadding><ListItemButton onClick={() => setClientLoginOpen(true)}><ListItemText primary="Login" /></ListItemButton></ListItem>
+               )
             )}
           </List>
         </Box>
@@ -245,31 +251,40 @@ export default function App() {
 
       <Box component="main" sx={{ flexGrow: 1, py: 4 }}>
         <Routes>
-          <Route path="/" element={<Home isLoggedIn={isLoggedIn} onLoginClick={() => setLoginOpen(true)} clientUser={clientUser} />} />
+          <Route path="/" element={<Home isLoggedIn={isLoggedIn} onLoginClick={() => setClientLoginOpen(true)} clientUser={clientUser} />} />
           <Route path="/cadastro" element={<ClientRegister />} />
           <Route path="/perfil" element={<ClientProfile user={clientUser} onUserUpdate={setClientUser} />} />
+          <Route path="/acesso-negado" element={<AccessDenied isLoggedIn={isLoggedIn || !!clientUser} onLoginClick={() => setClientLoginOpen(true)} />} />
           
-          {isLoggedIn ? (
-            <>
-              <Route path="/produtos" element={<Dashboard />} />
-              <Route path="/produtos/novo" element={<Products />} />
-              <Route path="/ingredientes" element={<Ingredients />} />
-              <Route path="/ingredientes/novo" element={<IngredientForm />} />
-              <Route path="/clientes" element={<Clients />} />
-              <Route path="/clientes/novo" element={<ClientForm />} />
-              <Route path="/pedidos" element={<Orders />} />
-              <Route path="/pedidos/novo" element={<OrderForm />} />
-              <Route path="/pedidos/:id" element={<OrderForm />} />
-              <Route path="/combos" element={<Combos />} />
-              <Route path="/combos/novo" element={<ComboForm />} />
-              <Route path="/combos/:id" element={<ComboForm />} />
-              <Route path="/estoque" element={<Inventory />} />
-              <Route path="/configuracoes" element={<Settings />} />
-              <Route path="/production" element={<Production />} />
-            </>
-          ) : (
-            <Route path="*" element={<Navigate to="/" replace />} />
-          )}
+          {/* Rotas Administrativas Protegidas */}
+          <Route path="/produtos" element={<ProtectedRoute isAllowed={isLoggedIn}><Dashboard /></ProtectedRoute>} />
+          <Route path="/produtos/novo" element={<ProtectedRoute isAllowed={isLoggedIn}><Products /></ProtectedRoute>} />
+          <Route path="/ingredientes" element={<ProtectedRoute isAllowed={isLoggedIn}><Ingredients /></ProtectedRoute>} />
+          <Route path="/ingredientes/novo" element={<ProtectedRoute isAllowed={isLoggedIn}><IngredientForm /></ProtectedRoute>} />
+          <Route path="/clientes" element={<ProtectedRoute isAllowed={isLoggedIn}><Clients /></ProtectedRoute>} />
+          <Route path="/clientes/novo" element={<ProtectedRoute isAllowed={isLoggedIn}><ClientForm /></ProtectedRoute>} />
+          <Route path="/pedidos" element={<ProtectedRoute isAllowed={isLoggedIn}><Orders /></ProtectedRoute>} />
+          
+          {/* Pedidos: Acessível por Admin OU Cliente Logado */}
+          <Route path="/pedidos/novo" element={
+            <ProtectedRoute isAllowed={isLoggedIn || !!clientUser}>
+              <OrderForm />
+            </ProtectedRoute>
+          } />
+          <Route path="/pedidos/:id" element={
+            <ProtectedRoute isAllowed={isLoggedIn || !!clientUser}>
+              <OrderForm />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/combos" element={<ProtectedRoute isAllowed={isLoggedIn}><Combos /></ProtectedRoute>} />
+          <Route path="/combos/novo" element={<ProtectedRoute isAllowed={isLoggedIn}><ComboForm /></ProtectedRoute>} />
+          <Route path="/combos/:id" element={<ProtectedRoute isAllowed={isLoggedIn}><ComboForm /></ProtectedRoute>} />
+          <Route path="/estoque" element={<ProtectedRoute isAllowed={isLoggedIn}><Inventory /></ProtectedRoute>} />
+          <Route path="/configuracoes" element={<ProtectedRoute isAllowed={isLoggedIn}><Settings /></ProtectedRoute>} />
+          <Route path="/production" element={<ProtectedRoute isAllowed={isLoggedIn}><Production /></ProtectedRoute>} />
+
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Box>
 
@@ -318,39 +333,10 @@ export default function App() {
       </Box>
       </Box>
 
-      {/* Login Dialog */}
-      <Dialog open={loginOpen} onClose={() => setLoginOpen(false)}>
-        <DialogTitle>Acesso Restrito</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Usuário"
-            fullWidth
-            variant="outlined"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-          <TextField
-            margin="dense"
-            label="Senha"
-            type="password"
-            fullWidth
-            variant="outlined"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setLoginOpen(false)}>Cancelar</Button>
-          <Button onClick={handleLogin} variant="contained">Entrar</Button>
-        </DialogActions>
-      </Dialog>
-
       {/* Drawer Login Cliente */}
       <Drawer anchor="right" open={clientLoginOpen} onClose={() => setClientLoginOpen(false)}>
         <Box sx={{ width: 300, p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <Typography variant="h5" fontWeight="bold">Login Cliente</Typography>
+          <Typography variant="h5" fontWeight="bold">Login</Typography>
           <TextField 
             label="Login" 
             fullWidth 
