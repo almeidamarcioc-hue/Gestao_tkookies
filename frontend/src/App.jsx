@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Link, Navigate, useNavigate } from "react-router-dom";
 import { AppBar, Toolbar, Button, Box, Typography, Menu, MenuItem, createTheme, ThemeProvider, CssBaseline, TextField, IconButton, Drawer, List, ListItem, ListItemButton, ListItemText, Divider, Container, Grid, Badge } from "@mui/material";
-import { Menu as MenuIcon, Instagram, WhatsApp, Facebook, AccountCircle, ShoppingCart } from "@mui/icons-material";
+import { Menu as MenuIcon, Instagram, WhatsApp, Facebook, AccountCircle, ShoppingCart, Favorite } from "@mui/icons-material";
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
 import Ingredients from "./pages/Ingredients";
@@ -23,6 +23,7 @@ import Cart from "./pages/Cart";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import ClientOrders from "./pages/ClientOrders";
 import ClientOrderDetails from "./pages/ClientOrderDetails";
+import ClientFavorites from "./pages/ClientFavorites";
 import api from "./services/api";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AccessDenied from "./pages/AccessDenied";
@@ -244,6 +245,7 @@ export default function App() {
                     </Button>
                     <Menu anchorEl={anchorClient} open={openClient} onClose={handleClose}>
                       <MenuItem component={Link} to="/perfil" onClick={handleClose}>Meu Perfil</MenuItem>
+                      <MenuItem component={Link} to="/meus-favoritos" onClick={handleClose}>Meus Favoritos</MenuItem>
                       <MenuItem component={Link} to="/meus-pedidos" onClick={handleClose}>Meus Pedidos</MenuItem>
                       <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>Sair</MenuItem>
                     </Menu>
@@ -320,6 +322,7 @@ export default function App() {
           <Route path="/pedido-confirmado" element={<OrderConfirmation />} />
           <Route path="/meus-pedidos" element={<ProtectedRoute isAllowed={!!clientUser}><ClientOrders clientUser={clientUser} /></ProtectedRoute>} />
           <Route path="/meus-pedidos/:id" element={<ProtectedRoute isAllowed={!!clientUser}><ClientOrderDetails /></ProtectedRoute>} />
+          <Route path="/meus-favoritos" element={<ProtectedRoute isAllowed={!!clientUser}><ClientFavorites clientUser={clientUser} addToCart={addToCart} /></ProtectedRoute>} />
           <Route path="/acesso-negado" element={<AccessDenied isLoggedIn={isLoggedIn || !!clientUser} onLoginClick={() => setClientLoginOpen(true)} />} />
           
           {/* Rotas Administrativas Protegidas */}

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Box, Typography, Button, Container, Paper, Grid, Card, CardMedia, CardContent, CardActions, IconButton, Badge, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
-import { AddCircleOutline, ListAlt, Inventory2, People, RestaurantMenu, PointOfSale, Add, Remove, ShoppingBag, LocalOffer } from "@mui/icons-material";
+import { AddCircleOutline, ListAlt, Inventory2, People, RestaurantMenu, PointOfSale, Add, Remove, ShoppingBag, LocalOffer, Favorite, FavoriteBorder } from "@mui/icons-material";
 import api from "../services/api";
 
 export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addToCart, updateCartQuantity, removeFromCart }) {
@@ -19,6 +19,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
   const [crossSellItems, setCrossSellItems] = useState([]);
   const [animateBag, setAnimateBag] = useState(false);
   const prevTotalItems = useRef(0);
+  const [favorites, setFavorites] = useState([]);
 
   useEffect(() => {
     api.get("/configuracoes").then(res => {
@@ -39,6 +40,33 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
       setFeaturedProduct(featured);
     });
   }, []);
+
+  useEffect(() => {
+    if (clientUser) {
+      api.get(`/favoritos/${clientUser.id}`)
+        .then(res => setFavorites(res.data.map(f => f.id)))
+        .catch(err => console.error("Erro ao carregar favoritos", err));
+    }
+  }, [clientUser]);
+
+  const toggleFavorite = async (prod) => {
+    if (!clientUser) {
+      onLoginClick();
+      return;
+    }
+    const isFav = favorites.includes(prod.id);
+    try {
+      if (isFav) {
+        await api.delete(`/favoritos/${clientUser.id}/${prod.id}`);
+        setFavorites(prev => prev.filter(id => id !== prod.id));
+      } else {
+        await api.post("/favoritos", { cliente_id: clientUser.id, produto_id: prod.id });
+        setFavorites(prev => [...prev, prod.id]);
+      }
+    } catch (err) {
+      console.error("Erro ao favoritar", err);
+    }
+  };
 
   const getQty = (prodId) => {
     const item = cart.find(i => i.id === prodId);
@@ -297,7 +325,13 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
 
               return (
                 <Grid item xs={12} sm={6} md={4} key={prod.id}>
-                  <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderRadius: 3, boxShadow: 3 }}>
+                  <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderRadius: 3, boxShadow: 3, position: 'relative' }}>
+                    <IconButton 
+                      sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'rgba(255,255,255,0.7)', '&:hover': { bgcolor: 'white' }, zIndex: 10 }}
+                      onClick={() => toggleFavorite(prod)}
+                    >
+                      {favorites.includes(prod.id) ? <Favorite color="error" /> : <FavoriteBorder />}
+                    </IconButton>
                     {coverImage && (
                       <CardMedia
                         component="img"

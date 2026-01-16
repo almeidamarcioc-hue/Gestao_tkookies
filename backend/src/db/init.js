@@ -148,6 +148,19 @@ export async function initDatabase() {
       )
     `);
 
+    // Tabela de Favoritos
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS favoritos (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        cliente_id INT,
+        produto_id INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE,
+        FOREIGN KEY (produto_id) REFERENCES produtos(id) ON DELETE CASCADE,
+        UNIQUE KEY unique_fav (cliente_id, produto_id)
+      )
+    `);
+
     // Migrações (Colunas novas) - Executa uma por uma de forma segura
     logs.push(await addColumnSafe("ingredientes", "usado_para_revenda BOOLEAN DEFAULT TRUE"));
     logs.push(await addColumnSafe("produtos", "margem_revenda DECIMAL(10, 2) DEFAULT 0"));
