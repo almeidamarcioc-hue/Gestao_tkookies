@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Box, Typography, Button, Container, Paper, Grid, Card, CardMedia, CardContent, CardActions, IconButton, Badge } from "@mui/material";
+import { Box, Typography, Button, Container, Paper, Grid, Card, CardMedia, CardContent, CardActions, IconButton, Badge, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
 import { AddCircleOutline, ListAlt, Inventory2, People, RestaurantMenu, PointOfSale, Add, Remove, ShoppingCart, LocalOffer } from "@mui/icons-material";
 import api from "../services/api";
@@ -16,6 +16,8 @@ export default function Home({ isLoggedIn, onLoginClick }) {
   const [products, setProducts] = useState([]);
   const [featuredProduct, setFeaturedProduct] = useState(null);
   const [cart, setCart] = useState({}); // { id: quantidade }
+  const [crossSellOpen, setCrossSellOpen] = useState(false);
+  const [crossSellItems, setCrossSellItems] = useState([]);
 
   useEffect(() => {
     api.get("/configuracoes").then(res => {
@@ -53,6 +55,21 @@ export default function Home({ isLoggedIn, onLoginClick }) {
       }
       return { ...prev, [prodId]: next };
     });
+  };
+
+  const handleAddFeatured = () => {
+    if (!featuredProduct) return;
+    
+    handleQtyChange(featuredProduct.id, 1);
+
+    const available = products.filter(p => p.id !== featuredProduct.id && Number(p.estoque) > 0);
+    const shuffled = [...available].sort(() => 0.5 - Math.random());
+    const selected = shuffled.slice(0, 2);
+
+    if (selected.length > 0) {
+      setCrossSellItems(selected);
+      setCrossSellOpen(true);
+    }
   };
 
   const handleCheckout = () => {
@@ -252,7 +269,29 @@ export default function Home({ isLoggedIn, onLoginClick }) {
                 <Typography variant="body1" mb={3}>
                   Aproveite esta oferta por tempo limitado! Restam apenas <strong>{Number(featuredProduct.estoque)}</strong> unidades.
                 </Typography>
-                <Button variant="contained" size="large" onClick={() => handleQtyChange(featuredProduct.id, 1)} startIcon={<Add />}>
+                <Button 
+                  variant="contained" 
+                  size="large" 
+                  onClick={handleAddFeatured} 
+                  startIcon={<Add />}
+                  sx={{
+                    animation: 'pulse 2s infinite',
+                    '@keyframes pulse': {
+                      '0%': {
+                        transform: 'scale(1)',
+                        boxShadow: '0 0 0 0 rgba(255, 152, 0, 0.7)',
+                      },
+                      '70%': {
+                        transform: 'scale(1.05)',
+                        boxShadow: '0 0 0 10px rgba(255, 152, 0, 0)',
+                      },
+                      '100%': {
+                        transform: 'scale(1)',
+                        boxShadow: '0 0 0 0 rgba(255, 152, 0, 0)',
+                      },
+                    },
+                  }}
+                >
                   Adicionar ao Pedido
                 </Button>
               </Grid>
@@ -336,6 +375,66 @@ export default function Home({ isLoggedIn, onLoginClick }) {
           </Container>
         </Paper>
       )}
+
+      {/* Modal Cross-Selling */}
+      <Dialog open={crossSellOpen} onClose={() => setCrossSellOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', color: 'primary.main', fontSize: '1.5rem' }}>
+          Ótima escolha! 🍪
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" textAlign="center" mb={3} color="text.secondary">
+            Que tal aproveitar e levar também?
+          </Typography>
+          <Grid container spacing={2}>
+            {crossSellItems.map(prod => {
+              const coverImage = prod.imagens?.find(img => img.eh_capa)?.imagem || prod.imagens?.[0]?.imagem;
+              return (
+                <Grid item xs={6} key={prod.id}>
+                  <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderRadius: 2 }}>
+                     {coverImage && (
+                        <CardMedia
+                          component="img"
+                          height="120"
+                          image={coverImage}
+                          alt={prod.nome}
+                          sx={{ objectFit: 'cover' }}
+                        />
+                      )}
+                    <CardContent sx={{ flexGrow: 1, p: 1.5, textAlign: 'center' }}>
+                      <Typography variant="subtitle2" fontWeight="bold" noWrap>{prod.nome}</Typography>
+                      <Typography variant="body2" color="primary" fontWeight="bold">R$ {Number(prod.preco_venda).toFixed(2)}</Typography>
+                    </CardContent>
+                    <CardActions sx={{ justifyContent: 'center', pb: 2 }}>
+                      <Button 
+                        variant="contained" 
+                        size="small" 
+                        onClick={() => handleQtyChange(prod.id, 1)}
+                        startIcon={<Add />}
+                        sx={{ borderRadius: 4 }}
+                      >
+                        Adicionar
+                      </Button>
+                    </CardActions>
+                  </Card>
+                </Grid>
+              );
+            })}
+          </Grid>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'center', pb: 3, gap: 2 }}>
+          <Button onClick={() => setCrossSellOpen(false)} color="inherit" sx={{ borderRadius: 4 }}>
+            Continuar Comprando
+          </Button>
+          <Button 
+            onClick={() => { setCrossSellOpen(false); handleCheckout(); }} 
+            variant="contained" 
+            color="primary"
+            sx={{ borderRadius: 4, px: 4 }}
+          >
+            Finalizar Pedido
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
