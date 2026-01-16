@@ -321,21 +321,17 @@ export default function App() {
                 Contato
               </Typography>
               <Typography variant="body2" display="block" sx={{ mb: 0.5 }}>📍 Três de Maio - RS</Typography>
-              <Typography variant="body2" display="block" sx={{ mb: 0.5 }}>📞 (55) 99999-9999</Typography>
-              <Typography variant="body2" display="block">✉️ contato@tkookies.com.br</Typography>
+              <Typography variant="body2" display="block" sx={{ mb: 0.5 }}>📞 (55) 9 9731 2557</Typography>
             </Grid>
             <Grid item xs={12} md={4}>
               <Typography variant="h6" fontWeight="bold" gutterBottom>
                 Redes Sociais
               </Typography>
               <Box display="flex" gap={1}>
-                <IconButton color="inherit" href="https://instagram.com" target="_blank" aria-label="Instagram">
+                <IconButton color="inherit" href="https://www.instagram.com/tkookies_/" target="_blank" aria-label="Instagram">
                   <Instagram />
                 </IconButton>
-                <IconButton color="inherit" href="https://wa.me/55999999999" target="_blank" aria-label="WhatsApp">
-                  <WhatsApp />
-                </IconButton>
-                <IconButton color="inherit" href="https://facebook.com" target="_blank" aria-label="Facebook">
+                <IconButton color="inherit" href="https://www.facebook.com/tkookiestm" target="_blank" aria-label="Facebook">
                   <Facebook />
                 </IconButton>
               </Box>
