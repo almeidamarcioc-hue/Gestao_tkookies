@@ -19,6 +19,7 @@ import Inventory from "./pages/Inventory";
 import Settings from "./pages/Settings";
 import ClientRegister from "./pages/ClientRegister";
 import ClientProfile from "./pages/ClientProfile";
+import api from "./services/api";
 
 const theme = createTheme({
   palette: {
@@ -127,19 +128,13 @@ export default function App() {
 
   const handleClientLogin = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:3333"}/clientes/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(clientLoginData)
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setClientUser(data);
-        setClientLoginOpen(false);
-      } else {
-        alert(data.error || "Erro no login");
-      }
-    } catch (err) { alert("Erro de conexão"); }
+      const res = await api.post("/clientes/login", clientLoginData);
+      setClientUser(res.data);
+      setClientLoginOpen(false);
+    } catch (err) {
+      const msg = err.response?.data?.error || "Erro no login";
+      alert(msg);
+    }
   };
 
   return (
