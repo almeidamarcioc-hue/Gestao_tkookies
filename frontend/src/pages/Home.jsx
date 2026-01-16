@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Box, Typography, Button, Container, Paper, Grid, Card, CardMedia, CardContent, CardActions, IconButton, Badge, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
-import { AddCircleOutline, ListAlt, Inventory2, People, RestaurantMenu, PointOfSale, Add, Remove, ShoppingCart, LocalOffer } from "@mui/icons-material";
+import { AddCircleOutline, ListAlt, Inventory2, People, RestaurantMenu, PointOfSale, Add, Remove, ShoppingBag, LocalOffer } from "@mui/icons-material";
 import api from "../services/api";
 
 export default function Home({ isLoggedIn, onLoginClick }) {
@@ -18,6 +18,8 @@ export default function Home({ isLoggedIn, onLoginClick }) {
   const [cart, setCart] = useState({}); // { id: quantidade }
   const [crossSellOpen, setCrossSellOpen] = useState(false);
   const [crossSellItems, setCrossSellItems] = useState([]);
+  const [animateBag, setAnimateBag] = useState(false);
+  const prevTotalItems = useRef(0);
 
   useEffect(() => {
     api.get("/configuracoes").then(res => {
@@ -107,6 +109,15 @@ export default function Home({ isLoggedIn, onLoginClick }) {
         : Number(prod?.preco_venda) || 0;
     return acc + (qty * preco);
   }, 0);
+
+  useEffect(() => {
+    if (totalItems > prevTotalItems.current) {
+      setAnimateBag(true);
+      const timer = setTimeout(() => setAnimateBag(false), 500);
+      return () => clearTimeout(timer);
+    }
+    prevTotalItems.current = totalItems;
+  }, [totalItems]);
 
   return (
     <Box>
@@ -365,7 +376,20 @@ export default function Home({ isLoggedIn, onLoginClick }) {
           <Container maxWidth="lg" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box display="flex" alignItems="center" gap={2}>
               <Badge badgeContent={totalItems} color="primary">
-                <ShoppingCart color="action" />
+                <ShoppingBag 
+                  color="action" 
+                  sx={{
+                    animation: animateBag ? 'swing 0.5s ease-in-out' : 'none',
+                    '@keyframes swing': {
+                      '0%': { transform: 'rotate(0deg)' },
+                      '20%': { transform: 'rotate(15deg)' },
+                      '40%': { transform: 'rotate(-10deg)' },
+                      '60%': { transform: 'rotate(5deg)' },
+                      '80%': { transform: 'rotate(-5deg)' },
+                      '100%': { transform: 'rotate(0deg)' }
+                    }
+                  }}
+                />
               </Badge>
               <Typography variant="h6" fontWeight="bold">Total: R$ {totalPrice.toFixed(2)}</Typography>
             </Box>

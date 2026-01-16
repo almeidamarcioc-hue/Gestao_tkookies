@@ -7,6 +7,7 @@ import {
 } from "@mui/material";
 import { Delete, Add, Print, Usb } from "@mui/icons-material";
 import { printOrder } from "../utils/printOrder";
+import confetti from "canvas-confetti";
 
 export default function OrderForm() {
   const navigate = useNavigate();
@@ -136,11 +137,22 @@ export default function OrderForm() {
       if (id) {
         await api.put(`/pedidos/${id}`, payload);
         alert("Pedido atualizado!");
+        navigate("/pedidos");
       } else {
         await api.post("/pedidos", payload);
-        alert("Pedido criado!");
+        
+        confetti({
+          particleCount: 150,
+          spread: 70,
+          origin: { y: 0.6 },
+          zIndex: 9999
+        });
+
+        setTimeout(() => {
+          alert("Pedido criado!");
+          navigate("/pedidos");
+        }, 1000);
       }
-      navigate("/pedidos");
     } catch (err) {
       alert("Erro ao salvar pedido");
     }
