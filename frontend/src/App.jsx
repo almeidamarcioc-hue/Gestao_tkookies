@@ -21,6 +21,7 @@ import ClientRegister from "./pages/ClientRegister";
 import ClientProfile from "./pages/ClientProfile";
 import Cart from "./pages/Cart";
 import OrderConfirmation from "./pages/OrderConfirmation";
+import ClientOrders from "./pages/ClientOrders";
 import api from "./services/api";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AccessDenied from "./pages/AccessDenied";
@@ -290,6 +291,7 @@ export default function App() {
                clientUser ? (
                  <>
                    <ListItem disablePadding><ListItemButton component={Link} to="/perfil"><ListItemText primary="Meu Perfil" /></ListItemButton></ListItem>
+                   <ListItem disablePadding><ListItemButton component={Link} to="/meus-pedidos"><ListItemText primary="Meus Pedidos" /></ListItemButton></ListItem>
                    <ListItem disablePadding><ListItemButton onClick={handleLogout}><ListItemText primary="SAIR" sx={{ color: 'error.main' }} /></ListItemButton></ListItem>
                  </>
                ) : (
@@ -308,6 +310,7 @@ export default function App() {
           <Route path="/perfil" element={<ClientProfile user={clientUser} onUserUpdate={setClientUser} />} />
           <Route path="/carrinho" element={<Cart cart={cart} updateQuantity={updateCartQuantity} removeFromCart={removeFromCart} clearCart={clearCart} clientUser={clientUser} />} />
           <Route path="/pedido-confirmado" element={<OrderConfirmation />} />
+          <Route path="/meus-pedidos" element={<ProtectedRoute isAllowed={!!clientUser}><ClientOrders clientUser={clientUser} /></ProtectedRoute>} />
           <Route path="/acesso-negado" element={<AccessDenied isLoggedIn={isLoggedIn || !!clientUser} onLoginClick={() => setClientLoginOpen(true)} />} />
           
           {/* Rotas Administrativas Protegidas */}

@@ -60,7 +60,7 @@ export default function OrderConfirmation() {
         </Typography>
 
         <Box sx={{ mt: 4, display: 'flex', flexDirection: 'column', gap: 2, width: '100%' }}>
-          <Button variant="contained" size="large" startIcon={<ReceiptLong />} component={Link} to="/pedidos" fullWidth sx={{ borderRadius: 50, py: 1.5 }}>
+          <Button variant="contained" size="large" startIcon={<ReceiptLong />} component={Link} to="/meus-pedidos" fullWidth sx={{ borderRadius: 50, py: 1.5 }}>
             Acompanhar Meus Pedidos
           </Button>
           
