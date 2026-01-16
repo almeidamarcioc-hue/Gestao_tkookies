@@ -124,6 +124,7 @@ export default function App() {
     setIsLoggedIn(false);
     setClientUser(null);
     handleClose();
+    setRedirectTo("/");
   };
 
   const handleClientLogin = async () => {
@@ -141,7 +142,7 @@ export default function App() {
       setClientUser(res.data);
       setClientLoginOpen(false);
       setClientLoginData({ login: "", senha: "" });
-      setRedirectTo("/pedidos/novo");
+      setRedirectTo("/");
     } catch (err) {
       const msg = err.response?.data?.error || "Erro no login";
       alert(msg);
