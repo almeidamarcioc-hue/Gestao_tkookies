@@ -137,9 +137,9 @@ export default function Home({ isLoggedIn, onLoginClick }) {
       }}>
         <Container maxWidth="lg">
           <Box display="flex" justifyContent="center">
-            <Paper elevation={3} sx={{ p: 4, borderRadius: 4, textAlign: 'center', bgcolor: 'rgba(255, 255, 255, 0.9)', maxWidth: 600, width: '100%' }}>
+            <Paper elevation={3} sx={{ p: { xs: 2, md: 4 }, borderRadius: 4, textAlign: 'center', bgcolor: 'rgba(255, 255, 255, 0.9)', maxWidth: 600, width: '100%' }}>
               <Box mb={4}>
-                <Typography variant="h2" fontWeight="900" color="primary" sx={{ letterSpacing: '-1px', textShadow: '2px 2px 0px #D7CCC8', mb: 1 }}>
+                <Typography variant="h2" fontWeight="900" color="primary" sx={{ letterSpacing: '-1px', textShadow: '2px 2px 0px #D7CCC8', mb: 1, fontSize: { xs: '2.5rem', md: '3.75rem' } }}>
                   {config.home_title}
                 </Typography>
                 <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 500 }}>

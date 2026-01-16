@@ -52,7 +52,7 @@ export default function Orders() {
         <Button variant="contained" startIcon={<Add />} component={Link} to="/pedidos/novo">Novo Pedido</Button>
       </Box>
 
-      <Paper>
+      <Paper sx={{ width: '100%', overflowX: 'auto' }}>
         <Table>
           <TableHead>
             <TableRow>

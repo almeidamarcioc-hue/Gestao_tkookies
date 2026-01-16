@@ -1,7 +1,8 @@
 // App.jsx
 import { useState } from "react";
 import { BrowserRouter, Routes, Route, Link, Navigate } from "react-router-dom";
-import { AppBar, Toolbar, Button, Box, Typography, Menu, MenuItem, createTheme, ThemeProvider, CssBaseline, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from "@mui/material";
+import { AppBar, Toolbar, Button, Box, Typography, Menu, MenuItem, createTheme, ThemeProvider, CssBaseline, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, Drawer, List, ListItem, ListItemButton, ListItemText, Divider, Container, Grid } from "@mui/material";
+import { Menu as MenuIcon, Instagram, WhatsApp, Facebook } from "@mui/icons-material";
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
 import Ingredients from "./pages/Ingredients";
@@ -85,6 +86,7 @@ export default function App() {
   const [loginOpen, setLoginOpen] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const openCad = Boolean(anchorCad);
   const openCons = Boolean(anchorCons);
@@ -94,6 +96,10 @@ export default function App() {
     setAnchorCad(null);
     setAnchorCons(null);
     setAnchorPed(null);
+  };
+
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
   };
 
   const handleLogin = () => {
@@ -116,12 +122,22 @@ export default function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
     <BrowserRouter>
+      <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <AppBar position="sticky" sx={{ top: 0, zIndex: 1100 }}>
         <Toolbar>
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            edge="start"
+            onClick={handleDrawerToggle}
+            sx={{ mr: 2, display: { md: 'none' } }}
+          >
+            <MenuIcon />
+          </IconButton>
           <Typography variant="h5" component={Link} to="/" sx={{ flexGrow: 1, fontWeight: '900', textDecoration: 'none', color: 'primary.main', letterSpacing: '-0.5px' }}>
             🍪 TKookies
           </Typography>
-          <Box display="flex" gap={1}>
+          <Box display={{ xs: 'none', md: 'flex' }} gap={1}>
             <Button color="inherit" component={Link} to="/">HOME</Button>
             
             {isLoggedIn ? (
@@ -160,7 +176,44 @@ export default function App() {
           </Box>
         </Toolbar>
       </AppBar>
-      <Box sx={{ py: 4, minHeight: '100vh' }}>
+
+      {/* Menu Mobile (Drawer) */}
+      <Drawer
+        variant="temporary"
+        open={mobileOpen}
+        onClose={handleDrawerToggle}
+        ModalProps={{ keepMounted: true }}
+        sx={{
+          display: { xs: 'block', md: 'none' },
+          '& .MuiDrawer-paper': { boxSizing: 'border-box', width: 250 },
+        }}
+      >
+        <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
+          <Typography variant="h6" sx={{ my: 2, fontWeight: 'bold', color: 'primary.main' }}>
+            🍪 TKookies
+          </Typography>
+          <Divider />
+          <List>
+            <ListItem disablePadding><ListItemButton component={Link} to="/"><ListItemText primary="HOME" /></ListItemButton></ListItem>
+            {isLoggedIn ? (
+              <>
+                <ListItem disablePadding><ListItemButton component={Link} to="/pedidos/novo"><ListItemText primary="Novo Pedido" /></ListItemButton></ListItem>
+                <ListItem disablePadding><ListItemButton component={Link} to="/pedidos"><ListItemText primary="Pedidos" /></ListItemButton></ListItem>
+                <ListItem disablePadding><ListItemButton component={Link} to="/produtos"><ListItemText primary="Produtos" /></ListItemButton></ListItem>
+                <ListItem disablePadding><ListItemButton component={Link} to="/clientes"><ListItemText primary="Clientes" /></ListItemButton></ListItem>
+                <ListItem disablePadding><ListItemButton component={Link} to="/combos"><ListItemText primary="Combos" /></ListItemButton></ListItem>
+                <ListItem disablePadding><ListItemButton component={Link} to="/estoque"><ListItemText primary="Estoque" /></ListItemButton></ListItem>
+                <ListItem disablePadding><ListItemButton component={Link} to="/configuracoes"><ListItemText primary="Configurações" /></ListItemButton></ListItem>
+                <ListItem disablePadding><ListItemButton onClick={handleLogout}><ListItemText primary="SAIR" sx={{ color: 'error.main' }} /></ListItemButton></ListItem>
+              </>
+            ) : (
+              <ListItem disablePadding><ListItemButton onClick={() => setLoginOpen(true)}><ListItemText primary="Acesso Restrito" /></ListItemButton></ListItem>
+            )}
+          </List>
+        </Box>
+      </Drawer>
+
+      <Box component="main" sx={{ flexGrow: 1, py: 4 }}>
         <Routes>
           <Route path="/" element={<Home isLoggedIn={isLoggedIn} onLoginClick={() => setLoginOpen(true)} />} />
           
@@ -186,6 +239,51 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           )}
         </Routes>
+      </Box>
+
+      {/* Rodapé */}
+      <Box component="footer" sx={{ bgcolor: 'primary.main', color: 'white', py: 6, mt: 'auto' }}>
+        <Container maxWidth="lg">
+          <Grid container spacing={4}>
+            <Grid item xs={12} md={4}>
+              <Typography variant="h6" fontWeight="bold" gutterBottom>
+                🍪 TKookies
+              </Typography>
+              <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                Um pedacinho de felicidade em cada mordida. Feito com amor e os melhores ingredientes para você.
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Typography variant="h6" fontWeight="bold" gutterBottom>
+                Contato
+              </Typography>
+              <Typography variant="body2" display="block" sx={{ mb: 0.5 }}>📍 Três de Maio - RS</Typography>
+              <Typography variant="body2" display="block" sx={{ mb: 0.5 }}>📞 (55) 99999-9999</Typography>
+              <Typography variant="body2" display="block">✉️ contato@tkookies.com.br</Typography>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Typography variant="h6" fontWeight="bold" gutterBottom>
+                Redes Sociais
+              </Typography>
+              <Box display="flex" gap={1}>
+                <IconButton color="inherit" href="https://instagram.com" target="_blank" aria-label="Instagram">
+                  <Instagram />
+                </IconButton>
+                <IconButton color="inherit" href="https://wa.me/55999999999" target="_blank" aria-label="WhatsApp">
+                  <WhatsApp />
+                </IconButton>
+                <IconButton color="inherit" href="https://facebook.com" target="_blank" aria-label="Facebook">
+                  <Facebook />
+                </IconButton>
+              </Box>
+            </Grid>
+          </Grid>
+          <Divider sx={{ my: 3, bgcolor: 'rgba(255,255,255,0.2)' }} />
+          <Typography variant="body2" align="center" sx={{ opacity: 0.6 }}>
+            © {new Date().getFullYear()} TKookies. Todos os direitos reservados.
+          </Typography>
+        </Container>
+      </Box>
       </Box>
 
       {/* Login Dialog */}

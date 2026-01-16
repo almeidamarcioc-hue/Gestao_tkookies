@@ -299,7 +299,7 @@ export default function Dashboard() {
         onChange={(e) => setSearchTerm(e.target.value)}
       />
 
-      <Paper>
+      <Paper sx={{ width: '100%', overflowX: 'auto' }}>
         <Table>
           <TableHead>
             <TableRow>
