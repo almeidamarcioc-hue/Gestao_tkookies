@@ -21,7 +21,9 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
-echo "📦 Adicionando arquivos..."
+echo "👤 Usuário Git configurado: $(git config user.name) <$(git config user.email)>"
+
+echo "� Adicionando arquivos..."
 git add .
 
 echo "💾 Criando commit..."
