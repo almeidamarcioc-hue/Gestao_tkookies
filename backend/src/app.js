@@ -47,6 +47,11 @@ app.get("/api/health", async (req, res) => {
   }
 });
 
+// Rota raiz para verificar se a API está online
+app.get("/", (req, res) => {
+  res.json({ message: "Backend Cookie ERP Online", timestamp: new Date() });
+});
+
 app.use("/ingredientes", ingredientRoutes);
 app.use("/produtos", productRoutes);
 app.use("/clientes", clientsRouter);

@@ -6,6 +6,7 @@ const router = Router();
 
 // ROTA DE MIGRAÇÃO (Para garantir que tabelas/colunas existam no Vercel)
 router.get("/migrate", async (req, res) => {
+  console.log("Iniciando migração do banco de dados...");
   try {
     const logs = await initDatabase();
     
