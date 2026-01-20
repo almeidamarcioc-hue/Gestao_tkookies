@@ -19,7 +19,8 @@ const dbConfig = {
   } : undefined,
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
+  connectTimeout: 10000 // 10 segundos para timeout de conexão
 };
 
 // Log de diagnóstico para verificar variáveis no Vercel (sem expor senha)
