@@ -1,5 +1,4 @@
 import express from "express";
-import cors from "cors";
 import { pool } from "./db/index.js";
 import ingredientRoutes from "./routes/ingredients.js";
 import productRoutes from "./routes/products.js";
@@ -12,11 +11,14 @@ import settingsRouter from "./routes/settings.js";
 
 const app = express();
 
-app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
-}));
-app.options(/.*/, cors()); // Garante tratamento de pre-flight para todas as rotas
+// Middleware CORS manual para garantir compatibilidade total
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  if (req.method === "OPTIONS") return res.sendStatus(200);
+  next();
+});
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
