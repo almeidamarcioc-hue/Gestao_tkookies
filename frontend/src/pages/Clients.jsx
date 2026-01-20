@@ -122,21 +122,21 @@ export default function Clients() {
           {editItem && (
             <Box sx={{ mt: 1 }}>
               <Grid container spacing={2}>
-                <Grid size={{ xs: 12, md: 8 }}>
+                <Grid item xs={12} md={8}>
                   <TextField label="Nome" fullWidth value={editItem.nome} onChange={e => setEditItem({...editItem, nome: e.target.value})} />
                 </Grid>
-                <Grid size={{ xs: 12, md: 4 }}>
+                <Grid item xs={12} md={4}>
                   <TextField label="Telefone" fullWidth value={editItem.telefone} onChange={e => setEditItem({...editItem, telefone: e.target.value})} />
                 </Grid>
-                <Grid size={{ xs: 12, md: 10 }}>
+                <Grid item xs={12} md={10}>
                   <TextField label="Endereço" fullWidth value={editItem.endereco} onChange={e => setEditItem({...editItem, endereco: e.target.value})} />
                 </Grid>
-                <Grid size={{ xs: 12, md: 2 }}>
+                <Grid item xs={12} md={2}>
                   <TextField label="Número" fullWidth value={editItem.numero} onChange={e => setEditItem({...editItem, numero: e.target.value})} />
                 </Grid>
-                <Grid size={{ xs: 12, md: 4 }}><TextField label="Complemento" fullWidth value={editItem.complemento} onChange={e => setEditItem({...editItem, complemento: e.target.value})} /></Grid>
-                <Grid size={{ xs: 12, md: 4 }}><TextField label="Bairro" fullWidth value={editItem.bairro} onChange={e => setEditItem({...editItem, bairro: e.target.value})} /></Grid>
-                <Grid size={{ xs: 12, md: 4 }}><TextField label="Cidade" fullWidth value={editItem.cidade} onChange={e => setEditItem({...editItem, cidade: e.target.value})} /></Grid>
+                <Grid item xs={12} md={4}><TextField label="Complemento" fullWidth value={editItem.complemento} onChange={e => setEditItem({...editItem, complemento: e.target.value})} /></Grid>
+                <Grid item xs={12} md={4}><TextField label="Bairro" fullWidth value={editItem.bairro} onChange={e => setEditItem({...editItem, bairro: e.target.value})} /></Grid>
+                <Grid item xs={12} md={4}><TextField label="Cidade" fullWidth value={editItem.cidade} onChange={e => setEditItem({...editItem, cidade: e.target.value})} /></Grid>
               </Grid>
             </Box>
           )}

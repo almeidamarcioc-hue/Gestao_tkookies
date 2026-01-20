@@ -76,31 +76,31 @@ export default function ClientForm() {
       <Typography variant="h4" mb={3} fontWeight="bold">{editId ? "Editar Cliente" : "Novo Cliente"}</Typography>
       <Paper sx={{ p: 3, mb: 4 }}>
         <Grid container spacing={2}>
-          <Grid size={{ xs: 12, md: 8 }}>
+          <Grid item xs={12} md={8}>
             <TextField label="Nome Completo" fullWidth value={nome} onChange={(e) => setNome(e.target.value)} />
           </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid item xs={12} md={4}>
             <TextField label="Telefone" fullWidth value={telefone} onChange={(e) => setTelefone(e.target.value)} />
           </Grid>
           
-          <Grid size={{ xs: 12, md: 10 }}>
+          <Grid item xs={12} md={10}>
             <TextField label="Endereço" fullWidth value={endereco} onChange={(e) => setEndereco(e.target.value)} />
           </Grid>
-          <Grid size={{ xs: 12, md: 2 }}>
+          <Grid item xs={12} md={2}>
             <TextField label="Número" fullWidth value={numero} onChange={(e) => setNumero(e.target.value)} />
           </Grid>
 
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid item xs={12} md={4}>
             <TextField label="Complemento" fullWidth value={complemento} onChange={(e) => setComplemento(e.target.value)} />
           </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid item xs={12} md={4}>
             <TextField label="Bairro" fullWidth value={bairro} onChange={(e) => setBairro(e.target.value)} />
           </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid item xs={12} md={4}>
             <TextField label="Cidade" fullWidth value={cidade} onChange={(e) => setCidade(e.target.value)} />
           </Grid>
 
-          <Grid size={12}>
+          <Grid item xs={12}>
             <Box display="flex" gap={2}>
               <Button variant="contained" fullWidth size="large" onClick={salvarCliente} sx={{ mt: 2 }}>
                 {editId ? "Atualizar" : "Cadastrar"}

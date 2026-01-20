@@ -250,7 +250,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
             <Box sx={{ position: 'absolute', top: 0, right: 0, bgcolor: '#ff9800', color: 'white', px: 4, py: 1, borderBottomLeftRadius: 16, boxShadow: 2, zIndex: 1 }}>
               <Typography fontWeight="900" variant="h6" sx={{ letterSpacing: 1 }}>OFERTA ESPECIAL</Typography>
             </Box>
-            <Grid container spacing={4} alignItems="center} sx={{ mt: 0 }}> {/* Adicionado mt:0 para evitar espaçamento extra */}
+            <Grid container spacing={4} alignItems="center" sx={{ mt: 0 }}>
               <Grid item xs={12} md={4}>
                 <Box 
                   component="img" 
@@ -412,7 +412,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           <Typography variant="body1" textAlign="center" mb={3} color="text.secondary">
             Que tal aproveitar e levar também?
           </Typography>
-          <Grid container spacing={2} sx={{ mt: 0 }}> {/* Adicionado mt:0 para evitar espaçamento extra */}
+          <Grid container spacing={2}>
             {crossSellItems.map(prod => {
               const coverImage = prod.imagens?.find(img => img.eh_capa)?.imagem || prod.imagens?.[0]?.imagem;
               return (
