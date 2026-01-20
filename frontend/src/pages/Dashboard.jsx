@@ -435,7 +435,7 @@ export default function Dashboard() {
               </Box>
 
               <Grid container spacing={2} mb={3}>
-                <Grid size={8}>
+                <Grid item xs={8}>
                   <TextField 
                     label="Nome do Produto" 
                     fullWidth 
@@ -443,7 +443,7 @@ export default function Dashboard() {
                     onChange={(e) => setEditProduct({...editProduct, nome: e.target.value})} 
                   />
                 </Grid>
-                <Grid size={4}>
+                <Grid item xs={4}>
                   <TextField 
                     label="Rendimento" 
                     type="number" fullWidth 
@@ -452,7 +452,7 @@ export default function Dashboard() {
                 </Grid>
                 
                 {/* Grupo Venda */}
-                <Grid size={6}>
+                <Grid item xs={6}>
                   <Paper variant="outlined" sx={{ p: 2, bgcolor: '#EFEBE9', height: '100%', borderColor: '#D7CCC8' }}>
                     <Typography variant="subtitle2" color="primary" fontWeight="bold" mb={2}>VENDA</Typography>
                     <Box display="flex" flexDirection="column" gap={2}>
@@ -470,7 +470,7 @@ export default function Dashboard() {
                 </Grid>
 
                 {/* Grupo Revenda */}
-                <Grid size={6}>
+                <Grid item xs={6}>
                   <Paper variant="outlined" sx={{ p: 2, bgcolor: '#FFF8E1', height: '100%', borderColor: '#FFE0B2' }}>
                     <Typography variant="subtitle2" color="secondary" fontWeight="bold" mb={2}>REVENDA</Typography>
                     <Box display="flex" flexDirection="column" gap={2}>

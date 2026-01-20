@@ -66,7 +66,7 @@ export default function Settings() {
         <Typography variant="h6" mb={2}>Personalização da Home</Typography>
         
         <Grid container spacing={3}>
-          <Grid size={12}>
+          <Grid item xs={12}>
             <TextField 
               label="Título Principal" 
               fullWidth 
@@ -75,7 +75,7 @@ export default function Settings() {
               placeholder="Ex: TKookies"
             />
           </Grid>
-          <Grid size={12}>
+          <Grid item xs={12}>
             <TextField 
               label="Subtítulo" 
               fullWidth 
@@ -84,7 +84,7 @@ export default function Settings() {
               placeholder="Ex: Um pedacinho de felicidade..."
             />
           </Grid>
-          <Grid size={12}>
+          <Grid item xs={12}>
             <TextField 
               label="Texto de Rodapé / Localização" 
               fullWidth 
@@ -94,7 +94,7 @@ export default function Settings() {
             />
           </Grid>
 
-          <Grid size={12}>
+          <Grid item xs={12}>
             <TextField 
               label="Valor do Frete (Entrega)" 
               fullWidth 
@@ -106,7 +106,7 @@ export default function Settings() {
             />
           </Grid>
           
-          <Grid size={12}>
+          <Grid item xs={12}>
             <Typography variant="subtitle2" mb={1}>Imagem de Fundo</Typography>
             <Box display="flex" alignItems="center" gap={2}>
               {homeBg && (
@@ -126,7 +126,7 @@ export default function Settings() {
             </Box>
           </Grid>
 
-          <Grid size={12}>
+          <Grid item xs={12}>
             <Box display="flex" gap={2}>
               <Button variant="contained" size="large" onClick={handleSave}>
                 Salvar Configurações

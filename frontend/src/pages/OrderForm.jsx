@@ -262,7 +262,7 @@ export default function OrderForm({ clientUser, isAdmin }) {
       
       <Paper sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={2}>
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid item xs={12} md={6}>
             <Box display="flex" gap={1}>
               <Autocomplete
                 fullWidth
@@ -284,10 +284,10 @@ export default function OrderForm({ clientUser, isAdmin }) {
               </Typography>
             )}
           </Grid>
-          <Grid size={{ xs: 6, md: 3 }}>
+          <Grid item xs={6} md={3}>
             <TextField type="date" label="Data" fullWidth InputLabelProps={{ shrink: true }} value={dataPedido} onChange={e => setDataPedido(e.target.value)} disabled={isCancelled} />
           </Grid>
-          <Grid size={{ xs: 6, md: 3 }}>
+          <Grid item xs={6} md={3}>
             <TextField select label="Status" fullWidth value={status} onChange={e => setStatus(e.target.value)} disabled={isCancelled}>
               <MenuItem value="Novo">Novo</MenuItem>
               <MenuItem value="Finalizado">Finalizado</MenuItem>
@@ -340,11 +340,11 @@ export default function OrderForm({ clientUser, isAdmin }) {
 
       <Paper sx={{ p: 3 }}>
         <Grid container spacing={2}>
-          <Grid size={{ xs: 12, md: 4 }}><TextField select label="Forma de Pagamento" fullWidth value={formaPagamento} onChange={e => setFormaPagamento(e.target.value)} disabled={isCancelled}><MenuItem value="Pix">Pix</MenuItem><MenuItem value="Dinheiro">Dinheiro</MenuItem><MenuItem value="Cartão">Cartão</MenuItem></TextField></Grid>
-          <Grid size={{ xs: 12, md: 4 }}><TextField label="Frete (R$)" type="number" fullWidth value={frete} onChange={e => setFrete(e.target.value)} disabled={isCancelled} /></Grid>
-          <Grid size={{ xs: 12, md: 4 }}><Typography variant="h5" align="right" color="primary" fontWeight="bold">Total: R$ {totalPedido.toFixed(2)}</Typography></Grid>
-          <Grid size={12}><TextField label="Observações" multiline rows={2} fullWidth value={observacao} onChange={e => setObservacao(e.target.value)} disabled={isCancelled} /></Grid>
-          <Grid size={12}><Button variant="contained" fullWidth size="large" onClick={salvarPedido} disabled={isCancelled}>SALVAR PEDIDO</Button></Grid>
+          <Grid item xs={12} md={4}><TextField select label="Forma de Pagamento" fullWidth value={formaPagamento} onChange={e => setFormaPagamento(e.target.value)} disabled={isCancelled}><MenuItem value="Pix">Pix</MenuItem><MenuItem value="Dinheiro">Dinheiro</MenuItem><MenuItem value="Cartão">Cartão</MenuItem></TextField></Grid>
+          <Grid item xs={12} md={4}><TextField label="Frete (R$)" type="number" fullWidth value={frete} onChange={e => setFrete(e.target.value)} disabled={isCancelled} /></Grid>
+          <Grid item xs={12} md={4}><Typography variant="h5" align="right" color="primary" fontWeight="bold">Total: R$ {totalPedido.toFixed(2)}</Typography></Grid>
+          <Grid item xs={12}><TextField label="Observações" multiline rows={2} fullWidth value={observacao} onChange={e => setObservacao(e.target.value)} disabled={isCancelled} /></Grid>
+          <Grid item xs={12}><Button variant="contained" fullWidth size="large" onClick={salvarPedido} disabled={isCancelled}>SALVAR PEDIDO</Button></Grid>
         </Grid>
       </Paper>
 

@@ -217,7 +217,7 @@ export default function ComboForm() {
 
         <Box sx={{ bgcolor: '#f5f5f5', p: 3, borderRadius: 2, mt: 2 }}>
             <Grid container spacing={3}>
-                <Grid size={{ xs: 12, md: 6 }}>
+                <Grid item xs={12} md={6}>
                     <Typography variant="subtitle1" fontWeight="bold" color="primary" gutterBottom>SIMULAÇÃO COMBO</Typography>
                     <Typography variant="body2" gutterBottom>Custo Produção: <strong>R$ {custoRealTotal.toFixed(2)}</strong></Typography>
                     
@@ -232,7 +232,7 @@ export default function ComboForm() {
                     {Number(precoVenda) < custoRealTotal && <Alert severity="error" sx={{ mt: 1 }}>Preço abaixo do custo de produção!</Alert>}
                 </Grid>
 
-                <Grid size={{ xs: 12, md: 6 }} sx={{ borderLeft: { md: '1px solid #e0e0e0' }, pl: { md: 3 } }}>
+                <Grid item xs={12} md={6} sx={{ borderLeft: { md: '1px solid #e0e0e0' }, pl: { md: 3 } }}>
                     <Typography variant="subtitle1" fontWeight="bold" color="text.secondary" gutterBottom>VENDA INDIVIDUAL (Comparativo)</Typography>
                     <Typography variant="body2">Preço de Tabela: <strong>R$ {valorTotalIndividual.toFixed(2)}</strong></Typography>
                     <Typography variant="body2">Margem Original: {margemIndividual.toFixed(2)}%</Typography>

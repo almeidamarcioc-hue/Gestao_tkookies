@@ -318,7 +318,12 @@ router.post("/:id/imprimir", async (req, res) => {
   try {
     // 1. Carregar bibliotecas dinamicamente (para não quebrar se não estiverem instaladas)
     // Nota: É necessário instalar: npm install escpos escpos-usb
-    const escpos = await import('escpos');
+    let escpos;
+    try {
+      escpos = await import('escpos');
+    } catch (e) {
+      return res.status(500).json({ error: "Módulo de impressão não instalado no servidor." });
+    }
     
     // 2. Buscar dados do pedido
     const pedidoRes = await pool.query(`

@@ -320,7 +320,7 @@ export default function Products() {
 
         <Grid container spacing={3} mb={4}>
           {/* Bloco de Venda Direta */}
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid item xs={12} md={6}>
             <Paper variant="outlined" sx={{ p: 2, bgcolor: '#EFEBE9', height: '100%', borderColor: '#D7CCC8' }}>
               <Typography variant="subtitle1" color="primary" fontWeight="bold" mb={2}>Venda (Produção)</Typography>
               <Box display="flex" flexDirection="column" gap={2}>
@@ -338,7 +338,7 @@ export default function Products() {
           </Grid>
 
           {/* Bloco de Revenda */}
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid item xs={12} md={6}>
             <Paper variant="outlined" sx={{ p: 2, bgcolor: '#FFF8E1', height: '100%', borderColor: '#FFE0B2' }}>
               <Typography variant="subtitle1" color="secondary" fontWeight="bold" mb={2}>Revenda</Typography>
               <Box display="flex" flexDirection="column" gap={2}>
