@@ -5,7 +5,7 @@ dotenv.config();
 const dbConfig = {
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
+  password: process.env.DB_PASSWORD || "aqpoS8oXf927JGyH",
   database: process.env.DB_NAME,
   port: Number(process.env.DB_PORT) || 4000,
   ssl: {
@@ -48,7 +48,6 @@ const executeQuery = async (executor, text, params) => {
 
     return { rows: [], rowCount: 0 };
   } catch (error) {
-    console.error("Erro na query MySQL:", sql, "Params:", params, "Erro:", error);
     throw error;
   }
 };
