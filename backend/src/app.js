@@ -36,6 +36,10 @@ app.use((req, res, next) => {
   next();
 });
 
+// Rota para ignorar favicon requests e evitar poluir logs com 404
+app.get('/favicon.ico', (req, res) => res.status(204).send());
+app.get('/favicon.png', (req, res) => res.status(204).send());
+
 // Health Check
 app.get("/api/health", async (req, res) => {
   try {
