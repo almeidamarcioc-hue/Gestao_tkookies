@@ -8,10 +8,10 @@ const dbConfig = {
   password: process.env.DB_PASSWORD || "aqpoS8oXf927JGyH",
   database: process.env.DB_NAME,
   port: Number(process.env.DB_PORT) || 4000,
-  ssl: {
+  ssl: (process.env.DB_HOST && process.env.DB_HOST !== "localhost" && process.env.DB_HOST !== "127.0.0.1") ? {
     minVersion: 'TLSv1.2',
-    rejectUnauthorized: false // Alterado para false para evitar problemas com CAs auto-assinados ou genéricos em serverless, a menos que tenha o CA exato
-  },
+    rejectUnauthorized: false
+  } : undefined,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
@@ -48,6 +48,9 @@ const executeQuery = async (executor, text, params) => {
 
     return { rows: [], rowCount: 0 };
   } catch (error) {
+    if (error.code !== 'ER_DUP_FIELDNAME') {
+      console.error("Erro na query MySQL:", error.message);
+    }
     throw error;
   }
 };

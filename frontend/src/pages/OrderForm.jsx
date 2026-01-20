@@ -3,7 +3,7 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 import api from "../services/api";
 import { 
   Box, Button, TextField, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, 
-  Container, Grid, Autocomplete, MenuItem, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Alert 
+  Container, Autocomplete, MenuItem, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Alert, Grid 
 } from "@mui/material";
 import { Delete, Add, Print, Usb } from "@mui/icons-material";
 import { printOrder } from "../utils/printOrder";

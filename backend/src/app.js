@@ -12,7 +12,11 @@ import settingsRouter from "./routes/settings.js";
 
 const app = express();
 
-app.use(cors()); // Habilita CORS para todas as rotas e origens de forma segura e padrão
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -27,7 +31,7 @@ app.use((req, res, next) => {
 app.use((req, res, next) => {
   res.setHeader(
     "Content-Security-Policy",
-    "default-src 'self'; style-src 'self' 'unsafe-inline' https://www.gstatic.com https://fonts.googleapis.com; script-src 'self' 'unsafe-inline' https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https:;"
+    "default-src 'self'; style-src 'self' 'unsafe-inline' https://www.gstatic.com https://fonts.googleapis.com; script-src 'self' 'unsafe-inline' https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: http:; connect-src 'self' https: http:;"
   );
   next();
 });
@@ -56,5 +60,11 @@ app.use("/producao", productionRouter);
 app.use("/combos", combosRouter);
 app.use("/estoque", inventoryRouter);
 app.use("/configuracoes", settingsRouter);
+
+// Middleware de Tratamento de Erros Global
+app.use((err, req, res, next) => {
+  console.error("Erro interno:", err);
+  res.status(500).json({ error: "Erro interno do servidor", details: err.message });
+});
 
 export default app;

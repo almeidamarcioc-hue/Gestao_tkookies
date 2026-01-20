@@ -15,9 +15,9 @@ import {
   IconButton,
   Paper,
   Container,
-  Grid,
   FormControlLabel,
-  Checkbox
+  Checkbox,
+  Grid
 } from "@mui/material";
 
 import { Delete, CloudUpload, Star, StarBorder } from "@mui/icons-material";
