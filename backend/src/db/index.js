@@ -2,13 +2,18 @@ import mysql from "mysql2/promise";
 import dotenv from "dotenv";
 dotenv.config();
 
+// Verifica se estamos em ambiente de produção/nuvem para forçar SSL
+const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL;
+const dbHost = process.env.DB_HOST;
+
 const dbConfig = {
-  host: process.env.DB_HOST,
+  host: dbHost,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD || "aqpoS8oXf927JGyH",
   database: process.env.DB_NAME,
   port: Number(process.env.DB_PORT) || 4000,
-  ssl: (process.env.DB_HOST && process.env.DB_HOST !== "localhost" && process.env.DB_HOST !== "127.0.0.1") ? {
+  // Ativa SSL se for produção OU se o host não for localhost
+  ssl: (isProduction || (dbHost && dbHost !== "localhost" && dbHost !== "127.0.0.1")) ? {
     minVersion: 'TLSv1.2',
     rejectUnauthorized: false
   } : undefined,
@@ -16,6 +21,15 @@ const dbConfig = {
   connectionLimit: 10,
   queueLimit: 0
 };
+
+// Log de diagnóstico para verificar variáveis no Vercel (sem expor senha)
+console.log("🔌 Configuração do Banco:", {
+  host: dbConfig.host || "❌ INDEFINIDO",
+  user: dbConfig.user || "❌ INDEFINIDO",
+  port: dbConfig.port,
+  ssl: dbConfig.ssl ? "ATIVADO" : "DESATIVADO",
+  password: dbConfig.password ? "******" : "❌ INDEFINIDA"
+});
 
 const mysqlPool = mysql.createPool(dbConfig);
 

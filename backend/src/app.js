@@ -15,7 +15,7 @@ const app = express();
 app.use(cors({
   origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "X-CSRF-Token"]
 }));
 
 app.use(express.json({ limit: '50mb' }));
