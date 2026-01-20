@@ -154,7 +154,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
               </Box>
               
               {isLoggedIn ? (
-                <Grid container spacing={2}>
+                <Grid container spacing={2} sx={{ mt: 2 }}>
                   <Grid item xs={12}>
                     <Button 
                       variant="contained" 
@@ -162,7 +162,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                       fullWidth 
                       component={Link} 
                       to="/pedidos/novo" 
-                      startIcon={<AddCircleOutline />}
+                      startIcon={<AddCircleOutline />} // Corrigido para usar o ícone correto
                       sx={{ py: 2, fontSize: '1.1rem', borderRadius: 3 }}
                     >
                       Novo Pedido
@@ -175,7 +175,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                       size="large" 
                       fullWidth 
                       component={Link} 
-                      to="/pedidos" 
+                      to="/pedidos"
                       startIcon={<ListAlt />}
                       sx={{ py: 1.5, borderRadius: 3, height: '100%' }}
                     >
@@ -188,7 +188,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                       size="large" 
                       fullWidth 
                       component={Link} 
-                      to="/combos" 
+                      to="/combos"
                       startIcon={<PointOfSale />}
                       sx={{ py: 1.5, borderRadius: 3, height: '100%' }}
                     >
@@ -202,7 +202,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                       size="large" 
                       fullWidth 
                       component={Link} 
-                      to="/produtos" 
+                      to="/produtos"
                       startIcon={<RestaurantMenu />}
                       sx={{ py: 1.5, borderRadius: 3, height: '100%' }}
                     >
@@ -215,7 +215,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                       size="large" 
                       fullWidth 
                       component={Link} 
-                      to="/estoque" 
+                      to="/estoque"
                       startIcon={<Inventory2 />}
                       sx={{ py: 1.5, borderRadius: 3, height: '100%' }}
                     >
@@ -229,7 +229,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                       size="large" 
                       fullWidth 
                       component={Link} 
-                      to="/clientes" 
+                      to="/clientes"
                       startIcon={<People />}
                       sx={{ py: 1.5, borderRadius: 3 }}
                     >
@@ -250,7 +250,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
             <Box sx={{ position: 'absolute', top: 0, right: 0, bgcolor: '#ff9800', color: 'white', px: 4, py: 1, borderBottomLeftRadius: 16, boxShadow: 2, zIndex: 1 }}>
               <Typography fontWeight="900" variant="h6" sx={{ letterSpacing: 1 }}>OFERTA ESPECIAL</Typography>
             </Box>
-            <Grid container spacing={4} alignItems="center">
+            <Grid container spacing={4} alignItems="center} sx={{ mt: 0 }}> {/* Adicionado mt:0 para evitar espaçamento extra */}
               <Grid item xs={12} md={4}>
                 <Box 
                   component="img" 
@@ -412,7 +412,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           <Typography variant="body1" textAlign="center" mb={3} color="text.secondary">
             Que tal aproveitar e levar também?
           </Typography>
-          <Grid container spacing={2}>
+          <Grid container spacing={2} sx={{ mt: 0 }}> {/* Adicionado mt:0 para evitar espaçamento extra */}
             {crossSellItems.map(prod => {
               const coverImage = prod.imagens?.find(img => img.eh_capa)?.imagem || prod.imagens?.[0]?.imagem;
               return (

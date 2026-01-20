@@ -1,10 +1,7 @@
 import { Router } from "express";
 import { pool } from "../db/index.js";
-import { exec } from "child_process";
-import fs from "fs";
-import path from "path";
-import os from "os";
-import { EventEmitter } from "events";
+import { checkUsb, printUsb } from "../utils/printer.js"; // Importa as funções do utilitário
+
 
 const router = Router();
 
@@ -169,33 +166,10 @@ router.put("/:id", async (req, res) => {
 // DIAGNÓSTICO USB (Verifica se acha impressoras)
 router.get("/usb-check", async (req, res) => {
   try {
-    // Tenta importar a lib USB diretamente para listar dispositivos
-    const usb = await import('usb');
-    
-    // Compatibilidade entre versões diferentes da lib 'usb'
-    const getDeviceList = usb.getDeviceList || (usb.default && usb.default.getDeviceList);
-    
-    if (!getDeviceList) {
-      return res.status(500).json({ ok: false, error: "Driver USB não carregou corretamente." });
-    }
-
-    const list = getDeviceList();
-    
-    // Filtra dispositivos que se identificam como Impressora (Classe 7)
-    const printers = list.filter(d => {
-      try {
-        return d.configDescriptor?.interfaces?.some(iface => 
-          iface.some(conf => conf.bInterfaceClass === 7)
-        );
-      } catch { return false; }
-    }).map(d => ({
-      vid: '0x' + d.deviceDescriptor.idVendor.toString(16).toUpperCase(),
-      pid: '0x' + d.deviceDescriptor.idProduct.toString(16).toUpperCase()
-    }));
-
-    res.json({ ok: true, printers, count: printers.length });
+    const count = await checkUsb();
+    res.json({ ok: true, count });
   } catch (e) {
-    res.status(500).json({ ok: false, error: e.message });
+    res.status(500).json({ ok: false, error: e.message || "Erro ao verificar USB." });
   }
 });
 
@@ -270,62 +244,12 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-// Adapter para Impressora do Sistema (Mac/Linux via lp)
-class SystemAdapter extends EventEmitter {
-  constructor() {
-    super();
-    this.buffer = [];
-  }
-  open(callback) {
-    console.log("SystemAdapter: Abrindo conexão...");
-    if (callback) callback();
-  }
-  write(data, callback) {
-    // console.log("SystemAdapter: Escrevendo dados...", data.length, "bytes");
-    this.buffer.push(data);
-    if (callback) callback();
-  }
-  close(callback) {
-    const buffer = Buffer.concat(this.buffer);
-    const tempPath = path.join(os.tmpdir(), `print-${Date.now()}.bin`);
-    
-    try {
-      fs.writeFileSync(tempPath, buffer);
-      // Envia para a impressora padrão do sistema usando o comando 'lp'
-      // '-o raw' envia os comandos ESC/POS diretamente sem processamento do driver
-      console.log(`Enviando arquivo ${tempPath} para impressora do sistema (lp)...`);
-      exec(`lp -o raw "${tempPath}"`, (error, stdout, stderr) => {
-        if (error) {
-          console.error("Erro lp:", error);
-          console.error("Stderr:", stderr);
-        } else {
-          console.log("Impressão enviada com sucesso:", stdout);
-        }
-        try { fs.unlinkSync(tempPath); } catch(e){}
-        if (callback) callback();
-      });
-    } catch (e) {
-      console.error("Erro ao gravar arquivo de impressão:", e);
-      if (callback) callback();
-    }
-  }
-}
-
 // IMPRIMIR (USB Direto)
 router.post("/:id/imprimir", async (req, res) => {
   const { id } = req.params;
   
   try {
-    // 1. Carregar bibliotecas dinamicamente (para não quebrar se não estiverem instaladas)
-    // Nota: É necessário instalar: npm install escpos escpos-usb
-    let escpos;
-    try {
-      escpos = await import('escpos');
-    } catch (e) {
-      return res.status(500).json({ error: "Módulo de impressão não instalado no servidor." });
-    }
-    
-    // 2. Buscar dados do pedido
+    // Buscar dados do pedido
     const pedidoRes = await pool.query(`
       SELECT p.*, c.nome as cliente_nome
       FROM pedidos p
@@ -335,7 +259,6 @@ router.post("/:id/imprimir", async (req, res) => {
     
     if (pedidoRes.rows.length === 0) return res.status(404).json({ error: "Pedido não encontrado" });
     const pedido = pedidoRes.rows[0];
-
     const itensRes = await pool.query(`
       SELECT ip.*, p.nome as produto_nome
       FROM itens_pedido ip
@@ -343,122 +266,53 @@ router.post("/:id/imprimir", async (req, res) => {
       WHERE ip.pedido_id = $1
     `, [id]);
     const itens = itensRes.rows;
-
-    // 3. Imprimir
-    let device;
-    let usingSystem = false;
-
-    // No MacOS, o acesso direto USB é bloqueado pelo driver do sistema.
-    // Se a impressora já está instalada no Mac, devemos usar o SystemAdapter (lp).
-    if (os.platform() === 'darwin') {
-        console.log("MacOS detectado. Usando adaptador de sistema (lp).");
-        device = new SystemAdapter();
-        usingSystem = true;
-    } else {
-        try {
-            // Tenta carregar driver USB (apenas se não for Mac ou se quiser forçar)
-            const { default: USB } = await import('escpos-usb');
-            escpos.default.USB = USB;
-            device = new escpos.default.USB(); 
-        } catch (e) {
-            console.log("USB direto indisponível (" + e.message + "). Usando adaptador de sistema.");
-            device = new SystemAdapter();
-            usingSystem = true;
-        }
-    }
-
-    const printer = new escpos.default.Printer(device);
-
-    device.open(function(error){
-      // Se falhar ao abrir USB (ex: ocupado pelo sistema), faz fallback para SystemAdapter
-      if (error && !usingSystem) {
-        console.log("Falha ao abrir USB (Ocupado?). Tentando driver do sistema...");
-        device = new SystemAdapter();
-        const printerSys = new escpos.default.Printer(device);
-        device.open(() => printContent(printerSys));
-        return;
-      }
-
-      if (error) {
-        console.error("Erro ao abrir impressora:", error);
-        return res.status(500).json({ error: "Erro na impressora: " + error });
-      }
-
-      printContent(printer);
-    });
-
-    function printContent(p) {
-    try {
-      p
+    
+    // Usa a função printUsb do utilitário
+    await printUsb(printer => {
+      printer
         .font('b')
         .align('ct')
         .style('b')
         .size(1, 1)
         .text('TKokies')
         .style('normal')
-        .size(1, 1) // Retornando ao tamanho padrão para o corpo do texto
+        .size(1, 1)
         .text(`Pedido #${pedido.id}`)
         .text('--------------------------------')
         .align('lt')
-        // Data com "Data:" em negrito
         .style('b').print('Data: ').style('normal').text(`${new Date(pedido.data_pedido).toLocaleDateString()}`)
-        // Espaço entre Data e Cliente
         .text(' ') 
-        // Cliente com "Cliente:" em negrito
         .style('b').print('Cliente: ').style('normal').text(`${pedido.cliente_nome}`)
-        
         .text('--------------------------------');
-         // itens.forEach(item => {
-         //   p.text(item.produto_nome);
-         //   p.text(`${Number(item.quantidade).toFixed(2)} x R$ ${Number(item.valor_unitario).toFixed(2)} = R$ ${Number(item.valor_total).toFixed(2)}`);
-          //  p.text('');
-         // });
 
-         // --- Início do Cabeçalho de Itens ---
-p.size(1, 1) // Garante que a fonte esteja no tamanho padrão/mínimo
- .font('b')  // Fonte 'b' é mais estreita, ideal para colunas
- .align('lt')
- .text('Prod.     Qtd.   V.Unit   Total'); 
-p.text('--------------------------------'); // Linha separadora
+      printer.size(1, 1)
+       .font('b')
+       .align('lt')
+       .text('Prod.     Qtd.   V.Unit   Total'); 
+      printer.text('--------------------------------');
 
-// --- Loop dos Itens ---
-itens.forEach(item => {
-    // Nome do produto (pode ocupar uma linha inteira se for longo)
-    p.style('b').text(item.produto_nome.toUpperCase()).style('normal');
-    p.feed(0);
+      itens.forEach(item => {
+          printer.style('b').text(item.produto_nome.toUpperCase()).style('normal');
+          printer.feed(0);
+          const qtd = Number(item.quantidade).toFixed(2);
+          const unit = Number(item.valor_unitario).toFixed(2);
+          const total = Number(item.valor_total).toFixed(2);
+          printer.text(`          ${qtd}  R$${unit}  R$${total}`);
+          printer.text(' ');
+      });
 
-    // Valores formatados em uma linha logo abaixo do nome
-    const qtd = Number(item.quantidade).toFixed(2);
-    const unit = Number(item.valor_unitario).toFixed(2);
-    const total = Number(item.valor_total).toFixed(2);
-
-    // Exemplo de linha de detalhes: "2.00 x 10.00 = 20.00"
-    p.text(`          ${qtd}  R$${unit}  R$${total}`);
-    p.text(' '); // Espaço entre itens
-});
-
-p.font('a'); // Retorna para a fonte padrão se desejar
-
-          p.text('------------------------');
-          p.align('rt');
-          if (Number(pedido.frete) > 0) p.text(`Frete: R$ ${Number(pedido.frete).toFixed(2)}`);
-          p.style('b').size(1, 1).text(`TOTAL: R$ ${Number(pedido.valor_total).toFixed(2)}`);
-          
-          p.align('ct').text('').text('TKookies');
-          p.align('ct').text('').text('');
-          
-          p.cut().close();
-
-          res.json({ message: "Enviado para impressora" });
-      } catch (printError) {
-          console.error("Erro durante a geração do comando de impressão:", printError);
-          res.status(500).json({ error: "Erro ao gerar impressão" });
-      }
-    }
-
+      printer.font('a');
+      printer.text('------------------------');
+      printer.align('rt');
+      if (Number(pedido.frete) > 0) printer.text(`Frete: R$ ${Number(pedido.frete).toFixed(2)}`);
+      printer.style('b').size(1, 1).text(`TOTAL: R$ ${Number(pedido.valor_total).toFixed(2)}`);
+      printer.align('ct').text('').text('TKookies');
+      printer.align('ct').text('').text('');
+    });
+    res.json({ message: "Enviado para impressora" });
   } catch (error) {
     console.error("Erro geral na rota de impressão:", error);
-    res.status(500).json({ error: "Erro ao processar impressão." });
+    res.status(500).json({ error: error.message || "Erro ao processar impressão." });
   }
 });
 
