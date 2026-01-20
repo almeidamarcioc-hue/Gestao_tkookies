@@ -45,8 +45,13 @@ export default function Products() {
     async function carregar() {
       try {
         const res = await api.get("/ingredientes");
-        console.log("Ingredientes carregados:", res.data);
-        setIngredientes(Array.isArray(res.data) ? res.data : []);
+        if (Array.isArray(res.data)) {
+          console.log(`✅ ${res.data.length} ingredientes carregados.`);
+          setIngredientes(res.data);
+        } else {
+          console.error("❌ Formato inválido recebido de /ingredientes:", res.data);
+          setIngredientes([]);
+        }
         const resProd = await api.get("/produtos");
         setListaProdutos(Array.isArray(resProd.data) ? resProd.data : []);
       } catch (err) {

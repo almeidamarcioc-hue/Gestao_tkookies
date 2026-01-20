@@ -14,6 +14,8 @@ if (baseURL.endsWith("/")) {
   baseURL = baseURL.slice(0, -1);
 }
 
+console.log("🔌 API Base URL:", baseURL);
+
 const api = axios.create({
   baseURL,
 });
