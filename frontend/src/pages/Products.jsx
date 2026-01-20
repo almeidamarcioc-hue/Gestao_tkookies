@@ -45,6 +45,7 @@ export default function Products() {
     async function carregar() {
       try {
         const res = await api.get("/ingredientes");
+        console.log("Ingredientes carregados:", res.data);
         setIngredientes(Array.isArray(res.data) ? res.data : []);
         const resProd = await api.get("/produtos");
         setListaProdutos(Array.isArray(resProd.data) ? resProd.data : []);
@@ -356,7 +357,7 @@ export default function Products() {
             fullWidth
             options={Array.isArray(ingredientes) ? ingredientes : []}
             getOptionLabel={(option) => option.nome}
-            value={(Array.isArray(ingredientes) ? ingredientes.find((i) => i.id === ingredienteSelecionado) : null) || null}
+            value={(Array.isArray(ingredientes) ? ingredientes.find((i) => Number(i.id) === Number(ingredienteSelecionado)) : null) || null}
             onChange={(event, newValue) => {
               setIngredienteSelecionado(newValue ? newValue.id : "");
             }}
