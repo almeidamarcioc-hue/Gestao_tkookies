@@ -4,6 +4,7 @@ import {
   Box, Button, TextField, Typography, Paper, Container, IconButton, InputAdornment, Grid 
 } from "@mui/material";
 import { CloudUpload, Delete } from "@mui/icons-material";
+import DebugLogs from "../components/DebugLogs";
 
 export default function Settings() {
   const [homeTitle, setHomeTitle] = useState("");
@@ -138,6 +139,10 @@ export default function Settings() {
           </Grid>
         </Grid>
       </Paper>
+
+      <Box mt={4}>
+        <DebugLogs />
+      </Box>
     </Container>
   );
 }

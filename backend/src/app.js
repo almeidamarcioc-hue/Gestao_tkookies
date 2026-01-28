@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { pool } from "./db/index.js";
+import { initDatabase } from "./db/init.js";
 import ingredientRoutes from "./routes/ingredients.js";
 import productRoutes from "./routes/products.js";
 import clientsRouter from "./routes/clients.js";
@@ -14,7 +15,11 @@ import financialRouter from "./routes/financial.js";
 const app = express();
 
 // Configuração CORS simplificada e robusta
-app.use(cors()); 
+app.use(cors({
+  origin: "*", // Em produção, idealmente troque "*" pela URL do seu frontend (https://tkookies.vercel.app)
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+})); 
 // Habilita Pre-Flight para todas as rotas explicitamente
 app.options('*', cors());
 
@@ -66,6 +71,18 @@ app.use("/combos", combosRouter);
 app.use("/estoque", inventoryRouter);
 app.use("/configuracoes", settingsRouter);
 app.use("/financeiro", financialRouter);
+
+// Rota especial para criar tabelas na Vercel (Executar uma vez após deploy)
+app.get("/api/migrate", async (req, res) => {
+  try {
+    console.log("Iniciando migração de banco de dados via HTTP...");
+    await initDatabase();
+    res.json({ status: "success", message: "Banco de dados inicializado/migrado com sucesso!" });
+  } catch (error) {
+    console.error("Falha na migração:", error);
+    res.status(500).json({ error: "Falha na migração", details: error.message });
+  }
+});
 
 // Middleware de Tratamento de Erros Global
 app.use((err, req, res, next) => {

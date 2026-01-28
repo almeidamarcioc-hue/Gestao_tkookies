@@ -1,15 +1,47 @@
 {
   "name": "frontend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Cookie ERP Desktop App",
+  "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "dist": "vite build && electron-builder"
+  },
+  "build": {
+    "appId": "com.cookieerp.app",
+    "productName": "Cookie ERP",
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.business"
+    },
+    "files": [
+      "dist/**/*",
+      "main.js"
+    ],
+    "afterPack": "after-pack.cjs",
+    "extraResources": [
+      {
+        "from": "../backend",
+        "to": "backend",
+        "filter": [
+          "**/*",
+          "!node_modules/**",
+          "!node_modules/.cache",
+          "!**/.git",
+          "!**/.DS_Store",
+          "!**/*.test.js"
+        ]
+      }
+    ],
+    "directories": {
+      "buildResources": "assets",
+      "output": "release"
+    }
   },
   "keywords": [],
-  "author": "",
+  "author": "TKookies",
   "license": "ISC",
   "type": "module",
   "dependencies": {
@@ -26,6 +58,10 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",
-    "@vitejs/plugin-vue": "^5.0.5"
+    "@vitejs/plugin-vue": "^5.0.5",
+    "concurrently": "^8.2.2",
+    "electron": "^31.0.0",
+    "electron-builder": "^26.0.0",
+    "wait-on": "^7.2.0"
   }
 }

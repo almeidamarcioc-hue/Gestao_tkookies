@@ -13,3 +13,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .DS_Store
+node_modules/
+**/node_modules/
+frontend/release/
+frontend/dist/
+backend/node_modules/
+frontend/node_modules/

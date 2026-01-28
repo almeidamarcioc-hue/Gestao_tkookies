@@ -43,6 +43,11 @@ api.interceptors.response.use(
     if (isTimeout || isServerError) {
       console.error("Erro crítico de API detectado, forçando logout:", error.message);
 
+      // Log detalhado para debug na Vercel
+      if (error.response && error.response.data) {
+        console.error("🔥 Detalhes do erro no Backend:", error.response.data);
+      }
+
       // Dispara um evento global para que a interface possa reagir e deslogar o usuário.
       // Isso centraliza a lógica de logout por falha de comunicação.
       window.dispatchEvent(new CustomEvent('force-logout'));
