@@ -54,6 +54,7 @@ app.get("/api/health", async (req, res) => {
 
 // Rota raiz para verificar se a API está online
 app.get("/", (req, res) => {
+  console.log("Health check route hit via Vercel/Local");
   res.json({ message: "Backend Cookie ERP Online", timestamp: new Date() });
 });
 
