@@ -17,7 +17,9 @@ export default function Ingredients() {
   }, []);
 
   function carregarIngredientes() {
-    api.get("/ingredientes").then(res => setIngredientes(res.data));
+    api.get("/ingredientes")
+      .then(res => setIngredientes(Array.isArray(res.data) ? res.data : []))
+      .catch(err => console.error("Erro ao carregar ingredientes", err));
   }
 
   function handleEdit(item) {

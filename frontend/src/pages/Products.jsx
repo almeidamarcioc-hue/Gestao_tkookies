@@ -52,10 +52,15 @@ export default function Products() {
           console.error("❌ Formato inválido recebido de /ingredientes:", res.data);
           setIngredientes([]);
         }
+      } catch (err) {
+        console.error("Erro ao carregar ingredientes:", err);
+      }
+
+      try {
         const resProd = await api.get("/produtos");
         setListaProdutos(Array.isArray(resProd.data) ? resProd.data : []);
       } catch (err) {
-        console.error("Erro ao carregar ingredientes:", err);
+        console.error("Erro ao carregar produtos:", err);
       }
     }
     carregar();
@@ -412,6 +417,11 @@ export default function Products() {
                 <TableCell align="right">R$ {Number(prod.preco_venda).toFixed(2)}</TableCell>
               </TableRow>
             ))}
+            {listaProdutos.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={2} align="center">Nenhum produto encontrado.</TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </Paper>

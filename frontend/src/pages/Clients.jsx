@@ -25,8 +25,10 @@ export default function Clients() {
     // O backend espera page=1, mas o MUI usa page=0
     api.get(`/clientes?page=${page + 1}&limit=${rowsPerPage}&search=${searchTerm}`)
       .then(res => {
-        setClientes(res.data.data || []);
-        setTotal(res.data.total || 0);
+        // Suporte para resposta paginada ou array simples
+        const dados = res.data.data || (Array.isArray(res.data) ? res.data : []);
+        setClientes(dados);
+        setTotal(res.data.total || dados.length);
       })
       .catch(() => {
         setClientes([]);

@@ -91,6 +91,16 @@ router.post("/", async (req, res) => {
       );
     }
 
+    // Gerar Lançamento Financeiro (Entrada Pendente)
+    const resCli = await client.query("SELECT nome FROM clientes WHERE id = $1", [cliente_id]);
+    const nomeCliente = resCli.rows[0]?.nome || "Cliente";
+
+    await client.query(
+      `INSERT INTO lancamentos_financeiros (tipo, descricao, valor, data_vencimento, status, pedido_id)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      ['Entrada', `Pedido #${pedidoId} - ${nomeCliente}`, valorTotalPedido, data_pedido, 'Pendente', pedidoId]
+    );
+
     await client.query("COMMIT");
     res.status(201).json({ message: "Pedido criado!", id: pedidoId });
   } catch (error) {
@@ -151,6 +161,12 @@ router.put("/:id", async (req, res) => {
         [item.quantidade, item.produto_id]
       );
     }
+
+    // Atualizar valor no Financeiro
+    await client.query(
+      "UPDATE lancamentos_financeiros SET valor = $1, data_vencimento = $2 WHERE pedido_id = $3",
+      [valorTotalPedido, data_pedido, id]
+    );
 
     await client.query("COMMIT");
     res.json({ message: "Pedido atualizado!" });
@@ -232,6 +248,7 @@ router.delete("/:id", async (req, res) => {
 
     await client.query("DELETE FROM itens_pedido WHERE pedido_id = $1", [id]);
     await client.query("DELETE FROM pedidos WHERE id = $1", [id]);
+    await client.query("DELETE FROM lancamentos_financeiros WHERE pedido_id = $1", [id]);
 
     await client.query("COMMIT");
     res.json({ message: "Pedido removido com sucesso!" });

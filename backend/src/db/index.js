@@ -4,14 +4,14 @@ dotenv.config();
 
 // Verifica se estamos em ambiente de produção/nuvem para forçar SSL
 const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL;
-const dbHost = process.env.DB_HOST;
+const dbHost = process.env.DB_HOST || "localhost";
 
 const dbConfig = {
   host: dbHost,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD || "aqpoS8oXf927JGyH",
-  database: process.env.DB_NAME,
-  port: Number(process.env.DB_PORT) || 4000,
+  user: process.env.DB_USER || "root",
+  password: process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : "root",
+  database: process.env.DB_NAME || "cookie_erp",
+  port: Number(process.env.DB_PORT) || 3306,
   // Ativa SSL se for produção OU se o host não for localhost
   ssl: (isProduction || (dbHost && dbHost !== "localhost" && dbHost !== "127.0.0.1")) ? {
     minVersion: 'TLSv1.2',

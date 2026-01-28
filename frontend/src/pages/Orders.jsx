@@ -10,8 +10,12 @@ import { printOrder } from "../utils/printOrder";
 export default function Orders() {
   const [pedidos, setPedidos] = useState([]);
 
-  useEffect(() => {
+  const loadPedidos = () => {
     api.get("/pedidos").then(res => setPedidos(Array.isArray(res.data) ? res.data : []));
+  };
+
+  useEffect(() => {
+    loadPedidos();
   }, []);
 
   const getStatusColor = (status) => {
@@ -23,7 +27,7 @@ export default function Orders() {
   const handleStatusChange = async (id, newStatus) => {
     try {
       await api.patch(`/pedidos/${id}/status`, { status: newStatus });
-      setPedidos(pedidos.map(p => p.id === id ? { ...p, status: newStatus } : p));
+      loadPedidos();
     } catch (error) {
       alert("Erro ao atualizar status");
     }

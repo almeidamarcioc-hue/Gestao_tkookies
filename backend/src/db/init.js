@@ -161,6 +161,19 @@ export async function initDatabase() {
       )
     `);
 
+    // Tabela de Lançamentos Financeiros (Contas a Pagar/Receber)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS lancamentos_financeiros (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        tipo VARCHAR(20) NOT NULL, -- 'Entrada' ou 'Saída'
+        descricao VARCHAR(255) NOT NULL,
+        valor DECIMAL(10, 2) NOT NULL,
+        data_vencimento DATE NOT NULL,
+        status VARCHAR(20) DEFAULT 'Pendente', -- 'Pendente', 'Pago'
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // Migrações (Colunas novas) - Executa uma por uma de forma segura
     logs.push(await addColumnSafe("ingredientes", "usado_para_revenda BOOLEAN DEFAULT TRUE"));
     logs.push(await addColumnSafe("produtos", "margem_revenda DECIMAL(10, 2) DEFAULT 0"));
@@ -184,6 +197,12 @@ export async function initDatabase() {
 
     logs.push(await addColumnSafe("clientes", "senha VARCHAR(255)"));
     logs.push(await addColumnSafe("clientes", "complemento VARCHAR(255)"));
+    logs.push(await addColumnSafe("pedidos", "status_financeiro VARCHAR(20) DEFAULT 'A Receber'"));
+    logs.push(await addColumnSafe("pedidos", "data_pagamento TIMESTAMP"));
+    logs.push(await addColumnSafe("lancamentos_financeiros", "pedido_id INT"));
+    logs.push(await addColumnSafe("lancamentos_financeiros", "parcela_numero INT DEFAULT 1"));
+    logs.push(await addColumnSafe("lancamentos_financeiros", "total_parcelas INT DEFAULT 1"));
+    logs.push(await addColumnSafe("lancamentos_financeiros", "group_id VARCHAR(50)"));
 
     console.log("✅ Base de dados inicializada com sucesso");
     return logs;

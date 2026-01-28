@@ -1,7 +1,7 @@
 // App.jsx
 import { useState, useEffect } from "react";
-import { BrowserRouter, Routes, Route, Link, Navigate, useNavigate } from "react-router-dom";
-import { AppBar, Toolbar, Button, Box, Typography, Menu, MenuItem, createTheme, ThemeProvider, CssBaseline, TextField, IconButton, Drawer, List, ListItem, ListItemButton, ListItemText, Divider, Container, Grid, Badge } from "@mui/material";
+import { Routes, Route, Link, Navigate, useNavigate } from "react-router-dom";
+import { AppBar, Toolbar, Button, Box, Typography, Menu, MenuItem, createTheme, ThemeProvider, CssBaseline, TextField, IconButton, Drawer, List, ListItem, ListItemButton, ListItemText, Divider, Container, Grid, Badge, CircularProgress } from "@mui/material";
 import { Menu as MenuIcon, Instagram, WhatsApp, Facebook, AccountCircle, ShoppingCart, Favorite } from "@mui/icons-material";
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
@@ -17,6 +17,7 @@ import Combos from "./pages/Combos";
 import ComboForm from "./pages/ComboForm";
 import Inventory from "./pages/Inventory";
 import Settings from "./pages/Settings";
+import Financial from "./pages/Financial";
 import ClientRegister from "./pages/ClientRegister";
 import ClientProfile from "./pages/ClientProfile";
 import Cart from "./pages/Cart";
@@ -86,17 +87,8 @@ const theme = createTheme({
   },
 });
 
-// Helper component for redirecting
-function RedirectHandler({ to, onReset }) {
-  const navigate = useNavigate();
-  useEffect(() => {
-    navigate(to);
-    onReset();
-  }, [to, navigate, onReset]);
-  return null;
-}
-
 export default function App() {
+  const navigate = useNavigate();
   const [anchorCad, setAnchorCad] = useState(null);
   const [anchorCons, setAnchorCons] = useState(null);
   const [anchorPed, setAnchorPed] = useState(null);
@@ -110,8 +102,23 @@ export default function App() {
   const [clientLoginOpen, setClientLoginOpen] = useState(false);
   const [clientUser, setClientUser] = useState(null); // Objeto do cliente logado
   const [clientLoginData, setClientLoginData] = useState({ login: "", senha: "" });
-  const [redirectTo, setRedirectTo] = useState(null);
   const [cart, setCart] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const adminLogged = localStorage.getItem("cookie_erp_admin");
+    const clientLogged = localStorage.getItem("cookie_erp_client");
+
+    if (adminLogged === "true") {
+      setIsLoggedIn(true);
+    }
+    
+    if (clientLogged) {
+      setClientUser(JSON.parse(clientLogged));
+    }
+
+    setLoading(false);
+  }, []);
 
   const openCad = Boolean(anchorCad);
   const openCons = Boolean(anchorCons);
@@ -132,14 +139,17 @@ export default function App() {
   const handleLogout = () => {
     setIsLoggedIn(false);
     setClientUser(null);
+    localStorage.removeItem("cookie_erp_admin");
+    localStorage.removeItem("cookie_erp_client");
     handleClose();
-    setRedirectTo("/");
+    navigate("/");
   };
 
   const handleClientLogin = async () => {
     // 1. Verifica se é Admin
     if (clientLoginData.login === "tkookies_" && clientLoginData.senha === "TKookies") {
       setIsLoggedIn(true);
+      localStorage.setItem("cookie_erp_admin", "true");
       setClientLoginOpen(false);
       setClientLoginData({ login: "", senha: "" });
       return;
@@ -149,9 +159,10 @@ export default function App() {
     try {
       const res = await api.post("/clientes/login", clientLoginData);
       setClientUser(res.data);
+      localStorage.setItem("cookie_erp_client", JSON.stringify(res.data));
       setClientLoginOpen(false);
       setClientLoginData({ login: "", senha: "" });
-      setRedirectTo("/");
+      navigate("/");
     } catch (err) {
       const msg = err.response?.data?.error || "Erro no login";
       alert(msg);
@@ -185,8 +196,13 @@ export default function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-    <BrowserRouter>
-      {redirectTo && <RedirectHandler to={redirectTo} onReset={() => setRedirectTo(null)} />}
+    {loading ? (
+      <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh', gap: 2 }}>
+        <CircularProgress color="primary" />
+        <Typography variant="h6" color="primary">Carregando...</Typography>
+      </Box>
+    ) : (
+      <>
       <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <AppBar position="sticky" sx={{ top: 0, zIndex: 1100 }}>
         <Toolbar>
@@ -227,6 +243,7 @@ export default function App() {
                   <MenuItem component={Link} to="/status" onClick={handleClose}>Status do Sistema</MenuItem>
                 </Menu>
 
+                <Button color="inherit" component={Link} to="/financeiro">FINANCEIRO</Button>
                 <Button color="inherit" component={Link} to="/configuracoes">Configurações</Button>
                 {/* Menu Pedidos */}
                 <Button color="inherit" onClick={(e) => setAnchorPed(e.currentTarget)}>PEDIDOS</Button>
@@ -294,6 +311,7 @@ export default function App() {
                 <ListItem disablePadding><ListItemButton component={Link} to="/clientes"><ListItemText primary="Clientes" /></ListItemButton></ListItem>
                 <ListItem disablePadding><ListItemButton component={Link} to="/combos"><ListItemText primary="Combos" /></ListItemButton></ListItem>
                 <ListItem disablePadding><ListItemButton component={Link} to="/estoque"><ListItemText primary="Estoque" /></ListItemButton></ListItem>
+                <ListItem disablePadding><ListItemButton component={Link} to="/financeiro"><ListItemText primary="Financeiro" /></ListItemButton></ListItem>
                 <ListItem disablePadding><ListItemButton component={Link} to="/configuracoes"><ListItemText primary="Configurações" /></ListItemButton></ListItem>
                 <ListItem disablePadding><ListItemButton onClick={handleLogout}><ListItemText primary="SAIR" sx={{ color: 'error.main' }} /></ListItemButton></ListItem>
               </>
@@ -351,6 +369,7 @@ export default function App() {
           <Route path="/combos/:id" element={<ProtectedRoute isAllowed={isLoggedIn}><ComboForm /></ProtectedRoute>} />
           <Route path="/estoque" element={<ProtectedRoute isAllowed={isLoggedIn}><Inventory /></ProtectedRoute>} />
           <Route path="/configuracoes" element={<ProtectedRoute isAllowed={isLoggedIn}><Settings /></ProtectedRoute>} />
+          <Route path="/financeiro" element={<ProtectedRoute isAllowed={isLoggedIn}><Financial /></ProtectedRoute>} />
           <Route path="/production" element={<ProtectedRoute isAllowed={isLoggedIn}><Production /></ProtectedRoute>} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -420,7 +439,8 @@ export default function App() {
           <Button variant="outlined" fullWidth component={Link} to="/cadastro" onClick={() => setClientLoginOpen(false)}>CRIAR CONTA</Button>
         </Box>
       </Drawer>
-    </BrowserRouter>
+      </>
+    )}
     </ThemeProvider>
   );
 }

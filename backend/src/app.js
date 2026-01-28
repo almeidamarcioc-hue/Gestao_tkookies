@@ -9,6 +9,7 @@ import productionRouter from "./routes/production.js";
 import combosRouter from "./routes/combos.js";
 import inventoryRouter from "./routes/inventory.js";
 import settingsRouter from "./routes/settings.js";
+import financialRouter from "./routes/financial.js";
 
 const app = express();
 
@@ -64,6 +65,7 @@ app.use("/producao", productionRouter);
 app.use("/combos", combosRouter);
 app.use("/estoque", inventoryRouter);
 app.use("/configuracoes", settingsRouter);
+app.use("/financeiro", financialRouter);
 
 // Middleware de Tratamento de Erros Global
 app.use((err, req, res, next) => {

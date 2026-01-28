@@ -117,8 +117,12 @@ router.post("/", async (req, res) => {
     await client.query("COMMIT");
     res.status(201).json({ message: "Produto criado com sucesso!", id: produtoId });
   } catch (error) {
-    await client.query("ROLLBACK");
-    console.error(error);
+    try {
+      await client.query("ROLLBACK");
+    } catch (rbError) {
+      console.error("Erro no Rollback (conexão perdida?):", rbError.message);
+    }
+    console.error("Erro ao criar produto:", error);
     res.status(500).json({ error: "Erro ao criar produto" });
   } finally {
     client.release();
@@ -174,8 +178,12 @@ router.put("/:id", async (req, res) => {
     await client.query("COMMIT");
     res.json({ message: "Produto atualizado com sucesso!" });
   } catch (error) {
-    await client.query("ROLLBACK");
-    console.error(error);
+    try {
+      await client.query("ROLLBACK");
+    } catch (rbError) {
+      console.error("Erro no Rollback (conexão perdida?):", rbError.message);
+    }
+    console.error("Erro ao atualizar produto:", error);
     res.status(500).json({ error: "Erro ao atualizar produto" });
   } finally {
     client.release();

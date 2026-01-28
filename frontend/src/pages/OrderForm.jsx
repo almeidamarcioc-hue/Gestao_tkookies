@@ -3,7 +3,8 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 import api from "../services/api";
 import { 
   Box, Button, TextField, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, 
-  Container, Autocomplete, MenuItem, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Alert, Grid 
+  Container, Autocomplete, MenuItem, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Alert, Grid,
+  Radio, RadioGroup, FormControlLabel, FormControl, FormLabel
 } from "@mui/material";
 import { Delete, Add, Print, Usb } from "@mui/icons-material";
 import { printOrder } from "../utils/printOrder";
@@ -19,6 +20,8 @@ export default function OrderForm({ clientUser, isAdmin }) {
   const [formaPagamento, setFormaPagamento] = useState("Pix");
   const [observacao, setObservacao] = useState("");
   const [frete, setFrete] = useState(0);
+  const [tipoEntrega, setTipoEntrega] = useState("retira");
+  const [configFrete, setConfigFrete] = useState(0);
   const [status, setStatus] = useState("Novo");
   
   // Itens
@@ -38,6 +41,7 @@ export default function OrderForm({ clientUser, isAdmin }) {
   const isCancelled = status === "Cancelado";
 
   useEffect(() => {
+    api.get("/pedidos/config/frete").then(res => setConfigFrete(Number(res.data.valor) || 0));
     carregarDados();
     if (id) carregarPedido(id);
     else {
@@ -58,7 +62,7 @@ export default function OrderForm({ clientUser, isAdmin }) {
 
     if (isAdmin) {
       const resCli = await api.get("/clientes");
-      setListaClientes(Array.isArray(resCli.data) ? resCli.data : []);
+      setListaClientes(resCli.data.data || (Array.isArray(resCli.data) ? resCli.data : []));
     } else if (clientUser) {
       setListaClientes([clientUser]);
     }
@@ -81,6 +85,7 @@ export default function OrderForm({ clientUser, isAdmin }) {
       setFormaPagamento(p.forma_pagamento);
       setObservacao(p.observacao);
       setFrete(p.frete);
+      setTipoEntrega(Number(p.frete) > 0 ? "entrega" : "retira");
       setStatus(p.status);
       setItens(p.itens.map(i => ({
         ...i,
@@ -122,6 +127,16 @@ export default function OrderForm({ clientUser, isAdmin }) {
     novaLista[index] = { ...novaLista[index], quantidade: Number(novaQtd) };
     setItens(novaLista);
   }
+
+  const handleTipoEntregaChange = (e) => {
+    const novoTipo = e.target.value;
+    setTipoEntrega(novoTipo);
+    if (novoTipo === "entrega") {
+      setFrete(configFrete);
+    } else {
+      setFrete(0);
+    }
+  };
 
   const totalProdutos = itens.reduce((acc, item) => acc + (Number(item.quantidade) * Number(item.valor_unitario)), 0);
   const totalPedido = totalProdutos + Number(frete);
@@ -284,10 +299,10 @@ export default function OrderForm({ clientUser, isAdmin }) {
               </Typography>
             )}
           </Grid>
-          <Grid item xs={6} md={3}>
+          <Grid item xs={6} md={2}>
             <TextField type="date" label="Data" fullWidth InputLabelProps={{ shrink: true }} value={dataPedido} onChange={e => setDataPedido(e.target.value)} disabled={isCancelled} />
           </Grid>
-          <Grid item xs={6} md={3}>
+          <Grid item xs={6} md={2}>
             <TextField select label="Status" fullWidth value={status} onChange={e => setStatus(e.target.value)} disabled={isCancelled}>
               <MenuItem value="Novo">Novo</MenuItem>
               <MenuItem value="Finalizado">Finalizado</MenuItem>
@@ -340,9 +355,18 @@ export default function OrderForm({ clientUser, isAdmin }) {
 
       <Paper sx={{ p: 3 }}>
         <Grid container spacing={2}>
-          <Grid item xs={12} md={4}><TextField select label="Forma de Pagamento" fullWidth value={formaPagamento} onChange={e => setFormaPagamento(e.target.value)} disabled={isCancelled}><MenuItem value="Pix">Pix</MenuItem><MenuItem value="Dinheiro">Dinheiro</MenuItem><MenuItem value="Cartão">Cartão</MenuItem></TextField></Grid>
-          <Grid item xs={12} md={4}><TextField label="Frete (R$)" type="number" fullWidth value={frete} onChange={e => setFrete(e.target.value)} disabled={isCancelled} /></Grid>
-          <Grid item xs={12} md={4}><Typography variant="h5" align="right" color="primary" fontWeight="bold">Total: R$ {totalPedido.toFixed(2)}</Typography></Grid>
+          <Grid item xs={12} md={3}><TextField select label="Forma de Pagamento" fullWidth value={formaPagamento} onChange={e => setFormaPagamento(e.target.value)} disabled={isCancelled}><MenuItem value="Pix">Pix</MenuItem><MenuItem value="Dinheiro">Dinheiro</MenuItem><MenuItem value="Cartão">Cartão</MenuItem></TextField></Grid>
+          <Grid item xs={12} md={4}>
+            <FormControl component="fieldset">
+              <FormLabel component="legend" sx={{ fontSize: '0.8rem' }}>Tipo de Entrega</FormLabel>
+              <RadioGroup row value={tipoEntrega} onChange={handleTipoEntregaChange}>
+                <FormControlLabel value="retira" control={<Radio size="small" />} label="Retirada" disabled={isCancelled} />
+                <FormControlLabel value="entrega" control={<Radio size="small" />} label="Entrega" disabled={isCancelled} />
+              </RadioGroup>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} md={2}><TextField label="Frete (R$)" type="number" fullWidth value={frete} onChange={e => setFrete(e.target.value)} disabled={isCancelled} /></Grid>
+          <Grid item xs={12} md={3}><Typography variant="h5" align="right" color="primary" fontWeight="bold">Total: R$ {totalPedido.toFixed(2)}</Typography></Grid>
           <Grid item xs={12}><TextField label="Observações" multiline rows={2} fullWidth value={observacao} onChange={e => setObservacao(e.target.value)} disabled={isCancelled} /></Grid>
           <Grid item xs={12}><Button variant="contained" fullWidth size="large" onClick={salvarPedido} disabled={isCancelled}>SALVAR PEDIDO</Button></Grid>
         </Grid>

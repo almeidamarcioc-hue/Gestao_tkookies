@@ -379,7 +379,7 @@ export default function Dashboard() {
             })}
             {produtos.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} align="center">Nenhum produto cadastrado.</TableCell>
+                <TableCell colSpan={10} align="center">Nenhum produto cadastrado.</TableCell>
               </TableRow>
             )}
           </TableBody>
