@@ -13,11 +13,10 @@ import financialRouter from "./routes/financial.js";
 
 const app = express();
 
-app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "X-CSRF-Token"]
-}));
+// Configuração CORS simplificada e robusta
+app.use(cors()); 
+// Habilita Pre-Flight para todas as rotas explicitamente
+app.options('*', cors());
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -72,6 +71,13 @@ app.use("/financeiro", financialRouter);
 app.use((err, req, res, next) => {
   console.error("Erro interno:", err);
   res.status(500).json({ error: "Erro interno do servidor", details: err.message });
+});
+
+// Handler para rotas não encontradas (404)
+// Isso garante que se a rota não existir, o frontend receba um JSON com headers CORS
+// ao invés de uma página HTML da Vercel que causaria erro de CORS.
+app.use((req, res) => {
+  res.status(404).json({ error: "Endpoint não encontrado", path: req.path });
 });
 
 export default app;
