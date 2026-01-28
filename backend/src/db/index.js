@@ -14,7 +14,7 @@ const dbConfig = {
   port: Number(process.env.DB_PORT) || 3306,
   // Ativa SSL se for produção OU se o host não for localhost
   ssl: (isProduction || (dbHost && dbHost !== "localhost" && dbHost !== "127.0.0.1")) ? {
-    minVersion: 'TLSv1.2',
+    // minVersion: 'TLSv1.2', // Comentado para maior compatibilidade inicial
     rejectUnauthorized: false
   } : undefined,
   waitForConnections: true,
@@ -36,7 +36,7 @@ const mysqlPool = mysql.createPool(dbConfig);
 
 // Wrapper para emular o comportamento do 'pg' (PostgreSQL) usando 'mysql2'
 // Aceita um 'executor' (pode ser o pool ou uma conexão específica)
-const executeQuery = async (executor, text, params) => {
+const executeQuery = async (executor, text, params, retries = 3) => {
   // 1. Remove RETURNING id (sintaxe PG não suportada no MySQL)
   let sql = text.replace(/RETURNING\s+id/i, "");
   
@@ -63,6 +63,17 @@ const executeQuery = async (executor, text, params) => {
 
     return { rows: [], rowCount: 0 };
   } catch (error) {
+    // Não retenta se for uma conexão dedicada (provavelmente dentro de uma transação)
+    const isDedicatedConnection = typeof executor.release === 'function';
+
+    // Retenta em caso de perda de conexão, mas apenas se não for uma conexão dedicada
+    if (!isDedicatedConnection && (error.code === 'ECONNRESET' || error.code === 'PROTOCOL_CONNECTION_LOST') && retries > 0) {
+      console.warn(`[DB] Conexão com o banco de dados perdida (código: ${error.code}). Tentando novamente... (${retries} tentativas restantes)`);
+      // Espera um pouco antes de tentar novamente para não sobrecarregar
+      await new Promise(res => setTimeout(res, 250));
+      return executeQuery(executor, text, params, retries - 1);
+    }
+
     if (error.code !== 'ER_DUP_FIELDNAME') {
       console.error("Erro na query MySQL:", error.message);
     }
