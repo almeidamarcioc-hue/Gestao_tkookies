@@ -12,6 +12,8 @@ import combosRouter from "./routes/combos.js";
 import inventoryRouter from "./routes/inventory.js";
 import settingsRouter from "./routes/settings.js";
 import financialRouter from "./routes/financial.js";
+import resellersRouter from "./routes/resellers.js";
+import favoritesRouter from "./routes/favorites.js";
 
 const app = express();
 
@@ -72,6 +74,8 @@ app.use("/combos", combosRouter);
 app.use("/estoque", inventoryRouter);
 app.use("/configuracoes", settingsRouter);
 app.use("/financeiro", financialRouter);
+app.use("/revendedores", resellersRouter);
+app.use("/favoritos", favoritesRouter);
 
 // Rota especial para criar tabelas na Vercel (Executar uma vez após deploy)
 app.get("/api/migrate", async (req, res) => {
