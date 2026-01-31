@@ -401,7 +401,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                       sx={{ position: 'absolute', top: 12, right: 12, bgcolor: 'rgba(255,255,255,0.8)', color: '#C62828', '&:hover': { bgcolor: 'white' }, zIndex: 10 }}
                       onClick={() => toggleFavorite(prod)}
                     >
-                      {favorites.includes(prod.id) ? <Favorite sx={{ color: '#ef4444' }} /> : <FavoriteBorder />}
+                      {favorites.includes(Number(prod.id)) ? <Favorite sx={{ color: '#ef4444' }} /> : <FavoriteBorder />}
                     </IconButton>
                     
                     <Button 
