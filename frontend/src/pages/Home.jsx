@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { Box, Typography, Button, Container, Paper, Grid, Card, CardMedia, CardContent, CardActions, IconButton, Badge, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import { Box, Typography, Button, Container, Grid, IconButton, Badge, Dialog, DialogTitle, DialogContent, DialogActions, Chip, Paper } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
-import { AddCircleOutline, ListAlt, Inventory2, People, RestaurantMenu, PointOfSale, Add, Remove, ShoppingBag, LocalOffer, Favorite, FavoriteBorder } from "@mui/icons-material";
+import { Add, Remove, ShoppingBag, Favorite, FavoriteBorder, Star, ArrowForward, AddCircleOutline, ListAlt, RestaurantMenu } from "@mui/icons-material";
+import { motion, AnimatePresence } from "framer-motion";
 import api from "../services/api";
 
 export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addToCart, updateCartQuantity, removeFromCart }) {
@@ -379,92 +380,134 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                 : Number(prod.preco_venda);
 
               return (
-                <Grid item xs={12} sm={6} md={4} key={prod.id}>
-                  <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderRadius: 3, boxShadow: 3, position: 'relative' }}>
+                <Grid item xs={12} sm={6} md={4} key={prod.id} component={motion.div} variants={itemVariants}>
+                  <Box 
+                    sx={{ 
+                      ...glassStyle, 
+                      height: '100%', 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      position: 'relative',
+                      transition: 'transform 0.3s ease',
+                      '&:hover': { transform: 'translateY(-10px)' }
+                    }}
+                  >
                     <IconButton 
-                      sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'rgba(255,255,255,0.7)', '&:hover': { bgcolor: 'white' }, zIndex: 10 }}
+                      sx={{ position: 'absolute', top: 12, right: 12, bgcolor: 'rgba(0,0,0,0.5)', color: 'white', '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' }, zIndex: 10 }}
                       onClick={() => toggleFavorite(prod)}
                     >
-                      {favorites.includes(prod.id) ? <Favorite color="error" /> : <FavoriteBorder />}
+                      {favorites.includes(prod.id) ? <Favorite sx={{ color: '#ef4444' }} /> : <FavoriteBorder />}
                     </IconButton>
+                    
                     {coverImage && (
-                      <CardMedia
+                      <Box
                         component="img"
-                        height="200"
-                        image={coverImage}
+                        src={coverImage}
                         alt={prod.nome}
+                        sx={{ width: '100%', height: 220, objectFit: 'cover', borderTopLeftRadius: '24px', borderTopRightRadius: '24px' }}
                       />
                     )}
-                    <CardContent sx={{ flexGrow: 1 }}>
-                      <Typography gutterBottom variant="h6" component="div" fontWeight="bold">
+                    
+                    <Box sx={{ p: 3, flexGrow: 1 }}>
+                      <Typography gutterBottom variant="h6" component="div" fontWeight="bold" sx={{ mb: 1 }}>
                         {prod.nome}
                       </Typography>
                       <Box display="flex" justifyContent="space-between" alignItems="center">
-                        <Typography variant="h6" color={isPromo ? "error" : "primary"}>
+                        <Typography variant="h6" sx={{ color: isPromo ? '#f59e0b' : secondaryColor, fontWeight: 'bold' }}>
                           R$ {precoFinal.toFixed(2)}
                         </Typography>
-                        {isPromo && <Typography variant="caption" sx={{ textDecoration: 'line-through' }}>R$ {Number(prod.preco_venda).toFixed(2)}</Typography>}
+                        {isPromo && <Typography variant="caption" sx={{ textDecoration: 'line-through', color: '#64748b' }}>R$ {Number(prod.preco_venda).toFixed(2)}</Typography>}
                       </Box>
-                      <Typography variant="caption" color="text.secondary" display="block" mt={1}>
-                        Disponível: {Number(prod.estoque)}
-                      </Typography>
-                    </CardContent>
-                    <CardActions sx={{ justifyContent: 'space-between', px: 2, pb: 2 }}>
+                    </Box>
+
+                    <Box sx={{ p: 2, pt: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <Box display="flex" alignItems="center" gap={1}>
-                        <IconButton size="small" onClick={() => handleQtyChange(prod.id, -1)} disabled={qty === 0} color="primary">
-                          <Remove />
+                        <IconButton size="small" onClick={() => handleQtyChange(prod.id, -1)} disabled={qty === 0} sx={{ color: 'white', border: '1px solid rgba(255,255,255,0.2)' }}>
+                          <Remove fontSize="small" />
                         </IconButton>
                         <Typography fontWeight="bold">{qty}</Typography>
-                        <IconButton size="small" onClick={() => handleQtyChange(prod.id, 1)} disabled={qty >= Number(prod.estoque)} color="primary">
-                          <Add />
+                        <IconButton size="small" onClick={() => handleQtyChange(prod.id, 1)} disabled={qty >= Number(prod.estoque)} sx={{ color: 'white', border: '1px solid rgba(255,255,255,0.2)' }}>
+                          <Add fontSize="small" />
                         </IconButton>
                       </Box>
-                    </CardActions>
-                  </Card>
+                      
+                      {qty > 0 && <Chip label="No Carrinho" size="small" sx={{ bgcolor: primaryColor, color: 'white', fontWeight: 'bold' }} />}
+                    </Box>
+                  </Box>
                 </Grid>
               );
             })}
           </Grid>
-        </Box>
+      </Box>
       </Container>
 
       {/* BARRA DE CHECKOUT FLUTUANTE */}
+      <AnimatePresence>
       {totalItems > 0 && (
-        <Paper sx={{ position: 'fixed', bottom: 0, left: 0, right: 0, p: 2, zIndex: 1200, borderTop: '1px solid #ddd' }} elevation={10}>
-          <Container maxWidth="lg" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box 
+          component={motion.div}
+          initial={{ y: 100 }}
+          animate={{ y: 0 }}
+          exit={{ y: 100 }}
+          sx={{ 
+            position: 'fixed', 
+            bottom: 24, 
+            left: '50%', 
+            transform: 'translateX(-50%)', 
+            width: '90%',
+            maxWidth: '600px',
+            zIndex: 1200 
+          }}
+        >
+          <Box sx={{ 
+            ...glassStyle, 
+            bgcolor: 'rgba(15, 23, 42, 0.8)', 
+            p: 2, 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            border: `1px solid ${primaryColor}`
+          }}>
             <Box display="flex" alignItems="center" gap={2}>
-              <Badge badgeContent={totalItems} color="primary">
-                <ShoppingBag 
-                  color="action" 
-                  sx={{
-                    animation: animateBag ? 'swing 0.5s ease-in-out' : 'none',
-                    '@keyframes swing': {
-                      '0%': { transform: 'rotate(0deg)' },
-                      '20%': { transform: 'rotate(15deg)' },
-                      '40%': { transform: 'rotate(-10deg)' },
-                      '60%': { transform: 'rotate(5deg)' },
-                      '80%': { transform: 'rotate(-5deg)' },
-                      '100%': { transform: 'rotate(0deg)' }
-                    }
-                  }}
+              <Box sx={{ position: 'relative' }}>
+                <ShoppingBag sx={{ color: secondaryColor, fontSize: 30 }} />
+                <Badge 
+                  badgeContent={totalItems} 
+                  color="error" 
+                  sx={{ position: 'absolute', top: -5, right: -5 }}
                 />
-              </Badge>
-              <Typography variant="h6" fontWeight="bold">Total: R$ {totalPrice.toFixed(2)}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" sx={{ color: '#94a3b8' }}>Total do Pedido</Typography>
+                <Typography variant="h6" fontWeight="bold">R$ {totalPrice.toFixed(2)}</Typography>
+              </Box>
             </Box>
-            <Button variant="contained" size="large" onClick={handleCheckout} startIcon={<PointOfSale />}>
-              Finalizar Pedido
+            <Button 
+              variant="contained" 
+              onClick={handleCheckout} 
+              endIcon={<ArrowForward />}
+              sx={{ 
+                borderRadius: '50px', 
+                bgcolor: 'white', 
+                color: 'black', 
+                fontWeight: 'bold',
+                '&:hover': { bgcolor: '#f1f5f9' }
+              }}
+            >
+              Finalizar
             </Button>
-          </Container>
-        </Paper>
+          </Box>
+        </Box>
       )}
+      </AnimatePresence>
 
       {/* Modal Cross-Selling */}
-      <Dialog open={crossSellOpen} onClose={() => setCrossSellOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', color: 'primary.main', fontSize: '1.5rem' }}>
+      <Dialog open={crossSellOpen} onClose={() => setCrossSellOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '24px', bgcolor: '#1e293b', color: 'white' } }}>
+        <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', fontSize: '1.5rem' }}>
           Ótima escolha! 🍪
         </DialogTitle>
         <DialogContent>
-          <Typography variant="body1" textAlign="center" mb={3} color="text.secondary">
+          <Typography variant="body1" textAlign="center" mb={3} sx={{ color: '#94a3b8' }}>
             Que tal aproveitar e levar também?
           </Typography>
           <Grid container spacing={2}>
@@ -472,47 +515,30 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
               const coverImage = prod.imagens?.find(img => img.eh_capa)?.imagem || prod.imagens?.[0]?.imagem;
               return (
                 <Grid item xs={6} key={prod.id}>
-                  <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderRadius: 2 }}>
+                  <Box sx={{ bgcolor: '#334155', borderRadius: '16px', overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' }}>
                      {coverImage && (
-                        <CardMedia
-                          component="img"
-                          height="120"
-                          image={coverImage}
-                          alt={prod.nome}
-                          sx={{ objectFit: 'cover' }}
-                        />
+                        <Box component="img" src={coverImage} sx={{ width: '100%', height: 100, objectFit: 'cover' }} />
                       )}
-                    <CardContent sx={{ flexGrow: 1, p: 1.5, textAlign: 'center' }}>
+                    <Box sx={{ p: 2, textAlign: 'center', flexGrow: 1 }}>
                       <Typography variant="subtitle2" fontWeight="bold" noWrap>{prod.nome}</Typography>
-                      <Typography variant="body2" color="primary" fontWeight="bold">R$ {Number(prod.preco_venda).toFixed(2)}</Typography>
-                    </CardContent>
-                    <CardActions sx={{ justifyContent: 'center', pb: 2 }}>
-                      <Button 
-                        variant="contained" 
-                        size="small" 
-                        onClick={() => handleQtyChange(prod.id, 1)}
-                        startIcon={<Add />}
-                        sx={{ borderRadius: 4 }}
-                      >
+                      <Typography variant="body2" sx={{ color: secondaryColor, fontWeight: 'bold' }}>R$ {Number(prod.preco_venda).toFixed(2)}</Typography>
+                    </Box>
+                    <Box sx={{ p: 1, display: 'flex', justifyContent: 'center' }}>
+                      <Button size="small" variant="contained" onClick={() => handleQtyChange(prod.id, 1)} sx={{ borderRadius: '20px', bgcolor: primaryColor }}>
                         Adicionar
                       </Button>
-                    </CardActions>
-                  </Card>
+                    </Box>
+                  </Box>
                 </Grid>
               );
             })}
           </Grid>
         </DialogContent>
         <DialogActions sx={{ justifyContent: 'center', pb: 3, gap: 2 }}>
-          <Button onClick={() => setCrossSellOpen(false)} color="inherit" sx={{ borderRadius: 4 }}>
+          <Button onClick={() => setCrossSellOpen(false)} sx={{ color: '#94a3b8' }}>
             Continuar Comprando
           </Button>
-          <Button 
-            onClick={() => { setCrossSellOpen(false); handleCheckout(); }} 
-            variant="contained" 
-            color="primary"
-            sx={{ borderRadius: 4, px: 4 }}
-          >
+          <Button onClick={() => { setCrossSellOpen(false); handleCheckout(); }} variant="contained" sx={{ bgcolor: 'white', color: 'black', borderRadius: '50px' }}>
             Finalizar Pedido
           </Button>
         </DialogActions>
