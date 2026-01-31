@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Add, Remove, ShoppingBag, Favorite, FavoriteBorder, Star, ArrowForward, AddCircleOutline, ListAlt, RestaurantMenu, PointOfSale, Inventory2, People, LocalOffer, Info, Close } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../services/api";
+import ResellerCTA from "../components/ResellerCTA";
 
 // Variantes de Animação (Framer Motion)
 const containerVariants = {
@@ -467,6 +468,11 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
         </Box>
       </Box>
       </Container>
+
+      {/* SEÇÃO REVENDEDOR (B2B) - Com zIndex para garantir visibilidade */}
+      <Box sx={{ position: 'relative', zIndex: 2 }}>
+        <ResellerCTA />
+      </Box>
 
       {/* BARRA DE CHECKOUT FLUTUANTE */}
       <AnimatePresence>
