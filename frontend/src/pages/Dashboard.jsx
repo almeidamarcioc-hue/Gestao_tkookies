@@ -536,10 +536,10 @@ export default function Dashboard() {
                     const custoItem = (custoBase / estoqueBase) * Number(ing.quantidade);
 
                     return (
-                      <TableRow key={ing._tempId}>
+                      <TableRow key={ing._tempId} sx={ing.apenas_revenda ? { bgcolor: '#FFF8E1' } : {}}>
                         <TableCell>{ing.nome} {ing.apenas_revenda && <Typography variant="caption" color="secondary" fontWeight="bold">(Revenda)</Typography>}</TableCell>
                         <TableCell>{`${ing.quantidade} ${ing.unidade}`}</TableCell>
-                        <TableCell align="right">R$ {custoItem.toFixed(2)}</TableCell>
+                        <TableCell align="right">R$ {custoItem.toFixed(4)}</TableCell>
                         <TableCell align="right">
                           <IconButton size="small" color="error" onClick={() => handleRemoveIngredientFromEdit(idx)}><Delete fontSize="small" /></IconButton>
                         </TableCell>

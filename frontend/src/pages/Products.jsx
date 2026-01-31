@@ -384,7 +384,7 @@ export default function Products() {
         <Table size="small" sx={{ mb: 4 }}>
           <TableBody>
             {itens.map((item, index) => (
-              <TableRow key={item._tempId}>
+              <TableRow key={item._tempId} sx={item.apenas_revenda ? { bgcolor: '#FFF8E1' } : {}}>
                 <TableCell>{item.nome} {item.apenas_revenda && <Typography variant="caption" color="secondary" fontWeight="bold">(Revenda)</Typography>}</TableCell>
                 <TableCell>{`${item.quantidade} ${item.unidade}`}</TableCell>
                 <TableCell align="right">
