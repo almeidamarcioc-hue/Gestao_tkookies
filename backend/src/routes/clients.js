@@ -97,7 +97,25 @@ router.post("/login", async (req, res) => {
     if (result.rows.length > 0) {
       res.json(result.rows[0]);
     } else {
-      res.status(401).json({ error: "Credenciais inválidas" });
+      // Se não achou em clientes, tenta em revendedores
+      const resRev = await pool.query("SELECT * FROM revendedores WHERE login = $1 AND senha = $2", [login, senha]);
+      
+      if (resRev.rows.length > 0) {
+        const rev = resRev.rows[0];
+        // Retorna um objeto compatível com o frontend, forçando is_revendedor = true
+        res.json({
+          id: rev.id,
+          nome: rev.razao_social, // Mapeia Razão Social para Nome
+          telefone: rev.telefone,
+          endereco: `CEP: ${rev.cep}`, // Endereço genérico
+          cidade: rev.cidade,
+          login: rev.login,
+          is_revendedor: true, // Garante acesso à área de parceiro
+          tipo_usuario: 'revendedor'
+        });
+      } else {
+        res.status(401).json({ error: "Credenciais inválidas" });
+      }
     }
   } catch (error) {
     console.error("Erro no login:", error);
