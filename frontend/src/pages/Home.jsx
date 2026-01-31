@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Box, Typography, Button, Container, Grid, IconButton, Badge, Dialog, DialogTitle, DialogContent, DialogActions, Chip, Paper, Fab } from "@mui/material";
+import { Box, Typography, Button, Container, Grid, IconButton, Badge, Dialog, DialogTitle, DialogContent, DialogActions, Chip, Paper, Fab, Snackbar, Alert } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
 import { Add, Remove, ShoppingBag, Favorite, FavoriteBorder, Star, ArrowForward, AddCircleOutline, ListAlt, RestaurantMenu, PointOfSale, Inventory2, People, LocalOffer, Info, Close, Storefront } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
@@ -57,6 +57,11 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+
+  const handleCloseSnackbar = () => setSnackbarOpen(false);
 
   useEffect(() => {
     api.get("/configuracoes").then(res => {
@@ -106,12 +111,20 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
       if (isFav) {
         await api.delete(`/favoritos/${clientUser.id}/${prodId}`);
         setFavorites(prev => prev.filter(id => id !== prodId)); // Remove do estado local
+        setSnackbarMessage("Produto removido dos favoritos");
+        setSnackbarSeverity("info");
       } else {
         await api.post("/favoritos", { cliente_id: clientUser.id, produto_id: prodId });
         setFavorites(prev => [...prev, prodId]); // Adiciona ao estado local
+        setSnackbarMessage("Produto adicionado aos favoritos!");
+        setSnackbarSeverity("success");
       }
+      setSnackbarOpen(true);
     } catch (err) {
       console.error("Erro ao favoritar", err);
+      setSnackbarMessage("Erro ao atualizar favoritos");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
     }
   };
 
@@ -680,6 +693,12 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           </>
         )}
       </Dialog>
+
+      <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={handleCloseSnackbar} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} sx={{ width: '100%', borderRadius: 2, fontWeight: 'bold' }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
