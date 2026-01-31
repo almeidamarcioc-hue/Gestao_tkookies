@@ -92,7 +92,7 @@ router.post("/", async (req, res) => {
 
     const resProd = await client.query(
       "INSERT INTO produtos (nome, descricao, preco_venda, margem_revenda, preco_revenda, rendimento, eh_destaque, desconto_destaque) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id",
-      [nome, descricao, preco_venda, margem_revenda || 0, preco_revenda || 0, rendimento || 1, eh_destaque || false, desconto_destaque || 0]
+      [nome, descricao || null, preco_venda, margem_revenda || 0, preco_revenda || 0, rendimento || 1, eh_destaque || false, desconto_destaque || 0]
     );
     const produtoId = resProd.rows[0].id;
 
@@ -123,7 +123,7 @@ router.post("/", async (req, res) => {
       console.error("Erro no Rollback (conexão perdida?):", rbError.message);
     }
     console.error("Erro ao criar produto:", error);
-    res.status(500).json({ error: "Erro ao criar produto" });
+    res.status(500).json({ error: "Erro ao criar produto", details: error.message });
   } finally {
     client.release();
   }
@@ -146,7 +146,7 @@ router.put("/:id", async (req, res) => {
     // Atualiza dados básicos do produto
     await client.query(
       "UPDATE produtos SET nome = $1, descricao = $2, preco_venda = $3, margem_revenda = $4, preco_revenda = $5, rendimento = $6, eh_destaque = $7, desconto_destaque = $8 WHERE id = $9",
-      [nome, descricao, preco_venda, margem_revenda || 0, preco_revenda || 0, rendimento || 1, eh_destaque || false, desconto_destaque || 0, id]
+      [nome, descricao || null, preco_venda, margem_revenda || 0, preco_revenda || 0, rendimento || 1, eh_destaque || false, desconto_destaque || 0, id]
     );
 
     // Remove ingredientes antigos para reinserir os atualizados
@@ -184,7 +184,7 @@ router.put("/:id", async (req, res) => {
       console.error("Erro no Rollback (conexão perdida?):", rbError.message);
     }
     console.error("Erro ao atualizar produto:", error);
-    res.status(500).json({ error: "Erro ao atualizar produto" });
+    res.status(500).json({ error: "Erro ao atualizar produto", details: error.message });
   } finally {
     client.release();
   }
