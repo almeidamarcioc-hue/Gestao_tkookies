@@ -77,11 +77,21 @@ app.use("/financeiro", financialRouter);
 app.get("/api/migrate", async (req, res) => {
   try {
     console.log("Iniciando migração de banco de dados via HTTP...");
-    await initDatabase();
-    res.json({ status: "success", message: "Banco de dados inicializado/migrado com sucesso!" });
+    const logs = await initDatabase();
+    res.json({ status: "success", message: "Banco de dados inicializado/migrado com sucesso!", logs });
   } catch (error) {
     console.error("Falha na migração:", error);
     res.status(500).json({ error: "Falha na migração", details: error.message });
+  }
+});
+
+// Rota de emergência para forçar a criação da coluna descricao
+app.get("/api/fix-descricao", async (req, res) => {
+  try {
+    await pool.query("ALTER TABLE produtos ADD COLUMN descricao VARCHAR(1000)");
+    res.json({ message: "Coluna 'descricao' adicionada com sucesso!" });
+  } catch (error) {
+    res.status(500).json({ error: "Erro ao adicionar coluna", details: error.message });
   }
 });
 

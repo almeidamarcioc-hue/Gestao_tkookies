@@ -13,6 +13,7 @@ async function addColumnSafe(table, columnDef) {
     // Ignora erro 1060 (Duplicate column name) e erros similares
     if (e.code !== 'ER_DUP_FIELDNAME' && !e.message.includes("Duplicate column") && !e.message.includes("already exists")) {
       console.log(`Nota sobre migração em ${table}:`, e.message);
+      console.error(`❌ Erro crítico migração ${table}:`, e);
       return `[${table}] Erro: ${e.message}`;
     }
     return `[${table}] Já existe: ${columnDef}`;
@@ -124,6 +125,7 @@ export async function initDatabase() {
         preco_venda DECIMAL(10, 2) NOT NULL,
         estoque DECIMAL(10, 2) DEFAULT 0,
         produto_id INT,
+        imagem LONGTEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -205,6 +207,8 @@ export async function initDatabase() {
     logs.push(await addColumnSafe("lancamentos_financeiros", "total_parcelas INT DEFAULT 1"));
     logs.push(await addColumnSafe("lancamentos_financeiros", "group_id VARCHAR(50)"));
     logs.push(await addColumnSafe("combos", "produto_id INT"));
+    logs.push(await addColumnSafe("combos", "imagem LONGTEXT"));
+    logs.push(await addColumnSafe("produtos", "descricao VARCHAR(1000)"));
 
     console.log("✅ Base de dados inicializada com sucesso");
     return logs;
