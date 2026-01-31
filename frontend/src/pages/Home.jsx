@@ -395,12 +395,27 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                       {favorites.includes(prod.id) ? <Favorite sx={{ color: '#ef4444' }} /> : <FavoriteBorder />}
                     </IconButton>
                     
-                    <IconButton 
-                      sx={{ position: 'absolute', top: 12, left: 12, bgcolor: 'rgba(255,255,255,0.8)', color: '#4E342E', '&:hover': { bgcolor: 'white' }, zIndex: 10 }}
+                    <Button 
+                      size="small"
                       onClick={() => handleOpenDetails(prod)}
+                      sx={{ 
+                        position: 'absolute', 
+                        top: 12, 
+                        left: 12, 
+                        bgcolor: 'rgba(255,255,255,0.9)', 
+                        color: '#4E342E', 
+                        '&:hover': { bgcolor: 'white' }, 
+                        zIndex: 10,
+                        textTransform: 'none',
+                        fontWeight: 'bold',
+                        borderRadius: '12px',
+                        minWidth: 'auto',
+                        px: 2,
+                        py: 0.5
+                      }}
                     >
-                      <Info />
-                    </IconButton>
+                      Detalhes
+                    </Button>
                     
                     {coverImage && (
                       <Box
@@ -554,11 +569,24 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
         {selectedProduct && (
           <>
             <Box sx={{ position: 'relative' }}>
-               <Box 
-                 component="img" 
-                 src={selectedProduct.imagens?.find(img => img.eh_capa)?.imagem || selectedProduct.imagens?.[0]?.imagem} 
-                 sx={{ width: '100%', height: 300, objectFit: 'cover', borderTopLeftRadius: '24px', borderTopRightRadius: '24px' }} 
-               />
+               <Box sx={{ 
+                 display: 'flex', 
+                 overflowX: 'auto', 
+                 scrollSnapType: 'x mandatory',
+                 '&::-webkit-scrollbar': { height: '6px' },
+                 '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '3px' },
+                 borderTopLeftRadius: '24px', 
+                 borderTopRightRadius: '24px'
+               }}>
+                 {(selectedProduct.imagens && selectedProduct.imagens.length > 0) ? selectedProduct.imagens.map((img, index) => (
+                   <Box 
+                     key={index}
+                     component="img" 
+                     src={img.imagem} 
+                     sx={{ width: '100%', height: 300, objectFit: 'cover', flexShrink: 0, scrollSnapAlign: 'center' }} 
+                   />
+                 )) : null}
+               </Box>
                <IconButton 
                  onClick={() => setDetailsOpen(false)}
                  sx={{ position: 'absolute', top: 10, right: 10, bgcolor: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: 'white' } }}

@@ -35,6 +35,7 @@ router.get("/", async (req, res) => {
         productsMap.set(row.id, {
           id: row.id,
           nome: row.nome,
+          descricao: row.descricao,
           preco_venda: row.preco_venda,
           margem_revenda: row.margem_revenda,
           preco_revenda: row.preco_revenda,
