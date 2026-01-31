@@ -104,6 +104,7 @@ export default function App() {
   const [clientLoginOpen, setClientLoginOpen] = useState(false);
   const [clientUser, setClientUser] = useState(null); // Objeto do cliente logado
   const [clientLoginData, setClientLoginData] = useState({ login: "", senha: "" });
+  const [loginMode, setLoginMode] = useState('client'); // 'client' | 'reseller'
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -147,9 +148,14 @@ export default function App() {
     navigate("/");
   };
 
+  const handleOpenLogin = (mode) => {
+    setLoginMode(mode);
+    setClientLoginOpen(true);
+  };
+
   const handleClientLogin = async () => {
-    // 1. Verifica se é Admin
-    if (clientLoginData.login === "tkookies_" && clientLoginData.senha === "TKookies") {
+    // 1. Verifica se é Admin (Apenas na área do cliente)
+    if (loginMode === 'client' && clientLoginData.login === "tkookies_" && clientLoginData.senha === "TKookies") {
       setIsLoggedIn(true);
       localStorage.setItem("cookie_erp_admin", "true");
       setClientLoginOpen(false);
@@ -160,8 +166,21 @@ export default function App() {
     // 2. Tenta login como Cliente
     try {
       const res = await api.post("/clientes/login", clientLoginData);
-      setClientUser(res.data);
-      localStorage.setItem("cookie_erp_client", JSON.stringify(res.data));
+      const user = res.data;
+
+      // Validação de acesso cruzado
+      if (loginMode === 'client' && user.is_revendedor) {
+        alert("Esta conta é de um Revendedor. Por favor, utilize a Área do Parceiro.");
+        return;
+      }
+
+      if (loginMode === 'reseller' && !user.is_revendedor) {
+        alert("Esta conta é de um Cliente. Por favor, utilize a Área do Cliente.");
+        return;
+      }
+
+      setClientUser(user);
+      localStorage.setItem("cookie_erp_client", JSON.stringify(user));
       setClientLoginOpen(false);
       setClientLoginData({ login: "", senha: "" });
       navigate("/");
@@ -272,10 +291,10 @@ export default function App() {
                   </>
                 ) : (
                   <>
-                    <Button color="inherit" onClick={() => setClientLoginOpen(true)}>
-                      Login
+                    <Button color="inherit" onClick={() => handleOpenLogin('client')}>
+                      Área do Cliente
                     </Button>
-                    <Button color="inherit" onClick={() => setClientLoginOpen(true)} sx={{ bgcolor: 'rgba(78, 52, 46, 0.1)' }}>
+                    <Button color="inherit" onClick={() => handleOpenLogin('reseller')} sx={{ bgcolor: 'rgba(78, 52, 46, 0.1)' }}>
                       Área do Parceiro
                     </Button>
                   </>
@@ -344,8 +363,8 @@ export default function App() {
                  </>
                ) : (
                  <>
-                   <ListItem disablePadding><ListItemButton onClick={() => setClientLoginOpen(true)}><ListItemText primary="Login" /></ListItemButton></ListItem>
-                   <ListItem disablePadding><ListItemButton onClick={() => setClientLoginOpen(true)}><ListItemText primary="Área do Parceiro" sx={{ color: 'primary.main', fontWeight: 'bold' }} /></ListItemButton></ListItem>
+                   <ListItem disablePadding><ListItemButton onClick={() => handleOpenLogin('client')}><ListItemText primary="Área do Cliente" /></ListItemButton></ListItem>
+                   <ListItem disablePadding><ListItemButton onClick={() => handleOpenLogin('reseller')}><ListItemText primary="Área do Parceiro" sx={{ color: 'primary.main', fontWeight: 'bold' }} /></ListItemButton></ListItem>
                  </>
                )
             )}
@@ -460,7 +479,9 @@ export default function App() {
         }}
       >
         <Box sx={{ width: 300, p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <Typography variant="h5" fontWeight="bold" sx={{ color: '#4E342E', textAlign: 'center' }}>Login</Typography>
+          <Typography variant="h5" fontWeight="bold" sx={{ color: '#4E342E', textAlign: 'center' }}>
+            {loginMode === 'reseller' ? 'Área do Parceiro' : 'Área do Cliente'}
+          </Typography>
           <TextField 
             label="Login" 
             fullWidth 
@@ -478,7 +499,9 @@ export default function App() {
           />
           <Button variant="contained" fullWidth onClick={handleClientLogin} sx={{ borderRadius: 50, bgcolor: '#4E342E', '&:hover': { bgcolor: '#3E2723' }, py: 1.5 }}>ENTRAR</Button>
           <Button color="primary" onClick={() => { setClientLoginOpen(false); }} sx={{ textTransform: 'none', color: '#5D4037' }}>Esqueci minha senha</Button>
-          <Button variant="outlined" fullWidth component={Link} to="/cadastro" onClick={() => setClientLoginOpen(false)} sx={{ borderRadius: 50, borderColor: '#4E342E', color: '#4E342E', py: 1.5 }}>CRIAR CONTA</Button>
+          {loginMode === 'client' && (
+            <Button variant="outlined" fullWidth component={Link} to="/cadastro" onClick={() => setClientLoginOpen(false)} sx={{ borderRadius: 50, borderColor: '#4E342E', color: '#4E342E', py: 1.5 }}>CRIAR CONTA</Button>
+          )}
         </Box>
       </Drawer>
       </>
