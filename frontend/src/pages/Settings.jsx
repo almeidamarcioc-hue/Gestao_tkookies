@@ -13,6 +13,18 @@ export default function Settings() {
   const [homeBg, setHomeBg] = useState("");
   const [valorFrete, setValorFrete] = useState("");
 
+  // Estados para a página Sobre Nós
+  const [aboutTitle, setAboutTitle] = useState("");
+  const [aboutDesc, setAboutDesc] = useState("");
+  const [aboutCard1Title, setAboutCard1Title] = useState("");
+  const [aboutCard1Desc, setAboutCard1Desc] = useState("");
+  const [aboutCard2Title, setAboutCard2Title] = useState("");
+  const [aboutCard2Desc, setAboutCard2Desc] = useState("");
+  const [aboutCard3Title, setAboutCard3Title] = useState("");
+  const [aboutCard3Desc, setAboutCard3Desc] = useState("");
+  const [aboutCtaTitle, setAboutCtaTitle] = useState("");
+  const [aboutCtaDesc, setAboutCtaDesc] = useState("");
+
   useEffect(() => {
     api.get("/configuracoes").then(res => {
       const cfg = res.data;
@@ -22,6 +34,17 @@ export default function Settings() {
         setHomeLocation(cfg.home_location || "");
         setHomeBg(cfg.home_bg || "");
         setValorFrete(cfg.valor_frete || "");
+
+        setAboutTitle(cfg.about_title || "Sobre a TKookies");
+        setAboutDesc(cfg.about_desc || "Nascemos da paixão por criar momentos doces e inesquecíveis. Acreditamos que um cookie não é apenas uma sobremesa, é um abraço em forma de sabor.");
+        setAboutCard1Title(cfg.about_card1_title || "Artesanal");
+        setAboutCard1Desc(cfg.about_card1_desc || "Cada cookie é feito à mão, com ingredientes selecionados e muito carinho, garantindo a textura perfeita: crocante por fora e macio por dentro.");
+        setAboutCard2Title(cfg.about_card2_title || "Qualidade");
+        setAboutCard2Desc(cfg.about_card2_desc || "Não abrimos mão da excelência. Utilizamos chocolates nobres e ingredientes frescos para entregar a melhor experiência a cada mordida.");
+        setAboutCard3Title(cfg.about_card3_title || "Comunidade");
+        setAboutCard3Desc(cfg.about_card3_desc || "Mais do que clientes, temos amigos. Adoramos fazer parte das suas celebrações e do seu dia a dia em Três de Maio e região.");
+        setAboutCtaTitle(cfg.about_cta_title || "Venha nos conhecer!");
+        setAboutCtaDesc(cfg.about_cta_desc || "Estamos prontos para adoçar o seu dia. Faça seu pedido agora mesmo e sinta a diferença.");
       }
     });
   }, []);
@@ -42,7 +65,18 @@ export default function Settings() {
         home_subtitle: homeSubtitle,
         home_location: homeLocation,
         home_bg: homeBg,
-        valor_frete: valorFrete
+        valor_frete: valorFrete,
+        
+        about_title: aboutTitle,
+        about_desc: aboutDesc,
+        about_card1_title: aboutCard1Title,
+        about_card1_desc: aboutCard1Desc,
+        about_card2_title: aboutCard2Title,
+        about_card2_desc: aboutCard2Desc,
+        about_card3_title: aboutCard3Title,
+        about_card3_desc: aboutCard3Desc,
+        about_cta_title: aboutCtaTitle,
+        about_cta_desc: aboutCtaDesc
       });
       alert("Configurações salvas!");
     } catch (err) {
@@ -126,6 +160,65 @@ export default function Settings() {
               )}
             </Box>
           </Grid>
+        </Grid>
+      </Paper>
+
+      <Paper sx={{ p: 3, mt: 3 }}>
+        <Typography variant="h6" mb={2}>Personalização da Página Sobre Nós</Typography>
+        <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <TextField label="Título Principal" fullWidth value={aboutTitle} onChange={e => setAboutTitle(e.target.value)} />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField label="Descrição Principal" multiline rows={3} fullWidth value={aboutDesc} onChange={e => setAboutDesc(e.target.value)} />
+          </Grid>
+          
+          <Grid item xs={12}><Typography variant="subtitle2" fontWeight="bold">Card 1 (Esquerda)</Typography></Grid>
+          <Grid item xs={12} md={4}>
+            <TextField label="Título Card 1" fullWidth value={aboutCard1Title} onChange={e => setAboutCard1Title(e.target.value)} />
+          </Grid>
+          <Grid item xs={12} md={8}>
+            <TextField label="Texto Card 1" fullWidth value={aboutCard1Desc} onChange={e => setAboutCard1Desc(e.target.value)} />
+          </Grid>
+
+          <Grid item xs={12}><Typography variant="subtitle2" fontWeight="bold">Card 2 (Centro)</Typography></Grid>
+          <Grid item xs={12} md={4}>
+            <TextField label="Título Card 2" fullWidth value={aboutCard2Title} onChange={e => setAboutCard2Title(e.target.value)} />
+          </Grid>
+          <Grid item xs={12} md={8}>
+            <TextField label="Texto Card 2" fullWidth value={aboutCard2Desc} onChange={e => setAboutCard2Desc(e.target.value)} />
+          </Grid>
+
+          <Grid item xs={12}><Typography variant="subtitle2" fontWeight="bold">Card 3 (Direita)</Typography></Grid>
+          <Grid item xs={12} md={4}>
+            <TextField label="Título Card 3" fullWidth value={aboutCard3Title} onChange={e => setAboutCard3Title(e.target.value)} />
+          </Grid>
+          <Grid item xs={12} md={8}>
+            <TextField label="Texto Card 3" fullWidth value={aboutCard3Desc} onChange={e => setAboutCard3Desc(e.target.value)} />
+          </Grid>
+
+          <Grid item xs={12}><Typography variant="subtitle2" fontWeight="bold">Chamada para Ação (Final)</Typography></Grid>
+          <Grid item xs={12} md={4}>
+            <TextField label="Título CTA" fullWidth value={aboutCtaTitle} onChange={e => setAboutCtaTitle(e.target.value)} />
+          </Grid>
+          <Grid item xs={12} md={8}>
+            <TextField label="Texto CTA" fullWidth value={aboutCtaDesc} onChange={e => setAboutCtaDesc(e.target.value)} />
+          </Grid>
+
+          <Grid item xs={12}>
+            <Button variant="contained" size="large" onClick={handleSave}>
+              Salvar Configurações
+            </Button>
+          </Grid>
+        </Grid>
+      </Paper>
+
+      <Box mt={4}>
+        <DebugLogs />
+      </Box>
+    </Container>
+  );
+}
 
           <Grid item xs={12}>
             <Box display="flex" gap={2}>
