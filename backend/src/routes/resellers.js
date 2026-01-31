@@ -25,7 +25,7 @@ router.post("/", async (req, res) => {
     res.status(201).json({ message: "Solicitação enviada com sucesso!" });
   } catch (error) {
     console.error("Erro ao cadastrar revendedor:", error);
-    res.status(500).json({ error: "Erro ao processar solicitação." });
+    res.status(500).json({ error: "Erro ao processar solicitação.", details: error.message });
   }
 });
 

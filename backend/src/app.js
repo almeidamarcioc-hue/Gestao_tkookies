@@ -99,6 +99,28 @@ app.get("/api/fix-descricao", async (req, res) => {
   }
 });
 
+// Rota de emergência para criar tabela de revendedores se não existir
+app.get("/api/fix-revendedores", async (req, res) => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS revendedores (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        razao_social VARCHAR(255) NOT NULL,
+        cpf_cnpj VARCHAR(20) NOT NULL,
+        nome_contato VARCHAR(100) NOT NULL,
+        telefone VARCHAR(20),
+        cep VARCHAR(10),
+        cidade VARCHAR(100),
+        estado CHAR(2),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    res.json({ message: "Tabela 'revendedores' verificada/criada com sucesso!" });
+  } catch (error) {
+    res.status(500).json({ error: "Erro ao criar tabela revendedores", details: error.message });
+  }
+});
+
 // Middleware de Tratamento de Erros Global
 app.use((err, req, res, next) => {
   console.error("Erro interno:", err);
