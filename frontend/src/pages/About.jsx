@@ -7,7 +7,7 @@ import api from "../services/api";
 
 export default function About() {
   const [config, setConfig] = useState({
-    about_title: <>Sobre a TK<Box component="span" sx={{ fontSize: '0.8em' }}>🍪🍪</Box>kies</>,
+    about_title: "Sobre a TKookies", // Valor padrão como string para evitar problemas de renderização inicial se a API falhar
     about_desc: "Nascemos da paixão por criar momentos doces e inesquecíveis. Acreditamos que um cookie não é apenas uma sobremesa, é um abraço em forma de sabor.",
     about_card1_title: "Artesanal",
     about_card1_desc: "Cada cookie é feito à mão, com ingredientes selecionados e muito carinho, garantindo a textura perfeita: crocante por fora e macio por dentro.",
@@ -24,6 +24,12 @@ export default function About() {
       if (res.data && Object.keys(res.data).length > 0) {
         // Mescla as configurações vindas do banco com os valores padrão (para garantir que nada quebre se faltar uma chave)
         setConfig(prev => ({ ...prev, ...res.data }));
+      } else {
+        // Se não vier nada da API, garante que o título padrão tenha a formatação correta
+        setConfig(prev => ({
+          ...prev,
+          about_title: "Sobre a TKookies"
+        }));
       }
     }).catch(err => console.error("Erro ao carregar configurações da página Sobre", err));
   }, []);
@@ -83,7 +89,12 @@ export default function About() {
         <Box component={motion.div} variants={containerVariants} initial="hidden" animate="visible">
           <Box sx={{ ...glassStyle, p: { xs: 4, md: 8 }, mb: 6, textAlign: 'center' }} component={motion.div} variants={itemVariants}>
             <Typography variant="h3" fontWeight="900" gutterBottom sx={{ color: '#4E342E', mb: 2 }}>
-              {config.about_title}
+              {/* Renderiza com formatação especial se for o título padrão ou se contiver "TKookies" */}
+              {typeof config.about_title === 'string' && config.about_title.includes("TKookies") ? (
+                <>Sobre a TK<Box component="span" sx={{ fontSize: '0.8em' }}>🍪🍪</Box>kies</>
+              ) : (
+                config.about_title
+              )}
             </Typography>
             <Typography variant="h6" sx={{ color: '#5D4037', maxWidth: '800px', mx: 'auto', lineHeight: 1.6 }}>
               {config.about_desc}
