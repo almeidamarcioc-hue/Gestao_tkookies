@@ -158,7 +158,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
   };
 
   return (
-    <Box sx={{ bgcolor: '#EFEBE9', minHeight: '100vh', color: '#3E2723', overflowX: 'hidden', position: 'relative' }}>
+    <Box sx={{ bgcolor: '#D7CCC8', minHeight: '100vh', color: '#3E2723', overflowX: 'hidden', position: 'relative' }}>
       
       {/* Background Wrapper Animado (Aurora Effect) */}
       <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
@@ -166,13 +166,13 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           animate={{ 
             background: [
               `radial-gradient(circle at 20% 30%, rgba(141, 110, 99, 0.15) 0%, transparent 50%)`, // Marrom claro suave
-              `radial-gradient(circle at 80% 70%, rgba(215, 204, 200, 0.2) 0%, transparent 50%)`  // Bege suave
+              `radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.2) 0%, transparent 50%)`  // Branco suave (Highlight)
             ]
           }}
           transition={{ duration: 10, repeat: Infinity, repeatType: "reverse" }}
           style={{ width: '100%', height: '100%', position: 'absolute' }}
         />
-        <Box sx={{ position: 'absolute', top: '-20%', left: '-10%', width: '50%', height: '50%', background: '#D7CCC8', filter: 'blur(150px)', opacity: 0.3, borderRadius: '50%' }} />
+        <Box sx={{ position: 'absolute', top: '-20%', left: '-10%', width: '50%', height: '50%', background: '#EFEBE9', filter: 'blur(150px)', opacity: 0.4, borderRadius: '50%' }} />
         <Box sx={{ position: 'absolute', bottom: '-10%', right: '-10%', width: '60%', height: '60%', background: '#FFE0B2', filter: 'blur(180px)', opacity: 0.3, borderRadius: '50%' }} />
       </Box>
 
@@ -180,59 +180,61 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
         
         {/* HERO SECTION */}
         <Box component={motion.div} initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} sx={{ textAlign: 'center', mb: 10 }}>
-          <Typography variant="h1" sx={{ 
-            fontWeight: 900, 
-            fontSize: { xs: '3rem', md: '5rem' }, 
-            background: `linear-gradient(135deg, #4E342E 0%, #8D6E63 100%)`,
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            mb: 2,
-            letterSpacing: '-2px'
-          }}>
-            {config.home_title}
-          </Typography>
-          <Typography variant="h5" sx={{ color: '#5D4037', fontWeight: 500, maxWidth: '600px', mx: 'auto', mb: 4 }}>
-            {config.home_subtitle}
-          </Typography>
-          
-          {/* Botões de Ação (Admin ou Cliente) */}
-          {isLoggedIn ? (
-            <Box sx={{ ...glassStyle, p: 3, maxWidth: 800, mx: 'auto', mt: 4 }}>
-              <Typography variant="subtitle2" sx={{ color: '#5D4037', mb: 2, textTransform: 'uppercase', letterSpacing: 1, fontWeight: 'bold' }}>Painel Rápido</Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={4}>
-                  <Button fullWidth variant="contained" component={Link} to="/pedidos/novo" startIcon={<AddCircleOutline />} sx={{ bgcolor: 'primary.main', borderRadius: '12px', py: 1.5 }}>Novo Pedido</Button>
+          <Box sx={{ ...glassStyle, p: { xs: 4, md: 8 }, mx: 'auto', maxWidth: 900 }}>
+            <Typography variant="h1" sx={{ 
+              fontWeight: 900, 
+              fontSize: { xs: '3rem', md: '5rem' }, 
+              background: `linear-gradient(135deg, #4E342E 0%, #8D6E63 100%)`,
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              mb: 2,
+              letterSpacing: '-2px'
+            }}>
+              {config.home_title}
+            </Typography>
+            <Typography variant="h5" sx={{ color: '#5D4037', fontWeight: 500, maxWidth: '600px', mx: 'auto', mb: 4 }}>
+              {config.home_subtitle}
+            </Typography>
+            
+            {/* Botões de Ação (Admin ou Cliente) */}
+            {isLoggedIn ? (
+              <Box sx={{ width: '100%', mt: 4 }}>
+                <Typography variant="subtitle2" sx={{ color: '#5D4037', mb: 2, textTransform: 'uppercase', letterSpacing: 1, fontWeight: 'bold' }}>Painel Rápido</Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={4}>
+                    <Button fullWidth variant="contained" component={Link} to="/pedidos/novo" startIcon={<AddCircleOutline />} sx={{ bgcolor: 'primary.main', borderRadius: '12px', py: 1.5 }}>Novo Pedido</Button>
+                  </Grid>
+                  <Grid item xs={6} sm={4}>
+                    <Button fullWidth variant="outlined" component={Link} to="/pedidos" startIcon={<ListAlt />} sx={{ color: 'primary.main', borderColor: 'primary.main', borderRadius: '12px', py: 1.5 }}>Pedidos</Button>
+                  </Grid>
+                  <Grid item xs={6} sm={4}>
+                    <Button fullWidth variant="outlined" component={Link} to="/produtos" startIcon={<RestaurantMenu />} sx={{ color: 'primary.main', borderColor: 'primary.main', borderRadius: '12px', py: 1.5 }}>Produtos</Button>
+                  </Grid>
                 </Grid>
-                <Grid item xs={6} sm={4}>
-                  <Button fullWidth variant="outlined" component={Link} to="/pedidos" startIcon={<ListAlt />} sx={{ color: 'primary.main', borderColor: 'primary.main', borderRadius: '12px', py: 1.5 }}>Pedidos</Button>
-                </Grid>
-                <Grid item xs={6} sm={4}>
-                  <Button fullWidth variant="outlined" component={Link} to="/produtos" startIcon={<RestaurantMenu />} sx={{ color: 'primary.main', borderColor: 'primary.main', borderRadius: '12px', py: 1.5 }}>Produtos</Button>
-                </Grid>
-              </Grid>
-            </Box>
-          ) : (
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button 
-                variant="contained" 
-                size="large" 
-                onClick={() => document.getElementById('cardapio').scrollIntoView({ behavior: 'smooth' })}
-                endIcon={<ArrowForward />}
-                sx={{ 
-                  borderRadius: '50px', 
-                  px: 5, 
-                  py: 1.5, 
-                  fontSize: '1.1rem',
-                  background: `linear-gradient(90deg, #4E342E, #8D6E63)`,
-                  boxShadow: `0 4px 15px rgba(78, 52, 46, 0.3)`,
-                  textTransform: 'none',
-                  color: 'white'
-                }}
-              >
-                Ver Cardápio
-              </Button>
-            </motion.div>
-          )}
+              </Box>
+            ) : (
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button 
+                  variant="contained" 
+                  size="large" 
+                  onClick={() => document.getElementById('cardapio').scrollIntoView({ behavior: 'smooth' })}
+                  endIcon={<ArrowForward />}
+                  sx={{ 
+                    borderRadius: '50px', 
+                    px: 5, 
+                    py: 1.5, 
+                    fontSize: '1.1rem',
+                    background: `linear-gradient(90deg, #4E342E, #8D6E63)`,
+                    boxShadow: `0 4px 15px rgba(78, 52, 46, 0.3)`,
+                    textTransform: 'none',
+                    color: 'white'
+                  }}
+                >
+                  Ver Cardápio
+                </Button>
+              </motion.div>
+            )}
+          </Box>
         </Box>
 
       {/* SEÇÃO DESTAQUE */}
