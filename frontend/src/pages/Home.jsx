@@ -426,7 +426,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
               );
             })}
           </Grid>
-      </Box>
+        </Box>
       </Box>
       </Container>
 
