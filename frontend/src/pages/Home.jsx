@@ -5,6 +5,24 @@ import { Add, Remove, ShoppingBag, Favorite, FavoriteBorder, Star, ArrowForward,
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../services/api";
 
+// Variantes de Animação (Framer Motion)
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.2 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { type: "spring", stiffness: 50, damping: 15 }
+  }
+};
+
 export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addToCart, updateCartQuantity, removeFromCart }) {
   const navigate = useNavigate();
   const [config, setConfig] = useState({
@@ -370,7 +388,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           <Typography variant="h4" gutterBottom color="primary" fontWeight="bold" textAlign="center" sx={{ mb: 4 }}>
             Nosso Cardápio
           </Typography>
-          <Grid container spacing={3}>
+          <Grid container spacing={3} component={motion.div} variants={containerVariants} initial="hidden" animate="visible">
             {products.filter(p => !combos.some(c => c.produto_vinculado_id === p.id)).map(prod => {
               const coverImage = prod.imagens?.find(img => img.eh_capa)?.imagem || prod.imagens?.[0]?.imagem;
               const qty = getQty(prod.id);
