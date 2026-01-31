@@ -14,6 +14,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
   });
 
   const [products, setProducts] = useState([]);
+  const [combos, setCombos] = useState([]);
   const [featuredProduct, setFeaturedProduct] = useState(null);
   const [crossSellOpen, setCrossSellOpen] = useState(false);
   const [crossSellItems, setCrossSellItems] = useState([]);
@@ -39,6 +40,11 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
       const featured = allProducts.find(p => p.eh_destaque);
       setFeaturedProduct(featured);
     });
+
+    // Carregar combos
+    api.get("/combos").then(res => {
+      setCombos(Array.isArray(res.data) ? res.data : []);
+    }).catch(err => console.error("Erro ao carregar combos", err));
   }, []);
 
   useEffect(() => {
@@ -305,6 +311,86 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
               </Grid>
             </Grid>
           </Paper>
+        </Container>
+      )}
+
+      {/* SEÇÃO COMBOS */}
+      {combos.length > 0 && (
+        <Container maxWidth="lg" sx={{ mb: 8 }}>
+          <Typography variant="h4" gutterBottom color="primary" fontWeight="bold" textAlign="center" sx={{ mb: 4 }}>
+            Combos Especiais
+          </Typography>
+          <Grid container spacing={3}>
+            {combos.map(combo => {
+              // Calcular economia
+              const totalOriginal = combo.itens.reduce((acc, item) => acc + (Number(item.preco_venda) * Number(item.quantidade)), 0);
+              const economia = totalOriginal - Number(combo.preco_venda);
+              
+              return (
+                <Grid item xs={12} md={6} key={combo.id}>
+                  <Paper elevation={3} sx={{ p: 3, borderRadius: 3, position: 'relative', overflow: 'hidden', bgcolor: '#FFF3E0', border: '1px solid #FFE0B2' }}>
+                    <Box sx={{ position: 'absolute', top: 0, right: 0, bgcolor: 'success.main', color: 'white', px: 2, py: 0.5, borderBottomLeftRadius: 8, fontWeight: 'bold' }}>
+                      Economize R$ {economia.toFixed(2)}
+                    </Box>
+                    <Typography variant="h5" fontWeight="bold" gutterBottom color="primary">{combo.nome}</Typography>
+                    <Typography variant="body2" color="text.secondary" mb={2}>
+                      Contém: {combo.itens.map(i => `${i.quantidade}x ${i.nome}`).join(', ')}
+                    </Typography>
+                    <Box display="flex" justifyContent="space-between" alignItems="center" mt={2}>
+                      <Box>
+                        <Typography variant="caption" sx={{ textDecoration: 'line-through', color: 'text.secondary' }}>R$ {totalOriginal.toFixed(2)}</Typography>
+                        <Typography variant="h5" color="primary" fontWeight="bold">R$ {Number(combo.preco_venda).toFixed(2)}</Typography>
+                      </Box>
+                      <Button variant="contained" onClick={() => handleQtyChange(combo.produto_vinculado_id, 1)} startIcon={<Add />}>
+                        Adicionar
+                      </Button>
+                    </Box>
+                  </Paper>
+                </Grid>
+              )
+            })}
+          </Grid>
+        </Container>
+      )}
+
+      {/* SEÇÃO COMBOS */}
+      {combos.length > 0 && (
+        <Container maxWidth="lg" sx={{ mb: 8 }}>
+          <Typography variant="h4" gutterBottom color="primary" fontWeight="bold" textAlign="center" sx={{ mb: 4 }}>
+            Combos Especiais
+          </Typography>
+          <Grid container spacing={3}>
+            {combos.map(combo => {
+              // Calcular economia
+              const totalOriginal = combo.itens.reduce((acc, item) => acc + (Number(item.preco_original || 0) * Number(item.quantidade)), 0);
+              const economia = totalOriginal - Number(combo.preco_venda);
+              
+              return (
+                <Grid item xs={12} md={6} key={combo.id}>
+                  <Paper elevation={3} sx={{ p: 3, borderRadius: 3, position: 'relative', overflow: 'hidden', bgcolor: '#FFF3E0', border: '1px solid #FFE0B2' }}>
+                    {economia > 0 && (
+                      <Box sx={{ position: 'absolute', top: 0, right: 0, bgcolor: 'success.main', color: 'white', px: 2, py: 0.5, borderBottomLeftRadius: 8, fontWeight: 'bold' }}>
+                        Economize R$ {economia.toFixed(2)}
+                      </Box>
+                    )}
+                    <Typography variant="h5" fontWeight="bold" gutterBottom color="primary">{combo.nome}</Typography>
+                    <Typography variant="body2" color="text.secondary" mb={2}>
+                      Contém: {combo.itens.map(i => `${i.quantidade}x ${i.nome}`).join(', ')}
+                    </Typography>
+                    <Box display="flex" justifyContent="space-between" alignItems="center" mt={2}>
+                      <Box>
+                        <Typography variant="caption" sx={{ textDecoration: 'line-through', color: 'text.secondary' }}>R$ {totalOriginal.toFixed(2)}</Typography>
+                        <Typography variant="h5" color="primary" fontWeight="bold">R$ {Number(combo.preco_venda).toFixed(2)}</Typography>
+                      </Box>
+                      <Button variant="contained" onClick={() => handleQtyChange(combo.produto_vinculado_id, 1)} startIcon={<Add />}>
+                        Adicionar
+                      </Button>
+                    </Box>
+                  </Paper>
+                </Grid>
+              )
+            })}
+          </Grid>
         </Container>
       )}
 

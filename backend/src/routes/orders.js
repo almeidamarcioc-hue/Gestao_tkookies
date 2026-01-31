@@ -84,11 +84,22 @@ router.post("/", async (req, res) => {
         [pedidoId, item.produto_id, item.quantidade, item.valor_unitario, (item.quantidade * item.valor_unitario)]
       );
 
-      // Baixar estoque do produto
-      await client.query(
-        "UPDATE produtos SET estoque = estoque - $1 WHERE id = $2",
-        [item.quantidade, item.produto_id]
-      );
+      // VERIFICA SE É UM COMBO
+      const resCombo = await client.query("SELECT id FROM combos WHERE produto_id = $1", [item.produto_id]);
+      
+      if (resCombo.rows.length > 0) {
+        // É um combo! Baixar estoque dos componentes
+        const comboId = resCombo.rows[0].id;
+        const resItensCombo = await client.query("SELECT produto_id, quantidade FROM combo_itens WHERE combo_id = $1", [comboId]);
+        
+        for (const comp of resItensCombo.rows) {
+          const qtdBaixar = Number(comp.quantidade) * Number(item.quantidade);
+          await client.query("UPDATE produtos SET estoque = estoque - $1 WHERE id = $2", [qtdBaixar, comp.produto_id]);
+        }
+      } else {
+        // Produto normal
+        await client.query("UPDATE produtos SET estoque = estoque - $1 WHERE id = $2", [item.quantidade, item.produto_id]);
+      }
     }
 
     // Gerar Lançamento Financeiro (Entrada Pendente)
@@ -140,10 +151,20 @@ router.put("/:id", async (req, res) => {
     // Devolver estoque dos itens antigos antes de remover
     const itensAntigos = await client.query("SELECT produto_id, quantidade FROM itens_pedido WHERE pedido_id = $1", [id]);
     for (const item of itensAntigos.rows) {
-      await client.query(
-        "UPDATE produtos SET estoque = estoque + $1 WHERE id = $2",
-        [item.quantidade, item.produto_id]
-      );
+      // Verifica se era combo
+      const resCombo = await client.query("SELECT id FROM combos WHERE produto_id = $1", [item.produto_id]);
+      if (resCombo.rows.length > 0) {
+        const comboId = resCombo.rows[0].id;
+        const resItensCombo = await client.query("SELECT produto_id, quantidade FROM itens_combo WHERE combo_id = $1", [comboId]);
+        for (const comp of resItensCombo.rows) {
+          const qtdDevolver = Number(comp.quantidade) * Number(item.quantidade);
+          await client.query("UPDATE produtos SET estoque = estoque + $1 WHERE id = $2", [qtdDevolver, comp.produto_id]);
+        }
+      } else {
+        await client.query(
+          "UPDATE produtos SET estoque = estoque + $1 WHERE id = $2", [item.quantidade, item.produto_id]
+        );
+      }
     }
 
     await client.query("DELETE FROM itens_pedido WHERE pedido_id = $1", [id]);
@@ -155,11 +176,20 @@ router.put("/:id", async (req, res) => {
         [id, item.produto_id, item.quantidade, item.valor_unitario, (item.quantidade * item.valor_unitario)]
       );
 
-      // Baixar estoque dos novos itens
-      await client.query(
-        "UPDATE produtos SET estoque = estoque - $1 WHERE id = $2",
-        [item.quantidade, item.produto_id]
-      );
+      // Baixar estoque (Lógica de Combo)
+      const resCombo = await client.query("SELECT id FROM combos WHERE produto_id = $1", [item.produto_id]);
+      if (resCombo.rows.length > 0) {
+        const comboId = resCombo.rows[0].id;
+        const resItensCombo = await client.query("SELECT produto_id, quantidade FROM itens_combo WHERE combo_id = $1", [comboId]);
+        for (const comp of resItensCombo.rows) {
+          const qtdBaixar = Number(comp.quantidade) * Number(item.quantidade);
+          await client.query("UPDATE produtos SET estoque = estoque - $1 WHERE id = $2", [qtdBaixar, comp.produto_id]);
+        }
+      } else {
+        await client.query(
+          "UPDATE produtos SET estoque = estoque - $1 WHERE id = $2", [item.quantidade, item.produto_id]
+        );
+      }
     }
 
     // Atualizar valor no Financeiro
@@ -210,10 +240,18 @@ router.patch("/:id/status", async (req, res) => {
       if (pedido.rows.length > 0 && pedido.rows[0].status !== 'Cancelado') {
         const itens = await client.query("SELECT produto_id, quantidade FROM itens_pedido WHERE pedido_id = $1", [id]);
         for (const item of itens.rows) {
-          await client.query(
-            "UPDATE produtos SET estoque = estoque + $1 WHERE id = $2",
-            [item.quantidade, item.produto_id]
-          );
+          // Verifica se era combo
+          const resCombo = await client.query("SELECT id FROM combos WHERE produto_id = $1", [item.produto_id]);
+          if (resCombo.rows.length > 0) {
+            const comboId = resCombo.rows[0].id;
+            const resItensCombo = await client.query("SELECT produto_id, quantidade FROM itens_combo WHERE combo_id = $1", [comboId]);
+            for (const comp of resItensCombo.rows) {
+              const qtdDevolver = Number(comp.quantidade) * Number(item.quantidade);
+              await client.query("UPDATE produtos SET estoque = estoque + $1 WHERE id = $2", [qtdDevolver, comp.produto_id]);
+            }
+          } else {
+            await client.query("UPDATE produtos SET estoque = estoque + $1 WHERE id = $2", [item.quantidade, item.produto_id]);
+          }
         }
       }
     }
@@ -242,7 +280,18 @@ router.delete("/:id", async (req, res) => {
     if (pedidoRes.rows.length > 0 && pedidoRes.rows[0].status !== 'Cancelado') {
         const itens = await client.query("SELECT produto_id, quantidade FROM itens_pedido WHERE pedido_id = $1", [id]);
         for (const item of itens.rows) {
-            await client.query("UPDATE produtos SET estoque = estoque + $1 WHERE id = $2", [item.quantidade, item.produto_id]);
+            // Verifica se era combo
+            const resCombo = await client.query("SELECT id FROM combos WHERE produto_id = $1", [item.produto_id]);
+            if (resCombo.rows.length > 0) {
+              const comboId = resCombo.rows[0].id;
+              const resItensCombo = await client.query("SELECT produto_id, quantidade FROM itens_combo WHERE combo_id = $1", [comboId]);
+              for (const comp of resItensCombo.rows) {
+                const qtdDevolver = Number(comp.quantidade) * Number(item.quantidade);
+                await client.query("UPDATE produtos SET estoque = estoque + $1 WHERE id = $2", [qtdDevolver, comp.produto_id]);
+              }
+            } else {
+              await client.query("UPDATE produtos SET estoque = estoque + $1 WHERE id = $2", [item.quantidade, item.produto_id]);
+            }
         }
     }
 
