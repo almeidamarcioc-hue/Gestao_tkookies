@@ -129,7 +129,7 @@ export async function initDatabase() {
 
     // Tabela de Itens do Combo
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS itens_combo (
+      CREATE TABLE IF NOT EXISTS combo_itens (
         id INT AUTO_INCREMENT PRIMARY KEY,
         combo_id INT,
         produto_id INT,

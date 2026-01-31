@@ -155,7 +155,7 @@ router.put("/:id", async (req, res) => {
       const resCombo = await client.query("SELECT id FROM combos WHERE produto_id = $1", [item.produto_id]);
       if (resCombo.rows.length > 0) {
         const comboId = resCombo.rows[0].id;
-        const resItensCombo = await client.query("SELECT produto_id, quantidade FROM itens_combo WHERE combo_id = $1", [comboId]);
+        const resItensCombo = await client.query("SELECT produto_id, quantidade FROM combo_itens WHERE combo_id = $1", [comboId]);
         for (const comp of resItensCombo.rows) {
           const qtdDevolver = Number(comp.quantidade) * Number(item.quantidade);
           await client.query("UPDATE produtos SET estoque = estoque + $1 WHERE id = $2", [qtdDevolver, comp.produto_id]);
@@ -180,7 +180,7 @@ router.put("/:id", async (req, res) => {
       const resCombo = await client.query("SELECT id FROM combos WHERE produto_id = $1", [item.produto_id]);
       if (resCombo.rows.length > 0) {
         const comboId = resCombo.rows[0].id;
-        const resItensCombo = await client.query("SELECT produto_id, quantidade FROM itens_combo WHERE combo_id = $1", [comboId]);
+        const resItensCombo = await client.query("SELECT produto_id, quantidade FROM combo_itens WHERE combo_id = $1", [comboId]);
         for (const comp of resItensCombo.rows) {
           const qtdBaixar = Number(comp.quantidade) * Number(item.quantidade);
           await client.query("UPDATE produtos SET estoque = estoque - $1 WHERE id = $2", [qtdBaixar, comp.produto_id]);
@@ -244,7 +244,7 @@ router.patch("/:id/status", async (req, res) => {
           const resCombo = await client.query("SELECT id FROM combos WHERE produto_id = $1", [item.produto_id]);
           if (resCombo.rows.length > 0) {
             const comboId = resCombo.rows[0].id;
-            const resItensCombo = await client.query("SELECT produto_id, quantidade FROM itens_combo WHERE combo_id = $1", [comboId]);
+            const resItensCombo = await client.query("SELECT produto_id, quantidade FROM combo_itens WHERE combo_id = $1", [comboId]);
             for (const comp of resItensCombo.rows) {
               const qtdDevolver = Number(comp.quantidade) * Number(item.quantidade);
               await client.query("UPDATE produtos SET estoque = estoque + $1 WHERE id = $2", [qtdDevolver, comp.produto_id]);
@@ -284,7 +284,7 @@ router.delete("/:id", async (req, res) => {
             const resCombo = await client.query("SELECT id FROM combos WHERE produto_id = $1", [item.produto_id]);
             if (resCombo.rows.length > 0) {
               const comboId = resCombo.rows[0].id;
-              const resItensCombo = await client.query("SELECT produto_id, quantidade FROM itens_combo WHERE combo_id = $1", [comboId]);
+              const resItensCombo = await client.query("SELECT produto_id, quantidade FROM combo_itens WHERE combo_id = $1", [comboId]);
               for (const comp of resItensCombo.rows) {
                 const qtdDevolver = Number(comp.quantidade) * Number(item.quantidade);
                 await client.query("UPDATE produtos SET estoque = estoque + $1 WHERE id = $2", [qtdDevolver, comp.produto_id]);

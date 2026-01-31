@@ -14,7 +14,7 @@ router.get("/", async (req, res) => {
              ic.quantidade as prod_quantidade,
              p.preco_venda as prod_preco_original
       FROM combos c
-      LEFT JOIN itens_combo ic ON c.id = ic.combo_id
+      LEFT JOIN combo_itens ic ON c.id = ic.combo_id
       LEFT JOIN produtos p ON ic.produto_id = p.id
       ORDER BY c.nome ASC
     `);
@@ -63,7 +63,7 @@ router.get("/:id", async (req, res) => {
              ic.quantidade as prod_quantidade,
              p.preco_venda as prod_preco_original
       FROM combos c
-      LEFT JOIN itens_combo ic ON c.id = ic.combo_id
+      LEFT JOIN combo_itens ic ON c.id = ic.combo_id
       LEFT JOIN produtos p ON ic.produto_id = p.id
       WHERE c.id = $1
     `, [id]);
@@ -121,7 +121,7 @@ router.post("/", async (req, res) => {
     if (itens && itens.length > 0) {
       for (const item of itens) {
         await client.query(
-          "INSERT INTO itens_combo (combo_id, produto_id, quantidade) VALUES ($1, $2, $3)",
+          "INSERT INTO combo_itens (combo_id, produto_id, quantidade) VALUES ($1, $2, $3)",
           [comboId, item.produto_id, item.quantidade]
         );
       }
@@ -160,12 +160,12 @@ router.put("/:id", async (req, res) => {
       [nome, preco_venda, id]
     );
 
-    await client.query("DELETE FROM itens_combo WHERE combo_id = $1", [id]);
+    await client.query("DELETE FROM combo_itens WHERE combo_id = $1", [id]);
 
     if (itens && itens.length > 0) {
       for (const item of itens) {
         await client.query(
-          "INSERT INTO itens_combo (combo_id, produto_id, quantidade) VALUES ($1, $2, $3)",
+          "INSERT INTO combo_itens (combo_id, produto_id, quantidade) VALUES ($1, $2, $3)",
           [id, item.produto_id, item.quantidade]
         );
       }
@@ -193,7 +193,7 @@ router.delete("/:id", async (req, res) => {
       await pool.query("DELETE FROM produtos WHERE id = $1", [produtoId]);
     }
 
-    await pool.query("DELETE FROM itens_combo WHERE combo_id = $1", [id]);
+    await pool.query("DELETE FROM combo_itens WHERE combo_id = $1", [id]);
     await pool.query("DELETE FROM combos WHERE id = $1", [id]);
     res.json({ message: "Combo removido com sucesso!" });
   } catch (error) {
