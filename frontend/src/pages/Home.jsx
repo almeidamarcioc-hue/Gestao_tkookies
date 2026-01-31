@@ -87,7 +87,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
       api.get(`/favoritos/${clientUser.id}`)
         .then(res => {
           // Garante que estamos pegando apenas os IDs e convertendo para número se necessário
-          const favIds = res.data.map(f => f.id);
+          const favIds = res.data.map(f => Number(f.id));
           setFavorites(favIds);
         })
         .catch(err => console.error("Erro ao carregar favoritos", err));
@@ -99,14 +99,15 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
       onLoginClick();
       return;
     }
-    const isFav = favorites.includes(prod.id);
+    const prodId = Number(prod.id);
+    const isFav = favorites.includes(prodId);
     try {
       if (isFav) {
-        await api.delete(`/favoritos/${clientUser.id}/${prod.id}`);
-        setFavorites(prev => prev.filter(id => id !== prod.id)); // Remove do estado local
+        await api.delete(`/favoritos/${clientUser.id}/${prodId}`);
+        setFavorites(prev => prev.filter(id => id !== prodId)); // Remove do estado local
       } else {
-        await api.post("/favoritos", { cliente_id: clientUser.id, produto_id: prod.id });
-        setFavorites(prev => [...prev, prod.id]); // Adiciona ao estado local
+        await api.post("/favoritos", { cliente_id: clientUser.id, produto_id: prodId });
+        setFavorites(prev => [...prev, prodId]); // Adiciona ao estado local
       }
     } catch (err) {
       console.error("Erro ao favoritar", err);

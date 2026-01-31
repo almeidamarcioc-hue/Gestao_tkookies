@@ -24,10 +24,15 @@ router.get("/:clienteId", async (req, res) => {
 router.post("/", async (req, res) => {
   const { cliente_id, produto_id } = req.body;
   try {
-    // INSERT IGNORE para MySQL evita erro se já existir
-    await pool.query("INSERT IGNORE INTO favoritos (cliente_id, produto_id) VALUES ($1, $2)", [cliente_id, produto_id]);
+    // Verifica se já existe antes de inserir (garante unicidade e evita erros)
+    const check = await pool.query("SELECT id FROM favoritos WHERE cliente_id = $1 AND produto_id = $2", [cliente_id, produto_id]);
+    
+    if (check.rows.length === 0) {
+      await pool.query("INSERT INTO favoritos (cliente_id, produto_id) VALUES ($1, $2)", [cliente_id, produto_id]);
+    }
     res.json({ message: "Adicionado aos favoritos" });
   } catch (error) {
+    console.error("Erro ao adicionar favorito:", error);
     res.status(500).json({ error: "Erro ao adicionar favorito" });
   }
 });
