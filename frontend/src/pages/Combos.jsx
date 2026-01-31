@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import api from "../services/api";
 import { 
-  Box, Button, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, Container, IconButton 
+  Box, Button, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, Container, IconButton, TextField, Tooltip 
 } from "@mui/material";
 import { Edit, Delete, Add } from "@mui/icons-material";
 
 export default function Combos() {
   const [combos, setCombos] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     carregarCombos();
@@ -34,12 +35,28 @@ export default function Combos() {
         <Button variant="contained" startIcon={<Add />} component={Link} to="/combos/novo">Novo Combo</Button>
       </Box>
 
+      <TextField 
+        label="Buscar Combo" 
+        variant="outlined" 
+        fullWidth 
+        sx={{ mb: 3 }} 
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+      />
+
       <Paper>
         <Table>
-          <TableHead><TableRow><TableCell>Nome</TableCell><TableCell align="right">Preço Venda</TableCell><TableCell align="center">Ações</TableCell></TableRow></TableHead>
+          <TableHead><TableRow><TableCell>Imagem</TableCell><TableCell>Nome</TableCell><TableCell align="right">Preço Venda</TableCell><TableCell align="center">Ações</TableCell></TableRow></TableHead>
           <TableBody>
-            {combos.map((combo) => (
+            {combos.filter(combo => combo.nome.toLowerCase().includes(searchTerm.toLowerCase())).map((combo) => (
               <TableRow key={combo.id}>
+                <TableCell>
+                  {combo.imagem ? (
+                    <Tooltip title={<img src={combo.imagem} alt={combo.nome} style={{ width: 200, height: 200, objectFit: 'cover' }} />} arrow>
+                      <img src={combo.imagem} alt={combo.nome} style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 4, cursor: 'zoom-in' }} />
+                    </Tooltip>
+                  ) : '-'}
+                </TableCell>
                 <TableCell>{combo.nome}</TableCell>
                 <TableCell align="right">R$ {Number(combo.preco_venda).toFixed(2)}</TableCell>
                 <TableCell align="center">
