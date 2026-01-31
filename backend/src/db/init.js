@@ -123,6 +123,7 @@ export async function initDatabase() {
         nome VARCHAR(255) NOT NULL,
         preco_venda DECIMAL(10, 2) NOT NULL,
         estoque DECIMAL(10, 2) DEFAULT 0,
+        produto_id INT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -203,6 +204,7 @@ export async function initDatabase() {
     logs.push(await addColumnSafe("lancamentos_financeiros", "parcela_numero INT DEFAULT 1"));
     logs.push(await addColumnSafe("lancamentos_financeiros", "total_parcelas INT DEFAULT 1"));
     logs.push(await addColumnSafe("lancamentos_financeiros", "group_id VARCHAR(50)"));
+    logs.push(await addColumnSafe("combos", "produto_id INT"));
 
     console.log("✅ Base de dados inicializada com sucesso");
     return logs;
