@@ -427,6 +427,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
             })}
           </Grid>
       </Box>
+      </Box>
       </Container>
 
       {/* BARRA DE CHECKOUT FLUTUANTE */}
