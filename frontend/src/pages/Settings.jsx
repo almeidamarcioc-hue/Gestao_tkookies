@@ -107,7 +107,7 @@ export default function Settings() {
               fullWidth 
               value={homeTitle} 
               onChange={e => setHomeTitle(e.target.value)} 
-              placeholder="Ex: TKookies"
+              placeholder="Ex: TK🍪🍪kies (Use emojis se desejar)"
             />
           </Grid>
           <Grid item xs={12}>

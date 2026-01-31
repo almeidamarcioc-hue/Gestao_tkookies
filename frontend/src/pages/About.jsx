@@ -7,7 +7,7 @@ import api from "../services/api";
 
 export default function About() {
   const [config, setConfig] = useState({
-    about_title: "Sobre a TKookies",
+    about_title: <>Sobre a TK<Box component="span" sx={{ fontSize: '0.8em' }}>🍪🍪</Box>kies</>,
     about_desc: "Nascemos da paixão por criar momentos doces e inesquecíveis. Acreditamos que um cookie não é apenas uma sobremesa, é um abraço em forma de sabor.",
     about_card1_title: "Artesanal",
     about_card1_desc: "Cada cookie é feito à mão, com ingredientes selecionados e muito carinho, garantindo a textura perfeita: crocante por fora e macio por dentro.",
