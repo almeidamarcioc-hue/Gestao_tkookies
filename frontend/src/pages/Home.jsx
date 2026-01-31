@@ -198,6 +198,30 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
         
         {/* HERO SECTION */}
         <Box component={motion.div} initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} sx={{ textAlign: 'center', mb: 10 }}>
+          
+          {/* Destaque B2B */}
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} style={{ display: 'inline-block' }}>
+            <Chip 
+              label="💼 Área B2B: Seja um Revendedor Parceiro" 
+              onClick={() => document.getElementById('revendedor')?.scrollIntoView({ behavior: 'smooth' })}
+              sx={{ 
+                mb: 3, 
+                bgcolor: '#FFF3E0', 
+                color: '#E65100', 
+                fontWeight: 'bold', 
+                fontSize: '0.9rem',
+                height: 'auto',
+                py: 1,
+                px: 1,
+                borderRadius: '50px',
+                border: '1px solid #FFB74D',
+                cursor: 'pointer',
+                boxShadow: '0 4px 10px rgba(230, 81, 0, 0.1)',
+                '&:hover': { bgcolor: '#FFE0B2' }
+              }} 
+            />
+          </motion.div>
+
           <Typography variant="h1" sx={{ 
             fontWeight: 900, 
             fontSize: { xs: '3rem', md: '5rem' }, 
@@ -470,7 +494,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
       </Container>
 
       {/* SEÇÃO REVENDEDOR (B2B) - Com zIndex para garantir visibilidade */}
-      <Box sx={{ position: 'relative', zIndex: 2 }}>
+      <Box id="revendedor" sx={{ position: 'relative', zIndex: 2 }}>
         <ResellerCTA />
       </Box>
 
