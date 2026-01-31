@@ -23,6 +23,19 @@ const itemVariants = {
   }
 };
 
+// Estilos "Organic Soft Tech" (Glassmorphism)
+const glassStyle = {
+  background: "rgba(255, 255, 255, 0.03)",
+  backdropFilter: "blur(16px)",
+  border: "1px solid rgba(255, 255, 255, 0.08)",
+  boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.2)",
+  borderRadius: "24px",
+  color: "white"
+};
+
+const primaryColor = "#6366f1"; // Indigo futurista
+const secondaryColor = "#10b981"; // Emerald neon
+
 export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addToCart, updateCartQuantity, removeFromCart }) {
   const navigate = useNavigate();
   const [config, setConfig] = useState({
@@ -148,208 +161,160 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
   }, [totalItems]);
 
   return (
-    <Box>
-      {/* SEÇÃO CABEÇALHO (Hero Section) */}
-      <Box sx={{ 
-        minHeight: '60vh', 
-        display: 'flex', 
-        flexDirection: 'column',
-        alignItems: 'center', 
-        justifyContent: 'center',
-        py: 4,
-        backgroundImage: config.home_bg ? `url(${config.home_bg})` : 'none',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed',
-        mb: 4
-      }}>
-        <Container maxWidth="lg">
-          <Box display="flex" justifyContent="center">
-            <Paper elevation={3} sx={{ p: { xs: 2, md: 4 }, borderRadius: 4, textAlign: 'center', bgcolor: 'rgba(255, 255, 255, 0.9)', maxWidth: 600, width: '100%' }}>
-              <Box mb={4}>
-                <Typography variant="h2" fontWeight="900" color="primary" sx={{ letterSpacing: '-1px', textShadow: '2px 2px 0px #D7CCC8', mb: 1, fontSize: { xs: '2.5rem', md: '3.75rem' } }}>
-                  {config.home_title}
-                </Typography>
-                <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 500 }}>
-                  {config.home_subtitle}
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  {config.home_location}
-                </Typography>
-              </Box>
-              
-              {isLoggedIn ? (
-                <Grid container spacing={2} sx={{ mt: 2 }}>
-                  <Grid item xs={12}>
-                    <Button 
-                      variant="contained" 
-                      size="large" 
-                      fullWidth 
-                      component={Link} 
-                      to="/pedidos/novo" 
-                      startIcon={<AddCircleOutline />} // Corrigido para usar o ícone correto
-                      sx={{ py: 2, fontSize: '1.1rem', borderRadius: 3 }}
-                    >
-                      Novo Pedido
-                    </Button>
-                  </Grid>
-                  
-                  <Grid item xs={6}>
-                    <Button 
-                      variant="outlined" 
-                      size="large" 
-                      fullWidth 
-                      component={Link} 
-                      to="/pedidos"
-                      startIcon={<ListAlt />}
-                      sx={{ py: 1.5, borderRadius: 3, height: '100%' }}
-                    >
-                      Pedidos
-                    </Button>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Button 
-                      variant="outlined" 
-                      size="large" 
-                      fullWidth 
-                      component={Link} 
-                      to="/combos"
-                      startIcon={<PointOfSale />}
-                      sx={{ py: 1.5, borderRadius: 3, height: '100%' }}
-                    >
-                      Combos
-                    </Button>
-                  </Grid>
-
-                  <Grid item xs={6}>
-                    <Button 
-                      variant="outlined" 
-                      size="large" 
-                      fullWidth 
-                      component={Link} 
-                      to="/produtos"
-                      startIcon={<RestaurantMenu />}
-                      sx={{ py: 1.5, borderRadius: 3, height: '100%' }}
-                    >
-                      Produtos
-                    </Button>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Button 
-                      variant="outlined" 
-                      size="large" 
-                      fullWidth 
-                      component={Link} 
-                      to="/estoque"
-                      startIcon={<Inventory2 />}
-                      sx={{ py: 1.5, borderRadius: 3, height: '100%' }}
-                    >
-                      Estoque
-                    </Button>
-                  </Grid>
-                  
-                  <Grid item xs={12}>
-                    <Button 
-                      variant="outlined" 
-                      size="large" 
-                      fullWidth 
-                      component={Link} 
-                      to="/clientes"
-                      startIcon={<People />}
-                      sx={{ py: 1.5, borderRadius: 3 }}
-                    >
-                      Gerenciar Clientes
-                    </Button>
-                  </Grid>
-                </Grid>
-            ) : null}
-            </Paper>
-          </Box>
-        </Container>
+    <Box sx={{ bgcolor: '#0f172a', minHeight: '100vh', color: 'white', overflowX: 'hidden', position: 'relative' }}>
+      
+      {/* Background Wrapper Animado (Aurora Effect) */}
+      <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+        <motion.div 
+          animate={{ 
+            background: [
+              `radial-gradient(circle at 20% 30%, ${primaryColor}40 0%, transparent 50%)`,
+              `radial-gradient(circle at 80% 70%, ${secondaryColor}40 0%, transparent 50%)`
+            ]
+          }}
+          transition={{ duration: 10, repeat: Infinity, repeatType: "reverse" }}
+          style={{ width: '100%', height: '100%', position: 'absolute' }}
+        />
+        <Box sx={{ position: 'absolute', top: '-20%', left: '-10%', width: '50%', height: '50%', background: `${primaryColor}`, filter: 'blur(150px)', opacity: 0.2, borderRadius: '50%' }} />
+        <Box sx={{ position: 'absolute', bottom: '-10%', right: '-10%', width: '60%', height: '60%', background: `${secondaryColor}`, filter: 'blur(180px)', opacity: 0.15, borderRadius: '50%' }} />
       </Box>
+
+      <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, pt: 8, pb: 12 }}>
+        
+        {/* HERO SECTION */}
+        <Box component={motion.div} initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} sx={{ textAlign: 'center', mb: 10 }}>
+          <Typography variant="h1" sx={{ 
+            fontWeight: 900, 
+            fontSize: { xs: '3rem', md: '5rem' }, 
+            background: `linear-gradient(135deg, #fff 0%, #94a3b8 100%)`,
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            mb: 2,
+            letterSpacing: '-2px'
+          }}>
+            {config.home_title}
+          </Typography>
+          <Typography variant="h5" sx={{ color: '#94a3b8', fontWeight: 400, maxWidth: '600px', mx: 'auto', mb: 4 }}>
+            {config.home_subtitle}
+          </Typography>
+          
+          {/* Botões de Ação (Admin ou Cliente) */}
+          {isLoggedIn ? (
+            <Box sx={{ ...glassStyle, p: 3, maxWidth: 800, mx: 'auto', mt: 4 }}>
+              <Typography variant="subtitle2" sx={{ color: '#94a3b8', mb: 2, textTransform: 'uppercase', letterSpacing: 1 }}>Painel Rápido</Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={4}>
+                  <Button fullWidth variant="contained" component={Link} to="/pedidos/novo" startIcon={<AddCircleOutline />} sx={{ bgcolor: primaryColor, borderRadius: '12px', py: 1.5 }}>Novo Pedido</Button>
+                </Grid>
+                <Grid item xs={6} sm={4}>
+                  <Button fullWidth variant="outlined" component={Link} to="/pedidos" startIcon={<ListAlt />} sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.2)', borderRadius: '12px', py: 1.5 }}>Pedidos</Button>
+                </Grid>
+                <Grid item xs={6} sm={4}>
+                  <Button fullWidth variant="outlined" component={Link} to="/produtos" startIcon={<RestaurantMenu />} sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.2)', borderRadius: '12px', py: 1.5 }}>Produtos</Button>
+                </Grid>
+              </Grid>
+            </Box>
+          ) : (
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button 
+                variant="contained" 
+                size="large" 
+                onClick={() => document.getElementById('cardapio').scrollIntoView({ behavior: 'smooth' })}
+                endIcon={<ArrowForward />}
+                sx={{ 
+                  borderRadius: '50px', 
+                  px: 5, 
+                  py: 1.5, 
+                  fontSize: '1.1rem',
+                  background: `linear-gradient(90deg, ${primaryColor}, ${secondaryColor})`,
+                  boxShadow: `0 0 20px ${primaryColor}60`,
+                  textTransform: 'none'
+                }}
+              >
+                Ver Cardápio
+              </Button>
+            </motion.div>
+          )}
+        </Box>
 
       {/* SEÇÃO DESTAQUE */}
       {featuredProduct && (
-        <Container maxWidth="lg" sx={{ mb: 6 }}>
-          <Paper elevation={4} sx={{ p: 3, bgcolor: '#fff3e0', border: '2px solid #ffb74d', borderRadius: 4, position: 'relative', overflow: 'hidden' }}>
-            <Box sx={{ position: 'absolute', top: 0, right: 0, bgcolor: '#ff9800', color: 'white', px: 4, py: 1, borderBottomLeftRadius: 16, boxShadow: 2, zIndex: 1 }}>
-              <Typography fontWeight="900" variant="h6" sx={{ letterSpacing: 1 }}>OFERTA ESPECIAL</Typography>
-            </Box>
-            <Grid container spacing={4} alignItems="center" sx={{ mt: 0 }}>
-              <Grid item xs={12} md={4}>
+        <Box component={motion.div} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3 }} sx={{ mb: 8 }}>
+          <Box sx={{ ...glassStyle, p: { xs: 3, md: 6 }, position: 'relative', overflow: 'hidden' }}>
+            <Box sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: `linear-gradient(45deg, ${primaryColor}20, transparent)`, zIndex: -1 }} />
+            
+            <Grid container spacing={6} alignItems="center">
+              <Grid item xs={12} md={5}>
                 <Box 
-                  component="img" 
+                  component={motion.img}
+                  whileHover={{ scale: 1.05, rotate: 2 }}
                   src={featuredProduct.imagens?.find(img => img.eh_capa)?.imagem || featuredProduct.imagens?.[0]?.imagem} 
-                  sx={{ width: '100%', height: 250, objectFit: 'cover', borderRadius: 3 }}
+                  sx={{ width: '100%', height: 350, objectFit: 'cover', borderRadius: '32px', boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }}
                 />
               </Grid>
-              <Grid item xs={12} md={8}>
-                <Typography variant="h4" fontWeight="bold" color="primary" gutterBottom>
-                  <LocalOffer sx={{ verticalAlign: 'middle', mr: 1 }} />
+              <Grid item xs={12} md={7}>
+                <Chip label="🔥 Destaque do Dia" sx={{ bgcolor: '#f59e0b', color: 'black', fontWeight: 'bold', mb: 2 }} />
+                <Typography variant="h3" fontWeight="800" gutterBottom sx={{ color: 'white' }}>
                   {featuredProduct.nome}
                 </Typography>
-                <Box display="flex" alignItems="center" gap={2} mb={2} flexWrap="wrap">
-                  <Typography variant="h5" sx={{ textDecoration: 'line-through', color: 'text.secondary', opacity: 0.7 }}>
+                <Typography variant="body1" sx={{ color: '#cbd5e1', mb: 4, fontSize: '1.1rem' }}>
+                  Uma explosão de sabor única. Aproveite esta oferta por tempo limitado!
+                </Typography>
+                
+                <Box display="flex" alignItems="center" gap={3} mb={4}>
+                  <Typography variant="h4" sx={{ textDecoration: 'line-through', color: '#64748b', opacity: 0.7 }}>
                     R$ {Number(featuredProduct.preco_venda).toFixed(2)}
                   </Typography>
-                  <Typography variant="h3" color="error" fontWeight="900">
+                  <Typography variant="h2" sx={{ color: secondaryColor, fontWeight: 900 }}>
                     R$ {(Number(featuredProduct.preco_venda) * (1 - Number(featuredProduct.desconto_destaque) / 100)).toFixed(2)}
                   </Typography>
-                  <Box sx={{ bgcolor: '#d32f2f', color: 'white', px: 1.5, py: 0.5, borderRadius: 2, fontWeight: 'bold', fontSize: '1.2rem', boxShadow: 1 }}>
-                    -{featuredProduct.desconto_destaque}% OFF
-                  </Box>
                 </Box>
-                <Typography variant="body1" mb={3}>
-                  Aproveite esta oferta por tempo limitado! Restam apenas <strong>{Number(featuredProduct.estoque)}</strong> unidades.
-                </Typography>
-                <Button 
-                  variant="contained" 
-                  size="large" 
-                  onClick={handleAddFeatured} 
-                  startIcon={<Add />}
-                  sx={{
-                    animation: 'pulse 2s infinite',
-                    '@keyframes pulse': {
-                      '0%': {
-                        transform: 'scale(1)',
-                        boxShadow: '0 0 0 0 rgba(255, 152, 0, 0.7)',
-                      },
-                      '70%': {
-                        transform: 'scale(1.05)',
-                        boxShadow: '0 0 0 10px rgba(255, 152, 0, 0)',
-                      },
-                      '100%': {
-                        transform: 'scale(1)',
-                        boxShadow: '0 0 0 0 rgba(255, 152, 0, 0)',
-                      },
-                    },
-                  }}
-                >
-                  Adicionar ao Pedido
-                </Button>
+
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button 
+                    variant="contained" 
+                    size="large" 
+                    onClick={handleAddFeatured} 
+                    startIcon={<Add />}
+                    sx={{ 
+                      bgcolor: 'white', 
+                      color: 'black', 
+                      borderRadius: '50px', 
+                      px: 4, 
+                      py: 1.5, 
+                      fontWeight: 'bold',
+                      '&:hover': { bgcolor: '#f1f5f9' }
+                    }}
+                  >
+                    Adicionar ao Carrinho
+                  </Button>
+                </motion.div>
               </Grid>
             </Grid>
-          </Paper>
-        </Container>
+          </Box>
+        </Box>
       )}
 
       {/* SEÇÃO COMBOS */}
       {combos.length > 0 && (
-        <Container maxWidth="lg" sx={{ mb: 8 }}>
-          <Typography variant="h4" gutterBottom color="primary" fontWeight="bold" textAlign="center" sx={{ mb: 4 }}>
+        <Box sx={{ mb: 10 }}>
+          <Typography variant="h3" gutterBottom fontWeight="800" textAlign="center" sx={{ mb: 6, color: 'white' }}>
             Combos Especiais
           </Typography>
           <Grid container spacing={3}>
             {combos.map(combo => {
-              // Calcular economia
               const totalOriginal = combo.itens.reduce((acc, item) => acc + (Number(item.preco_original || 0) * Number(item.quantidade)), 0);
               const economia = totalOriginal - Number(combo.preco_venda);
               
               return (
                 <Grid item xs={12} md={6} key={combo.id}>
-                  <Paper elevation={3} sx={{ p: 3, borderRadius: 3, position: 'relative', overflow: 'hidden', bgcolor: '#FFF3E0', border: '1px solid #FFE0B2' }}>
+                  <Box 
+                    component={motion.div}
+                    whileHover={{ y: -10, boxShadow: `0 20px 40px -10px ${primaryColor}40` }}
+                    sx={{ ...glassStyle, p: 3, position: 'relative', overflow: 'hidden' }}
+                  >
                     {economia > 0 && (
-                      <Box sx={{ position: 'absolute', top: 0, right: 0, bgcolor: 'success.main', color: 'white', px: 2, py: 0.5, borderBottomLeftRadius: 8, fontWeight: 'bold' }}>
+                      <Box sx={{ position: 'absolute', top: 16, right: 16, bgcolor: secondaryColor, color: 'black', px: 2, py: 0.5, borderRadius: '50px', fontWeight: 'bold', fontSize: '0.8rem' }}>
                         Economize R$ {economia.toFixed(2)}
                       </Box>
                     )}
@@ -358,34 +323,40 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                         component="img" 
                         src={combo.imagem} 
                         alt={combo.nome} 
-                        sx={{ width: '100%', height: 200, objectFit: 'cover', borderRadius: 2, mb: 2 }} 
+                        sx={{ width: '100%', height: 220, objectFit: 'cover', borderRadius: '16px', mb: 2 }} 
                       />
                     )}
-                    <Typography variant="h5" fontWeight="bold" gutterBottom color="primary">{combo.nome}</Typography>
-                    <Typography variant="body2" color="text.secondary" mb={2}>
+                    <Typography variant="h5" fontWeight="bold" gutterBottom>{combo.nome}</Typography>
+                    <Typography variant="body2" sx={{ color: '#94a3b8', mb: 3 }}>
                       Contém: {combo.itens.map(i => `${i.quantidade}x ${i.nome}`).join(', ')}
                     </Typography>
                     <Box display="flex" justifyContent="space-between" alignItems="center" mt={2}>
                       <Box>
-                        <Typography variant="caption" sx={{ textDecoration: 'line-through', color: 'text.secondary' }}>R$ {totalOriginal.toFixed(2)}</Typography>
-                        <Typography variant="h5" color="primary" fontWeight="bold">R$ {Number(combo.preco_venda).toFixed(2)}</Typography>
+                        <Typography variant="caption" sx={{ textDecoration: 'line-through', color: '#64748b', display: 'block' }}>R$ {totalOriginal.toFixed(2)}</Typography>
+                        <Typography variant="h5" sx={{ color: secondaryColor, fontWeight: 'bold' }}>R$ {Number(combo.preco_venda).toFixed(2)}</Typography>
                       </Box>
-                      <Button variant="contained" onClick={() => handleQtyChange(combo.produto_vinculado_id, 1)} startIcon={<Add />}>
-                        Adicionar
-                      </Button>
+                      <motion.div whileTap={{ scale: 0.9 }}>
+                        <IconButton 
+                          onClick={() => handleQtyChange(combo.produto_vinculado_id, 1)}
+                          sx={{ bgcolor: 'white', color: 'black', '&:hover': { bgcolor: '#e2e8f0' } }}
+                        >
+                          <Add />
+                        </IconButton>
+                      </motion.div>
                     </Box>
-                  </Paper>
+                  </Box>
                 </Grid>
               )
             })}
           </Grid>
-        </Container>
+        </Box>
       )}
 
       {/* SEÇÃO CARDÁPIO */}
-      <Container maxWidth="lg" sx={{ mb: 12 }}>
+      <Box id="cardapio" sx={{ mb: 12 }}>
         <Box mb={8}>
           <Typography variant="h4" gutterBottom color="primary" fontWeight="bold" textAlign="center" sx={{ mb: 4 }}>
+          <Typography variant="h3" gutterBottom fontWeight="800" textAlign="center" sx={{ mb: 6, color: 'white' }}>
             Nosso Cardápio
           </Typography>
           <Grid container spacing={3} component={motion.div} variants={containerVariants} initial="hidden" animate="visible">
