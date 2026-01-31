@@ -323,45 +323,6 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           <Grid container spacing={3}>
             {combos.map(combo => {
               // Calcular economia
-              const totalOriginal = combo.itens.reduce((acc, item) => acc + (Number(item.preco_venda) * Number(item.quantidade)), 0);
-              const economia = totalOriginal - Number(combo.preco_venda);
-              
-              return (
-                <Grid item xs={12} md={6} key={combo.id}>
-                  <Paper elevation={3} sx={{ p: 3, borderRadius: 3, position: 'relative', overflow: 'hidden', bgcolor: '#FFF3E0', border: '1px solid #FFE0B2' }}>
-                    <Box sx={{ position: 'absolute', top: 0, right: 0, bgcolor: 'success.main', color: 'white', px: 2, py: 0.5, borderBottomLeftRadius: 8, fontWeight: 'bold' }}>
-                      Economize R$ {economia.toFixed(2)}
-                    </Box>
-                    <Typography variant="h5" fontWeight="bold" gutterBottom color="primary">{combo.nome}</Typography>
-                    <Typography variant="body2" color="text.secondary" mb={2}>
-                      Contém: {combo.itens.map(i => `${i.quantidade}x ${i.nome}`).join(', ')}
-                    </Typography>
-                    <Box display="flex" justifyContent="space-between" alignItems="center" mt={2}>
-                      <Box>
-                        <Typography variant="caption" sx={{ textDecoration: 'line-through', color: 'text.secondary' }}>R$ {totalOriginal.toFixed(2)}</Typography>
-                        <Typography variant="h5" color="primary" fontWeight="bold">R$ {Number(combo.preco_venda).toFixed(2)}</Typography>
-                      </Box>
-                      <Button variant="contained" onClick={() => handleQtyChange(combo.produto_vinculado_id, 1)} startIcon={<Add />}>
-                        Adicionar
-                      </Button>
-                    </Box>
-                  </Paper>
-                </Grid>
-              )
-            })}
-          </Grid>
-        </Container>
-      )}
-
-      {/* SEÇÃO COMBOS */}
-      {combos.length > 0 && (
-        <Container maxWidth="lg" sx={{ mb: 8 }}>
-          <Typography variant="h4" gutterBottom color="primary" fontWeight="bold" textAlign="center" sx={{ mb: 4 }}>
-            Combos Especiais
-          </Typography>
-          <Grid container spacing={3}>
-            {combos.map(combo => {
-              // Calcular economia
               const totalOriginal = combo.itens.reduce((acc, item) => acc + (Number(item.preco_original || 0) * Number(item.quantidade)), 0);
               const economia = totalOriginal - Number(combo.preco_venda);
               
@@ -372,6 +333,14 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                       <Box sx={{ position: 'absolute', top: 0, right: 0, bgcolor: 'success.main', color: 'white', px: 2, py: 0.5, borderBottomLeftRadius: 8, fontWeight: 'bold' }}>
                         Economize R$ {economia.toFixed(2)}
                       </Box>
+                    )}
+                    {combo.imagem && (
+                      <Box 
+                        component="img" 
+                        src={combo.imagem} 
+                        alt={combo.nome} 
+                        sx={{ width: '100%', height: 200, objectFit: 'cover', borderRadius: 2, mb: 2 }} 
+                      />
                     )}
                     <Typography variant="h5" fontWeight="bold" gutterBottom color="primary">{combo.nome}</Typography>
                     <Typography variant="body2" color="text.secondary" mb={2}>
@@ -401,7 +370,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
             Nosso Cardápio
           </Typography>
           <Grid container spacing={3}>
-            {products.map(prod => {
+            {products.filter(p => !combos.some(c => c.produto_vinculado_id === p.id)).map(prod => {
               const coverImage = prod.imagens?.find(img => img.eh_capa)?.imagem || prod.imagens?.[0]?.imagem;
               const qty = getQty(prod.id);
               const isPromo = prod.eh_destaque && prod.desconto_destaque > 0;
