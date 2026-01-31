@@ -444,12 +444,13 @@ export default function App() {
         }}
       >
         <Box sx={{ width: 300, p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <Typography variant="h5" fontWeight="bold">Login</Typography>
+          <Typography variant="h5" fontWeight="bold" sx={{ color: '#4E342E', textAlign: 'center' }}>Login</Typography>
           <TextField 
             label="Login" 
             fullWidth 
             value={clientLoginData.login} 
             onChange={(e) => setClientLoginData({...clientLoginData, login: e.target.value})} 
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', bgcolor: 'rgba(255,255,255,0.5)' } }}
           />
           <TextField 
             label="Senha" 
@@ -457,10 +458,11 @@ export default function App() {
             fullWidth 
             value={clientLoginData.senha} 
             onChange={(e) => setClientLoginData({...clientLoginData, senha: e.target.value})} 
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', bgcolor: 'rgba(255,255,255,0.5)' } }}
           />
-          <Button variant="contained" fullWidth onClick={handleClientLogin}>ENTRAR</Button>
-          <Button color="primary" onClick={() => { setClientLoginOpen(false); }}>Esqueci minha senha</Button>
-          <Button variant="outlined" fullWidth component={Link} to="/cadastro" onClick={() => setClientLoginOpen(false)}>CRIAR CONTA</Button>
+          <Button variant="contained" fullWidth onClick={handleClientLogin} sx={{ borderRadius: 50, bgcolor: '#4E342E', '&:hover': { bgcolor: '#3E2723' }, py: 1.5 }}>ENTRAR</Button>
+          <Button color="primary" onClick={() => { setClientLoginOpen(false); }} sx={{ textTransform: 'none', color: '#5D4037' }}>Esqueci minha senha</Button>
+          <Button variant="outlined" fullWidth component={Link} to="/cadastro" onClick={() => setClientLoginOpen(false)} sx={{ borderRadius: 50, borderColor: '#4E342E', color: '#4E342E', py: 1.5 }}>CRIAR CONTA</Button>
         </Box>
       </Drawer>
       </>
