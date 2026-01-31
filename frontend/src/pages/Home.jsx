@@ -355,7 +355,6 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
       {/* SEÇÃO CARDÁPIO */}
       <Box id="cardapio" sx={{ mb: 12 }}>
         <Box mb={8}>
-          <Typography variant="h4" gutterBottom color="primary" fontWeight="bold" textAlign="center" sx={{ mb: 4 }}>
           <Typography variant="h3" gutterBottom fontWeight="800" textAlign="center" sx={{ mb: 6, color: 'white' }}>
             Nosso Cardápio
           </Typography>
@@ -427,6 +426,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
               );
             })}
           </Grid>
+        </Box>
       </Box>
       </Container>
 
