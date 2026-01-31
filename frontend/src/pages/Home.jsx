@@ -85,7 +85,11 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
   useEffect(() => {
     if (clientUser) {
       api.get(`/favoritos/${clientUser.id}`)
-        .then(res => setFavorites(res.data.map(f => f.id)))
+        .then(res => {
+          // Garante que estamos pegando apenas os IDs e convertendo para número se necessário
+          const favIds = res.data.map(f => f.id);
+          setFavorites(favIds);
+        })
         .catch(err => console.error("Erro ao carregar favoritos", err));
     }
   }, [clientUser]);
@@ -99,10 +103,10 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
     try {
       if (isFav) {
         await api.delete(`/favoritos/${clientUser.id}/${prod.id}`);
-        setFavorites(prev => prev.filter(id => id !== prod.id));
+        setFavorites(prev => prev.filter(id => id !== prod.id)); // Remove do estado local
       } else {
         await api.post("/favoritos", { cliente_id: clientUser.id, produto_id: prod.id });
-        setFavorites(prev => [...prev, prod.id]);
+        setFavorites(prev => [...prev, prod.id]); // Adiciona ao estado local
       }
     } catch (err) {
       console.error("Erro ao favoritar", err);
@@ -404,13 +408,13 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                         position: 'absolute', 
                         top: 12, 
                         left: 12, 
-                        bgcolor: 'rgba(255,255,255,0.9)', 
-                        color: '#4E342E', 
-                        '&:hover': { bgcolor: 'white' }, 
+                        bgcolor: '#4E342E', 
+                        color: 'white', 
+                        '&:hover': { bgcolor: '#3E2723', transform: 'scale(1.05)' }, 
                         zIndex: 10,
                         textTransform: 'none',
                         fontWeight: 'bold',
-                        borderRadius: '12px',
+                        borderRadius: '20px',
                         minWidth: 'auto',
                         px: 2,
                         py: 0.5

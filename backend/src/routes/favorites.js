@@ -8,7 +8,7 @@ router.get("/:clienteId", async (req, res) => {
   const { clienteId } = req.params;
   try {
     const result = await pool.query(`
-      SELECT p.*, f.created_at as favoritado_em
+      SELECT p.*, p.id as id, f.created_at as favoritado_em
       FROM favoritos f
       JOIN produtos p ON f.produto_id = p.id
       WHERE f.cliente_id = $1
