@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Box, Typography, Button, Container, Grid, IconButton, Badge, Dialog, DialogTitle, DialogContent, DialogActions, Chip, Paper } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
-import { Add, Remove, ShoppingBag, Favorite, FavoriteBorder, Star, ArrowForward, AddCircleOutline, ListAlt, RestaurantMenu } from "@mui/icons-material";
+import { Add, Remove, ShoppingBag, Favorite, FavoriteBorder, Star, ArrowForward, AddCircleOutline, ListAlt, RestaurantMenu, Info, Close } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../services/api";
 
@@ -40,6 +40,8 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
   const [animateBag, setAnimateBag] = useState(false);
   const prevTotalItems = useRef(0);
   const [favorites, setFavorites] = useState([]);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   useEffect(() => {
     api.get("/configuracoes").then(res => {
@@ -128,6 +130,11 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
 
   const handleCheckout = () => {
     navigate("/carrinho");
+  };
+
+  const handleOpenDetails = (prod) => {
+    setSelectedProduct(prod);
+    setDetailsOpen(true);
   };
 
   const totalItems = cart.reduce((acc, item) => acc + item.quantidade, 0);
@@ -387,12 +394,20 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                       {favorites.includes(prod.id) ? <Favorite sx={{ color: '#ef4444' }} /> : <FavoriteBorder />}
                     </IconButton>
                     
+                    <IconButton 
+                      sx={{ position: 'absolute', top: 12, left: 12, bgcolor: 'rgba(255,255,255,0.8)', color: '#4E342E', '&:hover': { bgcolor: 'white' }, zIndex: 10 }}
+                      onClick={() => handleOpenDetails(prod)}
+                    >
+                      <Info />
+                    </IconButton>
+                    
                     {coverImage && (
                       <Box
                         component="img"
                         src={coverImage}
                         alt={prod.nome}
-                        sx={{ width: '100%', height: 220, objectFit: 'cover', borderTopLeftRadius: '24px', borderTopRightRadius: '24px' }}
+                        onClick={() => handleOpenDetails(prod)}
+                        sx={{ width: '100%', height: 220, objectFit: 'cover', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', cursor: 'pointer' }}
                       />
                     )}
                     
@@ -531,6 +546,63 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
             Finalizar Pedido
           </Button>
         </DialogActions>
+      </Dialog>
+
+      {/* Modal Detalhes do Produto */}
+      <Dialog open={detailsOpen} onClose={() => setDetailsOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '24px', bgcolor: '#fff', color: '#3E2723' } }}>
+        {selectedProduct && (
+          <>
+            <Box sx={{ position: 'relative' }}>
+               <Box 
+                 component="img" 
+                 src={selectedProduct.imagens?.find(img => img.eh_capa)?.imagem || selectedProduct.imagens?.[0]?.imagem} 
+                 sx={{ width: '100%', height: 300, objectFit: 'cover', borderTopLeftRadius: '24px', borderTopRightRadius: '24px' }} 
+               />
+               <IconButton 
+                 onClick={() => setDetailsOpen(false)}
+                 sx={{ position: 'absolute', top: 10, right: 10, bgcolor: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: 'white' } }}
+               >
+                 <Close /> 
+               </IconButton>
+            </Box>
+            <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', fontSize: '1.8rem', color: '#4E342E' }}>
+              {selectedProduct.nome}
+            </DialogTitle>
+            <DialogContent>
+              <Typography variant="body1" sx={{ color: '#5D4037', lineHeight: 1.6, whiteSpace: 'pre-line', mb: 3, fontSize: '1.1rem' }}>
+                {selectedProduct.descricao || "Sem descrição disponível."}
+              </Typography>
+              
+              <Box display="flex" justifyContent="center" alignItems="center" gap={2}>
+                 <Typography variant="h4" sx={{ color: '#2E7D32', fontWeight: 'bold' }}>
+                   R$ {selectedProduct.eh_destaque && selectedProduct.desconto_destaque > 0 
+                     ? (Number(selectedProduct.preco_venda) * (1 - Number(selectedProduct.desconto_destaque) / 100)).toFixed(2)
+                     : Number(selectedProduct.preco_venda).toFixed(2)
+                   }
+                 </Typography>
+                 {selectedProduct.eh_destaque && selectedProduct.desconto_destaque > 0 && (
+                   <Typography variant="h6" sx={{ textDecoration: 'line-through', color: '#8D6E63' }}>
+                     R$ {Number(selectedProduct.preco_venda).toFixed(2)}
+                   </Typography>
+                 )}
+              </Box>
+            </DialogContent>
+            <DialogActions sx={{ justifyContent: 'center', pb: 4 }}>
+              <Button 
+                variant="contained" 
+                size="large"
+                startIcon={<Add />}
+                onClick={() => {
+                  handleQtyChange(selectedProduct.id, 1);
+                  setDetailsOpen(false);
+                }}
+                sx={{ bgcolor: '#4E342E', color: 'white', borderRadius: '50px', px: 4, py: 1.5 }}
+              >
+                Adicionar ao Carrinho
+              </Button>
+            </DialogActions>
+          </>
+        )}
       </Dialog>
     </Box>
   );
