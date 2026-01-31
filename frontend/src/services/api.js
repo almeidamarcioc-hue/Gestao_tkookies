@@ -41,16 +41,16 @@ api.interceptors.response.use(
     const isServerError = error.response && error.response.status >= 500;
 
     if (isTimeout || isServerError) {
-      console.error("Erro crítico de API detectado, forçando logout:", error.message);
+      console.error("Erro de API detectado:", error.message);
 
       // Log detalhado para debug na Vercel
       if (error.response && error.response.data) {
         console.error("🔥 Detalhes do erro no Backend:", error.response.data);
       }
 
-      // Dispara um evento global para que a interface possa reagir e deslogar o usuário.
-      // Isso centraliza a lógica de logout por falha de comunicação.
-      window.dispatchEvent(new CustomEvent('force-logout'));
+      // REMOVIDO: Não forçar logout em erro 500 (erro de servidor/banco)
+      // Isso permite que o usuário veja o erro e tente novamente sem perder a sessão
+      // window.dispatchEvent(new CustomEvent('force-logout'));
     }
 
     // Rejeita a promise para que o erro possa ser tratado localmente se necessário
