@@ -219,23 +219,3 @@ export default function Settings() {
     </Container>
   );
 }
-
-          <Grid item xs={12}>
-            <Box display="flex" gap={2}>
-              <Button variant="contained" size="large" onClick={handleSave}>
-                Salvar Configurações
-              </Button>
-              <Button variant="outlined" size="large" onClick={handleVerifyDb} color="warning">
-                Verificar Banco de Dados
-              </Button>
-            </Box>
-          </Grid>
-        </Grid>
-      </Paper>
-
-      <Box mt={4}>
-        <DebugLogs />
-      </Box>
-    </Container>
-  );
-}
