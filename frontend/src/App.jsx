@@ -293,7 +293,14 @@ export default function App() {
         ModalProps={{ keepMounted: true }}
         sx={{
           display: { xs: 'block', md: 'none' },
-          '& .MuiDrawer-paper': { boxSizing: 'border-box', width: 250 },
+          '& .MuiDrawer-paper': { 
+            boxSizing: 'border-box', 
+            width: 250,
+            backgroundColor: "rgba(255, 255, 255, 0.8)", // Fundo branco translúcido
+            backdropFilter: "blur(12px)", // Efeito de vidro (Glassmorphism)
+            borderRight: "1px solid rgba(255, 255, 255, 0.5)",
+            boxShadow: "4px 0 20px rgba(78, 52, 46, 0.1)" // Sombra marrom suave
+          },
         }}
       >
         <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
@@ -418,7 +425,19 @@ export default function App() {
       </Box>
 
       {/* Drawer Login Cliente */}
-      <Drawer anchor="right" open={clientLoginOpen} onClose={() => setClientLoginOpen(false)}>
+      <Drawer 
+        anchor="right" 
+        open={clientLoginOpen} 
+        onClose={() => setClientLoginOpen(false)}
+        sx={{
+          '& .MuiDrawer-paper': { 
+            backgroundColor: "rgba(255, 255, 255, 0.85)",
+            backdropFilter: "blur(12px)",
+            borderLeft: "1px solid rgba(255, 255, 255, 0.5)",
+            boxShadow: "-4px 0 20px rgba(78, 52, 46, 0.1)"
+          },
+        }}
+      >
         <Box sx={{ width: 300, p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Typography variant="h5" fontWeight="bold">Login</Typography>
           <TextField 
