@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Container, Typography, Grid, Card, CardMedia, CardContent, CardActions, Button, IconButton, Box } from "@mui/material";
+import { Container, Typography, Grid, Button, IconButton, Box } from "@mui/material";
 import { Delete, AddShoppingCart, ArrowBack, Favorite } from "@mui/icons-material";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import api from "../services/api";
 
 export default function ClientFavorites({ clientUser, addToCart }) {
@@ -28,67 +29,104 @@ export default function ClientFavorites({ clientUser, addToCart }) {
     }
   };
 
+  // Estilos "Organic Soft Tech" (Versão Light/Café)
+  const glassStyle = {
+    background: "rgba(255, 255, 255, 0.7)",
+    backdropFilter: "blur(12px)",
+    border: "1px solid rgba(255, 255, 255, 0.8)",
+    boxShadow: "0 8px 32px 0 rgba(78, 52, 46, 0.08)",
+    borderRadius: "24px",
+    color: "#3E2723"
+  };
+
   if (!clientUser) return null;
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
+    <Box sx={{ bgcolor: '#D7CCC8', minHeight: '100vh', color: '#3E2723', overflowX: 'hidden', position: 'relative' }}>
+      {/* Background Wrapper Animado */}
+      <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+        <motion.div 
+          animate={{ 
+            background: [
+              `radial-gradient(circle at 20% 30%, rgba(141, 110, 99, 0.15) 0%, transparent 50%)`,
+              `radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.2) 0%, transparent 50%)`
+            ]
+          }}
+          transition={{ duration: 10, repeat: Infinity, repeatType: "reverse" }}
+          style={{ width: '100%', height: '100%', position: 'absolute' }}
+        />
+        <Box sx={{ position: 'absolute', top: '-20%', left: '-10%', width: '50%', height: '50%', background: '#EFEBE9', filter: 'blur(150px)', opacity: 0.4, borderRadius: '50%' }} />
+        <Box sx={{ position: 'absolute', bottom: '-10%', right: '-10%', width: '60%', height: '60%', background: '#FFE0B2', filter: 'blur(180px)', opacity: 0.3, borderRadius: '50%' }} />
+      </Box>
+
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 8, position: 'relative', zIndex: 1 }}>
       <Box mb={4} display="flex" alignItems="center" gap={2}>
-        <Button startIcon={<ArrowBack />} component={Link} to="/" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
+        <Button startIcon={<ArrowBack />} component={Link} to="/" sx={{ fontWeight: 'bold', color: '#4E342E', borderRadius: 50, bgcolor: 'rgba(255,255,255,0.5)' }}>
           Voltar
         </Button>
-        <Typography variant="h4" fontWeight="900" color="primary" display="flex" alignItems="center" gap={1}>
+        <Typography variant="h4" fontWeight="900" sx={{ color: '#4E342E', display: 'flex', alignItems: 'center', gap: 1 }}>
           <Favorite color="error" /> Meus Favoritos
         </Typography>
       </Box>
 
       {favorites.length === 0 ? (
-        <Typography variant="h6" color="text.secondary" textAlign="center" mt={8}>
-          Você ainda não tem produtos favoritos.
-        </Typography>
+        <Box sx={{ ...glassStyle, p: 8, textAlign: 'center' }}>
+          <Typography variant="h6" sx={{ color: "#5D4037" }}>
+            Você ainda não tem produtos favoritos.
+          </Typography>
+        </Box>
       ) : (
         <Grid container spacing={3}>
           {favorites.map(prod => {
             const coverImage = prod.imagens?.find(img => img.eh_capa)?.imagem || prod.imagens?.[0]?.imagem; // Ajuste conforme estrutura retornada
-            // Nota: O endpoint de favoritos retorna colunas de produtos, mas as imagens podem vir como JSON ou precisar de join extra dependendo do DB.
-            // Assumindo que o backend retorna estrutura similar a produtos.
             
             return (
               <Grid item xs={12} sm={6} md={4} key={prod.id}>
-                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderRadius: 3, boxShadow: 3, position: 'relative' }}>
+                <Box sx={{ 
+                    ...glassStyle, 
+                    height: '100%', 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    position: 'relative',
+                    overflow: 'hidden',
+                    transition: 'transform 0.3s ease',
+                    '&:hover': { transform: 'translateY(-5px)' }
+                  }}>
                   <IconButton 
-                    sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'rgba(255,255,255,0.9)', '&:hover': { bgcolor: 'white' } }}
+                    sx={{ position: 'absolute', top: 12, right: 12, bgcolor: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: 'white' }, zIndex: 10 }}
                     onClick={() => handleRemove(prod.id)}
                     color="error"
                   >
                     <Delete />
                   </IconButton>
                   
-                  {/* Fallback para imagem se não vier populada no join simples */}
-                  <CardMedia
+                  <Box
                     component="img"
-                    height="200"
-                    image={coverImage || "https://via.placeholder.com/300?text=Sem+Imagem"}
+                    src={coverImage || "https://via.placeholder.com/300?text=Sem+Imagem"}
                     alt={prod.nome}
+                    sx={{ width: '100%', height: 220, objectFit: 'cover' }}
                   />
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Typography gutterBottom variant="h6" component="div" fontWeight="bold">
+                  
+                  <Box sx={{ p: 3, flexGrow: 1 }}>
+                    <Typography gutterBottom variant="h6" component="div" fontWeight="bold" sx={{ color: '#4E342E' }}>
                       {prod.nome}
                     </Typography>
-                    <Typography variant="h6" color="primary">
+                    <Typography variant="h6" sx={{ color: '#2E7D32', fontWeight: 'bold' }}>
                       R$ {Number(prod.preco_venda).toFixed(2)}
                     </Typography>
-                  </CardContent>
-                  <CardActions sx={{ p: 2 }}>
-                    <Button variant="contained" fullWidth startIcon={<AddShoppingCart />} onClick={() => addToCart(prod)}>
+                  </Box>
+                  <Box sx={{ p: 2, pt: 0 }}>
+                    <Button variant="contained" fullWidth startIcon={<AddShoppingCart />} onClick={() => addToCart(prod)} sx={{ borderRadius: 50, bgcolor: '#4E342E', '&:hover': { bgcolor: '#3E2723' } }}>
                       Adicionar ao Carrinho
                     </Button>
-                  </CardActions>
-                </Card>
+                  </Box>
+                </Box>
               </Grid>
             );
           })}
         </Grid>
       )}
     </Container>
+    </Box>
   );
 }
