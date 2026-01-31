@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { Box, Typography, Button, Container, Grid, IconButton, Badge, Dialog, DialogTitle, DialogContent, DialogActions, Chip, Paper } from "@mui/material";
+import { Box, Typography, Button, Container, Grid, IconButton, Badge, Dialog, DialogTitle, DialogContent, DialogActions, Chip, Paper, Fab } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
-import { Add, Remove, ShoppingBag, Favorite, FavoriteBorder, Star, ArrowForward, AddCircleOutline, ListAlt, RestaurantMenu, PointOfSale, Inventory2, People, LocalOffer, Info, Close } from "@mui/icons-material";
+import { Add, Remove, ShoppingBag, Favorite, FavoriteBorder, Star, ArrowForward, AddCircleOutline, ListAlt, RestaurantMenu, PointOfSale, Inventory2, People, LocalOffer, Info, Close, Storefront } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../services/api";
 import ResellerCTA from "../components/ResellerCTA";
@@ -198,29 +198,6 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
         
         {/* HERO SECTION */}
         <Box component={motion.div} initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} sx={{ textAlign: 'center', mb: 10 }}>
-          
-          {/* Destaque B2B */}
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} style={{ display: 'inline-block' }}>
-            <Chip 
-              label="💼 Área B2B: Seja um Revendedor Parceiro" 
-              onClick={() => document.getElementById('revendedor')?.scrollIntoView({ behavior: 'smooth' })}
-              sx={{ 
-                mb: 3, 
-                bgcolor: '#FFF3E0', 
-                color: '#E65100', 
-                fontWeight: 'bold', 
-                fontSize: '0.9rem',
-                height: 'auto',
-                py: 1,
-                px: 1,
-                borderRadius: '50px',
-                border: '1px solid #FFB74D',
-                cursor: 'pointer',
-                boxShadow: '0 4px 10px rgba(230, 81, 0, 0.1)',
-                '&:hover': { bgcolor: '#FFE0B2' }
-              }} 
-            />
-          </motion.div>
 
           <Typography variant="h1" sx={{ 
             fontWeight: 900, 
@@ -497,6 +474,28 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
       <Box id="revendedor" sx={{ position: 'relative', zIndex: 2 }}>
         <ResellerCTA />
       </Box>
+
+      {/* Botão Flutuante B2B */}
+      <Fab
+        variant="extended"
+        onClick={() => document.getElementById('revendedor')?.scrollIntoView({ behavior: 'smooth' })}
+        sx={{
+          position: 'fixed',
+          bottom: { xs: 20, md: 40 },
+          right: { xs: 20, md: 40 },
+          zIndex: 1100,
+          bgcolor: '#FFF3E0',
+          color: '#E65100',
+          fontWeight: 'bold',
+          border: '1px solid #FFB74D',
+          boxShadow: '0 4px 15px rgba(230, 81, 0, 0.2)',
+          '&:hover': { bgcolor: '#FFE0B2' },
+          textTransform: 'none'
+        }}
+      >
+        <Storefront sx={{ mr: 1 }} />
+        Seja um Revendedor Parceiro
+      </Fab>
 
       {/* BARRA DE CHECKOUT FLUTUANTE */}
       <AnimatePresence>
