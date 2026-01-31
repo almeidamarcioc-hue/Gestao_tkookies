@@ -1,4 +1,5 @@
 import express from "express";
+import "express-async-errors";
 import cors from "cors";
 import { pool } from "./db/index.js";
 import { initDatabase } from "./db/init.js";
