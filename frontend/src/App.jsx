@@ -26,6 +26,8 @@ import ClientOrders from "./pages/ClientOrders";
 import ClientOrderDetails from "./pages/ClientOrderDetails";
 import ClientFavorites from "./pages/ClientFavorites";
 import api from "./services/api";
+import About from "./pages/About";
+import Resellers from "./pages/Resellers";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AccessDenied from "./pages/AccessDenied";
 
@@ -240,6 +242,7 @@ export default function App() {
                   <MenuItem component={Link} to="/clientes" onClick={handleClose}>Clientes</MenuItem>
                   <MenuItem component={Link} to="/combos" onClick={handleClose}>Combos</MenuItem>
                   <MenuItem component={Link} to="/estoque" onClick={handleClose}>Estoque</MenuItem>
+                  <MenuItem component={Link} to="/revendedores" onClick={handleClose}>Revendedores</MenuItem>
                   <MenuItem component={Link} to="/status" onClick={handleClose}>Status do Sistema</MenuItem>
                 </Menu>
 
@@ -354,6 +357,7 @@ export default function App() {
           <Route path="/meus-pedidos/:id" element={<ProtectedRoute isAllowed={!!clientUser}><ClientOrderDetails /></ProtectedRoute>} />
           <Route path="/meus-favoritos" element={<ProtectedRoute isAllowed={!!clientUser}><ClientFavorites clientUser={clientUser} addToCart={addToCart} /></ProtectedRoute>} />
           <Route path="/acesso-negado" element={<AccessDenied isLoggedIn={isLoggedIn || !!clientUser} onLoginClick={() => setClientLoginOpen(true)} />} />
+          <Route path="/sobre" element={<About />} />
           
           {/* Rotas Administrativas Protegidas */}
           <Route path="/produtos" element={<ProtectedRoute isAllowed={isLoggedIn}><Dashboard /></ProtectedRoute>} />
@@ -381,6 +385,7 @@ export default function App() {
           <Route path="/combos/:id" element={<ProtectedRoute isAllowed={isLoggedIn}><ComboForm /></ProtectedRoute>} />
           <Route path="/estoque" element={<ProtectedRoute isAllowed={isLoggedIn}><Inventory /></ProtectedRoute>} />
           <Route path="/configuracoes" element={<ProtectedRoute isAllowed={isLoggedIn}><Settings /></ProtectedRoute>} />
+          <Route path="/revendedores" element={<ProtectedRoute isAllowed={isLoggedIn}><Resellers /></ProtectedRoute>} />
           <Route path="/financeiro" element={<ProtectedRoute isAllowed={isLoggedIn}><Financial /></ProtectedRoute>} />
           <Route path="/production" element={<ProtectedRoute isAllowed={isLoggedIn}><Production /></ProtectedRoute>} />
 
@@ -396,9 +401,12 @@ export default function App() {
               <Typography variant="h6" fontWeight="bold" gutterBottom>
                 🍪 TKookies
               </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.8 }}>
+              <Typography variant="body2" sx={{ opacity: 0.8, mb: 2 }}>
                 Um pedacinho de felicidade em cada mordida. Feito com amor e os melhores ingredientes para você.
               </Typography>
+              <Button color="inherit" component={Link} to="/sobre" sx={{ p: 0, minWidth: 0, textTransform: 'none', fontWeight: 'normal', textDecoration: 'underline' }}>
+                Sobre Nós
+              </Button>
             </Grid>
             <Grid item xs={12} md={4}>
               <Typography variant="h6" fontWeight="bold" gutterBottom>
