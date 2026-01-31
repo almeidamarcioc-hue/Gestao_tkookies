@@ -55,6 +55,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
   const [favorites, setFavorites] = useState([]);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   useEffect(() => {
     api.get("/configuracoes").then(res => {
@@ -147,6 +148,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
 
   const handleOpenDetails = (prod) => {
     setSelectedProduct(prod);
+    setSelectedImageIndex(0);
     setDetailsOpen(true);
   };
 
@@ -568,25 +570,12 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
       <Dialog open={detailsOpen} onClose={() => setDetailsOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '24px', bgcolor: '#fff', color: '#3E2723' } }}>
         {selectedProduct && (
           <>
-            <Box sx={{ position: 'relative' }}>
-               <Box sx={{ 
-                 display: 'flex', 
-                 overflowX: 'auto', 
-                 scrollSnapType: 'x mandatory',
-                 '&::-webkit-scrollbar': { height: '6px' },
-                 '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '3px' },
-                 borderTopLeftRadius: '24px', 
-                 borderTopRightRadius: '24px'
-               }}>
-                 {(selectedProduct.imagens && selectedProduct.imagens.length > 0) ? selectedProduct.imagens.map((img, index) => (
-                   <Box 
-                     key={index}
-                     component="img" 
-                     src={img.imagem} 
-                     sx={{ width: '100%', height: 300, objectFit: 'cover', flexShrink: 0, scrollSnapAlign: 'center' }} 
-                   />
-                 )) : null}
-               </Box>
+            <Box sx={{ position: 'relative', bgcolor: '#f5f5f5', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', overflow: 'hidden' }}>
+               <Box 
+                 component="img" 
+                 src={selectedProduct.imagens && selectedProduct.imagens.length > 0 ? selectedProduct.imagens[selectedImageIndex]?.imagem : (selectedProduct.imagens?.[0]?.imagem || "")} 
+                 sx={{ width: '100%', height: 350, objectFit: 'contain', display: 'block', mx: 'auto' }} 
+               />
                <IconButton 
                  onClick={() => setDetailsOpen(false)}
                  sx={{ position: 'absolute', top: 10, right: 10, bgcolor: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: 'white' } }}
@@ -594,7 +583,31 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                  <Close /> 
                </IconButton>
             </Box>
-            <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', fontSize: '1.8rem', color: '#4E342E' }}>
+
+            {selectedProduct.imagens && selectedProduct.imagens.length > 1 && (
+              <Box sx={{ display: 'flex', gap: 1, px: 3, py: 2, overflowX: 'auto', justifyContent: 'center', bgcolor: '#fafafa' }}>
+                {selectedProduct.imagens.map((img, index) => (
+                  <Box 
+                    key={index}
+                    component="img"
+                    src={img.imagem}
+                    onClick={() => setSelectedImageIndex(index)}
+                    sx={{ 
+                      width: 60, 
+                      height: 60, 
+                      objectFit: 'cover', 
+                      borderRadius: 2, 
+                      cursor: 'pointer',
+                      border: selectedImageIndex === index ? `2px solid #4E342E` : '2px solid transparent',
+                      opacity: selectedImageIndex === index ? 1 : 0.6,
+                      transition: 'all 0.2s'
+                    }}
+                  />
+                ))}
+              </Box>
+            )}
+
+            <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', fontSize: '1.8rem', color: '#4E342E', pt: 2 }}>
               {selectedProduct.nome}
             </DialogTitle>
             <DialogContent>
