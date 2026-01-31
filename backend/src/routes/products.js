@@ -79,7 +79,7 @@ router.get("/", async (req, res) => {
 
 // CRIAR PRODUTO
 router.post("/", async (req, res) => {
-  const { nome, preco_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque } = req.body;
+  const { nome, descricao, preco_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque } = req.body;
   const client = await pool.connect();
 
   try {
@@ -91,8 +91,8 @@ router.post("/", async (req, res) => {
     }
 
     const resProd = await client.query(
-      "INSERT INTO produtos (nome, preco_venda, margem_revenda, preco_revenda, rendimento, eh_destaque, desconto_destaque) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id",
-      [nome, preco_venda, margem_revenda || 0, preco_revenda || 0, rendimento || 1, eh_destaque || false, desconto_destaque || 0]
+      "INSERT INTO produtos (nome, descricao, preco_venda, margem_revenda, preco_revenda, rendimento, eh_destaque, desconto_destaque) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id",
+      [nome, descricao, preco_venda, margem_revenda || 0, preco_revenda || 0, rendimento || 1, eh_destaque || false, desconto_destaque || 0]
     );
     const produtoId = resProd.rows[0].id;
 
@@ -132,7 +132,7 @@ router.post("/", async (req, res) => {
 // ATUALIZAR PRODUTO (Edição total)
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
-  const { nome, preco_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque } = req.body;
+  const { nome, descricao, preco_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque } = req.body;
   const client = await pool.connect();
 
   try {
@@ -145,8 +145,8 @@ router.put("/:id", async (req, res) => {
 
     // Atualiza dados básicos do produto
     await client.query(
-      "UPDATE produtos SET nome = $1, preco_venda = $2, margem_revenda = $3, preco_revenda = $4, rendimento = $5, eh_destaque = $6, desconto_destaque = $7 WHERE id = $8",
-      [nome, preco_venda, margem_revenda || 0, preco_revenda || 0, rendimento || 1, eh_destaque || false, desconto_destaque || 0, id]
+      "UPDATE produtos SET nome = $1, descricao = $2, preco_venda = $3, margem_revenda = $4, preco_revenda = $5, rendimento = $6, eh_destaque = $7, desconto_destaque = $8 WHERE id = $9",
+      [nome, descricao, preco_venda, margem_revenda || 0, preco_revenda || 0, rendimento || 1, eh_destaque || false, desconto_destaque || 0, id]
     );
 
     // Remove ingredientes antigos para reinserir os atualizados

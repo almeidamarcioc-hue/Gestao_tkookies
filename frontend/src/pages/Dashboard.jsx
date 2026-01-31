@@ -248,6 +248,7 @@ export default function Dashboard() {
     try {
       const payload = {
         nome: editProduct.nome,
+        descricao: editProduct.descricao,
         preco_venda: Number(editProduct.preco_venda),
         rendimento: Number(editRendimento),
         margem_revenda: Number(editMargemRevenda),
@@ -435,6 +436,18 @@ export default function Dashboard() {
               </Box>
 
               <Grid container spacing={2} mb={3}>
+                <Grid item xs={12}>
+                  <TextField 
+                    label="Descrição do Produto" 
+                    multiline 
+                    rows={3} 
+                    fullWidth 
+                    value={editProduct.descricao || ""} 
+                    onChange={(e) => setEditProduct({...editProduct, descricao: e.target.value})} 
+                    inputProps={{ maxLength: 1000 }}
+                    helperText={`${(editProduct.descricao || "").length}/1000`}
+                  />
+                </Grid>
                 <Grid item xs={8}>
                   <TextField 
                     label="Nome do Produto" 

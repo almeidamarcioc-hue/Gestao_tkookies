@@ -25,6 +25,7 @@ import { Delete, CloudUpload, Star, StarBorder } from "@mui/icons-material";
 export default function Products() {
   const [ingredientes, setIngredientes] = useState([]);
   const [nome, setNome] = useState("");
+  const [descricao, setDescricao] = useState("");
   const [rendimento, setRendimento] = useState(1);
   const [percentual, setPercentual] = useState(0);
   const [margemRevenda, setMargemRevenda] = useState(0);
@@ -222,6 +223,7 @@ export default function Products() {
 
     const payload = {
       nome: nome,
+      descricao: descricao,
       preco_venda: valorFinalVenda,
       rendimento: Number(rendimento),
       margem_revenda: Number(margemRevenda),
@@ -242,6 +244,7 @@ export default function Products() {
       alert("Produto cadastrado com sucesso!");
       
       setNome("");
+      setDescricao("");
       setRendimento(1);
       setPercentual(0);
       setMargemRevenda(0);
@@ -273,6 +276,19 @@ export default function Products() {
         <Box display="flex" gap={2} mb={3}>
           <TextField label="Nome do Produto" fullWidth value={nome} onChange={(e) => setNome(e.target.value)} />
           <TextField label="Rendimento (Qtd Cookies)" type="number" sx={{ width: 200 }} value={rendimento} onChange={(e) => setRendimento(e.target.value)} />
+        </Box>
+
+        <Box mb={3}>
+          <TextField 
+            label="Descrição do Produto" 
+            multiline 
+            rows={3} 
+            fullWidth 
+            value={descricao} 
+            onChange={(e) => setDescricao(e.target.value)} 
+            inputProps={{ maxLength: 1000 }}
+            helperText={`${descricao.length}/1000`}
+          />
         </Box>
 
         <Box mb={3}>
