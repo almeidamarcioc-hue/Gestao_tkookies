@@ -304,8 +304,13 @@ export default function App() {
         }}
       >
         <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
-          <Typography variant="h6" sx={{ my: 2, fontWeight: 'bold', color: 'primary.main' }}>
-            🍪 TKookies
+          <Typography variant="h6" sx={{ my: 2, fontWeight: '900', color: 'primary.main' }}>
+            🍪 <Box component="span" sx={{ 
+              background: 'linear-gradient(135deg, #4E342E 0%, #8D6E63 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              letterSpacing: '-0.5px'
+            }}>TKookies</Box>
           </Typography>
           <Divider />
           <List>
