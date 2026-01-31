@@ -8,13 +8,39 @@ router.get("/:clienteId", async (req, res) => {
   const { clienteId } = req.params;
   try {
     const result = await pool.query(`
-      SELECT p.*, p.id as id, f.created_at as favoritado_em
+      SELECT p.*, p.id as id, f.created_at as favoritado_em,
+             pim.id as img_id,
+             pim.imagem as img_conteudo,
+             pim.eh_capa as img_eh_capa
       FROM favoritos f
       JOIN produtos p ON f.produto_id = p.id
+      LEFT JOIN produto_imagens pim ON p.id = pim.produto_id
       WHERE f.cliente_id = $1
       ORDER BY f.created_at DESC
     `, [clienteId]);
-    res.json(result.rows);
+
+    const favoritesMap = new Map();
+
+    result.rows.forEach(row => {
+      if (!favoritesMap.has(row.id)) {
+        // Separa os dados da imagem dos dados do produto para limpar o objeto final
+        const { img_id, img_conteudo, img_eh_capa, ...productData } = row;
+        favoritesMap.set(row.id, {
+          ...productData,
+          imagens: []
+        });
+      }
+
+      if (row.img_id) {
+        favoritesMap.get(row.id).imagens.push({
+          id: row.img_id,
+          imagem: row.img_conteudo,
+          eh_capa: row.img_eh_capa === 1 || row.img_eh_capa === true
+        });
+      }
+    });
+
+    res.json(Array.from(favoritesMap.values()));
   } catch (error) {
     res.status(500).json({ error: "Erro ao buscar favoritos" });
   }
