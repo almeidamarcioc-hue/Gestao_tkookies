@@ -61,11 +61,11 @@ router.get("/:id/mais-comprados", async (req, res) => {
 
 // CRIAR
 router.post("/", async (req, res) => {
-  const { nome, telefone, endereco, numero, complemento, bairro, cidade, login, senha } = req.body;
+  const { nome, telefone, endereco, numero, complemento, bairro, cidade, login, senha, is_revendedor } = req.body;
   console.log("Criando cliente:", nome, "Login:", login);
   try {
     await pool.query(
-      "INSERT INTO clientes (nome, telefone, endereco, numero, complemento, bairro, cidade, login, senha) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+      "INSERT INTO clientes (nome, telefone, endereco, numero, complemento, bairro, cidade, login, senha, is_revendedor) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
       [
         nome, 
         telefone || null,
@@ -75,7 +75,8 @@ router.post("/", async (req, res) => {
         bairro || null,
         cidade || null,
         (login && login.trim()) ? login : null,
-        (senha && senha.trim()) ? senha : null
+        (senha && senha.trim()) ? senha : null,
+        is_revendedor || false
       ]
     );
     res.status(201).json({ message: "Cliente criado!" });
@@ -118,7 +119,7 @@ router.get("/:id/pedidos", async (req, res) => {
 // ATUALIZAR
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
-  const { nome, telefone, endereco, numero, complemento, bairro, cidade, senha, senha_atual } = req.body;
+  const { nome, telefone, endereco, numero, complemento, bairro, cidade, senha, senha_atual, is_revendedor } = req.body;
   console.log("Atualizando cliente:", id);
   try {
     if (senha && senha.trim() !== "") {
@@ -134,13 +135,13 @@ router.put("/:id", async (req, res) => {
       }
 
       await pool.query(
-        "UPDATE clientes SET nome = $1, telefone = $2, endereco = $3, numero = $4, complemento = $5, bairro = $6, cidade = $7, senha = $8 WHERE id = $9",
-        [nome, telefone, endereco, numero, complemento, bairro, cidade, senha, id]
+        "UPDATE clientes SET nome = $1, telefone = $2, endereco = $3, numero = $4, complemento = $5, bairro = $6, cidade = $7, senha = $8, is_revendedor = $9 WHERE id = $10",
+        [nome, telefone, endereco, numero, complemento, bairro, cidade, senha, is_revendedor || false, id]
       );
     } else {
       await pool.query(
-        "UPDATE clientes SET nome = $1, telefone = $2, endereco = $3, numero = $4, complemento = $5, bairro = $6, cidade = $7 WHERE id = $8",
-        [nome, telefone, endereco, numero, complemento, bairro, cidade, id]
+        "UPDATE clientes SET nome = $1, telefone = $2, endereco = $3, numero = $4, complemento = $5, bairro = $6, cidade = $7, is_revendedor = $8 WHERE id = $9",
+        [nome, telefone, endereco, numero, complemento, bairro, cidade, is_revendedor || false, id]
       );
     }
     res.json({ message: "Cliente atualizado!" });

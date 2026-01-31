@@ -173,9 +173,14 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
 
   const totalItems = cart.reduce((acc, item) => acc + item.quantidade, 0);
   const totalPrice = cart.reduce((acc, item) => {
-    const price = item.eh_destaque && item.desconto_destaque > 0
-      ? Number(item.preco_venda) * (1 - Number(item.desconto_destaque) / 100)
-      : Number(item.preco_venda);
+    let price = Number(item.preco_venda);
+    
+    if (clientUser?.is_revendedor) {
+      price = Number(item.preco_revenda);
+    } else if (item.eh_destaque && item.desconto_destaque > 0) {
+      price = price * (1 - Number(item.desconto_destaque) / 100);
+    }
+    
     return acc + (item.quantidade * price);
   }, 0);
 
@@ -393,9 +398,16 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
               const coverImage = prod.imagens?.find(img => img.eh_capa)?.imagem || prod.imagens?.[0]?.imagem;
               const qty = getQty(prod.id);
               const isPromo = prod.eh_destaque && prod.desconto_destaque > 0;
-              const precoFinal = isPromo 
-                ? Number(prod.preco_venda) * (1 - Number(prod.desconto_destaque) / 100)
-                : Number(prod.preco_venda);
+              const isPartner = clientUser?.is_revendedor;
+              
+              let precoFinal = Number(prod.preco_venda);
+              let precoOriginal = Number(prod.preco_venda);
+
+              if (isPartner) {
+                precoFinal = Number(prod.preco_revenda);
+              } else if (isPromo) {
+                precoFinal = precoFinal * (1 - Number(prod.desconto_destaque) / 100);
+              }
 
               return (
                 <Grid item xs={12} sm={6} md={4} key={prod.id} component={motion.div} variants={itemVariants}>
@@ -454,10 +466,10 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                         {prod.nome}
                       </Typography>
                       <Box display="flex" justifyContent="space-between" alignItems="center">
-                        <Typography variant="h6" sx={{ color: isPromo ? '#E65100' : '#4E342E', fontWeight: 'bold' }}>
+                        <Typography variant="h6" sx={{ color: (isPromo || isPartner) ? '#E65100' : '#4E342E', fontWeight: 'bold' }}>
                           R$ {precoFinal.toFixed(2)}
                         </Typography>
-                        {isPromo && <Typography variant="caption" sx={{ textDecoration: 'line-through', color: '#8D6E63' }}>R$ {Number(prod.preco_venda).toFixed(2)}</Typography>}
+                        {!isPartner && isPromo && <Typography variant="caption" sx={{ textDecoration: 'line-through', color: '#8D6E63' }}>R$ {precoOriginal.toFixed(2)}</Typography>}
                       </Box>
                     </Box>
 
@@ -662,14 +674,18 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                 {selectedProduct.descricao || "Sem descrição disponível."}
               </Typography>
               
+              {clientUser?.is_revendedor && (
+                <Chip label="Preço de Revenda" color="warning" size="small" sx={{ mb: 2 }} />
+              )}
+
               <Box display="flex" justifyContent="center" alignItems="center" gap={2}>
                  <Typography variant="h4" sx={{ color: '#2E7D32', fontWeight: 'bold' }}>
-                   R$ {selectedProduct.eh_destaque && selectedProduct.desconto_destaque > 0 
+                   R$ {clientUser?.is_revendedor ? Number(selectedProduct.preco_revenda).toFixed(2) : (selectedProduct.eh_destaque && selectedProduct.desconto_destaque > 0 
                      ? (Number(selectedProduct.preco_venda) * (1 - Number(selectedProduct.desconto_destaque) / 100)).toFixed(2)
                      : Number(selectedProduct.preco_venda).toFixed(2)
-                   }
+                   )}
                  </Typography>
-                 {selectedProduct.eh_destaque && selectedProduct.desconto_destaque > 0 && (
+                 {!clientUser?.is_revendedor && selectedProduct.eh_destaque && selectedProduct.desconto_destaque > 0 && (
                    <Typography variant="h6" sx={{ textDecoration: 'line-through', color: '#8D6E63' }}>
                      R$ {Number(selectedProduct.preco_venda).toFixed(2)}
                    </Typography>

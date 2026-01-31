@@ -261,7 +261,7 @@ export default function App() {
                 {clientUser ? (
                   <>
                     <Button color="inherit" startIcon={<AccountCircle />} onClick={(e) => setAnchorClient(e.currentTarget)}>
-                      Olá, {clientUser.nome.split(' ')[0]}
+                      Olá, {clientUser.nome.split(' ')[0]} {clientUser.is_revendedor ? '(Parceiro)' : ''}
                     </Button>
                     <Menu anchorEl={anchorClient} open={openClient} onClose={handleClose}>
                       <MenuItem component={Link} to="/perfil" onClick={handleClose}>Meu Perfil</MenuItem>
@@ -271,9 +271,14 @@ export default function App() {
                     </Menu>
                   </>
                 ) : (
-                  <Button color="inherit" onClick={() => setClientLoginOpen(true)}>
-                    Login
-                  </Button>
+                  <>
+                    <Button color="inherit" onClick={() => setClientLoginOpen(true)}>
+                      Login
+                    </Button>
+                    <Button color="inherit" onClick={() => setClientLoginOpen(true)} sx={{ bgcolor: 'rgba(78, 52, 46, 0.1)' }}>
+                      Área do Parceiro
+                    </Button>
+                  </>
                 )}
               </>
             )}
@@ -338,7 +343,10 @@ export default function App() {
                    <ListItem disablePadding><ListItemButton onClick={handleLogout}><ListItemText primary="SAIR" sx={{ color: 'error.main' }} /></ListItemButton></ListItem>
                  </>
                ) : (
-                 <ListItem disablePadding><ListItemButton onClick={() => setClientLoginOpen(true)}><ListItemText primary="Login" /></ListItemButton></ListItem>
+                 <>
+                   <ListItem disablePadding><ListItemButton onClick={() => setClientLoginOpen(true)}><ListItemText primary="Login" /></ListItemButton></ListItem>
+                   <ListItem disablePadding><ListItemButton onClick={() => setClientLoginOpen(true)}><ListItemText primary="Área do Parceiro" sx={{ color: 'primary.main', fontWeight: 'bold' }} /></ListItemButton></ListItem>
+                 </>
                )
             )}
             <ListItem disablePadding><ListItemButton component={Link} to="/carrinho"><ListItemText primary="Carrinho" /></ListItemButton></ListItem>

@@ -164,6 +164,21 @@ export async function initDatabase() {
       )
     `);
 
+    // Tabela de Revendedores (B2B)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS revendedores (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        razao_social VARCHAR(255) NOT NULL,
+        cpf_cnpj VARCHAR(20) NOT NULL,
+        nome_contato VARCHAR(100) NOT NULL,
+        telefone VARCHAR(20),
+        cep VARCHAR(10),
+        cidade VARCHAR(100),
+        estado CHAR(2),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // Tabela de Lançamentos Financeiros (Contas a Pagar/Receber)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS lancamentos_financeiros (
@@ -209,6 +224,7 @@ export async function initDatabase() {
     logs.push(await addColumnSafe("combos", "produto_id INT"));
     logs.push(await addColumnSafe("combos", "imagem LONGTEXT"));
     logs.push(await addColumnSafe("produtos", "descricao VARCHAR(1000)"));
+    logs.push(await addColumnSafe("clientes", "is_revendedor BOOLEAN DEFAULT FALSE"));
 
     console.log("✅ Base de dados inicializada com sucesso");
     return logs;
