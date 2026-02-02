@@ -469,14 +469,20 @@ export default function App() {
             </Grid>
           </Grid>
           <Divider sx={{ my: 3, bgcolor: 'rgba(255,255,255,0.2)' }} />
-          <Typography variant="body2" align="center" sx={{ opacity: 0.6 }}>
-            Todos o direitos reservados - TK<Box component="span" sx={{ fontSize: '0.8em' }}>🍪🍪</Box>kies © {new Date().getFullYear()}
+          <Box sx={{ textAlign: 'center', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <Typography variant="body2" sx={{ opacity: 0.6 }}>
+              Todos o direitos reservados - TK<Box component="span" sx={{ fontSize: '0.8em' }}>🍪🍪</Box>kies © {new Date().getFullYear()}
+            </Typography>
             {!isLoggedIn && (
-              <IconButton size="small" onClick={() => setAdminLoginOpen(true)} sx={{ color: '#fff', ml: 1 }}>
+              <IconButton 
+                size="small" 
+                onClick={() => setAdminLoginOpen(true)} 
+                sx={{ color: 'rgba(255,255,255,0.5)', ml: 1, '&:hover': { color: '#fff' } }}
+              >
                 <Lock fontSize="small" />
               </IconButton>
             )}
-          </Typography>
+          </Box>
         </Container>
       </Box>
       </Box>
