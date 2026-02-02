@@ -469,14 +469,18 @@ export default function App() {
             </Grid>
           </Grid>
           <Divider sx={{ my: 3, bgcolor: 'rgba(255,255,255,0.2)' }} />
-          <Box sx={{ textAlign: 'center', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <Typography variant="body2" sx={{ opacity: 0.6 }}>
+          <Box sx={{ textAlign: 'center' }}>
+            <Typography variant="body2" sx={{ opacity: 0.6, mb: 1 }}>
               Todos o direitos reservados - TK<Box component="span" sx={{ fontSize: '0.8em' }}>🍪🍪</Box>kies © {new Date().getFullYear()}
             </Typography>
             <IconButton 
-              size="small" 
               onClick={() => isLoggedIn ? navigate('/produtos') : setAdminLoginOpen(true)} 
-              sx={{ color: '#fff', ml: 2, border: '1px solid rgba(255,255,255,0.3)', opacity: 1 }}
+              sx={{ 
+                color: '#fff', 
+                border: '1px solid rgba(255,255,255,0.3)', 
+                opacity: 0.7,
+                '&:hover': { opacity: 1, bgcolor: 'rgba(255,255,255,0.1)' }
+              }}
               title="Acesso Administrativo"
             >
               <Lock fontSize="small" />
