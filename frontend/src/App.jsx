@@ -473,15 +473,14 @@ export default function App() {
             <Typography variant="body2" sx={{ opacity: 0.6 }}>
               Todos o direitos reservados - TK<Box component="span" sx={{ fontSize: '0.8em' }}>🍪🍪</Box>kies © {new Date().getFullYear()}
             </Typography>
-            {!isLoggedIn && (
-              <IconButton 
-                size="small" 
-                onClick={() => setAdminLoginOpen(true)} 
-                sx={{ color: 'rgba(255,255,255,0.5)', ml: 1, '&:hover': { color: '#fff' } }}
-              >
-                <Lock fontSize="small" />
-              </IconButton>
-            )}
+            <IconButton 
+              size="small" 
+              onClick={() => isLoggedIn ? navigate('/produtos') : setAdminLoginOpen(true)} 
+              sx={{ color: '#fff', ml: 1, opacity: 0.5, '&:hover': { opacity: 1 } }}
+              title="Acesso Administrativo"
+            >
+              <Lock fontSize="small" />
+            </IconButton>
           </Box>
         </Container>
       </Box>
