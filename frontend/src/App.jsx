@@ -476,7 +476,7 @@ export default function App() {
             <IconButton 
               size="small" 
               onClick={() => isLoggedIn ? navigate('/produtos') : setAdminLoginOpen(true)} 
-              sx={{ color: '#fff', ml: 1, opacity: 0.5, '&:hover': { opacity: 1 } }}
+              sx={{ color: '#fff', ml: 2, border: '1px solid rgba(255,255,255,0.3)', opacity: 1 }}
               title="Acesso Administrativo"
             >
               <Lock fontSize="small" />
