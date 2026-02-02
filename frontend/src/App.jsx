@@ -374,6 +374,13 @@ export default function App() {
                )
             )}
             <ListItem disablePadding><ListItemButton component={Link} to="/carrinho"><ListItemText primary="Carrinho" /></ListItemButton></ListItem>
+            {!isLoggedIn && (
+              <ListItem disablePadding sx={{ justifyContent: 'center', mt: 2 }}>
+                <IconButton onClick={() => setAdminLoginOpen(true)} sx={{ color: 'text.secondary', opacity: 0.5 }}>
+                  <Lock />
+                </IconButton>
+              </ListItem>
+            )}
           </List>
         </Box>
       </Drawer>
@@ -465,7 +472,7 @@ export default function App() {
           <Typography variant="body2" align="center" sx={{ opacity: 0.6 }}>
             Todos o direitos reservados - TK<Box component="span" sx={{ fontSize: '0.8em' }}>🍪🍪</Box>kies © {new Date().getFullYear()}
             {!isLoggedIn && (
-              <IconButton size="small" onClick={() => setAdminLoginOpen(true)} sx={{ color: 'rgba(255,255,255,0.3)', ml: 1 }}>
+              <IconButton size="small" onClick={() => setAdminLoginOpen(true)} sx={{ color: '#fff', ml: 1 }}>
                 <Lock fontSize="small" />
               </IconButton>
             )}
