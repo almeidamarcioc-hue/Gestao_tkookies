@@ -62,7 +62,7 @@ export default function ResellerCTA() {
                 Seja um Revendedor Parceiro
               </Typography>
               <Typography variant="h6" sx={{ color: "#D7CCC8", mb: 4, fontWeight: 400 }}>
-                Leve a qualidade TKookies para o seu estabelecimento. Agregue valor ao seu comércio com produtos artesanais que fidelizam clientes.
+                Leve a qualidade TK<Box component="span" sx={{ fontSize: '0.8em' }}>🍪🍪</Box>kies para o seu estabelecimento. Agregue valor ao seu comércio com produtos artesanais que fidelizam clientes.
               </Typography>
               <Paper sx={{ p: 2, bgcolor: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 4, display: "inline-block" }}>
                 <Typography variant="subtitle1" sx={{ color: "#FFB74D", fontWeight: "bold" }}>

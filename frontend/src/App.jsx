@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Routes, Route, Link, Navigate, useNavigate } from "react-router-dom";
 import { AppBar, Toolbar, Button, Box, Typography, Menu, MenuItem, createTheme, ThemeProvider, CssBaseline, TextField, IconButton, Drawer, List, ListItem, ListItemButton, ListItemText, Divider, Container, Grid, Badge, CircularProgress } from "@mui/material";
-import { Menu as MenuIcon, Instagram, WhatsApp, Facebook, AccountCircle, ShoppingCart, Favorite } from "@mui/icons-material";
+import { Menu as MenuIcon, Instagram, WhatsApp, Facebook, AccountCircle, ShoppingCart, Favorite, Lock } from "@mui/icons-material";
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
 import Ingredients from "./pages/Ingredients";
@@ -95,6 +95,8 @@ export default function App() {
   const [anchorCons, setAnchorCons] = useState(null);
   const [anchorPed, setAnchorPed] = useState(null);
   const [anchorClient, setAnchorClient] = useState(null);
+  const [adminLoginOpen, setAdminLoginOpen] = useState(false);
+  const [adminLoginData, setAdminLoginData] = useState({ login: "", senha: "" });
 
   // Estados de Autenticação
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -154,15 +156,6 @@ export default function App() {
   };
 
   const handleClientLogin = async () => {
-    // 1. Verifica se é Admin (Apenas na área do cliente)
-    if (loginMode === 'client' && clientLoginData.login === "tkookies_" && clientLoginData.senha === "TKookies") {
-      setIsLoggedIn(true);
-      localStorage.setItem("cookie_erp_admin", "true");
-      setClientLoginOpen(false);
-      setClientLoginData({ login: "", senha: "" });
-      return;
-    }
-
     // 2. Tenta login como Cliente
     try {
       const res = await api.post("/clientes/login", clientLoginData);
@@ -187,6 +180,18 @@ export default function App() {
     } catch (err) {
       const msg = err.response?.data?.error || "Erro no login";
       alert(msg);
+    }
+  };
+
+  const handleAdminLogin = () => {
+    if (adminLoginData.login === "tkookies_" && adminLoginData.senha === "TKookies") {
+      setIsLoggedIn(true);
+      localStorage.setItem("cookie_erp_admin", "true");
+      setAdminLoginOpen(false);
+      setAdminLoginData({ login: "", senha: "" });
+      navigate("/produtos");
+    } else {
+      alert("Credenciais de administrador inválidas.");
     }
   };
 
@@ -237,7 +242,7 @@ export default function App() {
             <MenuIcon />
           </IconButton>
           <Typography variant="h5" component={Link} to="/" sx={{ flexGrow: 1, fontWeight: '900', textDecoration: 'none', color: 'primary.main', letterSpacing: '-0.5px' }}>
-            🍪 TKookies
+            🍪 TK<Box component="span" sx={{ fontSize: '0.8em' }}>🍪🍪</Box>kies
           </Typography>
           <Box display={{ xs: 'none', md: 'flex' }} gap={1}>
             <Button color="inherit" component={Link} to="/">Início</Button>
@@ -337,7 +342,7 @@ export default function App() {
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               letterSpacing: '-0.5px'
-            }}>TKookies</Box>
+            }}>TK<Box component="span" sx={{ fontSize: '0.8em' }}>🍪🍪</Box>kies</Box>
           </Typography>
           <Divider />
           <List>
@@ -426,7 +431,7 @@ export default function App() {
           <Grid container spacing={4}>
             <Grid item xs={12} md={4}>
               <Typography variant="h6" fontWeight="bold" gutterBottom>
-                🍪 TKookies
+                🍪 TK<Box component="span" sx={{ fontSize: '0.8em' }}>🍪🍪</Box>kies
               </Typography>
               <Typography variant="body2" sx={{ opacity: 0.8, mb: 2 }}>
                 Um pedacinho de felicidade em cada mordida. Feito com amor e os melhores ingredientes para você.
@@ -458,7 +463,12 @@ export default function App() {
           </Grid>
           <Divider sx={{ my: 3, bgcolor: 'rgba(255,255,255,0.2)' }} />
           <Typography variant="body2" align="center" sx={{ opacity: 0.6 }}>
-            Todos o direitos reservados - TKookies © {new Date().getFullYear()}
+            Todos o direitos reservados - TK<Box component="span" sx={{ fontSize: '0.8em' }}>🍪🍪</Box>kies © {new Date().getFullYear()}
+            {!isLoggedIn && (
+              <IconButton size="small" onClick={() => setAdminLoginOpen(true)} sx={{ color: 'rgba(255,255,255,0.3)', ml: 1 }}>
+                <Lock fontSize="small" />
+              </IconButton>
+            )}
           </Typography>
         </Container>
       </Box>
@@ -502,6 +512,30 @@ export default function App() {
           {loginMode === 'client' && (
             <Button variant="outlined" fullWidth component={Link} to="/cadastro" onClick={() => setClientLoginOpen(false)} sx={{ borderRadius: 50, borderColor: '#4E342E', color: '#4E342E', py: 1.5 }}>CRIAR CONTA</Button>
           )}
+        </Box>
+      </Drawer>
+
+      {/* Drawer Login Admin */}
+      <Drawer 
+        anchor="right" 
+        open={adminLoginOpen} 
+        onClose={() => setAdminLoginOpen(false)}
+        sx={{
+          '& .MuiDrawer-paper': { 
+            backgroundColor: "rgba(255, 255, 255, 0.9)",
+            backdropFilter: "blur(12px)",
+            borderLeft: "1px solid rgba(255, 255, 255, 0.5)",
+            boxShadow: "-4px 0 20px rgba(78, 52, 46, 0.1)"
+          },
+        }}
+      >
+        <Box sx={{ width: 300, p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Typography variant="h5" fontWeight="bold" sx={{ color: '#4E342E', textAlign: 'center' }}>
+            Acesso Administrativo
+          </Typography>
+          <TextField label="Usuário Admin" fullWidth value={adminLoginData.login} onChange={(e) => setAdminLoginData({...adminLoginData, login: e.target.value})} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', bgcolor: 'rgba(255,255,255,0.5)' } }} />
+          <TextField label="Senha" type="password" fullWidth value={adminLoginData.senha} onChange={(e) => setAdminLoginData({...adminLoginData, senha: e.target.value})} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', bgcolor: 'rgba(255,255,255,0.5)' } }} />
+          <Button variant="contained" fullWidth onClick={handleAdminLogin} sx={{ borderRadius: 50, bgcolor: '#4E342E', '&:hover': { bgcolor: '#3E2723' }, py: 1.5 }}>ENTRAR</Button>
         </Box>
       </Drawer>
       </>

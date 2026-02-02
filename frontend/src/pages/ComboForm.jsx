@@ -5,7 +5,7 @@ import {
   Box, Button, TextField, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, 
   Container, Autocomplete, IconButton, Alert, Grid
 } from "@mui/material";
-import { Delete, Add } from "@mui/icons-material";
+import { Delete, Add, CloudUpload } from "@mui/icons-material";
 
 export default function ComboForm() {
   const navigate = useNavigate();
@@ -13,6 +13,7 @@ export default function ComboForm() {
 
   const [nome, setNome] = useState("");
   const [precoVenda, setPrecoVenda] = useState("");
+  const [imagem, setImagem] = useState("");
   const [itens, setItens] = useState([]);
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
   const [qtdProduto, setQtdProduto] = useState(1);
@@ -62,6 +63,7 @@ export default function ComboForm() {
       const combo = res.data;
       setNome(combo.nome);
       setPrecoVenda(combo.preco_venda);
+      setImagem(combo.imagem || "");
       
       const itensMapeados = combo.itens.map(item => {
         const prodOriginal = produtos.find(p => p.id === item.produto_id);
@@ -130,7 +132,8 @@ export default function ComboForm() {
     const payload = {
       nome,
       preco_venda: Number(precoVenda),
-      itens
+      itens,
+      imagem
     };
 
     try {
@@ -163,6 +166,15 @@ export default function ComboForm() {
     }
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => setImagem(reader.result);
+    }
+  };
+
   // Recalcula margem visual sempre que houver mudança
   const margemAtual = custoRealTotal > 0 ? ((Number(precoVenda) - custoRealTotal) / custoRealTotal) * 100 : 0;
   
@@ -179,6 +191,26 @@ export default function ComboForm() {
       
       <Paper sx={{ p: 3, mb: 3 }}>
         <TextField label="Nome do Combo" fullWidth value={nome} onChange={e => setNome(e.target.value)} sx={{ mb: 2 }} />
+        
+        <Box mb={3}>
+          <Typography variant="subtitle2" mb={1}>Imagem do Combo</Typography>
+          <Box display="flex" alignItems="center" gap={2}>
+            {imagem && (
+              <Box 
+                component="img" 
+                src={imagem} 
+                sx={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 2, border: '1px solid #ddd' }} 
+              />
+            )}
+            <Button component="label" variant="outlined" startIcon={<CloudUpload />}>
+              Carregar Imagem
+              <input type="file" hidden accept="image/*" onChange={handleImageChange} />
+            </Button>
+            {imagem && (
+              <IconButton color="error" onClick={() => setImagem("")}><Delete /></IconButton>
+            )}
+          </Box>
+        </Box>
         
         <Box display="flex" gap={2} mb={2} alignItems="center">
           <Autocomplete

@@ -30,6 +30,7 @@ router.get("/", async (req, res) => {
           estoque: row.estoque,
           created_at: row.created_at,
           produto_vinculado_id: row.produto_vinculado_id,
+          imagem: row.imagem,
           itens: []
         });
       }
@@ -77,6 +78,7 @@ router.get("/:id", async (req, res) => {
       estoque: result.rows[0].estoque,
       created_at: result.rows[0].created_at,
       produto_vinculado_id: result.rows[0].produto_vinculado_id,
+      imagem: result.rows[0].imagem,
       itens: []
     };
 
@@ -99,7 +101,7 @@ router.get("/:id", async (req, res) => {
 
 // CRIAR
 router.post("/", async (req, res) => {
-  const { nome, preco_venda, itens } = req.body;
+  const { nome, preco_venda, itens, imagem } = req.body;
   const client = await pool.connect();
 
   try {
@@ -113,8 +115,8 @@ router.post("/", async (req, res) => {
     const produtoId = resProd.rows[0].id;
 
     const resCombo = await client.query(
-      "INSERT INTO combos (nome, preco_venda, produto_id) VALUES ($1, $2, $3) RETURNING id",
-      [nome, preco_venda, produtoId]
+      "INSERT INTO combos (nome, preco_venda, produto_id, imagem) VALUES ($1, $2, $3, $4) RETURNING id",
+      [nome, preco_venda, produtoId, imagem]
     );
     const comboId = resCombo.rows[0].id;
 
@@ -141,7 +143,7 @@ router.post("/", async (req, res) => {
 // ATUALIZAR
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
-  const { nome, preco_venda, itens } = req.body;
+  const { nome, preco_venda, itens, imagem } = req.body;
   const client = await pool.connect();
 
   try {
@@ -156,8 +158,8 @@ router.put("/:id", async (req, res) => {
     }
 
     await client.query(
-      "UPDATE combos SET nome = $1, preco_venda = $2 WHERE id = $3",
-      [nome, preco_venda, id]
+      "UPDATE combos SET nome = $1, preco_venda = $2, imagem = $4 WHERE id = $3",
+      [nome, preco_venda, id, imagem]
     );
 
     await client.query("DELETE FROM combo_itens WHERE combo_id = $1", [id]);

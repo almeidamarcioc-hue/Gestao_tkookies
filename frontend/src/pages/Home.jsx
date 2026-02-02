@@ -40,7 +40,7 @@ const secondaryColor = "#2E7D32"; // Verde Sucesso (ou outra cor de destaque do 
 export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addToCart, updateCartQuantity, removeFromCart }) {
   const navigate = useNavigate();
   const [config, setConfig] = useState({
-    home_title: "TKookies",
+    home_title: <>TK<Box component="span" sx={{ fontSize: '0.8em' }}>🍪🍪</Box>kies</>,
     home_subtitle: "🍪 Um pedacinho de felicidade em cada mordida.",
     home_location: "📍 Apenas delivery / Três de Maio - RS",
     home_bg: ""
