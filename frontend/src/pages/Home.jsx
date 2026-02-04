@@ -501,6 +501,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
       </Box>
 
       {/* Botão Flutuante B2B */}
+      {totalItems === 0 && (
       <Fab
         variant="extended"
         onClick={() => document.getElementById('revendedor')?.scrollIntoView({ behavior: 'smooth' })}
@@ -521,6 +522,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
         <Storefront sx={{ mr: 1 }} />
         Seja um Revendedor Parceiro
       </Fab>
+      )}
 
       {/* BARRA DE CHECKOUT FLUTUANTE */}
       <AnimatePresence>
@@ -532,12 +534,13 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           exit={{ y: 100 }}
           sx={{ 
             position: 'fixed', 
-            bottom: 24, 
+            bottom: { xs: 32, md: 24 },
             left: '50%', 
             transform: 'translateX(-50%)', 
-            width: '90%',
+            width: { xs: '96%', md: '90%' },
             maxWidth: '600px',
-            zIndex: 1200 
+            zIndex: 1200,
+            pb: 'env(safe-area-inset-bottom)'
           }}
         >
           <Box sx={{ 
@@ -547,7 +550,8 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
             display: 'flex', 
             justifyContent: 'space-between', 
             alignItems: 'center',
-            border: `1px solid #4E342E`
+            border: `1px solid #4E342E`,
+            boxShadow: '0 -4px 20px rgba(0,0,0,0.1)'
           }}>
             <Box display="flex" alignItems="center" gap={2}>
               <Box sx={{ position: 'relative' }}>
@@ -559,8 +563,8 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                 />
               </Box>
               <Box>
-                <Typography variant="caption" sx={{ color: '#5D4037' }}>Total do Pedido</Typography>
-                <Typography variant="h6" fontWeight="bold" color="primary.main">R$ {totalPrice.toFixed(2)}</Typography>
+                <Typography variant="caption" sx={{ color: '#5D4037', lineHeight: 1 }}>Total do Pedido</Typography>
+                <Typography variant="h6" fontWeight="bold" color="primary.main" sx={{ lineHeight: 1.2 }}>R$ {totalPrice.toFixed(2)}</Typography>
               </Box>
             </Box>
             <Button 
