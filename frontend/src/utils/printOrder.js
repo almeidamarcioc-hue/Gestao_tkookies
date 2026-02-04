@@ -72,7 +72,7 @@ export const printOrder = (order) => {
       <div class="section">
         <div>Cliente: ${order.cliente_nome || order.cliente?.nome || 'Consumidor'}</div>
         <div>Tel: ${order.telefone || order.cliente?.telefone || '-'}</div>
-        ${order.endereco ? `<div>End: ${order.endereco}, ${order.numero} - ${order.bairro}</div>` : '<div>Entrega: Retirada</div>'}
+        ${frete > 0 ? `<div>End: ${order.endereco}, ${order.numero} - ${order.bairro}</div>` : '<div>Retirada</div>'}
       </div>
 
       <div class="divider"></div>
