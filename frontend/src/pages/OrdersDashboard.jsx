@@ -107,6 +107,26 @@ export default function OrdersDashboard() {
     return () => clearInterval(interval);
   }, []);
 
+  const handleSoundToggle = (event) => {
+    const isEnabled = event.target.checked;
+    setSoundEnabled(isEnabled);
+
+    // Se estiver ativando, tenta tocar o som bem baixo para "desbloquear" o áudio no navegador.
+    // Isso é necessário por causa das políticas de autoplay dos navegadores.
+    if (isEnabled) {
+      const audio = audioRef.current;
+      audio.volume = 0.01; // Quase inaudível
+      audio.play().then(() => {
+        // Pausa rapidamente após o desbloqueio
+        setTimeout(() => {
+          audio.pause();
+          audio.currentTime = 0;
+          audio.volume = 1; // Restaura o volume
+        }, 50);
+      }).catch(error => console.warn("Não foi possível desbloquear o áudio no clique:", error));
+    }
+  };
+
   useEffect(() => {
     const audio = audioRef.current;
     if (soundEnabled && unacknowledgedOrders.size > 0) {
@@ -183,7 +203,7 @@ export default function OrdersDashboard() {
             control={
               <Switch 
                 checked={soundEnabled} 
-                onChange={(e) => setSoundEnabled(e.target.checked)} 
+                onChange={handleSoundToggle} 
                 color="success"
               />
             }
