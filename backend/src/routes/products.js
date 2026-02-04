@@ -220,12 +220,42 @@ router.patch("/:id/destaque", async (req, res) => {
 // DELETAR PRODUTO
 router.delete("/:id", async (req, res) => {
   const { id } = req.params;
+  const { confirm } = req.query; // ?confirm=true para forçar exclusão
+  const client = await pool.connect();
+
   try {
-    await pool.query("DELETE FROM produtos WHERE id = $1", [id]);
+    await client.query("BEGIN");
+
+    // 1. Verifica se o produto está em uso (Pedidos ou Combos)
+    const checkPedidos = await client.query("SELECT COUNT(*) as total FROM itens_pedido WHERE produto_id = $1", [id]);
+    const checkCombos = await client.query("SELECT COUNT(*) as total FROM combo_itens WHERE produto_id = $1", [id]);
+    
+    const totalUsos = Number(checkPedidos.rows[0].total) + Number(checkCombos.rows[0].total);
+
+    if (totalUsos > 0 && confirm !== 'true') {
+      await client.query("ROLLBACK");
+      return res.status(409).json({ 
+        error: "Este produto está vinculado a pedidos ou combos.",
+        confirmationRequired: true,
+        message: `Este item aparece em ${totalUsos} registros. Excluí-lo removerá esses itens do histórico. Deseja continuar?`
+      });
+    }
+
+    // 2. Se confirmado ou sem uso, remove as dependências manuais (caso o banco não tenha CASCADE configurado)
+    await client.query("DELETE FROM itens_pedido WHERE produto_id = $1", [id]);
+    await client.query("DELETE FROM combo_itens WHERE produto_id = $1", [id]);
+    
+    // 3. Remove o produto
+    await client.query("DELETE FROM produtos WHERE id = $1", [id]);
+    
+    await client.query("COMMIT");
     res.json({ message: "Produto removido com sucesso!" });
   } catch (error) {
-    console.error(error);
+    await client.query("ROLLBACK");
+    console.error("Erro ao deletar produto:", error);
     res.status(500).json({ error: "Erro ao remover produto" });
+  } finally {
+    client.release();
   }
 });
 

@@ -5,121 +5,74 @@ const router = Router();
 
 // LISTAR
 router.get("/", async (req, res) => {
+  const { apenas_ativos } = req.query;
   try {
-    const result = await pool.query(`
-      SELECT c.*, 
-             c.produto_id as produto_vinculado_id,
-             p.id as prod_id, 
-             p.nome as prod_nome, 
-             ic.quantidade as prod_quantidade,
-             p.preco_venda as prod_preco_original
-      FROM combos c
-      LEFT JOIN combo_itens ic ON c.id = ic.combo_id
-      LEFT JOIN produtos p ON ic.produto_id = p.id
-      ORDER BY c.nome ASC
-    `);
-
-    const combosMap = new Map();
-
-    result.rows.forEach(row => {
-      if (!combosMap.has(row.id)) {
-        combosMap.set(row.id, {
-          id: row.id,
-          nome: row.nome,
-          preco_venda: row.preco_venda,
-          estoque: row.estoque,
-          created_at: row.created_at,
-          produto_vinculado_id: row.produto_vinculado_id,
-          imagem: row.imagem,
-          itens: []
-        });
-      }
-
-      if (row.prod_id) {
-        combosMap.get(row.id).itens.push({
-          produto_id: row.prod_id,
-          nome: row.prod_nome,
-          quantidade: row.prod_quantidade,
-          preco_original: row.prod_preco_original
-        });
-      }
-    });
-
-    res.json(Array.from(combosMap.values()));
+    let query = "SELECT * FROM combos";
+    const params = [];
+    
+    if (apenas_ativos === 'true') {
+      query += " WHERE ativo = TRUE";
+    }
+    
+    query += " ORDER BY nome ASC";
+    
+    const result = await pool.query(query, params);
+    res.json(result.rows);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Erro ao listar combos" });
   }
 });
 
-// OBTER UM COMBO
+// OBTER UM
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await pool.query(`
-      SELECT c.*, 
-             c.produto_id as produto_vinculado_id,
-             p.id as prod_id, 
-             p.nome as prod_nome, 
-             ic.quantidade as prod_quantidade,
-             p.preco_venda as prod_preco_original
-      FROM combos c
-      LEFT JOIN combo_itens ic ON c.id = ic.combo_id
-      LEFT JOIN produtos p ON ic.produto_id = p.id
-      WHERE c.id = $1
-    `, [id]);
-    
+    const result = await pool.query("SELECT * FROM combos WHERE id = $1", [id]);
     if (result.rows.length === 0) return res.status(404).json({ error: "Combo não encontrado" });
     
-    const combo = {
-      id: result.rows[0].id,
-      nome: result.rows[0].nome,
-      preco_venda: result.rows[0].preco_venda,
-      estoque: result.rows[0].estoque,
-      created_at: result.rows[0].created_at,
-      produto_vinculado_id: result.rows[0].produto_vinculado_id,
-      imagem: result.rows[0].imagem,
-      itens: []
-    };
-
-    result.rows.forEach(row => {
-      if (row.prod_id) {
-        combo.itens.push({
-          produto_id: row.prod_id,
-          nome: row.prod_nome,
-          quantidade: row.prod_quantidade,
-          preco_original: row.prod_preco_original
-        });
-      }
-    });
-
+    const combo = result.rows[0];
+    
+    // Buscar itens do combo
+    const itensRes = await pool.query(`
+      SELECT ci.*, p.nome 
+      FROM combo_itens ci
+      JOIN produtos p ON ci.produto_id = p.id
+      WHERE ci.combo_id = $1
+    `, [id]);
+    
+    combo.itens = itensRes.rows;
+    
     res.json(combo);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: "Erro ao buscar combo" });
   }
 });
 
 // CRIAR
 router.post("/", async (req, res) => {
-  const { nome, preco_venda, itens, imagem } = req.body;
+  const { nome, preco_venda, imagem, itens, ativo } = req.body;
   const client = await pool.connect();
-
+  
   try {
     await client.query("BEGIN");
-
-    // 1. Criar o Combo como um Produto (para ser usado no pedido)
-    const resProd = await client.query(
-      "INSERT INTO produtos (nome, preco_venda, estoque, rendimento) VALUES ($1, $2, 9999, 1) RETURNING id",
-      [nome, preco_venda]
-    );
-    const produtoId = resProd.rows[0].id;
-
+    
+    // Insere o combo
     const resCombo = await client.query(
-      "INSERT INTO combos (nome, preco_venda, produto_id, imagem) VALUES ($1, $2, $3, $4) RETURNING id",
-      [nome, preco_venda, produtoId, imagem]
+      "INSERT INTO combos (nome, preco_venda, imagem, ativo) VALUES ($1, $2, $3, $4) RETURNING id",
+      [nome, preco_venda, imagem, ativo === undefined ? true : ativo]
     );
-    const comboId = resCombo.rows[0].id;
+    
+    // Compatibilidade para pegar o ID gerado
+    let comboId;
+    if (resCombo.rows && resCombo.rows.length > 0) {
+        comboId = resCombo.rows[0].id;
+    } else if (resCombo.insertId) {
+        comboId = resCombo.insertId;
+    }
 
+    // Insere os itens
     if (itens && itens.length > 0) {
       for (const item of itens) {
         await client.query(
@@ -128,12 +81,12 @@ router.post("/", async (req, res) => {
         );
       }
     }
-
+    
     await client.query("COMMIT");
-    res.status(201).json({ message: "Combo criado com sucesso!", id: comboId });
+    res.status(201).json({ message: "Combo criado!", id: comboId });
   } catch (error) {
     await client.query("ROLLBACK");
-    console.error(error);
+    console.error("Erro ao criar combo:", error);
     res.status(500).json({ error: "Erro ao criar combo" });
   } finally {
     client.release();
@@ -143,27 +96,20 @@ router.post("/", async (req, res) => {
 // ATUALIZAR
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
-  const { nome, preco_venda, itens, imagem } = req.body;
+  const { nome, preco_venda, imagem, itens, ativo } = req.body;
   const client = await pool.connect();
-
+  
   try {
     await client.query("BEGIN");
-
-    // Buscar produto_id vinculado
-    const resBusca = await client.query("SELECT produto_id FROM combos WHERE id = $1", [id]);
-    if (resBusca.rows.length > 0 && resBusca.rows[0].produto_id) {
-      const produtoId = resBusca.rows[0].produto_id;
-      // Atualizar Produto vinculado
-      await client.query("UPDATE produtos SET nome = $1, preco_venda = $2 WHERE id = $3", [nome, preco_venda, produtoId]);
-    }
-
+    
     await client.query(
-      "UPDATE combos SET nome = $1, preco_venda = $2, imagem = $4 WHERE id = $3",
-      [nome, preco_venda, id, imagem]
+      "UPDATE combos SET nome = $1, preco_venda = $2, imagem = $3, ativo = $4 WHERE id = $5",
+      [nome, preco_venda, imagem, ativo, id]
     );
-
+    
+    // Remove itens antigos e insere os novos
     await client.query("DELETE FROM combo_itens WHERE combo_id = $1", [id]);
-
+    
     if (itens && itens.length > 0) {
       for (const item of itens) {
         await client.query(
@@ -172,12 +118,12 @@ router.put("/:id", async (req, res) => {
         );
       }
     }
-
+    
     await client.query("COMMIT");
-    res.json({ message: "Combo atualizado com sucesso!" });
+    res.json({ message: "Combo atualizado!" });
   } catch (error) {
     await client.query("ROLLBACK");
-    console.error(error);
+    console.error("Erro ao atualizar combo:", error);
     res.status(500).json({ error: "Erro ao atualizar combo" });
   } finally {
     client.release();
@@ -187,20 +133,24 @@ router.put("/:id", async (req, res) => {
 // DELETAR
 router.delete("/:id", async (req, res) => {
   const { id } = req.params;
+  const client = await pool.connect();
   try {
-    // Buscar produto vinculado para deletar também
-    const resBusca = await pool.query("SELECT produto_id FROM combos WHERE id = $1", [id]);
-    if (resBusca.rows.length > 0 && resBusca.rows[0].produto_id) {
-      const produtoId = resBusca.rows[0].produto_id;
-      await pool.query("DELETE FROM produtos WHERE id = $1", [produtoId]);
-    }
-
-    await pool.query("DELETE FROM combo_itens WHERE combo_id = $1", [id]);
-    await pool.query("DELETE FROM combos WHERE id = $1", [id]);
-    res.json({ message: "Combo removido com sucesso!" });
+    await client.query("BEGIN");
+    
+    // 1. Remover itens do combo primeiro (Correção do erro 500)
+    await client.query("DELETE FROM combo_itens WHERE combo_id = $1", [id]);
+    
+    // 2. Remover o combo
+    await client.query("DELETE FROM combos WHERE id = $1", [id]);
+    
+    await client.query("COMMIT");
+    res.json({ message: "Combo removido!" });
   } catch (error) {
-    console.error(error);
+    await client.query("ROLLBACK");
+    console.error("Erro ao deletar combo:", error);
     res.status(500).json({ error: "Erro ao remover combo" });
+  } finally {
+    client.release();
   }
 });
 

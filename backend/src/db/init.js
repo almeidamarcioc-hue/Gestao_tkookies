@@ -227,6 +227,7 @@ export async function initDatabase() {
     logs.push(await addColumnSafe("clientes", "is_revendedor BOOLEAN DEFAULT FALSE"));
     logs.push(await addColumnSafe("revendedores", "login VARCHAR(100)"));
     logs.push(await addColumnSafe("revendedores", "senha VARCHAR(255)"));
+    logs.push(await addColumnSafe("combos", "ativo BOOLEAN DEFAULT TRUE"));
 
     console.log("✅ Base de dados inicializada com sucesso");
     return logs;

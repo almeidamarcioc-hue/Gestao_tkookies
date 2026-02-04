@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import api from "../services/api";
 import { 
   Box, Button, TextField, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, 
-  Container, Autocomplete, IconButton, Alert, Grid
+  Container, Autocomplete, IconButton, Alert, Grid, FormControlLabel, Checkbox
 } from "@mui/material";
 import { Delete, Add, CloudUpload } from "@mui/icons-material";
 
@@ -14,6 +14,7 @@ export default function ComboForm() {
   const [nome, setNome] = useState("");
   const [precoVenda, setPrecoVenda] = useState("");
   const [imagem, setImagem] = useState("");
+  const [ativo, setAtivo] = useState(true);
   const [itens, setItens] = useState([]);
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
   const [qtdProduto, setQtdProduto] = useState(1);
@@ -64,6 +65,7 @@ export default function ComboForm() {
       setNome(combo.nome);
       setPrecoVenda(combo.preco_venda);
       setImagem(combo.imagem || "");
+      setAtivo(combo.ativo !== false);
       
       const itensMapeados = combo.itens.map(item => {
         const prodOriginal = produtos.find(p => p.id === item.produto_id);
@@ -133,7 +135,8 @@ export default function ComboForm() {
       nome,
       preco_venda: Number(precoVenda),
       itens,
-      imagem
+      imagem,
+      ativo
     };
 
     try {
@@ -191,6 +194,12 @@ export default function ComboForm() {
       
       <Paper sx={{ p: 3, mb: 3 }}>
         <TextField label="Nome do Combo" fullWidth value={nome} onChange={e => setNome(e.target.value)} sx={{ mb: 2 }} />
+        
+        <FormControlLabel
+          control={<Checkbox checked={ativo} onChange={(e) => setAtivo(e.target.checked)} />}
+          label="Combo Ativo (Visível no Cardápio)"
+          sx={{ mb: 2, display: 'block' }}
+        />
         
         <Box mb={3}>
           <Typography variant="subtitle2" mb={1}>Imagem do Combo</Typography>
