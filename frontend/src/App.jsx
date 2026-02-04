@@ -30,6 +30,7 @@ import About from "./pages/About";
 import Resellers from "./pages/Resellers";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AccessDenied from "./pages/AccessDenied";
+import OrdersDashboard from "./pages/OrdersDashboard";
 
 const theme = createTheme({
   palette: {
@@ -242,7 +243,7 @@ export default function App() {
             <MenuIcon />
           </IconButton>
           <Typography variant="h5" component={Link} to="/" sx={{ flexGrow: 1, fontWeight: '900', textDecoration: 'none', color: 'primary.main', letterSpacing: '-0.5px' }}>
-            TK<Box component="span" sx={{ fontSize: '0.8em' }}>🍪🍪</Box>kies
+            TKookies
           </Typography>
           <Box display={{ xs: 'none', md: 'flex' }} gap={1}>
             <Button color="inherit" component={Link} to="/">Início</Button>
@@ -277,6 +278,7 @@ export default function App() {
                 <Menu anchorEl={anchorPed} open={openPed} onClose={handleClose}>
                   <MenuItem component={Link} to="/pedidos/novo" onClick={handleClose}>Novo Pedido</MenuItem>
                   <MenuItem component={Link} to="/pedidos" onClick={handleClose}>Consultar Pedidos</MenuItem>
+                  <MenuItem component={Link} to="/painel-cozinha" onClick={handleClose}>Painel de Cozinha (KDS)</MenuItem>
                 </Menu>
                 <Button color="inherit" onClick={handleLogout}>SAIR</Button>
               </>
@@ -351,6 +353,7 @@ export default function App() {
               <>
                 <ListItem disablePadding><ListItemButton component={Link} to="/pedidos/novo"><ListItemText primary="Novo Pedido" /></ListItemButton></ListItem>
                 <ListItem disablePadding><ListItemButton component={Link} to="/pedidos"><ListItemText primary="Pedidos" /></ListItemButton></ListItem>
+                <ListItem disablePadding><ListItemButton component={Link} to="/painel-cozinha"><ListItemText primary="Painel Cozinha" /></ListItemButton></ListItem>
                 <ListItem disablePadding><ListItemButton component={Link} to="/produtos"><ListItemText primary="Produtos" /></ListItemButton></ListItem>
                 <ListItem disablePadding><ListItemButton component={Link} to="/clientes"><ListItemText primary="Clientes" /></ListItemButton></ListItem>
                 <ListItem disablePadding><ListItemButton component={Link} to="/combos"><ListItemText primary="Combos" /></ListItemButton></ListItem>
@@ -406,6 +409,7 @@ export default function App() {
           <Route path="/clientes" element={<ProtectedRoute isAllowed={isLoggedIn}><Clients /></ProtectedRoute>} />
           <Route path="/clientes/novo" element={<ProtectedRoute isAllowed={isLoggedIn}><ClientForm /></ProtectedRoute>} />
           <Route path="/pedidos" element={<ProtectedRoute isAllowed={isLoggedIn}><Orders /></ProtectedRoute>} />
+          <Route path="/painel-cozinha" element={<ProtectedRoute isAllowed={isLoggedIn}><OrdersDashboard /></ProtectedRoute>} />
           
           {/* Pedidos: Acessível por Admin OU Cliente Logado */}
           <Route path="/pedidos/novo" element={

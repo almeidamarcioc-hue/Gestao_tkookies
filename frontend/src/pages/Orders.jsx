@@ -19,9 +19,11 @@ export default function Orders() {
   }, []);
 
   const getStatusColor = (status) => {
-    if (status === 'Finalizado') return 'success';
-    if (status === 'Cancelado') return 'error';
-    return 'primary';
+    if (status === 'Finalizado' || status === 'Pronto') return 'success.main';
+    if (status === 'Cancelado') return 'error.main';
+    if (status === 'Em Produção') return 'warning.main';
+    if (status === 'Novo') return 'primary.main';
+    return 'text.secondary';
   };
 
   const handleStatusChange = async (id, newStatus) => {
@@ -90,9 +92,11 @@ export default function Orders() {
                       value={pedido.status}
                       onChange={(e) => handleStatusChange(pedido.id, e.target.value)}
                       disableUnderline
-                      sx={{ fontSize: '0.875rem', fontWeight: 500, color: getStatusColor(pedido.status) === 'success' ? 'green' : getStatusColor(pedido.status) === 'error' ? 'red' : 'inherit' }}
+                      sx={{ fontSize: '0.875rem', fontWeight: 500, color: getStatusColor(pedido.status) }}
                     >
                       <MenuItem value="Novo">Novo</MenuItem>
+                      <MenuItem value="Em Produção">Em Produção</MenuItem>
+                      <MenuItem value="Pronto">Pronto</MenuItem>
                       <MenuItem value="Finalizado">Finalizado</MenuItem>
                       <MenuItem value="Cancelado">Cancelado</MenuItem>
                     </Select>

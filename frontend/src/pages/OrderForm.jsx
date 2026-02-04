@@ -305,6 +305,8 @@ export default function OrderForm({ clientUser, isAdmin }) {
           <Grid item xs={6} md={2}>
             <TextField select label="Status" fullWidth value={status} onChange={e => setStatus(e.target.value)} disabled={isCancelled}>
               <MenuItem value="Novo">Novo</MenuItem>
+              <MenuItem value="Em Produção">Em Produção</MenuItem>
+              <MenuItem value="Pronto">Pronto</MenuItem>
               <MenuItem value="Finalizado">Finalizado</MenuItem>
               <MenuItem value="Cancelado">Cancelado</MenuItem>
             </TextField>
