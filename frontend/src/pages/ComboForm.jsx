@@ -65,7 +65,7 @@ export default function ComboForm() {
       setNome(combo.nome);
       setPrecoVenda(combo.preco_venda);
       setImagem(combo.imagem || "");
-      setAtivo(combo.ativo !== false);
+      setAtivo(combo.ativo === 0 || combo.ativo === false ? false : true);
       
       const itensMapeados = combo.itens.map(item => {
         const prodOriginal = produtos.find(p => p.id === item.produto_id);

@@ -104,13 +104,13 @@ router.put("/:id", async (req, res) => {
     
     await client.query(
       "UPDATE combos SET nome = $1, preco_venda = $2, imagem = $3, ativo = $4 WHERE id = $5",
-      [nome, preco_venda, imagem, ativo, id]
+      [nome, preco_venda, imagem, ativo === undefined ? true : ativo, id]
     );
     
     // Remove itens antigos e insere os novos
     await client.query("DELETE FROM combo_itens WHERE combo_id = $1", [id]);
     
-    if (itens && itens.length > 0) {
+    if (Array.isArray(itens) && itens.length > 0) {
       for (const item of itens) {
         await client.query(
           "INSERT INTO combo_itens (combo_id, produto_id, quantidade) VALUES ($1, $2, $3)",
