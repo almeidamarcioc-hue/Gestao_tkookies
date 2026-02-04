@@ -45,7 +45,7 @@ export const printOrder = (order) => {
         * {
           box-sizing: border-box;
           color: #000 !important;
-          font-weight: bold !important; 
+          font-weight: 900 !important; 
         }
         .header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 10px; margin-bottom: 10px; }
         .brand { font-size: 20px; text-transform: uppercase; display: block; font-weight: 900 !important; }
@@ -96,7 +96,7 @@ export const printOrder = (order) => {
         ${order.observacao ? `<div>Obs: ${order.observacao}</div>` : ''}
       </div>
 
-      <div class="footer">Obrigado pela preferência!<br/>*** Documento não fiscal ***</div>
+      <div class="footer">Jeová Jireh</div>
       <script>window.onload = function() { window.print(); }</script>
     </body>
     </html>
