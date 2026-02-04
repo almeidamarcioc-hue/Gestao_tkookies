@@ -7,17 +7,51 @@ const router = Router();
 router.get("/", async (req, res) => {
   const { apenas_ativos } = req.query;
   try {
-    let query = "SELECT * FROM combos";
+    let query = `
+      SELECT c.*, 
+             ci.id as item_id, ci.quantidade as item_quantidade,
+             p.id as produto_id, p.nome as produto_nome, p.preco_venda as produto_preco
+      FROM combos c
+      LEFT JOIN combo_itens ci ON c.id = ci.combo_id
+      LEFT JOIN produtos p ON ci.produto_id = p.id
+    `;
+    
     const params = [];
     
     if (apenas_ativos === 'true') {
-      query += " WHERE ativo = TRUE";
+      query += " WHERE c.ativo = TRUE";
     }
     
-    query += " ORDER BY nome ASC";
+    query += " ORDER BY c.nome ASC";
     
     const result = await pool.query(query, params);
-    res.json(result.rows);
+    
+    const combosMap = new Map();
+    
+    result.rows.forEach(row => {
+      if (!combosMap.has(row.id)) {
+        combosMap.set(row.id, {
+          id: row.id,
+          nome: row.nome,
+          preco_venda: row.preco_venda,
+          imagem: row.imagem,
+          ativo: row.ativo,
+          itens: [] // Garante que itens seja um array, evitando o erro de reduce
+        });
+      }
+      
+      if (row.item_id) {
+        combosMap.get(row.id).itens.push({
+          id: row.item_id,
+          produto_id: row.produto_id,
+          nome: row.produto_nome,
+          quantidade: row.item_quantidade,
+          preco_original: row.produto_preco
+        });
+      }
+    });
+    
+    res.json(Array.from(combosMap.values()));
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Erro ao listar combos" });
