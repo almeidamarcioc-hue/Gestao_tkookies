@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import api from "../services/api";
 import { 
   Box, Button, TextField, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, 
-  Container, Autocomplete, IconButton, Alert, Grid, FormControlLabel, Checkbox
+  Container, Autocomplete, IconButton, Alert, Grid, FormControlLabel, Checkbox, CircularProgress
 } from "@mui/material";
 import { Delete, Add, CloudUpload } from "@mui/icons-material";
 
@@ -12,6 +12,7 @@ export default function ComboForm() {
   const { id } = useParams();
 
   const [nome, setNome] = useState("");
+  const [loading, setLoading] = useState(!!id); // Se tem ID, começa carregando
   const [precoVenda, setPrecoVenda] = useState("");
   const [imagem, setImagem] = useState("");
   const [ativo, setAtivo] = useState(true);
@@ -51,10 +52,12 @@ export default function ComboForm() {
       setListaProdutos(produtosComCusto);
       
       if (id) {
-        carregarCombo(id, produtosComCusto);
+        await carregarCombo(id, produtosComCusto);
       }
     } catch (err) {
       console.error("Erro ao carregar produtos", err);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -188,6 +191,14 @@ export default function ComboForm() {
   const margemIndividual = custoRealTotal > 0 ? (lucroIndividual / custoRealTotal) * 100 : 0;
   const economiaCliente = valorTotalIndividual - Number(precoVenda);
   const percentualEconomia = valorTotalIndividual > 0 ? (economiaCliente / valorTotalIndividual) * 100 : 0;
+
+  if (loading) {
+    return (
+      <Container maxWidth="md" sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+        <CircularProgress />
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="md">

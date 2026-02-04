@@ -95,7 +95,7 @@ router.post("/", async (req, res) => {
     // Insere o combo
     const resCombo = await client.query(
       "INSERT INTO combos (nome, preco_venda, imagem, ativo) VALUES ($1, $2, $3, $4) RETURNING id",
-      [nome, preco_venda, imagem, (ativo === undefined || ativo === true || ativo === 1 || ativo === "true") ? 1 : 0]
+      [nome, preco_venda, imagem, (ativo === true || ativo === 1 || ativo === "true") ? 1 : 0]
     );
     
     // Compatibilidade para pegar o ID gerado
