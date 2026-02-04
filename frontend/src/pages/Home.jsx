@@ -212,7 +212,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
         <Box sx={{ position: 'absolute', bottom: '-10%', right: '-10%', width: '60%', height: '60%', background: '#FFE0B2', filter: 'blur(180px)', opacity: 0.3, borderRadius: '50%' }} />
       </Box>
 
-      <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, pt: 8, pb: 12 }}>
+      <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, pt: 8, pb: 20 }}>
         
         {/* HERO SECTION */}
         <Box component={motion.div} initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} sx={{ textAlign: 'center', mb: 10 }}>
@@ -534,7 +534,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           exit={{ y: 100 }}
           sx={{ 
             position: 'fixed', 
-            bottom: { xs: 32, md: 24 },
+            bottom: { xs: 60, md: 24 },
             left: '50%', 
             transform: 'translateX(-50%)', 
             width: { xs: '96%', md: '90%' },
