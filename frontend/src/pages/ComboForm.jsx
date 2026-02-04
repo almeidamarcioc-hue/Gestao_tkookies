@@ -149,7 +149,8 @@ export default function ComboForm() {
       } 
       navigate("/combos");
     } catch (err) {
-      alert("Erro ao salvar combo");
+      const msg = err.response?.data?.details || err.response?.data?.error || "Erro ao salvar combo";
+      alert(`Erro: ${msg}`);
     }
   }
 

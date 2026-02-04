@@ -61,7 +61,7 @@ router.post("/", async (req, res) => {
     // Insere o combo
     const resCombo = await client.query(
       "INSERT INTO combos (nome, preco_venda, imagem, ativo) VALUES ($1, $2, $3, $4) RETURNING id",
-      [nome, preco_venda, imagem, ativo === undefined ? true : ativo]
+      [nome, preco_venda, imagem, (ativo === undefined || ativo === true || ativo === 1 || ativo === "true") ? 1 : 0]
     );
     
     // Compatibilidade para pegar o ID gerado
@@ -87,7 +87,7 @@ router.post("/", async (req, res) => {
   } catch (error) {
     await client.query("ROLLBACK");
     console.error("Erro ao criar combo:", error);
-    res.status(500).json({ error: "Erro ao criar combo" });
+    res.status(500).json({ error: "Erro ao criar combo", details: error.message });
   } finally {
     client.release();
   }
@@ -104,7 +104,7 @@ router.put("/:id", async (req, res) => {
     
     await client.query(
       "UPDATE combos SET nome = $1, preco_venda = $2, imagem = $3, ativo = $4 WHERE id = $5",
-      [nome, preco_venda, imagem, ativo === undefined ? true : ativo, id]
+      [nome, preco_venda, imagem, (ativo === true || ativo === 1 || ativo === "true") ? 1 : 0, id]
     );
     
     // Remove itens antigos e insere os novos
@@ -124,7 +124,7 @@ router.put("/:id", async (req, res) => {
   } catch (error) {
     await client.query("ROLLBACK");
     console.error("Erro ao atualizar combo:", error);
-    res.status(500).json({ error: "Erro ao atualizar combo" });
+    res.status(500).json({ error: "Erro ao atualizar combo", details: error.message });
   } finally {
     client.release();
   }
