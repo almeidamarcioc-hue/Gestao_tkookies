@@ -227,26 +227,11 @@ export default function OrderForm({ clientUser, isAdmin }) {
     if (!id) return alert("Salve o pedido antes de imprimir.");
     try {
       await api.post(`/pedidos/${id}/imprimir`);
-      alert("Enviado para impressora!");
+      alert("Pedido enviado para a impressora USB.");
     } catch (err) {
-      const pedidoParaImpressao = {
-        id: id,
-        data_pedido: dataPedido,
-        cliente: cliente,
-        itens: itens,
-        frete: frete,
-        valor_total: totalPedido,
-        forma_pagamento: formaPagamento,
-        observacao: observacao
-      };
-      
       const msg = err.response?.data?.error || err.message || "Erro na comunicação USB";
-      console.log("Impressão direta falhou:", msg);
-      
-      // Se falhar, avisa e abre o navegador
-      // alert(`${msg}. Abrindo janela de impressão...`);
-      
-      printOrder(pedidoParaImpressao);
+      alert(`Falha na impressão direta: ${msg}\n\nVerifique se a impressora está conectada e se os drivers estão instalados corretamente (Zadig para Windows).`);
+      console.error("Erro na impressão direta:", err);
     }
   }
 
