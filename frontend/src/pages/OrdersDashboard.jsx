@@ -107,23 +107,25 @@ export default function OrdersDashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleSoundToggle = (event) => {
+ const handleSoundToggle = (event) => {
     const isEnabled = event.target.checked;
     setSoundEnabled(isEnabled);
 
-    // Se estiver ativando, tenta tocar o som bem baixo para "desbloquear" o áudio no navegador.
-    // Isso é necessário por causa das políticas de autoplay dos navegadores.
     if (isEnabled) {
+      // Tenta "acordar" o contexto de áudio do navegador.
+      // Isso é uma exigência de navegadores modernos para permitir som automático.
       const audio = audioRef.current;
-      audio.volume = 0.01; // Quase inaudível
-      audio.play().then(() => {
-        // Pausa rapidamente após o desbloqueio
-        setTimeout(() => {
+      const playPromise = audio.play();
+
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          // Se o play funcionou, pausa imediatamente. O áudio está "desbloqueado".
           audio.pause();
           audio.currentTime = 0;
-          audio.volume = 1; // Restaura o volume
-        }, 50);
-      }).catch(error => console.warn("Não foi possível desbloquear o áudio no clique:", error));
+        }).catch(error => {
+          console.warn("O navegador bloqueou a tentativa inicial de ativar o som. Clique no botão de teste para habilitar.", error);
+        });
+      }
     }
   };
 
