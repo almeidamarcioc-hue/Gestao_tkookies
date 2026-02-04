@@ -242,7 +242,7 @@ export default function App() {
             <MenuIcon />
           </IconButton>
           <Typography variant="h5" component={Link} to="/" sx={{ flexGrow: 1, fontWeight: '900', textDecoration: 'none', color: 'primary.main', letterSpacing: '-0.5px' }}>
-            🍪 TK<Box component="span" sx={{ fontSize: '0.8em' }}>🍪🍪</Box>kies
+            TK<Box component="span" sx={{ fontSize: '0.8em' }}>🍪🍪</Box>kies
           </Typography>
           <Box display={{ xs: 'none', md: 'flex' }} gap={1}>
             <Button color="inherit" component={Link} to="/">Início</Button>
@@ -337,7 +337,7 @@ export default function App() {
       >
         <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
           <Typography variant="h6" sx={{ my: 2, fontWeight: '900', color: 'primary.main' }}>
-            🍪 <Box component="span" sx={{ 
+            <Box component="span" sx={{ 
               background: 'linear-gradient(135deg, #4E342E 0%, #8D6E63 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
@@ -438,7 +438,7 @@ export default function App() {
           <Grid container spacing={4}>
             <Grid item xs={12} md={4}>
               <Typography variant="h6" fontWeight="bold" gutterBottom>
-                🍪 TK<Box component="span" sx={{ fontSize: '0.8em' }}>🍪🍪</Box>kies
+                TK<Box component="span" sx={{ fontSize: '0.8em' }}>🍪🍪</Box>kies
               </Typography>
               <Typography variant="body2" sx={{ opacity: 0.8, mb: 2 }}>
                 Um pedacinho de felicidade em cada mordida. Feito com amor e os melhores ingredientes para você.
