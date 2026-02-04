@@ -1,102 +1,107 @@
-export function printOrder(pedido) {
-  const janela = window.open('', '', 'width=800,height=600');
+export const printOrder = (order) => {
+  // Cria uma nova janela para impressão
+  const printWindow = window.open('', '_blank', 'width=800,height=600');
   
-  // Normalização dos dados (pois podem vir do Form ou da API)
-  const clienteNome = pedido.cliente_nome || (pedido.cliente ? pedido.cliente.nome : 'Consumidor');
-  const clienteTel = pedido.telefone || (pedido.cliente ? pedido.cliente.telefone : '');
-  const clienteEnd = pedido.endereco ? `${pedido.endereco}, ${pedido.numero} - ${pedido.bairro}` : (pedido.cliente ? `${pedido.cliente.endereco}, ${pedido.cliente.numero} - ${pedido.cliente.bairro}` : '');
-  const clienteCidade = pedido.cidade || (pedido.cliente ? pedido.cliente.cidade : '');
+  if (!printWindow) {
+    alert("Por favor, permita popups para imprimir.");
+    return;
+  }
 
-  const itensHtml = pedido.itens.map(item => `
-    <div style="margin-bottom: 5px; border-bottom: 1px dashed #eee; padding-bottom: 2px;">
-      <div style="font-weight: bold;">${item.nome || item.produto_nome}</div>
-      <div style="display: flex; justify-content: space-between;">
-        <span>${Number(item.quantidade).toFixed(2)} x R$ ${Number(item.valor_unitario).toFixed(2)}</span>
-        <span>R$ ${(Number(item.quantidade) * Number(item.valor_unitario)).toFixed(2)}</span>
-      </div>
+  // Formata os itens
+  const itensHtml = (order.itens || []).map(item => `
+    <div class="item">
+      <span class="qty">${Number(item.quantidade)}x</span>
+      <span class="name">${item.nome || item.produto_nome || 'Produto'}</span>
+      <span class="price">R$ ${Number(item.valor_total).toFixed(2)}</span>
     </div>
   `).join('');
 
-  const subtotal = pedido.itens.reduce((acc, i) => acc + (Number(i.quantidade) * Number(i.valor_unitario)), 0);
-  const total = Number(pedido.valor_total || (subtotal + Number(pedido.frete || 0)));
+  // Calcula subtotal se não vier pronto
+  const total = Number(order.valor_total) || 0;
+  const frete = Number(order.frete) || 0;
+  const subtotal = total - frete;
 
-  const html = `
+  // Conteúdo HTML com CSS otimizado para impressoras térmicas (Alto Contraste)
+  const htmlContent = `
+    <!DOCTYPE html>
     <html>
-      <head>
-        <title>Pedido #${pedido.id || 'NOVO'}</title>
-        <style>
-          @page { margin: 0; }
-          body { 
-            font-family: 'Courier New', Courier, monospace; 
-            width: 72mm; 
-            margin: 0; 
-            padding: 5px; 
-            font-size: 12px;
-            color: #000;
-          }
-          .header { text-align: center; margin-bottom: 10px; }
-          .title { font-size: 16px; font-weight: bold; text-transform: uppercase; }
-          .divider { border-top: 1px dashed #000; margin: 10px 0; }
-          .info { margin-bottom: 5px; font-size: 11px; }
-          .flex-between { display: flex; justify-content: space-between; }
-          .total { font-size: 14px; font-weight: bold; margin-top: 5px; }
-          .footer { text-align: center; margin-top: 20px; font-size: 10px; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <div class="title">TKookies</div>
-          <div>Pedido #${pedido.id || '---'}</div>
-        </div>
-        
-        <div class="info">
-          <div><b>Data:</b> ${new Date(pedido.data_pedido).toLocaleDateString()}</div>
-          <div><b>Cliente:</b> ${clienteNome}</div>
-          ${clienteTel ? `<div><b>Tel:</b> ${clienteTel}</div>` : ''}
-          ${clienteEnd ? `<div><b>End:</b> ${clienteEnd}</div>` : ''}
-          ${clienteCidade ? `<div><b>Cidade:</b> ${clienteCidade}</div>` : ''}
-        </div>
+    <head>
+      <title>Pedido #${order.id}</title>
+      <style>
+        @page {
+          margin: 0;
+          size: auto; /* Ajusta ao tamanho do papel da impressora */
+        }
+        body {
+          font-family: 'Courier New', Courier, monospace; /* Fonte monoespaçada é melhor para térmicas */
+          margin: 0;
+          padding: 5px;
+          width: 100%;
+          max-width: 80mm; /* Largura padrão */
+          color: #000;
+          background: #fff;
+        }
+        /* Força preto puro e negrito para evitar impressão "apagada" */
+        * {
+          box-sizing: border-box;
+          color: #000 !important;
+          font-weight: bold !important; 
+        }
+        .header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 10px; margin-bottom: 10px; }
+        .brand { font-size: 20px; text-transform: uppercase; display: block; font-weight: 900 !important; }
+        .meta { font-size: 12px; margin-top: 5px; }
+        .section { margin-bottom: 10px; font-size: 12px; }
+        .divider { border-top: 1px dashed #000; margin: 10px 0; }
+        .item { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 12px; }
+        .qty { width: 25px; }
+        .name { flex: 1; padding-right: 5px; }
+        .price { white-space: nowrap; }
+        .totals { text-align: right; font-size: 12px; margin-top: 10px; }
+        .total-row { display: flex; justify-content: space-between; margin-bottom: 3px; }
+        .final-total { font-size: 18px; font-weight: 900 !important; margin-top: 5px; }
+        .footer { text-align: center; margin-top: 20px; font-size: 10px; }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <span class="brand">TKookies</span>
+        <div class="meta">Pedido #${order.id}</div>
+        <div class="meta">${new Date(order.data_pedido).toLocaleString('pt-BR')}</div>
+      </div>
 
-        <div class="divider"></div>
+      <div class="section">
+        <div>Cliente: ${order.cliente_nome || order.cliente?.nome || 'Consumidor'}</div>
+        <div>Tel: ${order.telefone || order.cliente?.telefone || '-'}</div>
+        ${order.endereco ? `<div>End: ${order.endereco}, ${order.numero} - ${order.bairro}</div>` : '<div>Entrega: Retirada</div>'}
+      </div>
 
-        <div>
-          ${itensHtml}
-        </div>
+      <div class="divider"></div>
 
-        <div class="divider"></div>
+      <div class="items">
+        ${itensHtml}
+      </div>
 
-        <div class="flex-between">
-          <span>Subtotal:</span>
-          <span>R$ ${subtotal.toFixed(2)}</span>
-        </div>
-        <div class="flex-between">
-          <span>Frete:</span>
-          <span>R$ ${Number(pedido.frete || 0).toFixed(2)}</span>
-        </div>
-        <div class="flex-between total">
-          <span>TOTAL:</span>
-          <span>R$ ${total.toFixed(2)}</span>
-        </div>
+      <div class="divider"></div>
 
-        <div class="divider"></div>
-        
-        <div class="info">
-          <div><b>Pagamento:</b> ${pedido.forma_pagamento}</div>
-          ${pedido.observacao ? `<div><b>Obs:</b> ${pedido.observacao}</div>` : ''}
-        </div>
+      <div class="totals">
+        <div class="total-row"><span>Subtotal:</span><span>R$ ${subtotal.toFixed(2)}</span></div>
+        ${frete > 0 ? `<div class="total-row"><span>Frete:</span><span>R$ ${frete.toFixed(2)}</span></div>` : ''}
+        <div class="total-row final-total"><span>TOTAL:</span><span>R$ ${total.toFixed(2)}</span></div>
+      </div>
 
-        <div class="footer">
-          Jeová Jireh
-        </div>
-      </body>
+      <div class="divider"></div>
+
+      <div class="section">
+        <div>Pagamento: ${order.forma_pagamento}</div>
+        ${order.observacao ? `<div>Obs: ${order.observacao}</div>` : ''}
+      </div>
+
+      <div class="footer">Obrigado pela preferência!<br/>*** Documento não fiscal ***</div>
+      <script>window.onload = function() { window.print(); }</script>
+    </body>
     </html>
   `;
 
-  janela.document.write(html);
-  janela.document.close();
-  janela.focus();
-  setTimeout(() => {
-    janela.print();
-    janela.close();
-  }, 500);
-}
+  printWindow.document.write(htmlContent);
+  printWindow.document.close();
+};

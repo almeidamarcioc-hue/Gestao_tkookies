@@ -225,13 +225,28 @@ export default function OrderForm({ clientUser, isAdmin }) {
 
   async function handlePrint() {
     if (!id) return alert("Salve o pedido antes de imprimir.");
-    try {
-      await api.post(`/pedidos/${id}/imprimir`);
-      alert("Pedido enviado para a impressora USB.");
-    } catch (err) {
-      const msg = err.response?.data?.error || err.message || "Erro na comunicação USB";
-      alert(`Falha na impressão direta: ${msg}\n\nVerifique se a impressora está conectada e se os drivers estão instalados corretamente (Zadig para Windows).`);
-      console.error("Erro na impressão direta:", err);
+
+    const isVercel = api.defaults.baseURL.includes('vercel.app');
+
+    if (isVercel) {
+      // Se está na Vercel, vai direto para a impressão do navegador
+      console.log("Ambiente Vercel detectado. Usando impressão do navegador.");
+      try {
+          const res = await api.get(`/pedidos/${id}`);
+          printOrder(res.data);
+      } catch (fetchErr) {
+          alert("Erro ao carregar dados do pedido para impressão.");
+      }
+    } else {
+      // Se não está na Vercel (local), tenta a impressão direta
+      try {
+        await api.post(`/pedidos/${id}/imprimir`);
+        alert("Pedido enviado para a impressora USB.");
+      } catch (err) {
+        const msg = err.response?.data?.error || err.message || "Erro na comunicação USB";
+        alert(`Falha na impressão direta: ${msg}\n\nVerifique se a impressora está conectada e se os drivers estão instalados corretamente (Zadig para Windows).`);
+        console.error("Erro na impressão direta:", err);
+      }
     }
   }
 
