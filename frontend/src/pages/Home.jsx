@@ -83,7 +83,6 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
     });
 
     // Carregar combos
-    api.get("/combos").then(res => {
     api.get("/combos?apenas_ativos=true").then(res => {
       setCombos(Array.isArray(res.data) ? res.data : []);
     }).catch(err => console.error("Erro ao carregar combos", err));
