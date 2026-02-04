@@ -72,16 +72,28 @@ export default function OrdersDashboard() {
       const activeOrders = data.filter(o => o.status !== 'Finalizado' && o.status !== 'Cancelado');
       activeOrders.sort((a, b) => b.id - a.id);
 
-      if (isPolling && activeOrders.length > 0) {
-        const newOrdersFound = activeOrders.filter(o => o.id > lastOrderIdRef.current);
-        if (newOrdersFound.length > 0) {
+      if (isPolling) {
+        if (activeOrders.length > 0) {
+          const newOrdersFound = activeOrders.filter(o => o.id > lastOrderIdRef.current);
+          if (newOrdersFound.length > 0) {
+            // Atualiza a referência do último ID imediatamente para evitar race conditions
+            const newestId = newOrdersFound[0].id;
+            lastOrderIdRef.current = newestId;
+
             setUnacknowledgedOrders(prevSet => {
                 const newSet = new Set(prevSet);
                 newOrdersFound.forEach(o => newSet.add(o.id));
                 return newSet;
             });
+          }
+        }
+      } else {
+        // Carga inicial: apenas define a referência do último ID conhecido
+        if (activeOrders.length > 0) {
+          lastOrderIdRef.current = activeOrders[0].id;
         }
       }
+
       setOrders(activeOrders);
     } catch (error) {
       console.error("Erro ao carregar pedidos", error);
@@ -89,15 +101,6 @@ export default function OrdersDashboard() {
       if (!isPolling) setLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (orders.length > 0) {
-      const newestId = orders[0].id;
-      if (newestId > lastOrderIdRef.current) {
-        lastOrderIdRef.current = newestId;
-      }
-    }
-  }, [orders]);
 
   useEffect(() => {
     loadOrders(false);
