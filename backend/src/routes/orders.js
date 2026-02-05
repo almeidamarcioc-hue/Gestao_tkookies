@@ -66,14 +66,17 @@ router.post("/", async (req, res) => {
   try {
     await client.query("BEGIN");
 
+    const safeDesconto = Number(desconto) || 0;
+    const safeFrete = Number(frete) || 0;
+
     let valorTotalItens = 0;
     itens.forEach(i => valorTotalItens += (Number(i.quantidade) * Number(i.valor_unitario)));
-    const valorTotalPedido = valorTotalItens - Number(desconto || 0) + Number(frete || 0);
+    const valorTotalPedido = valorTotalItens - safeDesconto + safeFrete;
 
     const resPedido = await client.query(
       `INSERT INTO pedidos (cliente_id, data_pedido, forma_pagamento, observacao, frete, desconto, valor_total, status) 
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
-      [cliente_id, data_pedido, forma_pagamento, observacao, frete || 0, desconto || 0, valorTotalPedido, status || 'Novo']
+      [cliente_id, data_pedido, forma_pagamento, observacao, safeFrete, safeDesconto, valorTotalPedido, status || 'Novo']
     );
     const pedidoId = resPedido.rows[0].id;
 
@@ -138,14 +141,17 @@ router.put("/:id", async (req, res) => {
       throw new Error("Não é possível alterar um pedido cancelado.");
     }
 
+    const safeDesconto = Number(desconto) || 0;
+    const safeFrete = Number(frete) || 0;
+
     let valorTotalItens = 0;
     itens.forEach(i => valorTotalItens += (Number(i.quantidade) * Number(i.valor_unitario)));
-    const valorTotalPedido = valorTotalItens - Number(desconto || 0) + Number(frete || 0);
+    const valorTotalPedido = valorTotalItens - safeDesconto + safeFrete;
 
     await client.query(
       `UPDATE pedidos SET cliente_id = $1, data_pedido = $2, forma_pagamento = $3, observacao = $4, frete = $5, desconto = $6, valor_total = $7, status = $8
        WHERE id = $9`,
-      [cliente_id, data_pedido, forma_pagamento, observacao, frete || 0, desconto || 0, valorTotalPedido, status, id]
+      [cliente_id, data_pedido, forma_pagamento, observacao, safeFrete, safeDesconto, valorTotalPedido, status, id]
     );
 
     // Devolver estoque dos itens antigos antes de remover

@@ -163,8 +163,8 @@ export default function OrderForm({ clientUser, isAdmin }) {
       data_pedido: dataPedido,
       forma_pagamento: formaPagamento,
       observacao,
-      frete: Number(frete),
-      desconto: Number(desconto),
+      frete: Number(frete) || 0,
+      desconto: Number(desconto) || 0,
       status,
       itens
     };
