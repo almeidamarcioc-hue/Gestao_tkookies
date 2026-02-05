@@ -193,7 +193,8 @@ export default function OrderForm({ clientUser, isAdmin }) {
         }, 1000);
       }
     } catch (err) {
-      alert("Erro ao salvar pedido");
+      const msg = err.response?.data?.error || err.message || "Erro ao salvar pedido";
+      alert(`Erro: ${msg}`);
     }
   }
 

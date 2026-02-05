@@ -69,16 +69,35 @@ router.post("/", async (req, res) => {
     const safeDesconto = Number(desconto) || 0;
     const safeFrete = Number(frete) || 0;
 
+    if (!Array.isArray(itens) || itens.length === 0) {
+      throw new Error("O pedido deve conter pelo menos um item.");
+    }
+
     let valorTotalItens = 0;
     itens.forEach(i => valorTotalItens += (Number(i.quantidade) * Number(i.valor_unitario)));
     const valorTotalPedido = valorTotalItens - safeDesconto + safeFrete;
 
-    const resPedido = await client.query(
-      `INSERT INTO pedidos (cliente_id, data_pedido, forma_pagamento, observacao, frete, desconto, valor_total, status) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
-      [cliente_id, data_pedido, forma_pagamento, observacao, safeFrete, safeDesconto, valorTotalPedido, status || 'Novo']
-    );
-    const pedidoId = resPedido.rows[0].id;
+    let pedidoId;
+    try {
+      const resPedido = await client.query(
+        `INSERT INTO pedidos (cliente_id, data_pedido, forma_pagamento, observacao, frete, desconto, valor_total, status) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+        [cliente_id, data_pedido, forma_pagamento, observacao, safeFrete, safeDesconto, valorTotalPedido, status || 'Novo']
+      );
+      pedidoId = resPedido.rows[0].id;
+    } catch (e) {
+      // Fallback: Se a coluna desconto não existir, tenta salvar sem ela
+      if (e.message && (e.message.includes("desconto") || e.message.includes("Unknown column"))) {
+        const resPedido = await client.query(
+          `INSERT INTO pedidos (cliente_id, data_pedido, forma_pagamento, observacao, frete, valor_total, status) 
+           VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+          [cliente_id, data_pedido, forma_pagamento, observacao, safeFrete, valorTotalPedido, status || 'Novo']
+        );
+        pedidoId = resPedido.rows[0].id;
+      } else {
+        throw e;
+      }
+    }
 
     for (const item of itens) {
       await client.query(
@@ -144,15 +163,32 @@ router.put("/:id", async (req, res) => {
     const safeDesconto = Number(desconto) || 0;
     const safeFrete = Number(frete) || 0;
 
+    if (!Array.isArray(itens) || itens.length === 0) {
+      throw new Error("O pedido deve conter pelo menos um item.");
+    }
+
     let valorTotalItens = 0;
     itens.forEach(i => valorTotalItens += (Number(i.quantidade) * Number(i.valor_unitario)));
     const valorTotalPedido = valorTotalItens - safeDesconto + safeFrete;
 
-    await client.query(
-      `UPDATE pedidos SET cliente_id = $1, data_pedido = $2, forma_pagamento = $3, observacao = $4, frete = $5, desconto = $6, valor_total = $7, status = $8
-       WHERE id = $9`,
-      [cliente_id, data_pedido, forma_pagamento, observacao, safeFrete, safeDesconto, valorTotalPedido, status, id]
-    );
+    try {
+      await client.query(
+        `UPDATE pedidos SET cliente_id = $1, data_pedido = $2, forma_pagamento = $3, observacao = $4, frete = $5, desconto = $6, valor_total = $7, status = $8
+         WHERE id = $9`,
+        [cliente_id, data_pedido, forma_pagamento, observacao, safeFrete, safeDesconto, valorTotalPedido, status, id]
+      );
+    } catch (e) {
+      // Fallback: Se a coluna desconto não existir, tenta salvar sem ela
+      if (e.message && (e.message.includes("desconto") || e.message.includes("Unknown column"))) {
+        await client.query(
+          `UPDATE pedidos SET cliente_id = $1, data_pedido = $2, forma_pagamento = $3, observacao = $4, frete = $5, valor_total = $6, status = $7
+           WHERE id = $8`,
+          [cliente_id, data_pedido, forma_pagamento, observacao, safeFrete, valorTotalPedido, status, id]
+        );
+      } else {
+        throw e;
+      }
+    }
 
     // Devolver estoque dos itens antigos antes de remover
     const itensAntigos = await client.query("SELECT produto_id, quantidade FROM itens_pedido WHERE pedido_id = $1", [id]);
