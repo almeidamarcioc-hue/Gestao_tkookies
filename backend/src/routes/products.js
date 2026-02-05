@@ -86,11 +86,6 @@ router.post("/", async (req, res) => {
   try {
     await client.query("BEGIN");
 
-    // Se for destaque, remove o destaque dos outros
-    if (eh_destaque) {
-      await client.query("UPDATE produtos SET eh_destaque = FALSE");
-    }
-
     const resProd = await client.query(
       "INSERT INTO produtos (nome, descricao, preco_venda, margem_revenda, preco_revenda, rendimento, eh_destaque, desconto_destaque) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id",
       [nome, descricao || null, preco_venda, margem_revenda || 0, preco_revenda || 0, rendimento || 1, eh_destaque || false, desconto_destaque || 0]
@@ -138,11 +133,6 @@ router.put("/:id", async (req, res) => {
 
   try {
     await client.query("BEGIN");
-
-    // Se for destaque, remove o destaque dos outros
-    if (eh_destaque) {
-      await client.query("UPDATE produtos SET eh_destaque = FALSE WHERE id != $1", [id]);
-    }
 
     // Atualiza dados básicos do produto
     await client.query(
@@ -199,11 +189,6 @@ router.patch("/:id/destaque", async (req, res) => {
 
   try {
     await client.query("BEGIN");
-
-    if (eh_destaque) {
-      // Se estiver ativando, desativa todos os outros primeiro
-      await client.query("UPDATE produtos SET eh_destaque = FALSE");
-    }
 
     await client.query("UPDATE produtos SET eh_destaque = $1 WHERE id = $2", [eh_destaque, id]);
 

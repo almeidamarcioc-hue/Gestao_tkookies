@@ -77,9 +77,12 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
       const availableProducts = allProducts.filter(p => Number(p.estoque) > 0);
       setProducts(availableProducts);
       
-      // Encontra o produto destaque
-      const featured = allProducts.find(p => p.eh_destaque);
-      setFeaturedProduct(featured);
+      // Encontra produtos destaque com estoque e seleciona um aleatório
+      const featuredList = availableProducts.filter(p => p.eh_destaque);
+      if (featuredList.length > 0) {
+        const randomFeatured = featuredList[Math.floor(Math.random() * featuredList.length)];
+        setFeaturedProduct(randomFeatured);
+      }
     });
 
     // Carregar combos
