@@ -368,7 +368,7 @@ router.post("/:id/imprimir", async (req, res) => {
     if (pedidoRes.rows.length === 0) return res.status(404).json({ error: "Pedido não encontrado" });
     const pedido = pedidoRes.rows[0];
     const itensRes = await pool.query(`
-      SELECT ip.*, p.nome as produto_nome
+      SELECT ip.*, p.nome as produto_nome, p.preco_venda
       FROM itens_pedido ip
       LEFT JOIN produtos p ON ip.produto_id = p.id
       WHERE ip.pedido_id = $1
@@ -402,8 +402,17 @@ router.post("/:id/imprimir", async (req, res) => {
       itens.forEach(item => {
           printer.style('b').text(item.produto_nome.toUpperCase()).style('normal');
           printer.feed(0);
+
+          const unitVal = Number(item.valor_unitario);
+          const originalVal = Number(item.preco_venda || 0);
+
+          if (originalVal > unitVal + 0.01) {
+             const diff = originalVal - unitVal;
+             printer.text(`   (De R$${originalVal.toFixed(2)} - Desc R$${diff.toFixed(2)})`);
+          }
+
           const qtd = Number(item.quantidade).toFixed(2);
-          const unit = Number(item.valor_unitario).toFixed(2);
+          const unit = unitVal.toFixed(2);
           const total = Number(item.valor_total).toFixed(2);
           printer.text(`          ${qtd}  R$${unit}  R$${total}`);
           printer.text(' ');
