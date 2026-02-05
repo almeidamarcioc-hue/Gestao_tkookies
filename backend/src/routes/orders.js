@@ -370,6 +370,7 @@ router.post("/:id/imprimir", async (req, res) => {
       printer.font('a');
       printer.text('------------------------');
       printer.align('rt');
+      if (Number(pedido.desconto) > 0) printer.text(`Desconto: -R$ ${Number(pedido.desconto).toFixed(2)}`);
       if (Number(pedido.frete) > 0) printer.text(`Frete: R$ ${Number(pedido.frete).toFixed(2)}`);
       printer.style('b').size(1, 1).text(`TOTAL: R$ ${Number(pedido.valor_total).toFixed(2)}`);
       printer.align('ct').text('').text('TKookies');
