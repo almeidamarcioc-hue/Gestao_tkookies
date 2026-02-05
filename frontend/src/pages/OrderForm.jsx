@@ -61,7 +61,7 @@ export default function OrderForm({ clientUser, isAdmin }) {
     setListaProdutos(Array.isArray(resProd.data) ? resProd.data : []);
 
     if (isAdmin) {
-      const resCli = await api.get("/clientes");
+      const resCli = await api.get("/clientes?limit=1000");
       setListaClientes(resCli.data.data || (Array.isArray(resCli.data) ? resCli.data : []));
     } else if (clientUser) {
       setListaClientes([clientUser]);
