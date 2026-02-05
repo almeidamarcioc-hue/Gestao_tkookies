@@ -36,7 +36,7 @@ router.get("/:id", async (req, res) => {
   const { id } = req.params;
   try {
     const pedidoRes = await pool.query(`
-      SELECT p.*, c.nome as cliente_nome, c.telefone, c.endereco, c.numero, c.bairro, c.cidade
+      SELECT p.*, c.nome as cliente_nome, c.telefone, c.endereco, c.numero, c.bairro, c.cidade, c.is_revendedor
       FROM pedidos p
       LEFT JOIN clientes c ON p.cliente_id = c.id
       WHERE p.id = $1
@@ -60,7 +60,7 @@ router.get("/:id", async (req, res) => {
 
 // CRIAR
 router.post("/", async (req, res) => {
-  const { cliente_id, data_pedido, forma_pagamento, observacao, frete, itens, status } = req.body;
+  const { cliente_id, data_pedido, forma_pagamento, observacao, frete, desconto, itens, status } = req.body;
   const client = await pool.connect();
   
   try {
@@ -68,12 +68,12 @@ router.post("/", async (req, res) => {
 
     let valorTotalItens = 0;
     itens.forEach(i => valorTotalItens += (Number(i.quantidade) * Number(i.valor_unitario)));
-    const valorTotalPedido = valorTotalItens + Number(frete || 0);
+    const valorTotalPedido = valorTotalItens - Number(desconto || 0) + Number(frete || 0);
 
     const resPedido = await client.query(
-      `INSERT INTO pedidos (cliente_id, data_pedido, forma_pagamento, observacao, frete, valor_total, status) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-      [cliente_id, data_pedido, forma_pagamento, observacao, frete || 0, valorTotalPedido, status || 'Novo']
+      `INSERT INTO pedidos (cliente_id, data_pedido, forma_pagamento, observacao, frete, desconto, valor_total, status) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+      [cliente_id, data_pedido, forma_pagamento, observacao, frete || 0, desconto || 0, valorTotalPedido, status || 'Novo']
     );
     const pedidoId = resPedido.rows[0].id;
 
@@ -126,7 +126,7 @@ router.post("/", async (req, res) => {
 // ATUALIZAR (Edição completa)
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
-  const { cliente_id, data_pedido, forma_pagamento, observacao, frete, itens, status } = req.body;
+  const { cliente_id, data_pedido, forma_pagamento, observacao, frete, desconto, itens, status } = req.body;
   const client = await pool.connect();
 
   try {
@@ -140,12 +140,12 @@ router.put("/:id", async (req, res) => {
 
     let valorTotalItens = 0;
     itens.forEach(i => valorTotalItens += (Number(i.quantidade) * Number(i.valor_unitario)));
-    const valorTotalPedido = valorTotalItens + Number(frete || 0);
+    const valorTotalPedido = valorTotalItens - Number(desconto || 0) + Number(frete || 0);
 
     await client.query(
-      `UPDATE pedidos SET cliente_id = $1, data_pedido = $2, forma_pagamento = $3, observacao = $4, frete = $5, valor_total = $6, status = $7
-       WHERE id = $8`,
-      [cliente_id, data_pedido, forma_pagamento, observacao, frete || 0, valorTotalPedido, status, id]
+      `UPDATE pedidos SET cliente_id = $1, data_pedido = $2, forma_pagamento = $3, observacao = $4, frete = $5, desconto = $6, valor_total = $7, status = $8
+       WHERE id = $9`,
+      [cliente_id, data_pedido, forma_pagamento, observacao, frete || 0, desconto || 0, valorTotalPedido, status, id]
     );
 
     // Devolver estoque dos itens antigos antes de remover

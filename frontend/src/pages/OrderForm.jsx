@@ -20,6 +20,7 @@ export default function OrderForm({ clientUser, isAdmin }) {
   const [formaPagamento, setFormaPagamento] = useState("Pix");
   const [observacao, setObservacao] = useState("");
   const [frete, setFrete] = useState(0);
+  const [desconto, setDesconto] = useState(0);
   const [tipoEntrega, setTipoEntrega] = useState("retira");
   const [configFrete, setConfigFrete] = useState(0);
   const [status, setStatus] = useState("Novo");
@@ -79,12 +80,14 @@ export default function OrderForm({ clientUser, isAdmin }) {
         endereco: p.endereco,
         numero: p.numero,
         bairro: p.bairro,
-        cidade: p.cidade
+        cidade: p.cidade,
+        is_revendedor: p.is_revendedor
       });
       setDataPedido(p.data_pedido.split('T')[0]);
       setFormaPagamento(p.forma_pagamento);
       setObservacao(p.observacao);
       setFrete(p.frete);
+      setDesconto(p.desconto || 0);
       setTipoEntrega(Number(p.frete) > 0 ? "entrega" : "retira");
       setStatus(p.status);
       setItens(p.itens.map(i => ({
@@ -102,12 +105,21 @@ export default function OrderForm({ clientUser, isAdmin }) {
   function adicionarItem() {
     if (!produtoSelecionado || qtdProduto <= 0) return;
 
+    let valorUnitario = Number(produtoSelecionado.preco_venda);
+
+    // Prioridade: Revenda > Promoção > Normal
+    if (cliente && cliente.is_revendedor) {
+      valorUnitario = Number(produtoSelecionado.preco_revenda);
+    } else if (produtoSelecionado.eh_destaque && Number(produtoSelecionado.desconto_destaque) > 0) {
+      valorUnitario = valorUnitario * (1 - Number(produtoSelecionado.desconto_destaque) / 100);
+    }
+
     const novoItem = {
       produto_id: produtoSelecionado.id,
       nome: produtoSelecionado.nome,
       quantidade: Number(qtdProduto),
-      valor_unitario: Number(produtoSelecionado.preco_venda),
-      valor_total: Number(qtdProduto) * Number(produtoSelecionado.preco_venda),
+      valor_unitario: valorUnitario,
+      valor_total: Number(qtdProduto) * valorUnitario,
       _tempId: Math.random()
     };
 
@@ -139,7 +151,7 @@ export default function OrderForm({ clientUser, isAdmin }) {
   };
 
   const totalProdutos = itens.reduce((acc, item) => acc + (Number(item.quantidade) * Number(item.valor_unitario)), 0);
-  const totalPedido = totalProdutos + Number(frete);
+  const totalPedido = totalProdutos - Number(desconto) + Number(frete);
 
   async function salvarPedido() {
     if (!cliente) return alert("Selecione um cliente");
@@ -152,6 +164,7 @@ export default function OrderForm({ clientUser, isAdmin }) {
       forma_pagamento: formaPagamento,
       observacao,
       frete: Number(frete),
+      desconto: Number(desconto),
       status,
       itens
     };
@@ -321,7 +334,17 @@ export default function OrderForm({ clientUser, isAdmin }) {
             fullWidth
             disabled={isCancelled}
             options={listaProdutos}
-            getOptionLabel={(option) => `${option.nome} | Est: ${option.estoque} | R$ ${Number(option.preco_venda).toFixed(2)}`}
+            getOptionLabel={(option) => {
+              let preco = Number(option.preco_venda);
+              let textoPreco = `R$ ${preco.toFixed(2)}`;
+              if (cliente && cliente.is_revendedor) {
+                textoPreco = `R$ ${Number(option.preco_revenda).toFixed(2)} (Revenda)`;
+              } else if (option.eh_destaque && Number(option.desconto_destaque) > 0) {
+                const precoDesc = preco * (1 - Number(option.desconto_destaque) / 100);
+                textoPreco = `R$ ${precoDesc.toFixed(2)} (Promo)`;
+              }
+              return `${option.nome} | Est: ${option.estoque} | ${textoPreco}`;
+            }}
             value={produtoSelecionado}
             onChange={(e, val) => setProdutoSelecionado(val)}
             renderInput={(params) => <TextField {...params} label="Buscar Produto" />}
@@ -358,7 +381,7 @@ export default function OrderForm({ clientUser, isAdmin }) {
       <Paper sx={{ p: 3 }}>
         <Grid container spacing={2}>
           <Grid item xs={12} md={3}><TextField select label="Forma de Pagamento" fullWidth value={formaPagamento} onChange={e => setFormaPagamento(e.target.value)} disabled={isCancelled}><MenuItem value="Pix">Pix</MenuItem><MenuItem value="Dinheiro">Dinheiro</MenuItem><MenuItem value="Cartão">Cartão</MenuItem></TextField></Grid>
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={3}>
             <FormControl component="fieldset">
               <FormLabel component="legend" sx={{ fontSize: '0.8rem' }}>Tipo de Entrega</FormLabel>
               <RadioGroup row value={tipoEntrega} onChange={handleTipoEntregaChange}>
@@ -367,8 +390,9 @@ export default function OrderForm({ clientUser, isAdmin }) {
               </RadioGroup>
             </FormControl>
           </Grid>
-          <Grid item xs={12} md={2}><TextField label="Frete (R$)" type="number" fullWidth value={frete} onChange={e => setFrete(e.target.value)} disabled={isCancelled} /></Grid>
-          <Grid item xs={12} md={3}><Typography variant="h5" align="right" color="primary" fontWeight="bold">Total: R$ {totalPedido.toFixed(2)}</Typography></Grid>
+          <Grid item xs={6} md={2}><TextField label="Frete (R$)" type="number" fullWidth value={frete} onChange={e => setFrete(e.target.value)} disabled={isCancelled} /></Grid>
+          <Grid item xs={6} md={2}><TextField label="Desconto (R$)" type="number" fullWidth value={desconto} onChange={e => setDesconto(e.target.value)} disabled={isCancelled} /></Grid>
+          <Grid item xs={12} md={2}><Typography variant="h5" align="right" color="primary" fontWeight="bold">Total: R$ {totalPedido.toFixed(2)}</Typography></Grid>
           <Grid item xs={12}><TextField label="Observações" multiline rows={2} fullWidth value={observacao} onChange={e => setObservacao(e.target.value)} disabled={isCancelled} /></Grid>
           <Grid item xs={12}><Button variant="contained" fullWidth size="large" onClick={salvarPedido} disabled={isCancelled}>SALVAR PEDIDO</Button></Grid>
         </Grid>
