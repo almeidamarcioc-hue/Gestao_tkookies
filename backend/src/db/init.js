@@ -201,6 +201,7 @@ export async function initDatabase() {
     logs.push(await addColumnSafe("produtos", "estoque DECIMAL(10, 2) DEFAULT 0"));
     logs.push(await addColumnSafe("produtos", "eh_destaque BOOLEAN DEFAULT FALSE"));
     logs.push(await addColumnSafe("produtos", "desconto_destaque DECIMAL(10, 2) DEFAULT 0"));
+    logs.push(await addColumnSafe("produtos", "validade_promocao DATE"));
     
     // Tenta adicionar login SEM unique primeiro para garantir a coluna
     logs.push(await addColumnSafe("clientes", "login VARCHAR(100)"));

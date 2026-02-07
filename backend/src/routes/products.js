@@ -43,6 +43,7 @@ router.get("/", async (req, res) => {
           estoque: row.estoque,
           eh_destaque: row.eh_destaque === 1 || row.eh_destaque === true,
           desconto_destaque: row.desconto_destaque,
+          validade_promocao: row.validade_promocao,
           created_at: row.created_at,
           ingredientes: [],
           imagens: []
@@ -80,15 +81,15 @@ router.get("/", async (req, res) => {
 
 // CRIAR PRODUTO
 router.post("/", async (req, res) => {
-  const { nome, descricao, preco_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque } = req.body;
+  const { nome, descricao, preco_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque, validade_promocao } = req.body;
   const client = await pool.connect();
 
   try {
     await client.query("BEGIN");
 
     const resProd = await client.query(
-      "INSERT INTO produtos (nome, descricao, preco_venda, margem_revenda, preco_revenda, rendimento, eh_destaque, desconto_destaque) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id",
-      [nome, descricao || null, preco_venda, margem_revenda || 0, preco_revenda || 0, rendimento || 1, eh_destaque || false, desconto_destaque || 0]
+      "INSERT INTO produtos (nome, descricao, preco_venda, margem_revenda, preco_revenda, rendimento, eh_destaque, desconto_destaque, validade_promocao) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id",
+      [nome, descricao || null, preco_venda, margem_revenda || 0, preco_revenda || 0, rendimento || 1, eh_destaque || false, desconto_destaque || 0, validade_promocao || null]
     );
     const produtoId = resProd.rows[0].id;
 
@@ -128,7 +129,7 @@ router.post("/", async (req, res) => {
 // ATUALIZAR PRODUTO (Edição total)
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
-  const { nome, descricao, preco_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque } = req.body;
+  const { nome, descricao, preco_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque, validade_promocao } = req.body;
   const client = await pool.connect();
 
   try {
@@ -136,8 +137,8 @@ router.put("/:id", async (req, res) => {
 
     // Atualiza dados básicos do produto
     await client.query(
-      "UPDATE produtos SET nome = $1, descricao = $2, preco_venda = $3, margem_revenda = $4, preco_revenda = $5, rendimento = $6, eh_destaque = $7, desconto_destaque = $8 WHERE id = $9",
-      [nome, descricao || null, preco_venda, margem_revenda || 0, preco_revenda || 0, rendimento || 1, eh_destaque || false, desconto_destaque || 0, id]
+      "UPDATE produtos SET nome = $1, descricao = $2, preco_venda = $3, margem_revenda = $4, preco_revenda = $5, rendimento = $6, eh_destaque = $7, desconto_destaque = $8, validade_promocao = $9 WHERE id = $10",
+      [nome, descricao || null, preco_venda, margem_revenda || 0, preco_revenda || 0, rendimento || 1, eh_destaque || false, desconto_destaque || 0, validade_promocao || null, id]
     );
 
     // Remove ingredientes antigos para reinserir os atualizados
