@@ -58,7 +58,7 @@ router.get("/", async (req, res) => {
           estoque: row.estoque,
           eh_destaque: isDestaque,
           desconto_destaque: row.desconto_destaque,
-          validade_promocao: row.validade_promocao,
+          validade_promocao: row.validade_promocao ? new Date(row.validade_promocao).toISOString().split('T')[0] : null,
           created_at: row.created_at,
           ingredientes: [],
           imagens: []
@@ -132,7 +132,7 @@ router.get("/:id", async (req, res) => {
       estoque: row.estoque,
       eh_destaque: row.eh_destaque === 1 || row.eh_destaque === true,
       desconto_destaque: row.desconto_destaque,
-      validade_promocao: row.validade_promocao,
+      validade_promocao: row.validade_promocao ? new Date(row.validade_promocao).toISOString().split('T')[0] : null,
       created_at: row.created_at,
       ingredientes: [],
       imagens: []
