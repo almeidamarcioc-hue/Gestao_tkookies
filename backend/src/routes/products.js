@@ -180,9 +180,13 @@ router.post("/", async (req, res) => {
   try {
     await client.query("BEGIN");
 
+    const isDestaque = eh_destaque === true || eh_destaque === 1 || eh_destaque === 'true';
+    const validadeFinal = isDestaque ? (validade_promocao || null) : null;
+    const descontoFinal = isDestaque ? (desconto_destaque || 0) : 0;
+
     const resProd = await client.query(
       "INSERT INTO produtos (nome, descricao, preco_venda, margem_revenda, preco_revenda, rendimento, eh_destaque, desconto_destaque, validade_promocao) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id",
-      [nome, descricao || null, preco_venda, margem_revenda || 0, preco_revenda || 0, rendimento || 1, eh_destaque || false, desconto_destaque || 0, validade_promocao || null]
+      [nome, descricao || null, preco_venda, margem_revenda || 0, preco_revenda || 0, rendimento || 1, isDestaque, descontoFinal, validadeFinal]
     );
     const produtoId = resProd.rows[0].id;
 
@@ -228,10 +232,14 @@ router.put("/:id", async (req, res) => {
   try {
     await client.query("BEGIN");
 
+    const isDestaque = eh_destaque === true || eh_destaque === 1 || eh_destaque === 'true';
+    const validadeFinal = isDestaque ? (validade_promocao || null) : null;
+    const descontoFinal = isDestaque ? (desconto_destaque || 0) : 0;
+
     // Atualiza dados básicos do produto
     await client.query(
       "UPDATE produtos SET nome = $1, descricao = $2, preco_venda = $3, margem_revenda = $4, preco_revenda = $5, rendimento = $6, eh_destaque = $7, desconto_destaque = $8, validade_promocao = $9 WHERE id = $10",
-      [nome, descricao || null, preco_venda, margem_revenda || 0, preco_revenda || 0, rendimento || 1, eh_destaque || false, desconto_destaque || 0, validade_promocao || null, id]
+      [nome, descricao || null, preco_venda, margem_revenda || 0, preco_revenda || 0, rendimento || 1, isDestaque, descontoFinal, validadeFinal, id]
     );
 
     // Remove ingredientes antigos para reinserir os atualizados
