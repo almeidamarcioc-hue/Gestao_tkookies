@@ -29,9 +29,24 @@ router.get("/", async (req, res) => {
 
     // Agrupa os ingredientes por produto via Javascript
     const productsMap = new Map();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     result.rows.forEach(row => {
       if (!productsMap.has(row.id)) {
+        let isDestaque = row.eh_destaque === 1 || row.eh_destaque === true;
+        
+        // Lógica para expirar promoção automaticamente na listagem
+        if (isDestaque && row.validade_promocao) {
+          const validade = new Date(row.validade_promocao);
+          // Ajusta para comparar apenas datas (ignora hora)
+          validade.setHours(0, 0, 0, 0);
+          // Se a validade for menor que hoje, a promoção expirou
+          if (validade < today) {
+            isDestaque = false;
+          }
+        }
+
         productsMap.set(row.id, {
           id: row.id,
           nome: row.nome,
@@ -41,7 +56,7 @@ router.get("/", async (req, res) => {
           preco_revenda: row.preco_revenda,
           rendimento: row.rendimento,
           estoque: row.estoque,
-          eh_destaque: row.eh_destaque === 1 || row.eh_destaque === true,
+          eh_destaque: isDestaque,
           desconto_destaque: row.desconto_destaque,
           validade_promocao: row.validade_promocao,
           created_at: row.created_at,
