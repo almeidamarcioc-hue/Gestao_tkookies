@@ -79,6 +79,84 @@ router.get("/", async (req, res) => {
   }
 });
 
+// OBTER UM PRODUTO (Para edição)
+router.get("/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(`
+      SELECT p.*, 
+             i.id as ing_id, 
+             i.nome as ing_nome, 
+             pi.quantidade as ing_quantidade, 
+             i.unidade as ing_unidade,
+             i.custo as ing_custo, 
+             i.estoque as ing_estoque, 
+             i.usado_para_revenda as ing_usado_para_revenda,
+             pi.apenas_revenda as ing_apenas_revenda,
+             pim.id as img_id,
+             pim.imagem as img_conteudo,
+             pim.eh_capa as img_eh_capa
+      FROM produtos p
+      LEFT JOIN produto_ingredientes pi ON p.id = pi.produto_id
+      LEFT JOIN ingredientes i ON pi.ingrediente_id = i.id
+      LEFT JOIN produto_imagens pim ON p.id = pim.produto_id
+      WHERE p.id = $1
+    `, [id]);
+
+    if (result.rows.length === 0) return res.status(404).json({ error: "Produto não encontrado" });
+
+    const row = result.rows[0];
+    const product = {
+      id: row.id,
+      nome: row.nome,
+      descricao: row.descricao,
+      preco_venda: row.preco_venda,
+      margem_revenda: row.margem_revenda,
+      preco_revenda: row.preco_revenda,
+      rendimento: row.rendimento,
+      estoque: row.estoque,
+      eh_destaque: row.eh_destaque === 1 || row.eh_destaque === true,
+      desconto_destaque: row.desconto_destaque,
+      validade_promocao: row.validade_promocao,
+      created_at: row.created_at,
+      ingredientes: [],
+      imagens: []
+    };
+
+    const ingMap = new Map();
+    const imgMap = new Map();
+
+    result.rows.forEach(r => {
+      if (r.ing_id && !ingMap.has(r.ing_id)) {
+        ingMap.set(r.ing_id, true);
+        product.ingredientes.push({
+          ingrediente_id: r.ing_id,
+          nome: r.ing_nome,
+          quantidade: r.ing_quantidade,
+          unidade: r.ing_unidade,
+          custo_base: r.ing_custo,
+          estoque_base: r.ing_estoque,
+          usado_para_revenda: r.ing_usado_para_revenda === 1 || r.ing_usado_para_revenda === true,
+          apenas_revenda: r.ing_apenas_revenda === 1 || r.ing_apenas_revenda === true
+        });
+      }
+      if (r.img_id && !imgMap.has(r.img_id)) {
+        imgMap.set(r.img_id, true);
+        product.imagens.push({
+          id: r.img_id,
+          imagem: r.img_conteudo,
+          eh_capa: r.img_eh_capa === 1 || r.img_eh_capa === true
+        });
+      }
+    });
+
+    res.json(product);
+  } catch (error) {
+    console.error("Erro ao buscar produto:", error);
+    res.status(500).json({ error: "Erro ao buscar produto" });
+  }
+});
+
 // CRIAR PRODUTO
 router.post("/", async (req, res) => {
   const { nome, descricao, preco_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque, validade_promocao } = req.body;
