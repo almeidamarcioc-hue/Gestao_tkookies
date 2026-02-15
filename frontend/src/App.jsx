@@ -9,6 +9,7 @@ import Ingredients from "./pages/Ingredients";
 import IngredientForm from "./pages/IngredientForm";
 import Products from "./pages/Products";
 import Production from "./pages/Production";
+import ProductionRecipe from "./pages/ProductionRecipe";
 import Clients from "./pages/Clients";
 import ClientForm from "./pages/ClientForm";
 import Orders from "./pages/Orders";
@@ -431,6 +432,7 @@ export default function App() {
           <Route path="/revendedores" element={<ProtectedRoute isAllowed={isLoggedIn}><Resellers /></ProtectedRoute>} />
           <Route path="/financeiro" element={<ProtectedRoute isAllowed={isLoggedIn}><Financial /></ProtectedRoute>} />
           <Route path="/production" element={<ProtectedRoute isAllowed={isLoggedIn}><Production /></ProtectedRoute>} />
+          <Route path="/producao/:id" element={<ProtectedRoute isAllowed={isLoggedIn}><ProductionRecipe /></ProtectedRoute>} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
