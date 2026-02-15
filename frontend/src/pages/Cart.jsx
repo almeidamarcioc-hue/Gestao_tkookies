@@ -4,7 +4,7 @@ import { Delete, ArrowBack, RemoveShoppingCart, LocalShipping, AttachMoney, QrCo
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import api from "../services/api";
-import { Pix } from "qrcode-pix";
+import { QrCodePix } from "qrcode-pix";
 import { QRCodeSVG } from "qrcode.react";
 
 export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, clientUser }) {
@@ -50,11 +50,12 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
 
   useEffect(() => {
     if (paymentMethod === 'Pix' && totalOrder > 0) {
-      const pix = Pix({
-        pixKey: '54209675000174', // Seu CNPJ
-        merchant: 'TKOOKIES',
+      const pix = QrCodePix({
+        version: '01',
+        key: '54209675000174', // Seu CNPJ
+        name: 'TKOOKIES',
         city: 'TRES DE MAIO',
-        amount: parseFloat(totalOrder.toFixed(2)),
+        value: parseFloat(totalOrder.toFixed(2)),
       });
       setPixPayload(pix.payload());
     } else {
