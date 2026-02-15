@@ -268,12 +268,11 @@ export default function App() {
                   <MenuItem component={Link} to="/clientes" onClick={handleClose}>Clientes</MenuItem>
                   <MenuItem component={Link} to="/combos" onClick={handleClose}>Combos</MenuItem>
                   <MenuItem component={Link} to="/estoque" onClick={handleClose}>Estoque</MenuItem>
-                  <MenuItem component={Link} to="/production" onClick={handleClose}>Produção</MenuItem>
-                  <MenuItem component={Link} to="/production" onClick={handleClose}>Produção</MenuItem>
                   <MenuItem component={Link} to="/revendedores" onClick={handleClose}>Revendedores</MenuItem>
                   <MenuItem component={Link} to="/status" onClick={handleClose}>Status do Sistema</MenuItem>
                 </Menu>
 
+                <Button color="inherit" component={Link} to="/production">PRODUÇÃO</Button>
                 <Button color="inherit" component={Link} to="/financeiro">FINANCEIRO</Button>
                 <Button color="inherit" component={Link} to="/configuracoes">Configurações</Button>
                 {/* Menu Pedidos */}
@@ -361,7 +360,6 @@ export default function App() {
                 <ListItem disablePadding><ListItemButton component={Link} to="/clientes"><ListItemText primary="Clientes" /></ListItemButton></ListItem>
                 <ListItem disablePadding><ListItemButton component={Link} to="/combos"><ListItemText primary="Combos" /></ListItemButton></ListItem>
                 <ListItem disablePadding><ListItemButton component={Link} to="/estoque"><ListItemText primary="Estoque" /></ListItemButton></ListItem>
-                <ListItem disablePadding><ListItemButton component={Link} to="/production"><ListItemText primary="Produção" /></ListItemButton></ListItem>
                 <ListItem disablePadding><ListItemButton component={Link} to="/production"><ListItemText primary="Produção" /></ListItemButton></ListItem>
                 <ListItem disablePadding><ListItemButton component={Link} to="/financeiro"><ListItemText primary="Financeiro" /></ListItemButton></ListItem>
                 <ListItem disablePadding><ListItemButton component={Link} to="/configuracoes"><ListItemText primary="Configurações" /></ListItemButton></ListItem>
