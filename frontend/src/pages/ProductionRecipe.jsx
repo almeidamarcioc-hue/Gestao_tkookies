@@ -16,13 +16,14 @@ import {
   Button,
   CircularProgress
 } from "@mui/material";
-import { ArrowBack } from "@mui/icons-material";
+import { ArrowBack, CheckCircle } from "@mui/icons-material";
 
 export default function ProductionRecipe() {
   const { id } = useParams();
   const [produto, setProduto] = useState(null);
   const [loading, setLoading] = useState(true);
   const [quantidadeProduzir, setQuantidadeProduzir] = useState(1); // Default to 1 batch
+  const [producing, setProducing] = useState(false);
 
   useEffect(() => {
     api.get(`/produtos/${id}`)
@@ -34,6 +35,28 @@ export default function ProductionRecipe() {
       .catch(err => console.error("Erro ao carregar produto", err))
       .finally(() => setLoading(false));
   }, [id]);
+
+  const handleProduzir = async () => {
+    if (!quantidadeProduzir || Number(quantidadeProduzir) <= 0) {
+      alert("Informe uma quantidade válida para produzir.");
+      return;
+    }
+
+    if (!confirm(`Confirma a produção de ${quantidadeProduzir} unidades de ${produto.nome}? Isso descontará os ingredientes do estoque.`)) return;
+
+    setProducing(true);
+    try {
+      const res = await api.post("/estoque/produzir", {
+        produto_id: produto.id,
+        quantidade: Number(quantidadeProduzir)
+      });
+      alert(res.data.message);
+    } catch (err) {
+      alert("Erro ao registrar produção: " + (err.response?.data?.error || err.message));
+    } finally {
+      setProducing(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -116,6 +139,19 @@ export default function ProductionRecipe() {
           </TableBody>
         </Table>
       </Paper>
+
+      <Button 
+        variant="contained" 
+        color="success" 
+        size="large" 
+        fullWidth
+        onClick={handleProduzir}
+        disabled={producing}
+        startIcon={producing ? <CircularProgress size={20} color="inherit" /> : <CheckCircle />}
+        sx={{ mt: 2, py: 2, fontSize: '1.1rem', borderRadius: 2 }}
+      >
+        {producing ? "Registrando..." : "Confirmar Produção e Atualizar Estoque"}
+      </Button>
     </Container>
   );
 }
