@@ -56,6 +56,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
   const [favorites, setFavorites] = useState([]);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [zoomPosition, setZoomPosition] = useState('50% 50%'); // For image zoom
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -172,6 +173,13 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
     setSelectedProduct(prod);
     setSelectedImageIndex(0);
     setDetailsOpen(true);
+  };
+
+  const handleMouseMove = (e) => {
+    const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - left) / width) * 100;
+    const y = ((e.clientY - top) / height) * 100;
+    setZoomPosition(`${x}% ${y}%`);
   };
 
   const totalItems = cart.reduce((acc, item) => acc + item.quantidade, 0);
@@ -580,87 +588,113 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
       </Dialog>
 
       {/* Modal Detalhes do Produto */}
-      <Dialog open={detailsOpen} onClose={() => setDetailsOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '24px', bgcolor: '#fff', color: '#3E2723' } }}>
+      <Dialog open={detailsOpen} onClose={() => setDetailsOpen(false)} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: '24px', bgcolor: '#fff', color: '#3E2723' } }}>
         {selectedProduct && (
-          <>
-            <Box sx={{ position: 'relative', bgcolor: '#f5f5f5', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', overflow: 'hidden' }}>
-               <Box 
-                 component="img" 
-                 src={selectedProduct.imagens && selectedProduct.imagens.length > 0 ? selectedProduct.imagens[selectedImageIndex]?.imagem : (selectedProduct.imagens?.[0]?.imagem || "")} 
-                 sx={{ width: '100%', height: 350, objectFit: 'contain', display: 'block', mx: 'auto' }} 
-               />
-               <IconButton 
-                 onClick={() => setDetailsOpen(false)}
-                 sx={{ position: 'absolute', top: 10, right: 10, bgcolor: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: 'white' } }}
-               >
-                 <Close /> 
-               </IconButton>
-            </Box>
-
-            {selectedProduct.imagens && selectedProduct.imagens.length > 1 && (
-              <Box sx={{ display: 'flex', gap: 1, px: 3, py: 2, overflowX: 'auto', justifyContent: 'center', bgcolor: '#fafafa' }}>
-                {selectedProduct.imagens.map((img, index) => (
-                  <Box 
-                    key={index}
-                    component="img"
-                    src={img.imagem}
-                    onClick={() => setSelectedImageIndex(index)}
-                    sx={{ 
-                      width: 60, 
-                      height: 60, 
-                      objectFit: 'cover', 
-                      borderRadius: 2, 
-                      cursor: 'pointer',
-                      border: selectedImageIndex === index ? `2px solid #4E342E` : '2px solid transparent',
-                      opacity: selectedImageIndex === index ? 1 : 0.6,
-                      transition: 'all 0.2s'
-                    }}
-                  />
-                ))}
-              </Box>
-            )}
-
-            <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', fontSize: '1.8rem', color: '#4E342E', pt: 2 }}>
-              {selectedProduct.nome}
-            </DialogTitle>
-            <DialogContent>
-              <Typography variant="body1" sx={{ color: '#5D4037', lineHeight: 1.6, whiteSpace: 'pre-line', mb: 3, fontSize: '1.1rem' }}>
-                {selectedProduct.descricao || "Sem descrição disponível."}
-              </Typography>
-              
-              {clientUser?.is_revendedor && (
-                <Chip label="Preço de Revenda" color="warning" size="small" sx={{ mb: 2 }} />
-              )}
-
-              <Box display="flex" justifyContent="center" alignItems="center" gap={2}>
-                 <Typography variant="h4" sx={{ color: '#2E7D32', fontWeight: 'bold' }}>
-                   R$ {clientUser?.is_revendedor ? Number(selectedProduct.preco_revenda).toFixed(2) : (selectedProduct.eh_destaque && selectedProduct.desconto_destaque > 0 
-                     ? (Number(selectedProduct.preco_venda) * (1 - Number(selectedProduct.desconto_destaque) / 100)).toFixed(2)
-                     : Number(selectedProduct.preco_venda).toFixed(2)
-                   )}
-                 </Typography>
-                 {!clientUser?.is_revendedor && selectedProduct.eh_destaque && selectedProduct.desconto_destaque > 0 && (
-                   <Typography variant="h6" sx={{ textDecoration: 'line-through', color: '#8D6E63' }}>
-                     R$ {Number(selectedProduct.preco_venda).toFixed(2)}
-                   </Typography>
-                 )}
-              </Box>
-            </DialogContent>
-            <DialogActions sx={{ justifyContent: 'center', pb: 4 }}>
-              <Button 
-                variant="contained" 
-                size="large"
-                startIcon={<Add />}
-                onClick={() => {
-                  handleQtyChange(selectedProduct.id, 1);
-                  setDetailsOpen(false);
-                }}
-                sx={{ bgcolor: '#4E342E', color: 'white', borderRadius: '50px', px: 4, py: 1.5 }}
+          <Grid container>
+            {/* Coluna da Imagem */}
+            <Grid item xs={12} md={6} sx={{ bgcolor: '#f5f5f5', position: 'relative' }}>
+              <IconButton 
+                onClick={() => setDetailsOpen(false)}
+                sx={{ position: 'absolute', top: 10, right: 10, zIndex: 2, bgcolor: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: 'white' } }}
               >
-                Adicionar ao Carrinho
-              </Button>
-            </DialogActions>
-          </>
+                <Close /> 
+              </IconButton>
+              <Box 
+                onMouseMove={handleMouseMove}
+                sx={{ 
+                  width: '100%', 
+                  height: { xs: 300, md: 'auto' },
+                  minHeight: { md: 500 },
+                  overflow: 'hidden', 
+                  cursor: 'zoom-in',
+                  position: 'relative'
+                }}
+              >
+                <Box 
+                  component="img" 
+                  src={selectedProduct.imagens && selectedProduct.imagens.length > 0 ? selectedProduct.imagens[selectedImageIndex]?.imagem : ""} 
+                  sx={{ 
+                    width: '100%', 
+                    height: '100%', 
+                    objectFit: 'cover',
+                    transition: 'transform 0.2s ease-out',
+                    transformOrigin: zoomPosition,
+                    '&:hover': {
+                      transform: 'scale(2)'
+                    }
+                  }} 
+                />
+              </Box>
+
+              {selectedProduct.imagens && selectedProduct.imagens.length > 1 && (
+                <Box sx={{ display: 'flex', gap: 1, p: 2, overflowX: 'auto', justifyContent: 'center', bgcolor: '#fafafa' }}>
+                  {selectedProduct.imagens.map((img, index) => (
+                    <Box 
+                      key={index}
+                      component="img"
+                      src={img.imagem}
+                      onClick={() => setSelectedImageIndex(index)}
+                      sx={{ 
+                        width: 60, 
+                        height: 60, 
+                        objectFit: 'cover', 
+                        borderRadius: 2, 
+                        cursor: 'pointer',
+                        border: selectedImageIndex === index ? `2px solid #4E342E` : '2px solid transparent',
+                        opacity: selectedImageIndex === index ? 1 : 0.7,
+                        transition: 'all 0.2s'
+                      }}
+                    />
+                  ))}
+                </Box>
+              )}
+            </Grid>
+
+            {/* Coluna de Detalhes */}
+            <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
+              <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', fontSize: '1.8rem', color: '#4E342E', pt: 4 }}>
+                {selectedProduct.nome}
+              </DialogTitle>
+              <DialogContent sx={{ flexGrow: 1 }}>
+                <Typography variant="body1" sx={{ color: '#5D4037', lineHeight: 1.6, whiteSpace: 'pre-line', mb: 3, fontSize: '1.1rem' }}>
+                  {selectedProduct.descricao || "Sem descrição disponível."}
+                </Typography>
+                
+                {clientUser?.is_revendedor && (
+                  <Chip label="Preço de Revenda" color="warning" size="small" sx={{ mb: 2 }} />
+                )}
+
+                <Box display="flex" justifyContent="center" alignItems="center" gap={2}>
+                  <Typography variant="h4" sx={{ color: '#2E7D32', fontWeight: 'bold' }}>
+                    R$ {clientUser?.is_revendedor ? Number(selectedProduct.preco_revenda).toFixed(2) : (selectedProduct.eh_destaque && selectedProduct.desconto_destaque > 0 
+                      ? (Number(selectedProduct.preco_venda) * (1 - Number(selectedProduct.desconto_destaque) / 100)).toFixed(2)
+                      : Number(selectedProduct.preco_venda).toFixed(2)
+                    )}
+                  </Typography>
+                  {!clientUser?.is_revendedor && selectedProduct.eh_destaque && selectedProduct.desconto_destaque > 0 && (
+                    <Typography variant="h6" sx={{ textDecoration: 'line-through', color: '#8D6E63' }}>
+                      R$ {Number(selectedProduct.preco_venda).toFixed(2)}
+                    </Typography>
+                  )}
+                </Box>
+              </DialogContent>
+              <DialogActions sx={{ justifyContent: 'center', p: 3, pt: 0 }}>
+                <Button 
+                  variant="contained" 
+                  size="large"
+                  fullWidth
+                  startIcon={<Add />}
+                  onClick={() => {
+                    handleQtyChange(selectedProduct.id, 1);
+                    setDetailsOpen(false);
+                  }}
+                  sx={{ bgcolor: '#4E342E', color: 'white', borderRadius: '50px', px: 4, py: 1.5 }}
+                >
+                  Adicionar ao Carrinho
+                </Button>
+              </DialogActions>
+            </Grid>
+          </Grid>
         )}
       </Dialog>
 
