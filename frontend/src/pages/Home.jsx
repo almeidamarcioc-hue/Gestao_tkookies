@@ -669,6 +669,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           {snackbarMessage}
         </Alert>
       </Snackbar>
+    </Container>
     </Box>
   );
 }
