@@ -4,8 +4,8 @@ import { Delete, ArrowBack, RemoveShoppingCart, LocalShipping, AttachMoney, QrCo
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import api from "../services/api";
-import { Pix } from 'qrcode-pix';
-import QRCode from 'qrcode.react';
+import { Pix } from "qrcode-pix";
+import { QRCodeSVG } from "qrcode.react";
 
 export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, clientUser }) {
   const [deliveryType, setDeliveryType] = useState("retira"); // 'retira' ou 'entrega'
@@ -319,7 +319,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
                 <Box sx={{ mt: 1, mb: 2, p: 2, bgcolor: 'rgba(255,255,255,0.8)', borderRadius: 2, textAlign: 'center', border: '1px solid rgba(78, 52, 46, 0.1)' }}>
                   <Typography variant="body2" sx={{ mb: 1, fontWeight: 'bold' }}>Pague com Pix para confirmar</Typography>
                   <Box sx={{ bgcolor: 'white', p: 1, borderRadius: 1, display: 'inline-block' }}>
-                    <QRCode value={pixPayload} size={180} />
+                    <QRCodeSVG value={pixPayload} size={180} />
                   </Box>
                   <Button
                     variant="outlined"
