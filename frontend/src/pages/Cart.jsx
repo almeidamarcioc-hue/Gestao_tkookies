@@ -1,15 +1,18 @@
 import { useState, useEffect } from "react";
 import { Container, Typography, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, RadioGroup, FormControlLabel, Radio, Divider, IconButton, TextField, Grid } from "@mui/material";
-import { Delete, ArrowBack, RemoveShoppingCart, LocalShipping, AttachMoney, QrCode, Storefront, Add, Remove } from "@mui/icons-material";
+import { Delete, ArrowBack, RemoveShoppingCart, LocalShipping, AttachMoney, QrCode, Storefront, Add, Remove, ContentCopy } from "@mui/icons-material";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import api from "../services/api";
+import { Pix } from 'qrcode-pix';
+import QRCode from 'qrcode.react';
 
 export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, clientUser }) {
   const [deliveryType, setDeliveryType] = useState("retira"); // 'retira' ou 'entrega'
   const [paymentMethod, setPaymentMethod] = useState("Pix");
   const [addressOption, setAddressOption] = useState("cadastrado");
   const [customAddress, setCustomAddress] = useState({ endereco: "", numero: "", bairro: "", cidade: "" });
+  const [pixPayload, setPixPayload] = useState('');
   const [freightValue, setFreightValue] = useState(0);
   const [observacao, setObservacao] = useState("");
   const navigate = useNavigate();
@@ -44,6 +47,27 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
   const totalItems = cart.reduce((acc, item) => acc + (getItemPrice(item) * item.quantidade), 0);
   const finalFreight = deliveryType === "entrega" ? freightValue : 0;
   const totalOrder = totalItems + finalFreight;
+
+  useEffect(() => {
+    if (paymentMethod === 'Pix' && totalOrder > 0) {
+      const pix = Pix({
+        pixKey: '54209675000174', // Seu CNPJ
+        merchant: 'TKOOKIES',
+        city: 'TRES DE MAIO',
+        amount: parseFloat(totalOrder.toFixed(2)),
+      });
+      setPixPayload(pix.payload());
+    } else {
+      setPixPayload('');
+    }
+  }, [paymentMethod, totalOrder]);
+
+  const handleCopyPix = () => {
+    if (pixPayload) {
+      navigator.clipboard.writeText(pixPayload);
+      alert('Código PIX (copia e cola) copiado para a área de transferência!');
+    }
+  };
 
   const handleCheckout = async () => {
     if (!clientUser) {
@@ -290,6 +314,25 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
             <Typography variant="subtitle2" fontWeight="bold" gutterBottom color="#4E342E">Pagamento</Typography>
             <RadioGroup value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
                <FormControlLabel value="Pix" control={<Radio size="small" sx={{ color: '#4E342E', '&.Mui-checked': { color: '#4E342E' } }} />} label={<Box display="flex" alignItems="center" gap={1}><QrCode fontSize="small" sx={{ color: '#5D4037' }}/><Typography variant="body2" color="#3E2723">Pix</Typography></Box>} />
+               
+               {paymentMethod === 'Pix' && pixPayload && (
+                <Box sx={{ mt: 1, mb: 2, p: 2, bgcolor: 'rgba(255,255,255,0.8)', borderRadius: 2, textAlign: 'center', border: '1px solid rgba(78, 52, 46, 0.1)' }}>
+                  <Typography variant="body2" sx={{ mb: 1, fontWeight: 'bold' }}>Pague com Pix para confirmar</Typography>
+                  <Box sx={{ bgcolor: 'white', p: 1, borderRadius: 1, display: 'inline-block' }}>
+                    <QRCode value={pixPayload} size={180} />
+                  </Box>
+                  <Button
+                    variant="outlined"
+                    startIcon={<ContentCopy />}
+                    onClick={handleCopyPix}
+                    fullWidth
+                    sx={{ mt: 2, borderRadius: 50, color: '#4E342E', borderColor: '#4E342E' }}
+                  >
+                    Copiar Código
+                  </Button>
+                </Box>
+               )}
+
                <FormControlLabel value="Dinheiro" control={<Radio size="small" sx={{ color: '#4E342E', '&.Mui-checked': { color: '#4E342E' } }} />} label={<Box display="flex" alignItems="center" gap={1}><AttachMoney fontSize="small" sx={{ color: '#5D4037' }}/><Typography variant="body2" color="#3E2723">Dinheiro</Typography></Box>} />
             </RadioGroup>
 
