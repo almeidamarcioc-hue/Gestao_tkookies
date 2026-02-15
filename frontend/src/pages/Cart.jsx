@@ -9,7 +9,7 @@ import { QRCodeSVG } from "qrcode.react";
 
 export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, clientUser }) {
   const [deliveryType, setDeliveryType] = useState("retira"); // 'retira' ou 'entrega'
-  const [paymentMethod, setPaymentMethod] = useState("Pix");
+  const [paymentMethod, setPaymentMethod] = useState("Dinheiro");
   const [addressOption, setAddressOption] = useState("cadastrado");
   const [customAddress, setCustomAddress] = useState({ endereco: "", numero: "", bairro: "", cidade: "" });
   const [pixPayload, setPixPayload] = useState('');
