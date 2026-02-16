@@ -492,28 +492,27 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           exit={{ y: 100 }}
           sx={{ 
             position: 'fixed', 
-            bottom: { xs: 60, md: 24 },
+            bottom: { xs: 'max(16px, env(safe-area-inset-bottom))', md: 24 },
             left: '50%', 
             transform: 'translateX(-50%)', 
-            width: { xs: '96%', md: '90%' },
+            width: { xs: '95%', md: '90%' },
             maxWidth: '600px',
             zIndex: 1200,
-            pb: 'env(safe-area-inset-bottom)'
           }}
         >
           <Box sx={{ 
             ...glassStyle, 
             bgcolor: 'rgba(255, 255, 255, 0.95)', 
-            p: 2, 
+            p: { xs: 1.5, md: 2 },
             display: 'flex', 
             justifyContent: 'space-between', 
             alignItems: 'center',
             border: `1px solid #4E342E`,
             boxShadow: '0 -4px 20px rgba(0,0,0,0.1)'
           }}>
-            <Box display="flex" alignItems="center" gap={2}>
+            <Box display="flex" alignItems="center" gap={1.5}>
               <Box sx={{ position: 'relative' }}>
-                <ShoppingBag sx={{ color: '#4E342E', fontSize: 30 }} />
+                <ShoppingBag sx={{ color: '#4E342E', fontSize: { xs: 24, md: 30 } }} />
                 <Badge 
                   badgeContent={totalItems} 
                   color="error" 
@@ -521,8 +520,8 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                 />
               </Box>
               <Box>
-                <Typography variant="caption" sx={{ color: '#5D4037', lineHeight: 1 }}>Total do Pedido</Typography>
-                <Typography variant="h6" fontWeight="bold" color="primary.main" sx={{ lineHeight: 1.2 }}>R$ {totalPrice.toFixed(2)}</Typography>
+                <Typography variant="caption" sx={{ color: '#5D4037', lineHeight: 1 }}>Total</Typography>
+                <Typography variant="h6" fontWeight="bold" color="primary.main" sx={{ lineHeight: 1.2, fontSize: { xs: '1rem', md: '1.25rem' } }}>R$ {totalPrice.toFixed(2)}</Typography>
               </Box>
             </Box>
             <Button 
@@ -534,6 +533,8 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                 bgcolor: '#4E342E', 
                 color: 'white', 
                 fontWeight: 'bold',
+                px: { xs: 2, md: 3 },
+                fontSize: { xs: '0.85rem', md: '1rem' },
                 '&:hover': { bgcolor: '#3E2723' }
               }}
             >
