@@ -152,7 +152,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
   }
 
   return (
-    <Box sx={{ bgcolor: '#D7CCC8', minHeight: '100vh', color: '#3E2723', overflowX: 'hidden', position: 'relative', pb: { xs: 12, md: 0 } }}>
+    <Box sx={{ bgcolor: '#D7CCC8', minHeight: '100vh', color: '#3E2723', overflowX: 'hidden', position: 'relative', pb: { xs: 18, md: 0 } }}>
       {/* Background Wrapper Animado */}
       <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
         <motion.div 
@@ -377,6 +377,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
         right: 0, 
         zIndex: 1100,
         p: 2,
+        pb: 'max(16px, env(safe-area-inset-bottom))',
         bgcolor: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(10px)',
         borderTopLeftRadius: 24,
