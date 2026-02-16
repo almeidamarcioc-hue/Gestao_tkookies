@@ -152,7 +152,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
   }
 
   return (
-    <Box sx={{ bgcolor: '#D7CCC8', minHeight: '100vh', color: '#3E2723', overflowX: 'hidden', position: 'relative', pb: { xs: 18, md: 0 } }}>
+    <Box sx={{ bgcolor: '#D7CCC8', minHeight: '100vh', color: '#3E2723', overflowX: 'hidden', position: 'relative', pb: { xs: 14, md: 0 } }}>
       {/* Background Wrapper Animado */}
       <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
         <motion.div 
@@ -376,28 +376,30 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
         left: 0, 
         right: 0, 
         zIndex: 1100,
-        p: 2,
+        px: 3,
+        py: 2,
         pb: 'max(16px, env(safe-area-inset-bottom))',
         bgcolor: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(10px)',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
-        display: { xs: 'block', md: 'none' }
+        display: { xs: 'flex', md: 'none' },
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 2
       }}
     >
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-        <Typography variant="subtitle1" fontWeight="bold" color="#5D4037">Total a Pagar</Typography>
+      <Box>
+        <Typography variant="caption" color="#5D4037" fontWeight="bold" display="block">TOTAL</Typography>
         <Typography variant="h5" fontWeight="bold" color="#2E7D32">R$ {totalOrder.toFixed(2)}</Typography>
       </Box>
       <Button 
         variant="contained" 
-        fullWidth 
-        size="large" 
         onClick={handleCheckout}
         disabled={cart.length === 0}
-        sx={{ borderRadius: 50, bgcolor: '#4E342E', '&:hover': { bgcolor: '#3E2723' }, py: 1.5 }}
+        sx={{ borderRadius: 50, bgcolor: '#4E342E', '&:hover': { bgcolor: '#3E2723' }, px: 4, py: 1.2, fontWeight: 'bold' }}
       >
-        FINALIZAR COMPRA
+        FINALIZAR
       </Button>
     </Paper>
     </Box>
