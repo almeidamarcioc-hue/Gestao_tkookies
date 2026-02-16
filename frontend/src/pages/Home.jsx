@@ -495,7 +495,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
             bottom: { xs: 'max(16px, env(safe-area-inset-bottom))', md: 24 },
             left: '50%', 
             transform: 'translateX(-50%)', 
-            width: { xs: '90%', md: '90%' },
+            width: { xs: '95%', md: '90%' },
             maxWidth: '600px',
             zIndex: 1200,
           }}
@@ -503,16 +503,16 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           <Box sx={{ 
             ...glassStyle, 
             bgcolor: 'rgba(255, 255, 255, 0.95)', 
-            p: { xs: 2, md: 2 },
+            p: { xs: 1.5, md: 2 },
             display: 'flex', 
             flexDirection: { xs: 'column', sm: 'row' },
-            justifyContent: 'center',
+            justifyContent: 'space-between',
             alignItems: 'center',
-            gap: { xs: 2, sm: 0 },
+            gap: { xs: 1.5, sm: 0 },
             border: `1px solid #4E342E`,
             boxShadow: '0 -4px 20px rgba(0,0,0,0.1)'
           }}>
-            <Box display="flex" alignItems="center" gap={1.5} sx={{ width: { xs: '100%', sm: 'auto' }, justifyContent: { xs: 'center', sm: 'flex-start' }, mr: { sm: 3 } }}>
+            <Box display="flex" alignItems="center" gap={1.5} sx={{ width: { xs: '100%', sm: 'auto' }, justifyContent: { xs: 'center', sm: 'flex-start' } }}>
               <Box sx={{ position: 'relative' }}>
                 <ShoppingBag sx={{ color: '#4E342E', fontSize: { xs: 24, md: 30 } }} />
                 <Badge 
@@ -536,8 +536,8 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                 bgcolor: '#4E342E', 
                 color: 'white', 
                 fontWeight: 'bold',
-                px: { xs: 4, md: 3 },
-                fontSize: { xs: '1rem', md: '1rem' },
+                px: { xs: 2, md: 3 },
+                fontSize: { xs: '0.85rem', md: '1rem' },
                 '&:hover': { bgcolor: '#3E2723' }
               }}
             >
