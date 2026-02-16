@@ -152,7 +152,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
   }
 
   return (
-    <Box sx={{ bgcolor: '#D7CCC8', minHeight: '100vh', color: '#3E2723', overflowX: 'hidden', position: 'relative' }}>
+    <Box sx={{ bgcolor: '#D7CCC8', minHeight: '100vh', color: '#3E2723', overflowX: 'hidden', position: 'relative', pb: { xs: 12, md: 0 } }}>
       {/* Background Wrapper Animado */}
       <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
         <motion.div 
@@ -350,7 +350,15 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
               size="large" 
               onClick={handleCheckout}
               disabled={cart.length === 0}
-              sx={{ py: 1.5, fontWeight: 'bold', borderRadius: 50, boxShadow: 'none', bgcolor: '#4E342E', '&:hover': { bgcolor: '#3E2723' } }}
+              sx={{ 
+                py: 1.5, 
+                fontWeight: 'bold', 
+                borderRadius: 50, 
+                boxShadow: 'none', 
+                bgcolor: '#4E342E', 
+                '&:hover': { bgcolor: '#3E2723' },
+                display: { xs: 'none', md: 'block' }
+              }}
             >
               FINALIZAR COMPRA
             </Button>
@@ -358,6 +366,39 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
         </Grid>
       </Grid>
     </Container>
+
+    {/* Sticky Footer for Mobile */}
+    <Paper 
+      elevation={10}
+      sx={{ 
+        position: 'fixed', 
+        bottom: 0, 
+        left: 0, 
+        right: 0, 
+        zIndex: 1100,
+        p: 2,
+        bgcolor: 'rgba(255, 255, 255, 0.95)',
+        backdropFilter: 'blur(10px)',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        display: { xs: 'block', md: 'none' }
+      }}
+    >
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+        <Typography variant="subtitle1" fontWeight="bold" color="#5D4037">Total a Pagar</Typography>
+        <Typography variant="h5" fontWeight="bold" color="#2E7D32">R$ {totalOrder.toFixed(2)}</Typography>
+      </Box>
+      <Button 
+        variant="contained" 
+        fullWidth 
+        size="large" 
+        onClick={handleCheckout}
+        disabled={cart.length === 0}
+        sx={{ borderRadius: 50, bgcolor: '#4E342E', '&:hover': { bgcolor: '#3E2723' }, py: 1.5 }}
+      >
+        FINALIZAR COMPRA
+      </Button>
+    </Paper>
     </Box>
   );
 }
