@@ -505,12 +505,14 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
             bgcolor: 'rgba(255, 255, 255, 0.95)', 
             p: { xs: 1.5, md: 2 },
             display: 'flex', 
+            flexDirection: { xs: 'column', sm: 'row' },
             justifyContent: 'space-between', 
             alignItems: 'center',
+            gap: { xs: 1.5, sm: 0 },
             border: `1px solid #4E342E`,
             boxShadow: '0 -4px 20px rgba(0,0,0,0.1)'
           }}>
-            <Box display="flex" alignItems="center" gap={1.5}>
+            <Box display="flex" alignItems="center" gap={1.5} sx={{ width: { xs: '100%', sm: 'auto' }, justifyContent: { xs: 'center', sm: 'flex-start' } }}>
               <Box sx={{ position: 'relative' }}>
                 <ShoppingBag sx={{ color: '#4E342E', fontSize: { xs: 24, md: 30 } }} />
                 <Badge 
@@ -529,6 +531,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
               onClick={handleCheckout} 
               endIcon={<ArrowForward />}
               sx={{ 
+                width: { xs: '100%', sm: 'auto' },
                 borderRadius: '50px', 
                 bgcolor: '#4E342E', 
                 color: 'white', 
