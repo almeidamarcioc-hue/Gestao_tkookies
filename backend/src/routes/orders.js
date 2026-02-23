@@ -53,7 +53,7 @@ router.get("/:id", async (req, res) => {
 
     // Buscar Itens
     const queryItens = `
-      SELECT pi.*, p.nome as produto_nome, p.imagem
+      SELECT pi.*, p.nome as produto_nome
       FROM itens_pedido pi
       JOIN produtos p ON pi.produto_id = p.id
       WHERE pi.pedido_id = $1
@@ -64,7 +64,7 @@ router.get("/:id", async (req, res) => {
     res.json(pedido);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Erro ao buscar pedido" });
+    res.status(500).json({ error: "Erro ao buscar pedido", details: error.message });
   }
 });
 
