@@ -21,6 +21,8 @@ export const printOrder = (order) => {
   const frete = Number(order.frete) || 0;
   const subtotal = total - frete;
 
+  const labelCliente = (order.is_revendedor || order.tipo_cliente === 'revendedor') ? 'Revendedor' : 'Cliente';
+
   // Conteúdo HTML com CSS otimizado para impressoras térmicas (Alto Contraste)
   const htmlContent = `
     <!DOCTYPE html>
@@ -70,7 +72,7 @@ export const printOrder = (order) => {
       </div>
 
       <div class="section">
-        <div>Cliente: ${order.cliente_nome || order.cliente?.nome || 'Consumidor'}</div>
+        <div>${labelCliente}: ${order.cliente_nome || order.cliente?.nome || 'Consumidor'}</div>
         <div>Tel: ${order.telefone || order.cliente?.telefone || '-'}</div>
         ${frete > 0 ? `<div>End: ${order.endereco}, ${order.numero} - ${order.bairro}</div>` : '<div>Retirada</div>'}
       </div>
