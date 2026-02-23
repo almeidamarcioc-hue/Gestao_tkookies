@@ -24,6 +24,7 @@ export default function OrderForm({ clientUser, isAdmin }) {
   const [tipoEntrega, setTipoEntrega] = useState("retira");
   const [configFrete, setConfigFrete] = useState(0);
   const [status, setStatus] = useState("Novo");
+  const [tipoCliente, setTipoCliente] = useState("consumidor"); // 'consumidor' | 'revendedor'
   
   // Itens
   const [itens, setItens] = useState([]);
@@ -32,6 +33,7 @@ export default function OrderForm({ clientUser, isAdmin }) {
 
   // Listas para seleção
   const [listaClientes, setListaClientes] = useState([]);
+  const [listaRevendedores, setListaRevendedores] = useState([]);
   const [listaProdutos, setListaProdutos] = useState([]);
 
   // Modal Novo Cliente
@@ -64,6 +66,10 @@ export default function OrderForm({ clientUser, isAdmin }) {
     if (isAdmin) {
       const resCli = await api.get("/clientes?limit=1000");
       setListaClientes(resCli.data.data || (Array.isArray(resCli.data) ? resCli.data : []));
+      
+      // Carregar Revendedores
+      const resRev = await api.get("/revendedores");
+      setListaRevendedores(Array.isArray(resRev.data) ? resRev.data : []);
     } else if (clientUser) {
       setListaClientes([clientUser]);
     }
@@ -166,6 +172,7 @@ export default function OrderForm({ clientUser, isAdmin }) {
       frete: Number(frete) || 0,
       desconto: Number(desconto) || 0,
       status,
+      tipo_cliente: tipoCliente, // Envia o tipo para controle (se o backend suportar)
       itens
     };
 
@@ -292,19 +299,47 @@ export default function OrderForm({ clientUser, isAdmin }) {
       <Paper sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={2}>
           <Grid item xs={12} md={6}>
+            {isAdmin && (
+              <FormControl component="fieldset" sx={{ mb: 1 }}>
+                <RadioGroup row value={tipoCliente} onChange={(e) => {
+                  setTipoCliente(e.target.value);
+                  setCliente(null); // Limpa seleção ao trocar tipo
+                }}>
+                  <FormControlLabel value="consumidor" control={<Radio size="small" />} label="Consumidor Final" disabled={isCancelled} />
+                  <FormControlLabel value="revendedor" control={<Radio size="small" />} label="Revendedor Parceiro" disabled={isCancelled} />
+                </RadioGroup>
+              </FormControl>
+            )}
+            
             <Box display="flex" gap={1}>
               <Autocomplete
                 fullWidth
                 disabled={isCancelled || (!isAdmin && !!clientUser)}
-                options={listaClientes}
-                getOptionLabel={(option) => option.nome || ""}
+                options={tipoCliente === 'revendedor' ? listaRevendedores : listaClientes}
+                getOptionLabel={(option) => {
+                  if (tipoCliente === 'revendedor') return option.razao_social || option.nome || "";
+                  return option.nome || "";
+                }}
                 isOptionEqualToValue={(option, value) => option.id === value.id}
                 value={cliente}
-                onChange={(e, newValue) => setCliente(newValue)}
-                renderInput={(params) => <TextField {...params} label="Cliente" />}
+                onChange={(e, newValue) => {
+                  if (newValue && tipoCliente === 'revendedor') {
+                    // Adapta objeto revendedor para formato cliente e marca flag para preço
+                    setCliente({
+                      ...newValue,
+                      nome: newValue.razao_social,
+                      is_revendedor: true, // Força flag para cálculo de preço
+                      endereco: newValue.cidade, // Usa cidade como endereço base visual
+                      bairro: newValue.estado
+                    });
+                  } else {
+                    setCliente(newValue);
+                  }
+                }}
+                renderInput={(params) => <TextField {...params} label={tipoCliente === 'revendedor' ? "Selecione o Revendedor" : "Selecione o Cliente"} />}
               />
-              {isAdmin && (
-                <Button variant="outlined" onClick={() => setOpenClientModal(true)} disabled={isCancelled}><Add /></Button>
+              {isAdmin && tipoCliente === 'consumidor' && (
+                <Button variant="outlined" onClick={() => setOpenClientModal(true)} disabled={isCancelled} title="Novo Cliente"><Add /></Button>
               )}
             </Box>
             {cliente && (
