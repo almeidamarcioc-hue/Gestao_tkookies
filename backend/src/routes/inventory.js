@@ -54,7 +54,7 @@ router.post("/produzir", async (req, res) => {
     // 3. Baixar estoque dos ingredientes proporcionalmente
     for (const item of resIng.rows) {
       const qtdNecessaria = (Number(item.quantidade) / rendimentoBase) * Number(quantidade);
-      await client.query("UPDATE ingredientes SET estoque = estoque - $1 WHERE id = $2", [qtdNecessaria, item.ingrediente_id]);
+      await client.query("UPDATE ingredientes SET estoque_atual = estoque_atual - $1 WHERE id = $2", [qtdNecessaria, item.ingrediente_id]);
     }
 
     // 4. Subir estoque do produto final

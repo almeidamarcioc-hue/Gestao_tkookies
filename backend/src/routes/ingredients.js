@@ -15,11 +15,11 @@ router.get("/", async (req, res) => {
 
 // CRIAR
 router.post("/", async (req, res) => {
-  const { nome, unidade, custo, estoque, usado_para_revenda } = req.body;
+  const { nome, unidade, custo, estoque, estoque_atual, usado_para_revenda } = req.body;
   try {
     await pool.query(
-      "INSERT INTO ingredientes (nome, unidade, custo, estoque, usado_para_revenda) VALUES ($1, $2, $3, $4, $5)",
-      [nome, unidade, custo, estoque, usado_para_revenda === undefined ? true : usado_para_revenda]
+      "INSERT INTO ingredientes (nome, unidade, custo, estoque, estoque_atual, usado_para_revenda) VALUES ($1, $2, $3, $4, $5, $6)",
+      [nome, unidade, custo, estoque, estoque_atual || 0, usado_para_revenda === undefined ? true : usado_para_revenda]
     );
     res.status(201).json({ message: "Ingrediente criado!" });
   } catch (error) {
@@ -30,11 +30,11 @@ router.post("/", async (req, res) => {
 // ATUALIZAR
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
-  const { nome, unidade, custo, estoque, usado_para_revenda } = req.body;
+  const { nome, unidade, custo, estoque, estoque_atual, usado_para_revenda } = req.body;
   try {
     await pool.query(
-      "UPDATE ingredientes SET nome = $1, unidade = $2, custo = $3, estoque = $4, usado_para_revenda = $5 WHERE id = $6",
-      [nome, unidade, custo, estoque, usado_para_revenda, id]
+      "UPDATE ingredientes SET nome = $1, unidade = $2, custo = $3, estoque = $4, estoque_atual = $5, usado_para_revenda = $6 WHERE id = $7",
+      [nome, unidade, custo, estoque, estoque_atual || 0, usado_para_revenda, id]
     );
     res.json({ message: "Ingrediente atualizado!" });
   } catch (error) {

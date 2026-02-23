@@ -7,6 +7,7 @@ export default function IngredientForm() {
   const [unidade, setUnidade] = useState("");
   const [custo, setCusto] = useState("");
   const [estoque, setEstoque] = useState("");
+  const [estoqueAtual, setEstoqueAtual] = useState("");
   const [listaIngredientes, setListaIngredientes] = useState([]);
   const [usadoParaRevenda, setUsadoParaRevenda] = useState(true);
 
@@ -29,13 +30,14 @@ export default function IngredientForm() {
       unidade: unidade || "g",
       custo: Number(custo),
       estoque: Number(estoque),
+      estoque_atual: Number(estoqueAtual || 0),
       usado_para_revenda: usadoParaRevenda
     };
 
     try {
       await api.post("/ingredientes", payload);
       alert("Ingrediente cadastrado!");
-      setNome(""); setUnidade(""); setCusto(""); setEstoque(""); setUsadoParaRevenda(true);
+      setNome(""); setUnidade(""); setCusto(""); setEstoque(""); setEstoqueAtual(""); setUsadoParaRevenda(true);
       carregarLista();
     } catch (err) {
       alert("Erro ao salvar ingrediente.");
@@ -51,7 +53,10 @@ export default function IngredientForm() {
           <TextField label="Unidade (ex: g, kg, un)" fullWidth value={unidade} onChange={(e) => setUnidade(e.target.value)} />
           <TextField label="Custo da Embalagem" type="number" fullWidth value={custo} onChange={(e) => setCusto(e.target.value)} />
         </Box>
-        <TextField label="Peso/Qtd na Embalagem" type="number" fullWidth value={estoque} onChange={(e) => setEstoque(e.target.value)} sx={{ mb: 3 }} />
+        <Box display="flex" gap={2} mb={3}>
+          <TextField label="Qtd na Embalagem (Para Custo)" type="number" fullWidth value={estoque} onChange={(e) => setEstoque(e.target.value)} helperText="Ex: 1000g (se pacote de 1kg)" />
+          <TextField label="Estoque Inicial (Real)" type="number" fullWidth value={estoqueAtual} onChange={(e) => setEstoqueAtual(e.target.value)} helperText="Quanto tem fisicamente agora" />
+        </Box>
         
         <FormControlLabel 
           control={<Checkbox checked={usadoParaRevenda} onChange={(e) => setUsadoParaRevenda(e.target.checked)} />} 
@@ -69,6 +74,7 @@ export default function IngredientForm() {
               <TableCell>Nome</TableCell>
               <TableCell>Unidade</TableCell>
               <TableCell>Qtd Emb.</TableCell>
+              <TableCell>Estoque Atual</TableCell>
               <TableCell>Custo</TableCell>
               <TableCell>Revenda?</TableCell>
             </TableRow>
@@ -79,6 +85,7 @@ export default function IngredientForm() {
                 <TableCell>{ing.nome}</TableCell>
                 <TableCell>{ing.unidade}</TableCell>
                 <TableCell>{ing.estoque}</TableCell>
+                <TableCell>{ing.estoque_atual || 0}</TableCell>
                 <TableCell>R$ {Number(ing.custo).toFixed(2)}</TableCell>
                 <TableCell>{ing.usado_para_revenda ? "Sim" : "Não"}</TableCell>
               </TableRow>

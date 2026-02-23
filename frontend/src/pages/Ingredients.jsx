@@ -68,7 +68,8 @@ export default function Ingredients() {
               <TableCell>Nome</TableCell>
               <TableCell>Unidade</TableCell>
               <TableCell>Custo Emb.</TableCell>
-              <TableCell>Qtd Emb.</TableCell>
+              <TableCell>Qtd Emb. (Custo)</TableCell>
+              <TableCell>Estoque Atual</TableCell>
               <TableCell>Revenda?</TableCell>
               <TableCell align="center">Ações</TableCell>
             </TableRow>
@@ -82,6 +83,9 @@ export default function Ingredients() {
                 <TableCell>{ing.unidade}</TableCell>
                 <TableCell>R$ {Number(ing.custo).toFixed(2)}</TableCell>
                 <TableCell>{ing.estoque}</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: Number(ing.estoque_atual) <= 0 ? 'error.main' : 'inherit' }}>
+                  {Number(ing.estoque_atual || 0).toFixed(2)}
+                </TableCell>
                 <TableCell>{ing.usado_para_revenda ? "Sim" : "Não"}</TableCell>
                 <TableCell align="center">
                   <IconButton color="primary" onClick={() => handleEdit(ing)}><Edit /></IconButton>
@@ -112,8 +116,14 @@ export default function Ingredients() {
                 onChange={e => setEditItem({...editItem, custo: e.target.value})} 
               />
               <TextField 
-                label="Qtd Embalagem" type="number" fullWidth value={editItem.estoque} 
+                label="Qtd Embalagem (Custo)" type="number" fullWidth value={editItem.estoque} 
                 onChange={e => setEditItem({...editItem, estoque: e.target.value})} 
+                helperText="Quantidade total que vem na embalagem comprada"
+              />
+              <TextField 
+                label="Estoque Atual (Real)" type="number" fullWidth value={editItem.estoque_atual} 
+                onChange={e => setEditItem({...editItem, estoque_atual: e.target.value})} 
+                helperText="Quantidade física disponível para uso"
               />
               <FormControlLabel 
                 control={<Checkbox checked={editItem.usado_para_revenda || false} onChange={(e) => setEditItem({...editItem, usado_para_revenda: e.target.checked})} />} 

@@ -40,3 +40,11 @@ npm run dev
 ```
 
 O sistema abrirá em: `http://localhost:5173`
+
+## 📦 Atualizações de Banco de Dados
+
+Para habilitar o controle de estoque real dos ingredientes, execute o seguinte comando no banco de dados:
+
+```sql
+ALTER TABLE ingredientes ADD COLUMN estoque_atual DECIMAL(10,4) DEFAULT 0;
+```
