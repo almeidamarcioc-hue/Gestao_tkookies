@@ -54,7 +54,7 @@ router.get("/:id", async (req, res) => {
     // Buscar Itens
     const queryItens = `
       SELECT pi.*, p.nome as produto_nome, p.imagem
-      FROM pedido_itens pi
+      FROM itens_pedido pi
       JOIN produtos p ON pi.produto_id = p.id
       WHERE pi.pedido_id = $1
     `;
@@ -90,7 +90,7 @@ router.post("/", async (req, res) => {
 
     for (const item of itens) {
       await client.query(
-        "INSERT INTO pedido_itens (pedido_id, produto_id, quantidade, valor_unitario, valor_total) VALUES ($1, $2, $3, $4, $5)",
+        "INSERT INTO itens_pedido (pedido_id, produto_id, quantidade, valor_unitario, valor_total) VALUES ($1, $2, $3, $4, $5)",
         [pedidoId, item.produto_id, item.quantidade, item.valor_unitario, Number(item.quantidade) * Number(item.valor_unitario)]
       );
       
@@ -119,13 +119,13 @@ router.put("/:id", async (req, res) => {
     await client.query("BEGIN");
 
     // 1. Restaurar estoque dos itens antigos
-    const oldItens = await client.query("SELECT produto_id, quantidade FROM pedido_itens WHERE pedido_id = $1", [id]);
+    const oldItens = await client.query("SELECT produto_id, quantidade FROM itens_pedido WHERE pedido_id = $1", [id]);
     for (const item of oldItens.rows) {
       await client.query("UPDATE produtos SET estoque = estoque + $1 WHERE id = $2", [item.quantidade, item.produto_id]);
     }
 
     // 2. Limpar itens antigos
-    await client.query("DELETE FROM pedido_itens WHERE pedido_id = $1", [id]);
+    await client.query("DELETE FROM itens_pedido WHERE pedido_id = $1", [id]);
 
     // 3. Recalcular total
     const totalItens = itens.reduce((acc, item) => acc + (Number(item.quantidade) * Number(item.valor_unitario)), 0);
@@ -143,7 +143,7 @@ router.put("/:id", async (req, res) => {
     // 5. Inserir novos itens e baixar estoque
     for (const item of itens) {
       await client.query(
-        "INSERT INTO pedido_itens (pedido_id, produto_id, quantidade, valor_unitario, valor_total) VALUES ($1, $2, $3, $4, $5)",
+        "INSERT INTO itens_pedido (pedido_id, produto_id, quantidade, valor_unitario, valor_total) VALUES ($1, $2, $3, $4, $5)",
         [id, item.produto_id, item.quantidade, item.valor_unitario, Number(item.quantidade) * Number(item.valor_unitario)]
       );
       await client.query("UPDATE produtos SET estoque = estoque - $1 WHERE id = $2", [item.quantidade, item.produto_id]);
