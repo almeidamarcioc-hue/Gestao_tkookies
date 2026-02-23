@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import api from "../services/api";
 import { 
   Box, Button, TextField, Typography, Paper, Table, TableBody, TableCell, 
-  TableHead, TableRow, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, FormControlLabel, Checkbox, Container 
+  TableHead, TableRow, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, FormControlLabel, Checkbox, Container, TablePagination 
 } from "@mui/material";
 import { Edit, Delete } from "@mui/icons-material";
 
@@ -11,16 +11,50 @@ export default function Ingredients() {
   const [open, setOpen] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
-    carregarIngredientes();
-  }, []);
+    const delayDebounceFn = setTimeout(() => {
+      carregarIngredientes();
+    }, 500);
+    return () => clearTimeout(delayDebounceFn);
+  }, [page, rowsPerPage, searchTerm]);
 
   function carregarIngredientes() {
-    api.get("/ingredientes")
-      .then(res => setIngredientes(Array.isArray(res.data) ? res.data : []))
+    const params = new URLSearchParams();
+    params.append("page", page + 1);
+    params.append("limit", rowsPerPage);
+    if (searchTerm) params.append("search", searchTerm);
+
+    api.get(`/ingredientes?${params.toString()}`)
+      .then(res => {
+        if (res.data.data) {
+          setIngredientes(res.data.data);
+          setTotal(res.data.total);
+        } else {
+          // Fallback caso o backend retorne array direto
+          setIngredientes(Array.isArray(res.data) ? res.data : []);
+          setTotal(Array.isArray(res.data) ? res.data.length : 0);
+        }
+      })
       .catch(err => console.error("Erro ao carregar ingredientes", err));
   }
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setPage(0); // Volta para a primeira página ao pesquisar
+  };
 
   function handleEdit(item) {
     setEditItem({ ...item });
@@ -58,7 +92,7 @@ export default function Ingredients() {
         fullWidth 
         sx={{ mb: 3 }} 
         value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
+        onChange={handleSearchChange}
       />
 
       <Paper>
@@ -76,7 +110,6 @@ export default function Ingredients() {
           </TableHead>
           <TableBody>
             {ingredientes
-              .filter(ing => ing.nome.toLowerCase().includes(searchTerm.toLowerCase()))
               .map(ing => (
               <TableRow key={ing.id}>
                 <TableCell>{ing.nome}</TableCell>
@@ -95,6 +128,16 @@ export default function Ingredients() {
             ))}
           </TableBody>
         </Table>
+        <TablePagination
+          component="div"
+          count={total}
+          page={page}
+          onPageChange={handleChangePage}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          rowsPerPageOptions={[10, 25, 50, 100]}
+          labelRowsPerPage="Itens por página"
+        />
       </Paper>
 
       {/* Modal de Edição */}

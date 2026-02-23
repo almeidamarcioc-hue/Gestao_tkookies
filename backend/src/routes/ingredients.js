@@ -5,8 +5,45 @@ const router = Router();
 
 // LISTAR
 router.get("/", async (req, res) => {
+  const { page, limit, search } = req.query;
+
   try {
-    const result = await pool.query("SELECT * FROM ingredientes ORDER BY nome ASC");
+    let query = "SELECT * FROM ingredientes";
+    let countQuery = "SELECT COUNT(*) FROM ingredientes";
+    const params = [];
+    let paramIndex = 1;
+
+    if (search) {
+      query += ` WHERE nome ILIKE $${paramIndex}`;
+      countQuery += ` WHERE nome ILIKE $${paramIndex}`;
+      params.push(`%${search}%`);
+      paramIndex++;
+    }
+
+    query += " ORDER BY nome ASC";
+
+    if (page && limit) {
+      const pageInt = parseInt(page);
+      const limitInt = parseInt(limit);
+      const offset = (pageInt - 1) * limitInt;
+
+      query += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+      params.push(limitInt, offset);
+
+      const countRes = await pool.query(countQuery, search ? [`%${search}%`] : []);
+      const total = parseInt(countRes.rows[0].count);
+      const result = await pool.query(query, params);
+
+      return res.json({
+        data: result.rows,
+        total,
+        page: pageInt,
+        totalPages: Math.ceil(total / limitInt)
+      });
+    }
+
+    // Fallback: retorna tudo se não houver paginação (compatibilidade)
+    const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error) {
     res.status(500).json({ error: "Erro ao listar ingredientes" });
