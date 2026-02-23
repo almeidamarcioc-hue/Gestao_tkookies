@@ -258,6 +258,7 @@ export default function App() {
                   <MenuItem component={Link} to="/ingredientes/novo" onClick={handleClose}>Novo Ingrediente</MenuItem>
                   <MenuItem component={Link} to="/clientes/novo" onClick={handleClose}>Novo Cliente</MenuItem>
                   <MenuItem component={Link} to="/combos/novo" onClick={handleClose}>Novo Combo</MenuItem>
+                  <MenuItem component={Link} to="/revendedores" onClick={handleClose}>Novo Revendedor</MenuItem>
                 </Menu>
 
                 {/* Menu Consultas */}

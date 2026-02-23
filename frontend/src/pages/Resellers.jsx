@@ -4,7 +4,7 @@ import {
   Box, Typography, Paper, Table, TableBody, TableCell, 
   TableHead, TableRow, Container, TextField, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button, Grid 
 } from "@mui/material";
-import { Edit, Delete } from "@mui/icons-material";
+import { Edit, Delete, Add } from "@mui/icons-material";
 
 export default function Resellers() {
   const [revendedores, setRevendedores] = useState([]);
@@ -27,14 +27,34 @@ export default function Resellers() {
     setOpen(true);
   }
 
-  async function handleSaveEdit() {
+  function handleOpenCreate() {
+    setEditItem({
+      razao_social: "",
+      cpf_cnpj: "",
+      nome_contato: "",
+      telefone: "",
+      cep: "",
+      cidade: "",
+      estado: "",
+      login: "",
+      senha: ""
+    });
+    setOpen(true);
+  }
+
+  async function handleSave() {
     try {
-      await api.put(`/revendedores/${editItem.id}`, editItem);
-      alert("Revendedor atualizado!");
+      if (editItem.id) {
+        await api.put(`/revendedores/${editItem.id}`, editItem);
+        alert("Revendedor atualizado!");
+      } else {
+        await api.post("/revendedores", editItem);
+        alert("Revendedor cadastrado!");
+      }
       setOpen(false);
       carregarRevendedores();
     } catch (err) {
-      alert("Erro ao atualizar.");
+      alert("Erro ao salvar.");
     }
   }
 
@@ -50,7 +70,10 @@ export default function Resellers() {
 
   return (
     <Container maxWidth="xl">
-      <Typography variant="h4" mb={3} fontWeight="bold">Revendedores Parceiros</Typography>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h4" fontWeight="bold">Revendedores Parceiros</Typography>
+        <Button variant="contained" startIcon={<Add />} onClick={handleOpenCreate}>Novo Revendedor</Button>
+      </Box>
       
       <TextField 
         label="Buscar Revendedor" 
@@ -102,7 +125,7 @@ export default function Resellers() {
 
       {/* Modal de Edição */}
       <Dialog open={open} onClose={() => setOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Editar Revendedor</DialogTitle>
+        <DialogTitle>{editItem?.id ? "Editar Revendedor" : "Novo Revendedor"}</DialogTitle>
         <DialogContent>
           {editItem && (
             <Box sx={{ mt: 1 }}>
@@ -128,7 +151,7 @@ export default function Resellers() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpen(false)}>Cancelar</Button>
-          <Button variant="contained" onClick={handleSaveEdit}>Salvar</Button>
+          <Button variant="contained" onClick={handleSave}>Salvar</Button>
         </DialogActions>
       </Dialog>
     </Container>
