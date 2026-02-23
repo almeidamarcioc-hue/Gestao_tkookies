@@ -1,141 +1,105 @@
 import { Router } from "express";
 import { pool } from "../db/index.js";
-import { checkUsb, printUsb } from "../utils/printer.js"; // Importa as funções do utilitário
-
+import { printUsb, checkUsb } from "../utils/printer.js";
 
 const router = Router();
 
-// LISTAR
+// LISTAR PEDIDOS
 router.get("/", async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT p.*, c.nome as cliente_nome 
+    // Busca nome do cliente ou razão social do revendedor baseado no tipo_cliente
+    const query = `
+      SELECT p.*,
+             COALESCE(c.nome, r.razao_social, 'Cliente Balcão') as cliente_nome,
+             COALESCE(c.telefone, r.telefone) as cliente_telefone
       FROM pedidos p
-      LEFT JOIN clientes c ON p.cliente_id = c.id
-      ORDER BY p.created_at DESC
-    `);
+      LEFT JOIN clientes c ON p.cliente_id = c.id AND (p.tipo_cliente IS NULL OR p.tipo_cliente = 'consumidor')
+      LEFT JOIN revendedores r ON p.cliente_id = r.id AND p.tipo_cliente = 'revendedor'
+      ORDER BY p.id DESC
+    `;
+    const result = await pool.query(query);
     res.json(result.rows);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: "Erro ao listar pedidos" });
   }
 });
 
-// OBTER VALOR DO FRETE (Configuração)
-router.get("/config/frete", async (req, res) => {
-  try {
-    const result = await pool.query("SELECT valor FROM configuracoes WHERE chave = 'valor_frete'");
-    const valor = result.rows.length > 0 ? Number(result.rows[0].valor) : 0;
-    res.json({ valor });
-  } catch (error) {
-    res.status(500).json({ error: "Erro ao buscar valor do frete" });
-  }
-});
-
-// OBTER UM PEDIDO (para edição)
+// OBTER PEDIDO POR ID
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
   try {
-    const pedidoRes = await pool.query(`
-      SELECT p.*, c.nome as cliente_nome, c.telefone, c.endereco, c.numero, c.bairro, c.cidade, c.is_revendedor
+    const queryHeader = `
+      SELECT p.*,
+             COALESCE(c.nome, r.razao_social, 'Cliente Balcão') as cliente_nome,
+             COALESCE(c.telefone, r.telefone) as telefone,
+             COALESCE(c.endereco, r.cidade) as endereco,
+             COALESCE(c.numero, '') as numero,
+             COALESCE(c.bairro, r.estado) as bairro,
+             COALESCE(c.cidade, r.cidade) as cidade,
+             CASE WHEN p.tipo_cliente = 'revendedor' THEN true ELSE false END as is_revendedor
       FROM pedidos p
-      LEFT JOIN clientes c ON p.cliente_id = c.id
+      LEFT JOIN clientes c ON p.cliente_id = c.id AND (p.tipo_cliente IS NULL OR p.tipo_cliente = 'consumidor')
+      LEFT JOIN revendedores r ON p.cliente_id = r.id AND p.tipo_cliente = 'revendedor'
       WHERE p.id = $1
-    `, [id]);
+    `;
+    const headerRes = await pool.query(queryHeader, [id]);
     
-    if (pedidoRes.rows.length === 0) return res.status(404).json({ error: "Pedido não encontrado" });
+    if (headerRes.rows.length === 0) {
+      return res.status(404).json({ error: "Pedido não encontrado" });
+    }
 
-    const itensRes = await pool.query(`
-      SELECT ip.*, p.nome as produto_nome,
-      (SELECT imagem FROM produto_imagens pi WHERE pi.produto_id = p.id ORDER BY pi.eh_capa DESC LIMIT 1) as imagem
-      FROM itens_pedido ip
-      LEFT JOIN produtos p ON ip.produto_id = p.id
-      WHERE ip.pedido_id = $1
-    `, [id]);
+    const pedido = headerRes.rows[0];
 
-    res.json({ ...pedidoRes.rows[0], itens: itensRes.rows });
+    // Buscar Itens
+    const queryItens = `
+      SELECT pi.*, p.nome as produto_nome, p.imagem
+      FROM pedido_itens pi
+      JOIN produtos p ON pi.produto_id = p.id
+      WHERE pi.pedido_id = $1
+    `;
+    const itensRes = await pool.query(queryItens, [id]);
+    
+    pedido.itens = itensRes.rows;
+    res.json(pedido);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: "Erro ao buscar pedido" });
   }
 });
 
-// CRIAR
+// CRIAR PEDIDO
 router.post("/", async (req, res) => {
-  const { cliente_id, data_pedido, forma_pagamento, observacao, frete, desconto, itens, status } = req.body;
-  const client = await pool.connect();
+  const { cliente_id, data_pedido, forma_pagamento, observacao, frete, desconto, status, tipo_cliente, itens } = req.body;
   
+  const client = await pool.connect();
   try {
     await client.query("BEGIN");
 
-    const safeDesconto = Number(desconto) || 0;
-    const safeFrete = Number(frete) || 0;
+    // Calcular total
+    const totalItens = itens.reduce((acc, item) => acc + (Number(item.quantidade) * Number(item.valor_unitario)), 0);
+    const valor_total = totalItens + Number(frete || 0) - Number(desconto || 0);
 
-    if (!Array.isArray(itens) || itens.length === 0) {
-      throw new Error("O pedido deve conter pelo menos um item.");
-    }
-
-    let valorTotalItens = 0;
-    itens.forEach(i => valorTotalItens += (Number(i.quantidade) * Number(i.valor_unitario)));
-    const valorTotalPedido = valorTotalItens - safeDesconto + safeFrete;
-
-    let pedidoId;
-    try {
-      const resPedido = await client.query(
-        `INSERT INTO pedidos (cliente_id, data_pedido, forma_pagamento, observacao, frete, desconto, valor_total, status) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
-        [cliente_id, data_pedido, forma_pagamento, observacao, safeFrete, safeDesconto, valorTotalPedido, status || 'Novo']
-      );
-      pedidoId = resPedido.rows[0].id;
-    } catch (e) {
-      // Fallback: Se a coluna desconto não existir, tenta salvar sem ela
-      if (e.message && (e.message.includes("desconto") || e.message.includes("Unknown column"))) {
-        const resPedido = await client.query(
-          `INSERT INTO pedidos (cliente_id, data_pedido, forma_pagamento, observacao, frete, valor_total, status) 
-           VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-          [cliente_id, data_pedido, forma_pagamento, observacao, safeFrete, valorTotalPedido, status || 'Novo']
-        );
-        pedidoId = resPedido.rows[0].id;
-      } else {
-        throw e;
-      }
-    }
+    const resPedido = await client.query(
+      `INSERT INTO pedidos 
+       (cliente_id, data_pedido, forma_pagamento, observacao, frete, desconto, valor_total, status, tipo_cliente) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
+      [cliente_id, data_pedido, forma_pagamento, observacao, frete || 0, desconto || 0, valor_total, status || 'Novo', tipo_cliente || 'consumidor']
+    );
+    const pedidoId = resPedido.rows[0].id;
 
     for (const item of itens) {
       await client.query(
-        `INSERT INTO itens_pedido (pedido_id, produto_id, quantidade, valor_unitario, valor_total)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [pedidoId, item.produto_id, item.quantidade, item.valor_unitario, (item.quantidade * item.valor_unitario)]
+        "INSERT INTO pedido_itens (pedido_id, produto_id, quantidade, valor_unitario, valor_total) VALUES ($1, $2, $3, $4, $5)",
+        [pedidoId, item.produto_id, item.quantidade, item.valor_unitario, Number(item.quantidade) * Number(item.valor_unitario)]
       );
-
-      // VERIFICA SE É UM COMBO
-      const resCombo = await client.query("SELECT id FROM combos WHERE produto_id = $1", [item.produto_id]);
       
-      if (resCombo.rows.length > 0) {
-        // É um combo! Baixar estoque dos componentes
-        const comboId = resCombo.rows[0].id;
-        const resItensCombo = await client.query("SELECT produto_id, quantidade FROM combo_itens WHERE combo_id = $1", [comboId]);
-        
-        for (const comp of resItensCombo.rows) {
-          const qtdBaixar = Number(comp.quantidade) * Number(item.quantidade);
-          await client.query("UPDATE produtos SET estoque = estoque - $1 WHERE id = $2", [qtdBaixar, comp.produto_id]);
-        }
-      } else {
-        // Produto normal
-        await client.query("UPDATE produtos SET estoque = estoque - $1 WHERE id = $2", [item.quantidade, item.produto_id]);
-      }
+      // Baixar estoque do produto
+      await client.query("UPDATE produtos SET estoque = estoque - $1 WHERE id = $2", [item.quantidade, item.produto_id]);
     }
 
-    // Gerar Lançamento Financeiro (Entrada Pendente)
-    const resCli = await client.query("SELECT nome FROM clientes WHERE id = $1", [cliente_id]);
-    const nomeCliente = resCli.rows[0]?.nome || "Cliente";
-
-    await client.query(
-      `INSERT INTO lancamentos_financeiros (tipo, descricao, valor, data_vencimento, status, pedido_id)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      ['Entrada', `Pedido #${pedidoId} - ${nomeCliente}`, valorTotalPedido, data_pedido, 'Pendente', pedidoId]
-    );
-
     await client.query("COMMIT");
-    res.status(201).json({ message: "Pedido criado!", id: pedidoId });
+    res.status(201).json({ id: pedidoId, message: "Pedido criado com sucesso" });
   } catch (error) {
     await client.query("ROLLBACK");
     console.error(error);
@@ -145,119 +109,54 @@ router.post("/", async (req, res) => {
   }
 });
 
-// ATUALIZAR (Edição completa)
+// ATUALIZAR PEDIDO
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
-  const { cliente_id, data_pedido, forma_pagamento, observacao, frete, desconto, itens, status } = req.body;
-  const client = await pool.connect();
+  const { cliente_id, data_pedido, forma_pagamento, observacao, frete, desconto, status, tipo_cliente, itens } = req.body;
 
+  const client = await pool.connect();
   try {
     await client.query("BEGIN");
 
-    // Verificar se o pedido já está cancelado
-    const checkStatus = await client.query("SELECT status FROM pedidos WHERE id = $1", [id]);
-    if (checkStatus.rows.length > 0 && checkStatus.rows[0].status === 'Cancelado') {
-      throw new Error("Não é possível alterar um pedido cancelado.");
+    // 1. Restaurar estoque dos itens antigos
+    const oldItens = await client.query("SELECT produto_id, quantidade FROM pedido_itens WHERE pedido_id = $1", [id]);
+    for (const item of oldItens.rows) {
+      await client.query("UPDATE produtos SET estoque = estoque + $1 WHERE id = $2", [item.quantidade, item.produto_id]);
     }
 
-    const safeDesconto = Number(desconto) || 0;
-    const safeFrete = Number(frete) || 0;
+    // 2. Limpar itens antigos
+    await client.query("DELETE FROM pedido_itens WHERE pedido_id = $1", [id]);
 
-    if (!Array.isArray(itens) || itens.length === 0) {
-      throw new Error("O pedido deve conter pelo menos um item.");
-    }
+    // 3. Recalcular total
+    const totalItens = itens.reduce((acc, item) => acc + (Number(item.quantidade) * Number(item.valor_unitario)), 0);
+    const valor_total = totalItens + Number(frete || 0) - Number(desconto || 0);
 
-    let valorTotalItens = 0;
-    itens.forEach(i => valorTotalItens += (Number(i.quantidade) * Number(i.valor_unitario)));
-    const valorTotalPedido = valorTotalItens - safeDesconto + safeFrete;
-
-    try {
-      await client.query(
-        `UPDATE pedidos SET cliente_id = $1, data_pedido = $2, forma_pagamento = $3, observacao = $4, frete = $5, desconto = $6, valor_total = $7, status = $8
-         WHERE id = $9`,
-        [cliente_id, data_pedido, forma_pagamento, observacao, safeFrete, safeDesconto, valorTotalPedido, status, id]
-      );
-    } catch (e) {
-      // Fallback: Se a coluna desconto não existir, tenta salvar sem ela
-      if (e.message && (e.message.includes("desconto") || e.message.includes("Unknown column"))) {
-        await client.query(
-          `UPDATE pedidos SET cliente_id = $1, data_pedido = $2, forma_pagamento = $3, observacao = $4, frete = $5, valor_total = $6, status = $7
-           WHERE id = $8`,
-          [cliente_id, data_pedido, forma_pagamento, observacao, safeFrete, valorTotalPedido, status, id]
-        );
-      } else {
-        throw e;
-      }
-    }
-
-    // Devolver estoque dos itens antigos antes de remover
-    const itensAntigos = await client.query("SELECT produto_id, quantidade FROM itens_pedido WHERE pedido_id = $1", [id]);
-    for (const item of itensAntigos.rows) {
-      // Verifica se era combo
-      const resCombo = await client.query("SELECT id FROM combos WHERE produto_id = $1", [item.produto_id]);
-      if (resCombo.rows.length > 0) {
-        const comboId = resCombo.rows[0].id;
-        const resItensCombo = await client.query("SELECT produto_id, quantidade FROM combo_itens WHERE combo_id = $1", [comboId]);
-        for (const comp of resItensCombo.rows) {
-          const qtdDevolver = Number(comp.quantidade) * Number(item.quantidade);
-          await client.query("UPDATE produtos SET estoque = estoque + $1 WHERE id = $2", [qtdDevolver, comp.produto_id]);
-        }
-      } else {
-        await client.query(
-          "UPDATE produtos SET estoque = estoque + $1 WHERE id = $2", [item.quantidade, item.produto_id]
-        );
-      }
-    }
-
-    await client.query("DELETE FROM itens_pedido WHERE pedido_id = $1", [id]);
-
-    for (const item of itens) {
-      await client.query(
-        `INSERT INTO itens_pedido (pedido_id, produto_id, quantidade, valor_unitario, valor_total)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [id, item.produto_id, item.quantidade, item.valor_unitario, (item.quantidade * item.valor_unitario)]
-      );
-
-      // Baixar estoque (Lógica de Combo)
-      const resCombo = await client.query("SELECT id FROM combos WHERE produto_id = $1", [item.produto_id]);
-      if (resCombo.rows.length > 0) {
-        const comboId = resCombo.rows[0].id;
-        const resItensCombo = await client.query("SELECT produto_id, quantidade FROM combo_itens WHERE combo_id = $1", [comboId]);
-        for (const comp of resItensCombo.rows) {
-          const qtdBaixar = Number(comp.quantidade) * Number(item.quantidade);
-          await client.query("UPDATE produtos SET estoque = estoque - $1 WHERE id = $2", [qtdBaixar, comp.produto_id]);
-        }
-      } else {
-        await client.query(
-          "UPDATE produtos SET estoque = estoque - $1 WHERE id = $2", [item.quantidade, item.produto_id]
-        );
-      }
-    }
-
-    // Atualizar valor no Financeiro
+    // 4. Atualizar Pedido
     await client.query(
-      "UPDATE lancamentos_financeiros SET valor = $1, data_vencimento = $2 WHERE pedido_id = $3",
-      [valorTotalPedido, data_pedido, id]
+      `UPDATE pedidos SET 
+       cliente_id = $1, data_pedido = $2, forma_pagamento = $3, observacao = $4, 
+       frete = $5, desconto = $6, valor_total = $7, status = $8, tipo_cliente = $9
+       WHERE id = $10`,
+      [cliente_id, data_pedido, forma_pagamento, observacao, frete || 0, desconto || 0, valor_total, status, tipo_cliente, id]
     );
 
+    // 5. Inserir novos itens e baixar estoque
+    for (const item of itens) {
+      await client.query(
+        "INSERT INTO pedido_itens (pedido_id, produto_id, quantidade, valor_unitario, valor_total) VALUES ($1, $2, $3, $4, $5)",
+        [id, item.produto_id, item.quantidade, item.valor_unitario, Number(item.quantidade) * Number(item.valor_unitario)]
+      );
+      await client.query("UPDATE produtos SET estoque = estoque - $1 WHERE id = $2", [item.quantidade, item.produto_id]);
+    }
+
     await client.query("COMMIT");
-    res.json({ message: "Pedido atualizado!" });
+    res.json({ message: "Pedido atualizado" });
   } catch (error) {
     await client.query("ROLLBACK");
     console.error(error);
-    res.status(400).json({ error: error.message || "Erro ao atualizar pedido" });
+    res.status(500).json({ error: "Erro ao atualizar pedido" });
   } finally {
     client.release();
-  }
-});
-
-// DIAGNÓSTICO USB (Verifica se acha impressoras)
-router.get("/usb-check", async (req, res) => {
-  try {
-    const count = await checkUsb();
-    res.json({ ok: true, count });
-  } catch (e) {
-    res.status(500).json({ ok: false, error: e.message || "Erro ao verificar USB." });
   }
 });
 
@@ -265,172 +164,21 @@ router.get("/usb-check", async (req, res) => {
 router.patch("/:id/status", async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
-  const client = await pool.connect();
-
   try {
-    await client.query("BEGIN");
-
-    const pedido = await client.query("SELECT status FROM pedidos WHERE id = $1", [id]);
-    
-    // Verificar se já está cancelado (impede reabertura ou qualquer mudança)
-    if (pedido.rows.length > 0 && pedido.rows[0].status === 'Cancelado') {
-       throw new Error("Este pedido está cancelado e não pode ser alterado.");
-    }
-
-    // Se for cancelar, devolver estoque
-    if (status === 'Cancelado') {
-      if (pedido.rows.length > 0 && pedido.rows[0].status !== 'Cancelado') {
-        const itens = await client.query("SELECT produto_id, quantidade FROM itens_pedido WHERE pedido_id = $1", [id]);
-        for (const item of itens.rows) {
-          // Verifica se era combo
-          const resCombo = await client.query("SELECT id FROM combos WHERE produto_id = $1", [item.produto_id]);
-          if (resCombo.rows.length > 0) {
-            const comboId = resCombo.rows[0].id;
-            const resItensCombo = await client.query("SELECT produto_id, quantidade FROM combo_itens WHERE combo_id = $1", [comboId]);
-            for (const comp of resItensCombo.rows) {
-              const qtdDevolver = Number(comp.quantidade) * Number(item.quantidade);
-              await client.query("UPDATE produtos SET estoque = estoque + $1 WHERE id = $2", [qtdDevolver, comp.produto_id]);
-            }
-          } else {
-            await client.query("UPDATE produtos SET estoque = estoque + $1 WHERE id = $2", [item.quantidade, item.produto_id]);
-          }
-        }
-      }
-    }
-
-    await client.query("UPDATE pedidos SET status = $1 WHERE id = $2", [status, id]);
-    await client.query("COMMIT");
-    res.json({ message: "Status atualizado!" });
+    await pool.query("UPDATE pedidos SET status = $1 WHERE id = $2", [status, id]);
+    res.json({ message: "Status atualizado" });
   } catch (error) {
-    await client.query("ROLLBACK");
-    console.error(error);
-    res.status(400).json({ error: error.message || "Erro ao atualizar status" });
-  } finally {
-    client.release();
+    res.status(500).json({ error: "Erro ao atualizar status" });
   }
 });
 
-// DELETAR PEDIDO (Devolve estoque e remove)
-router.delete("/:id", async (req, res) => {
-  const { id } = req.params;
-  const client = await pool.connect();
+// CONFIG FRETE
+router.get("/config/frete", async (req, res) => {
   try {
-    await client.query("BEGIN");
-
-    // Verificar status para saber se precisa devolver estoque
-    const pedidoRes = await client.query("SELECT status FROM pedidos WHERE id = $1", [id]);
-    if (pedidoRes.rows.length > 0 && pedidoRes.rows[0].status !== 'Cancelado') {
-        const itens = await client.query("SELECT produto_id, quantidade FROM itens_pedido WHERE pedido_id = $1", [id]);
-        for (const item of itens.rows) {
-            // Verifica se era combo
-            const resCombo = await client.query("SELECT id FROM combos WHERE produto_id = $1", [item.produto_id]);
-            if (resCombo.rows.length > 0) {
-              const comboId = resCombo.rows[0].id;
-              const resItensCombo = await client.query("SELECT produto_id, quantidade FROM combo_itens WHERE combo_id = $1", [comboId]);
-              for (const comp of resItensCombo.rows) {
-                const qtdDevolver = Number(comp.quantidade) * Number(item.quantidade);
-                await client.query("UPDATE produtos SET estoque = estoque + $1 WHERE id = $2", [qtdDevolver, comp.produto_id]);
-              }
-            } else {
-              await client.query("UPDATE produtos SET estoque = estoque + $1 WHERE id = $2", [item.quantidade, item.produto_id]);
-            }
-        }
-    }
-
-    await client.query("DELETE FROM itens_pedido WHERE pedido_id = $1", [id]);
-    await client.query("DELETE FROM pedidos WHERE id = $1", [id]);
-    await client.query("DELETE FROM lancamentos_financeiros WHERE pedido_id = $1", [id]);
-
-    await client.query("COMMIT");
-    res.json({ message: "Pedido removido com sucesso!" });
+    const result = await pool.query("SELECT valor_frete FROM configuracoes LIMIT 1");
+    res.json({ valor: result.rows[0]?.valor_frete || 0 });
   } catch (error) {
-    await client.query("ROLLBACK");
-    console.error(error);
-    res.status(500).json({ error: "Erro ao remover pedido" });
-  } finally {
-    client.release();
-  }
-});
-
-// IMPRIMIR (USB Direto)
-router.post("/:id/imprimir", async (req, res) => {
-  const { id } = req.params;
-  
-  try {
-    // Buscar dados do pedido
-    const pedidoRes = await pool.query(`
-      SELECT p.*, c.nome as cliente_nome
-      FROM pedidos p
-      LEFT JOIN clientes c ON p.cliente_id = c.id
-      WHERE p.id = $1
-    `, [id]);
-    
-    if (pedidoRes.rows.length === 0) return res.status(404).json({ error: "Pedido não encontrado" });
-    const pedido = pedidoRes.rows[0];
-    const itensRes = await pool.query(`
-      SELECT ip.*, p.nome as produto_nome, p.preco_venda
-      FROM itens_pedido ip
-      LEFT JOIN produtos p ON ip.produto_id = p.id
-      WHERE ip.pedido_id = $1
-    `, [id]);
-    const itens = itensRes.rows;
-    
-    // Usa a função printUsb do utilitário
-    await printUsb(printer => {
-      printer
-        .font('b')
-        .align('ct')
-        .style('b')
-        .size(1, 1)
-        .text('TKokies')
-        .style('normal')
-        .size(1, 1)
-        .text(`Pedido #${pedido.id}`)
-        .text('--------------------------------')
-        .align('lt')
-        .style('b').print('Data: ').style('normal').text(`${new Date(pedido.data_pedido).toLocaleDateString()}`)
-        .text(' ') 
-        .style('b').print('Cliente: ').style('normal').text(`${pedido.cliente_nome}`)
-        .text('--------------------------------');
-
-      printer.size(1, 1)
-       .font('b')
-       .align('lt')
-       .text('Prod.     Qtd.   V.Unit   Total'); 
-      printer.text('--------------------------------');
-
-      itens.forEach(item => {
-          printer.style('b').text(item.produto_nome.toUpperCase()).style('normal');
-          printer.feed(0);
-
-          const unitVal = Number(item.valor_unitario);
-          const originalVal = Number(item.preco_venda || 0);
-
-          if (originalVal > unitVal + 0.01) {
-             const diff = originalVal - unitVal;
-             printer.text(`   (De R$${originalVal.toFixed(2)} - Desc R$${diff.toFixed(2)})`);
-          }
-
-          const qtd = Number(item.quantidade).toFixed(2);
-          const unit = unitVal.toFixed(2);
-          const total = Number(item.valor_total).toFixed(2);
-          printer.text(`          ${qtd}  R$${unit}  R$${total}`);
-          printer.text(' ');
-      });
-
-      printer.font('a');
-      printer.text('------------------------');
-      printer.align('rt');
-      if (Number(pedido.desconto) > 0) printer.text(`Desconto: -R$ ${Number(pedido.desconto).toFixed(2)}`);
-      if (Number(pedido.frete) > 0) printer.text(`Frete: R$ ${Number(pedido.frete).toFixed(2)}`);
-      printer.style('b').size(1, 1).text(`TOTAL: R$ ${Number(pedido.valor_total).toFixed(2)}`);
-      printer.align('ct').text('').text('TKookies');
-      printer.align('ct').text('').text('');
-    });
-    res.json({ message: "Enviado para impressora" });
-  } catch (error) {
-    console.error("Erro geral na rota de impressão:", error);
-    res.status(500).json({ error: error.message || "Erro ao processar impressão." });
+    res.json({ valor: 0 });
   }
 });
 

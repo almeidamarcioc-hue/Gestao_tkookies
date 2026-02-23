@@ -47,4 +47,5 @@ Para habilitar o controle de estoque real dos ingredientes, execute o seguinte c
 
 ```sql
 ALTER TABLE ingredientes ADD COLUMN estoque_atual DECIMAL(10,4) DEFAULT 0;
+ALTER TABLE pedidos ADD COLUMN tipo_cliente VARCHAR(20) DEFAULT 'consumidor';
 ```
