@@ -21,7 +21,7 @@ router.get("/", async (req, res) => {
     res.json(result.rows);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Erro ao listar pedidos" });
+    res.status(500).json({ error: "Erro ao listar pedidos", details: error.message });
   }
 });
 
