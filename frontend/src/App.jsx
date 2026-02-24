@@ -33,6 +33,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AccessDenied from "./pages/AccessDenied";
 import OrdersDashboard from "./pages/OrdersDashboard";
 import TitheReport from "./pages/TitheReport";
+import TopProductsReport from "./pages/TopProductsReport";
 
 const theme = createTheme({
   palette: {
@@ -292,6 +293,7 @@ export default function App() {
                 <Button color="inherit" onClick={(e) => setAnchorRel(e.currentTarget)}>RELATÓRIOS</Button>
                 <Menu anchorEl={anchorRel} open={openRel} onClose={handleClose}>
                   <MenuItem component={Link} to="/relatorios/dizimo" onClick={handleClose}>Dízimo</MenuItem>
+                  <MenuItem component={Link} to="/relatorios/top-produtos" onClick={handleClose}>Sabores mais Amados</MenuItem>
                 </Menu>
 
                 <Button color="inherit" onClick={handleLogout}>SAIR</Button>
@@ -376,6 +378,7 @@ export default function App() {
                 <ListItem disablePadding><ListItemButton component={Link} to="/financeiro"><ListItemText primary="Financeiro" /></ListItemButton></ListItem>
                 <ListItem disablePadding><ListItemButton component={Link} to="/configuracoes"><ListItemText primary="Configurações" /></ListItemButton></ListItem>
                 <ListItem disablePadding><ListItemButton component={Link} to="/relatorios/dizimo"><ListItemText primary="Relatório Dízimo" /></ListItemButton></ListItem>
+                <ListItem disablePadding><ListItemButton component={Link} to="/relatorios/top-produtos"><ListItemText primary="Top Produtos" /></ListItemButton></ListItem>
                 <ListItem disablePadding><ListItemButton onClick={handleLogout}><ListItemText primary="SAIR" sx={{ color: 'error.main' }} /></ListItemButton></ListItem>
               </>
             ) : (
@@ -449,6 +452,7 @@ export default function App() {
           <Route path="/production" element={<ProtectedRoute isAllowed={isLoggedIn}><Production /></ProtectedRoute>} />
           <Route path="/producao/:id" element={<ProtectedRoute isAllowed={isLoggedIn}><ProductionRecipe /></ProtectedRoute>} />
           <Route path="/relatorios/dizimo" element={<ProtectedRoute isAllowed={isLoggedIn}><TitheReport /></ProtectedRoute>} />
+          <Route path="/relatorios/top-produtos" element={<ProtectedRoute isAllowed={isLoggedIn}><TopProductsReport /></ProtectedRoute>} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

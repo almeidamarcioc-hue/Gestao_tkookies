@@ -138,4 +138,34 @@ router.post("/dizimo/pagar", async (req, res) => {
   }
 });
 
+// RELATÓRIO DE PRODUTOS MAIS VENDIDOS
+router.get("/top-produtos", async (req, res) => {
+  const { startDate, endDate } = req.query;
+
+  if (!startDate || !endDate) {
+    return res.status(400).json({ error: "Data inicial e final são obrigatórias" });
+  }
+
+  try {
+    const query = `
+      SELECT
+        p.id,
+        p.nome,
+        COALESCE(SUM(ip.quantidade), 0) as total_vendido,
+        p.estoque as estoque_atual
+      FROM produtos p
+      LEFT JOIN itens_pedido ip ON p.id = ip.produto_id
+      LEFT JOIN pedidos ped ON ip.pedido_id = ped.id AND ped.status != 'Cancelado' AND DATE(ped.data_pedido) BETWEEN DATE($1) AND DATE($2)
+      GROUP BY p.id, p.nome, p.estoque
+      ORDER BY total_vendido DESC;
+    `;
+
+    const result = await pool.query(query, [startDate, endDate]);
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Erro no relatório de top produtos:", error);
+    res.status(500).json({ error: "Erro ao gerar relatório de produtos" });
+  }
+});
+
 export default router;
