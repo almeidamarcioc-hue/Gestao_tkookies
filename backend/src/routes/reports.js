@@ -18,6 +18,7 @@ router.get("/dizimo", async (req, res) => {
       SELECT 
         p.id,
         p.nome,
+        p.rendimento,
         SUM(ip.quantidade) as qtd_vendida,
         SUM(ip.valor_total) as total_venda,
         COALESCE((
@@ -25,13 +26,13 @@ router.get("/dizimo", async (req, res) => {
           FROM produto_ingredientes pi
           JOIN ingredientes i ON pi.ingrediente_id = i.id
           WHERE pi.produto_id = p.id
-        ), 0) as custo_unitario_atual
+        ), 0) as custo_receita_atual
       FROM itens_pedido ip
       JOIN pedidos ped ON ip.pedido_id = ped.id
       JOIN produtos p ON ip.produto_id = p.id
       WHERE ped.status != 'Cancelado'
         AND DATE(ped.data_pedido) BETWEEN DATE($1) AND DATE($2)
-      GROUP BY p.id, p.nome
+      GROUP BY p.id, p.nome, p.rendimento
       ORDER BY total_venda DESC
     `;
 
@@ -42,7 +43,11 @@ router.get("/dizimo", async (req, res) => {
 
     const itensCalculados = result.rows.map(item => {
       const venda = Number(item.total_venda);
-      const custoUnit = Number(item.custo_unitario_atual);
+      const rendimento = Number(item.rendimento) || 1;
+      const custoReceita = Number(item.custo_receita_atual);
+      
+      // Custo unitário = Custo da Receita / Rendimento
+      const custoUnit = custoReceita / rendimento;
       const qtd = Number(item.qtd_vendida);
       const custoTotal = custoUnit * qtd;
       const lucro = venda - custoTotal;
