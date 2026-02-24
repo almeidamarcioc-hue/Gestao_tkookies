@@ -22,7 +22,7 @@ router.get("/dizimo", async (req, res) => {
         SUM(ip.quantidade) as qtd_vendida,
         SUM(ip.valor_total) as total_venda,
         COALESCE((
-          SELECT SUM(pi.quantidade * i.custo)
+          SELECT SUM(pi.quantidade * (i.custo / NULLIF(i.estoque, 0)))
           FROM produto_ingredientes pi
           JOIN ingredientes i ON pi.ingrediente_id = i.id
           WHERE pi.produto_id = p.id
