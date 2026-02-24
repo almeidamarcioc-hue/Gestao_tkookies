@@ -14,6 +14,15 @@ router.get("/dizimo", async (req, res) => {
   try {
     // Busca itens vendidos no período (excluindo cancelados)
     // Calcula o custo unitário atual baseado nos ingredientes do produto
+    
+    // Verifica se já existe pagamento registrado para este período
+    const descricaoDizimo = `Dízimo Período: ${startDate} a ${endDate}`;
+    const checkPagamento = await pool.query(
+      "SELECT id FROM lancamentos_financeiros WHERE descricao = $1 AND tipo = 'Saída'",
+      [descricaoDizimo]
+    );
+    const isPago = checkPagamento.rows.length > 0;
+
     const query = `
       SELECT 
         p.id,
@@ -90,12 +99,42 @@ router.get("/dizimo", async (req, res) => {
         lucro_operacional: lucroTotal,
         valor_dizimo: dizimo
       },
+      pago: isPago,
       detalhes: itensCalculados
     });
 
   } catch (error) {
     console.error("Erro no relatório de dízimo:", error);
     res.status(500).json({ error: "Erro ao gerar relatório" });
+  }
+});
+
+// REGISTRAR PAGAMENTO DÍZIMO
+router.post("/dizimo/pagar", async (req, res) => {
+  const { startDate, endDate, valor } = req.body;
+  
+  if (!startDate || !endDate || !valor) {
+    return res.status(400).json({ error: "Dados incompletos" });
+  }
+
+  const descricao = `Dízimo Período: ${startDate} a ${endDate}`;
+
+  try {
+    // Verifica duplicidade antes de inserir
+    const check = await pool.query("SELECT id FROM lancamentos_financeiros WHERE descricao = $1", [descricao]);
+    if (check.rows.length > 0) {
+       return res.status(400).json({ error: "Pagamento já registrado para este período." });
+    }
+
+    await pool.query(
+      "INSERT INTO lancamentos_financeiros (tipo, descricao, valor, data_vencimento, status) VALUES ($1, $2, $3, CURRENT_DATE, $4)",
+      ['Saída', descricao, valor, 'Pago']
+    );
+
+    res.json({ message: "Pagamento registrado no financeiro!" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Erro ao registrar pagamento" });
   }
 });
 

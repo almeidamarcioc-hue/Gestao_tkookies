@@ -19,10 +19,10 @@ export default function TitheReport() {
 
   async function gerarRelatorio() {
     setLoading(true);
-    setPaymentGenerated(false); // Reseta o status de pagamento ao gerar novo relatório
     try {
       const res = await api.get(`/relatorios/dizimo?startDate=${startDate}&endDate=${endDate}`);
       setReportData(res.data);
+      setPaymentGenerated(res.data.pago); // Define status baseado no registro financeiro
     } catch (error) {
       alert("Erro ao gerar relatório");
       console.error(error);
@@ -61,9 +61,19 @@ export default function TitheReport() {
     }
   };
 
-  const handleConfirmPayment = () => {
-    setPaymentModalOpen(false);
-    setPaymentGenerated(true);
+  const handleConfirmPayment = async () => {
+    try {
+      await api.post('/relatorios/dizimo/pagar', {
+        startDate,
+        endDate,
+        valor: reportData.resumo.valor_dizimo
+      });
+      setPaymentGenerated(true);
+      setPaymentModalOpen(false);
+      alert("Pagamento registrado no financeiro com sucesso!");
+    } catch (error) {
+      alert("Erro ao registrar pagamento: " + (error.response?.data?.error || error.message));
+    }
   };
 
   const formatMoney = (val) => `R$ ${Number(val).toFixed(2)}`;
