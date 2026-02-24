@@ -19,21 +19,30 @@ router.get("/dizimo", async (req, res) => {
         p.id,
         p.nome,
         p.rendimento,
+        ped.tipo_cliente,
         SUM(ip.quantidade) as qtd_vendida,
         SUM(ip.valor_total) as total_venda,
+        -- Custo da receita para consumidor final (não inclui ingredientes 'apenas_revenda')
         COALESCE((
           SELECT SUM(pi.quantidade * (i.custo / NULLIF(i.estoque, 0)))
           FROM produto_ingredientes pi
           JOIN ingredientes i ON pi.ingrediente_id = i.id
-          WHERE pi.produto_id = p.id
-        ), 0) as custo_receita_atual
+          WHERE pi.produto_id = p.id AND pi.apenas_revenda = FALSE
+        ), 0) as custo_receita_consumidor,
+        -- Custo da receita para revendedor (considera ingredientes de revenda)
+        COALESCE((
+          SELECT SUM(pi.quantidade * (i.custo / NULLIF(i.estoque, 0)))
+          FROM produto_ingredientes pi
+          JOIN ingredientes i ON pi.ingrediente_id = i.id
+          WHERE pi.produto_id = p.id AND (i.usado_para_revenda = TRUE OR pi.apenas_revenda = TRUE)
+        ), 0) as custo_receita_revendedor
       FROM itens_pedido ip
       JOIN pedidos ped ON ip.pedido_id = ped.id
       JOIN produtos p ON ip.produto_id = p.id
       WHERE ped.status != 'Cancelado'
         AND DATE(ped.data_pedido) BETWEEN DATE($1) AND DATE($2)
-      GROUP BY p.id, p.nome, p.rendimento
-      ORDER BY total_venda DESC
+      GROUP BY p.id, p.nome, p.rendimento, ped.tipo_cliente
+      ORDER BY p.nome, ped.tipo_cliente
     `;
 
     const result = await pool.query(query, [startDate, endDate]);
@@ -44,7 +53,13 @@ router.get("/dizimo", async (req, res) => {
     const itensCalculados = result.rows.map(item => {
       const venda = Number(item.total_venda);
       const rendimento = Number(item.rendimento) || 1;
-      const custoReceita = Number(item.custo_receita_atual);
+      
+      let custoReceita;
+      if (item.tipo_cliente === 'revendedor') {
+        custoReceita = Number(item.custo_receita_revendedor);
+      } else { // 'consumidor' ou nulo
+        custoReceita = Number(item.custo_receita_consumidor);
+      }
       
       // Custo unitário = Custo da Receita / Rendimento
       const custoUnit = custoReceita / rendimento;
@@ -57,6 +72,7 @@ router.get("/dizimo", async (req, res) => {
 
       return {
         ...item,
+        nome_display: `${item.nome} (${item.tipo_cliente || 'consumidor'})`,
         total_venda: venda,
         custo_total: custoTotal,
         lucro: lucro

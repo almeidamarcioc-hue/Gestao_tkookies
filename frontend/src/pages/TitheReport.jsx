@@ -112,8 +112,8 @@ export default function TitheReport() {
               </TableHead>
               <TableBody>
                 {reportData.detalhes.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>{item.nome}</TableCell>
+                  <TableRow key={`${item.id}-${item.tipo_cliente}`}>
+                    <TableCell>{item.nome_display || item.nome}</TableCell>
                     <TableCell align="center">{item.qtd_vendida}</TableCell>
                     <TableCell align="right">{formatMoney(item.total_venda)}</TableCell>
                     <TableCell align="right" sx={{ color: 'error.main' }}>{formatMoney(item.custo_total)}</TableCell>
