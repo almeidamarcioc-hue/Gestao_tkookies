@@ -2,18 +2,24 @@ import { useState } from "react";
 import api from "../services/api";
 import { 
   Box, Typography, Paper, TextField, Button, Grid, Table, TableBody, TableCell, 
-  TableHead, TableRow, Container, Card, CardContent
+  TableHead, TableRow, Container, Card, CardContent, Dialog, DialogTitle, DialogContent, DialogActions, IconButton
 } from "@mui/material";
-import { Search, VolunteerActivism } from "@mui/icons-material";
+import { Search, VolunteerActivism, QrCode, ContentCopy, CheckCircle, Close } from "@mui/icons-material";
+import { QrCodePix } from "qrcode-pix";
+import { QRCodeSVG } from "qrcode.react";
 
 export default function TitheReport() {
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
   const [reportData, setReportData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [paymentGenerated, setPaymentGenerated] = useState(false);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [pixPayload, setPixPayload] = useState('');
 
   async function gerarRelatorio() {
     setLoading(true);
+    setPaymentGenerated(false); // Reseta o status de pagamento ao gerar novo relatório
     try {
       const res = await api.get(`/relatorios/dizimo?startDate=${startDate}&endDate=${endDate}`);
       setReportData(res.data);
@@ -24,6 +30,36 @@ export default function TitheReport() {
       setLoading(false);
     }
   }
+
+  function handleGeneratePayment() {
+    if (!reportData?.resumo?.valor_dizimo || reportData.resumo.valor_dizimo <= 0) {
+      alert("Não há valor de dízimo a ser pago para este período.");
+      return;
+    }
+
+    const pix = QrCodePix({
+      version: '01',
+      key: '8879715400005', // CNPJ conforme solicitado
+      name: 'TKOOKIES', // Nome do beneficiário
+      city: 'TRES DE MAIO', // Cidade do beneficiário
+      value: parseFloat(reportData.resumo.valor_dizimo.toFixed(2)),
+    });
+
+    setPixPayload(pix.payload());
+    setPaymentModalOpen(true);
+  }
+
+  const handleCopyPix = () => {
+    if (pixPayload) {
+      navigator.clipboard.writeText(pixPayload);
+      alert('Código PIX (copia e cola) copiado!');
+    }
+  };
+
+  const handleConfirmPayment = () => {
+    setPaymentModalOpen(false);
+    setPaymentGenerated(true);
+  };
 
   const formatMoney = (val) => `R$ ${Number(val).toFixed(2)}`;
 
@@ -93,6 +129,17 @@ export default function TitheReport() {
                 <CardContent>
                   <Typography color="textSecondary" gutterBottom fontWeight="bold">Dízimo (10%)</Typography>
                   <Typography variant="h4" fontWeight="bold" color="primary">{formatMoney(reportData.resumo.valor_dizimo)}</Typography>
+                  {!paymentGenerated && (
+                    <Button 
+                      variant="contained" 
+                      size="small" 
+                      startIcon={<QrCode />} 
+                      onClick={handleGeneratePayment}
+                      sx={{ mt: 1 }}
+                    >
+                      Gerar Pagamento
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             </Grid>
@@ -103,6 +150,7 @@ export default function TitheReport() {
             <Table size="small">
               <TableHead>
                 <TableRow>
+                  <TableCell align="center">Pago</TableCell>
                   <TableCell>Produto</TableCell>
                   <TableCell align="center">Qtd Vendida</TableCell>
                   <TableCell align="right">Total Venda</TableCell>
@@ -113,6 +161,9 @@ export default function TitheReport() {
               <TableBody>
                 {reportData.detalhes.map((item) => (
                   <TableRow key={`${item.id}-${item.tipo_cliente}`}>
+                    <TableCell align="center">
+                      {paymentGenerated && <CheckCircle color="success" />}
+                    </TableCell>
                     <TableCell>{item.nome_display || item.nome}</TableCell>
                     <TableCell align="center">{item.qtd_vendida}</TableCell>
                     <TableCell align="right">{formatMoney(item.total_venda)}</TableCell>
