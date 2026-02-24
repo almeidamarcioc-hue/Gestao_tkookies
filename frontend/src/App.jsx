@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Routes, Route, Link, Navigate, useNavigate } from "react-router-dom";
 import { AppBar, Toolbar, Button, Box, Typography, Menu, MenuItem, createTheme, ThemeProvider, CssBaseline, TextField, IconButton, Drawer, List, ListItem, ListItemButton, ListItemText, Divider, Container, Grid, Badge, CircularProgress } from "@mui/material";
-import { Menu as MenuIcon, Instagram, WhatsApp, Facebook, AccountCircle, ShoppingCart, Favorite, Lock } from "@mui/icons-material";
+import { Menu as MenuIcon, Instagram, WhatsApp, Facebook, AccountCircle, ShoppingCart, Favorite, Lock, Assessment } from "@mui/icons-material";
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
 import Ingredients from "./pages/Ingredients";
@@ -32,6 +32,7 @@ import Resellers from "./pages/Resellers";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AccessDenied from "./pages/AccessDenied";
 import OrdersDashboard from "./pages/OrdersDashboard";
+import TitheReport from "./pages/TitheReport";
 
 const theme = createTheme({
   palette: {
@@ -97,6 +98,7 @@ export default function App() {
   const [anchorCons, setAnchorCons] = useState(null);
   const [anchorPed, setAnchorPed] = useState(null);
   const [anchorClient, setAnchorClient] = useState(null);
+  const [anchorRel, setAnchorRel] = useState(null);
   const [adminLoginOpen, setAdminLoginOpen] = useState(false);
   const [adminLoginData, setAdminLoginData] = useState({ login: "", senha: "" });
 
@@ -131,12 +133,14 @@ export default function App() {
   const openCons = Boolean(anchorCons);
   const openPed = Boolean(anchorPed);
   const openClient = Boolean(anchorClient);
+  const openRel = Boolean(anchorRel);
 
   const handleClose = () => {
     setAnchorCad(null);
     setAnchorCons(null);
     setAnchorPed(null);
     setAnchorClient(null);
+    setAnchorRel(null);
   };
 
   const handleDrawerToggle = () => {
@@ -283,6 +287,13 @@ export default function App() {
                   <MenuItem component={Link} to="/pedidos" onClick={handleClose}>Consultar Pedidos</MenuItem>
                   <MenuItem component={Link} to="/painel-cozinha" onClick={handleClose}>Painel de Cozinha (KDS)</MenuItem>
                 </Menu>
+
+                {/* Menu Relatórios */}
+                <Button color="inherit" onClick={(e) => setAnchorRel(e.currentTarget)}>RELATÓRIOS</Button>
+                <Menu anchorEl={anchorRel} open={openRel} onClose={handleClose}>
+                  <MenuItem component={Link} to="/relatorios/dizimo" onClick={handleClose}>Dízimo</MenuItem>
+                </Menu>
+
                 <Button color="inherit" onClick={handleLogout}>SAIR</Button>
               </>
             ) : (
@@ -364,6 +375,7 @@ export default function App() {
                 <ListItem disablePadding><ListItemButton component={Link} to="/production"><ListItemText primary="Produção" /></ListItemButton></ListItem>
                 <ListItem disablePadding><ListItemButton component={Link} to="/financeiro"><ListItemText primary="Financeiro" /></ListItemButton></ListItem>
                 <ListItem disablePadding><ListItemButton component={Link} to="/configuracoes"><ListItemText primary="Configurações" /></ListItemButton></ListItem>
+                <ListItem disablePadding><ListItemButton component={Link} to="/relatorios/dizimo"><ListItemText primary="Relatório Dízimo" /></ListItemButton></ListItem>
                 <ListItem disablePadding><ListItemButton onClick={handleLogout}><ListItemText primary="SAIR" sx={{ color: 'error.main' }} /></ListItemButton></ListItem>
               </>
             ) : (
@@ -436,6 +448,7 @@ export default function App() {
           <Route path="/financeiro" element={<ProtectedRoute isAllowed={isLoggedIn}><Financial /></ProtectedRoute>} />
           <Route path="/production" element={<ProtectedRoute isAllowed={isLoggedIn}><Production /></ProtectedRoute>} />
           <Route path="/producao/:id" element={<ProtectedRoute isAllowed={isLoggedIn}><ProductionRecipe /></ProtectedRoute>} />
+          <Route path="/relatorios/dizimo" element={<ProtectedRoute isAllowed={isLoggedIn}><TitheReport /></ProtectedRoute>} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
