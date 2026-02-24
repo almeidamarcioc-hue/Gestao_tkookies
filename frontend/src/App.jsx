@@ -33,7 +33,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AccessDenied from "./pages/AccessDenied";
 import OrdersDashboard from "./pages/OrdersDashboard";
 import TitheReport from "./pages/TitheReport";
-import TopProductsReport from "./pages/TopProductsReport";
+import BestSellersReport from "./pages/BestSellersReport";
 
 const theme = createTheme({
   palette: {
@@ -452,7 +452,7 @@ export default function App() {
           <Route path="/production" element={<ProtectedRoute isAllowed={isLoggedIn}><Production /></ProtectedRoute>} />
           <Route path="/producao/:id" element={<ProtectedRoute isAllowed={isLoggedIn}><ProductionRecipe /></ProtectedRoute>} />
           <Route path="/relatorios/dizimo" element={<ProtectedRoute isAllowed={isLoggedIn}><TitheReport /></ProtectedRoute>} />
-          <Route path="/relatorios/top-produtos" element={<ProtectedRoute isAllowed={isLoggedIn}><TopProductsReport /></ProtectedRoute>} />
+          <Route path="/relatorios/top-produtos" element={<ProtectedRoute isAllowed={isLoggedIn}><BestSellersReport /></ProtectedRoute>} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
