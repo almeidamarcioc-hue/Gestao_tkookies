@@ -3,8 +3,8 @@ import api from '../services/api';
 import { 
   Container, Typography, Box, Paper, Grid, Card, CardContent, 
   Table, TableBody, TableCell, TableHead, TableRow, 
-  Button, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, 
-  TextField, MenuItem, Chip 
+  Button, IconButton, Dialog, DialogTitle, DialogContent, DialogActions,
+  TextField, MenuItem, Chip, FormControlLabel, Switch
 } from '@mui/material';
 import { Edit, Delete, Add, TrendingUp, TrendingDown, AccountBalanceWallet, AttachMoney, FilterList } from '@mui/icons-material';
 import AutoLogout from '../components/AutoLogout';
@@ -16,6 +16,7 @@ export default function Financial() {
   const [editItem, setEditItem] = useState(null);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [showOnlyTithe, setShowOnlyTithe] = useState(false);
   const [installmentDialogOpen, setInstallmentDialogOpen] = useState(false);
   
   // Estado do Formulário
@@ -32,20 +33,26 @@ export default function Financial() {
     loadData();
   }, []);
 
-  async function loadData(start = startDate, end = endDate) {
+  async function loadData() {
     try {
       const params = {};
-      if (start && end) {
-        params.startDate = start;
-        params.endDate = end;
+      if (startDate && endDate) {
+        params.startDate = startDate;
+        params.endDate = endDate;
       }
 
       const [dashRes, listRes] = await Promise.all([
         api.get('/financeiro/dashboard', { params }),
         api.get('/financeiro', { params })
       ]);
+
+      let lancamentosData = listRes.data;
+      if (showOnlyTithe) {
+        lancamentosData = lancamentosData.filter(lanc => lanc.descricao.startsWith('Dízimo Período:'));
+      }
+
       setDashboard(dashRes.data);
-      setLancamentos(listRes.data);
+      setLancamentos(lancamentosData);
     } catch (error) {
       console.error("Erro ao carregar dados financeiros", error);
     }
@@ -156,7 +163,16 @@ export default function Financial() {
             InputLabelProps={{ shrink: true }} 
             size="small"
           />
-          <Button variant="contained" startIcon={<FilterList />} onClick={() => loadData()}>Filtrar</Button>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={showOnlyTithe}
+                onChange={(e) => setShowOnlyTithe(e.target.checked)}
+              />
+            }
+            label="Apenas Dízimo"
+          />
+          <Button variant="contained" startIcon={<FilterList />} onClick={loadData}>Filtrar</Button>
         </Box>
       </Paper>
 
