@@ -75,7 +75,7 @@ export default function TitheReport() {
             <Grid item xs={12} md={3}>
               <Card sx={{ bgcolor: '#ffebee' }}>
                 <CardContent>
-                  <Typography color="textSecondary" gutterBottom>Custo Estimado (Ingredientes)</Typography>
+                  <Typography color="textSecondary" gutterBottom>Custo Estimado</Typography>
                   <Typography variant="h5" fontWeight="bold" color="error">{formatMoney(reportData.resumo.total_custo)}</Typography>
                 </CardContent>
               </Card>
