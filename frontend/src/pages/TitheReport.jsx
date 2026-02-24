@@ -32,21 +32,26 @@ export default function TitheReport() {
   }
 
   function handleGeneratePayment() {
-    if (!reportData?.resumo?.valor_dizimo || reportData.resumo.valor_dizimo <= 0) {
-      alert("Não há valor de dízimo a ser pago para este período.");
-      return;
+    try {
+      if (!reportData?.resumo?.valor_dizimo || reportData.resumo.valor_dizimo <= 0) {
+        alert("Não há valor de dízimo a ser pago para este período.");
+        return;
+      }
+
+      const pix = QrCodePix({
+        version: '01',
+        key: '8879715400005', // CNPJ conforme solicitado
+        name: 'TKOOKIES', // Nome do beneficiário
+        city: 'TRES DE MAIO', // Cidade do beneficiário
+        value: parseFloat(reportData.resumo.valor_dizimo.toFixed(2)),
+      });
+
+      setPixPayload(pix.payload());
+      setPaymentModalOpen(true);
+    } catch (error) {
+      console.error("Erro ao gerar PIX. Verifique se as dependências 'qrcode-pix' e 'qrcode.react' estão instaladas.", error);
+      alert("Ocorreu um erro ao gerar o QR Code de pagamento. Verifique o console para mais detalhes.");
     }
-
-    const pix = QrCodePix({
-      version: '01',
-      key: '8879715400005', // CNPJ conforme solicitado
-      name: 'TKOOKIES', // Nome do beneficiário
-      city: 'TRES DE MAIO', // Cidade do beneficiário
-      value: parseFloat(reportData.resumo.valor_dizimo.toFixed(2)),
-    });
-
-    setPixPayload(pix.payload());
-    setPaymentModalOpen(true);
   }
 
   const handleCopyPix = () => {
@@ -176,6 +181,38 @@ export default function TitheReport() {
           </Paper>
         </>
       )}
+
+      {/* Modal de Pagamento PIX */}
+      <Dialog open={paymentModalOpen} onClose={() => setPaymentModalOpen(false)} maxWidth="xs">
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          Pagamento PIX
+          <IconButton onClick={() => setPaymentModalOpen(false)}><Close /></IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ textAlign: 'center' }}>
+          <Typography variant="body2" mb={2}>
+            Escaneie o QR Code com o app do seu banco para pagar <strong>{formatMoney(reportData?.resumo?.valor_dizimo)}</strong>.
+          </Typography>
+          {pixPayload && (
+            <Box sx={{ bgcolor: 'white', p: 2, borderRadius: 2, display: 'inline-block' }}>
+              <QRCodeSVG value={pixPayload} size={256} />
+            </Box>
+          )}
+          <Button
+            variant="outlined"
+            startIcon={<ContentCopy />}
+            onClick={handleCopyPix}
+            fullWidth
+            sx={{ mt: 2 }}
+          >
+            Copiar Código PIX
+          </Button>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'center', p: 2 }}>
+          <Button variant="contained" color="success" onClick={handleConfirmPayment}>
+            Marcar como Pago
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }
