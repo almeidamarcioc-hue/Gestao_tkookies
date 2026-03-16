@@ -360,7 +360,7 @@ export default function App() {
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               letterSpacing: '-0.5px'
-            }}>TK<Box component="span" sx={{ fontSize: '0.8em' }}>🍪🍪</Box>kies</Box>
+            }}>TKookies</Box>
           </Typography>
           <Divider />
           <List>

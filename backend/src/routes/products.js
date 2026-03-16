@@ -217,6 +217,13 @@ router.post("/", async (req, res) => {
       console.error("Erro no Rollback (conexão perdida?):", rbError.message);
     }
     console.error("Erro ao criar produto:", error);
+    if (error.message && error.message.includes("Unknown column")) {
+      return res.status(500).json({ 
+        error: "Banco de dados desatualizado", 
+        details: "Acesse /api/migrate para criar as novas colunas (validade_promocao).",
+        technical: error.message
+      });
+    }
     res.status(500).json({ error: "Erro ao criar produto", details: error.message });
   } finally {
     client.release();
@@ -277,6 +284,13 @@ router.put("/:id", async (req, res) => {
       console.error("Erro no Rollback (conexão perdida?):", rbError.message);
     }
     console.error("Erro ao atualizar produto:", error);
+    if (error.message && error.message.includes("Unknown column")) {
+      return res.status(500).json({ 
+        error: "Banco de dados desatualizado", 
+        details: "Acesse /api/migrate para criar as novas colunas (validade_promocao).",
+        technical: error.message
+      });
+    }
     res.status(500).json({ error: "Erro ao atualizar produto", details: error.message });
   } finally {
     client.release();
