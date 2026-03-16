@@ -487,14 +487,13 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
       {totalItems > 0 && (
         <Box 
           component={motion.div}
-          initial={{ y: 100 }}
-          animate={{ y: 0 }}
-          exit={{ y: 100 }}
+          initial={{ y: 100, x: "-50%" }}
+          animate={{ y: 0, x: "-50%" }}
+          exit={{ y: 100, x: "-50%" }}
           sx={{ 
             position: 'fixed', 
             bottom: { xs: 'max(16px, env(safe-area-inset-bottom))', md: 24 },
             left: '50%', 
-            transform: 'translateX(-50%)', 
             width: { xs: '95%', md: '90%' },
             maxWidth: '600px',
             zIndex: 1200,
