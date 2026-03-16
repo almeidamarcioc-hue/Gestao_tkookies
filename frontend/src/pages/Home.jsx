@@ -381,47 +381,48 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                       '&:hover': { transform: 'translateY(-10px)' }
                     }}
                   >
-                    <IconButton 
-                      sx={{ position: 'absolute', top: 12, right: 12, bgcolor: 'rgba(255,255,255,0.8)', color: '#C62828', '&:hover': { bgcolor: 'white' }, zIndex: 10 }}
-                      onClick={() => toggleFavorite(prod)}
-                    >
-                      {favorites.includes(Number(prod.id)) ? <Favorite sx={{ color: '#ef4444' }} /> : <FavoriteBorder />}
-                    </IconButton>
-                    
-                    <Button 
-                      size="small"
-                      onClick={() => handleOpenDetails(prod)}
-                      sx={{ 
-                        position: 'absolute', 
-                        top: 12, 
-                        left: 12, 
-                        bgcolor: '#4E342E', 
-                        color: 'white', 
-                        '&:hover': { bgcolor: '#3E2723', transform: 'scale(1.05)' }, 
-                        zIndex: 10,
-                        textTransform: 'none',
-                        fontWeight: 'bold',
-                        borderRadius: '20px',
-                        minWidth: 'auto',
-                        px: 2,
-                        py: 0.5
-                      }}
-                    >
-                      Detalhes
-                    </Button>
-                    
                     {coverImage && (
-                      <Box
-                        component="img"
-                        src={coverImage}
-                        alt={prod.nome}
-                        onClick={() => handleOpenDetails(prod)}
-                        sx={{ width: '100%', height: 220, objectFit: 'cover', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', cursor: 'pointer' }}
-                      />
+                      <Box sx={{ position: 'relative' }}>
+                        <IconButton 
+                          sx={{ position: 'absolute', top: 12, right: 12, bgcolor: 'rgba(255,255,255,0.8)', color: '#C62828', '&:hover': { bgcolor: 'white' }, zIndex: 10 }}
+                          onClick={() => toggleFavorite(prod)}
+                        >
+                          {favorites.includes(Number(prod.id)) ? <Favorite sx={{ color: '#ef4444' }} /> : <FavoriteBorder />}
+                        </IconButton>
+                        
+                        <Button 
+                          size="small"
+                          onClick={() => handleOpenDetails(prod)}
+                          sx={{ 
+                            position: 'absolute', 
+                            top: 12, 
+                            left: 12, 
+                            bgcolor: '#4E342E', 
+                            color: 'white', 
+                            '&:hover': { bgcolor: '#3E2723', transform: 'scale(1.05)' }, 
+                            zIndex: 10,
+                            textTransform: 'none',
+                            fontWeight: 'bold',
+                            borderRadius: '20px',
+                            minWidth: 'auto',
+                            px: 2,
+                            py: 0.5
+                          }}
+                        >
+                          Detalhes
+                        </Button>
+                        <Box
+                          component="img"
+                          src={coverImage}
+                          alt={prod.nome}
+                          onClick={() => handleOpenDetails(prod)}
+                          sx={{ width: '100%', height: 220, objectFit: 'cover', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', cursor: 'pointer' }}
+                        />
+                      </Box>
                     )}
                     
                     <Box sx={{ p: 3, flexGrow: 1 }}>
-                      <Typography gutterBottom variant="h6" component="div" fontWeight="bold" sx={{ mb: 1, color: '#4E342E' }}>
+                      <Typography gutterBottom variant="h6" component="div" fontWeight="bold" sx={{ mb: 1, color: '#4E342E', cursor: 'pointer' }} onClick={() => handleOpenDetails(prod)}>
                         {prod.nome}
                       </Typography>
                       <Box display="flex" justifyContent="space-between" alignItems="center">
