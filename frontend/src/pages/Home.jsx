@@ -486,8 +486,8 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                            color="error" 
                            size="small"
                            startIcon={<DeleteOutline />}
-                           onClick={() => {
-                             if(confirm("Tem certeza que deseja esvaziar sua sacola?")) clearCart();
+                       onClick={() => {
+                         if(window.confirm("Tem certeza que deseja esvaziar sua sacola?")) clearCart();
                            }} 
                            sx={{ mt: 1, textTransform: 'none' }}>
                            Limpar Sacola
