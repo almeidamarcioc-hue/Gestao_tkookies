@@ -469,18 +469,6 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           </Grid>
         </Grid>
 
-        {/* ADMIN DASHBOARD LINK (Only if logged in) */}
-        {isLoggedIn && (
-          <Box mt={8} p={4} bgcolor="white" borderRadius={4} border="1px dashed #ddd">
-            <Typography variant="h6" gutterBottom color="text.secondary">Administração</Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={4}><Button fullWidth variant="contained" component={Link} to="/pedidos/novo" startIcon={<AddCircleOutline />}>Novo Pedido</Button></Grid>
-              <Grid item xs={6} sm={4}><Button fullWidth variant="outlined" component={Link} to="/pedidos" startIcon={<ListAlt />}>Pedidos</Button></Grid>
-              <Grid item xs={6} sm={4}><Button fullWidth variant="outlined" component={Link} to="/produtos" startIcon={<RestaurantMenu />}>Produtos</Button></Grid>
-            </Grid>
-          </Box>
-        )}
-
       {/* COMBOS - REMOVED FROM MAIN FLOW TO SIMPLIFY NEW LAYOUT, OR MOVE TO MAIN COLUMN IF NEEDED. 
           For now, strictly following Sidebar request, assuming Combos are part of menu or separate. 
           Let's hide specific combo section to clean up or place it in menu. 
