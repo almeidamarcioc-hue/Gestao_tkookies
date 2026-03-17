@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Box, Typography, Button, Container, Grid, IconButton, Badge, Dialog, DialogTitle, DialogContent, DialogActions, Chip, Paper, Fab, Snackbar, Alert, Card, CardContent, CardMedia, CardActionArea } from "@mui/material";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Add, Remove, ShoppingBag, Favorite, FavoriteBorder, Star, ArrowForward, AddCircleOutline, ListAlt, RestaurantMenu, PointOfSale, Inventory2, People, LocalOffer, Info, Close, Storefront, Map, Loyalty, DeleteOutline } from "@mui/icons-material";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import api from "../services/api";
 import ResellerCTA from "../components/ResellerCTA";
 
@@ -39,6 +39,12 @@ const secondaryColor = "#2E7D32";
 
 export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addToCart, updateCartQuantity, removeFromCart, clearCart }) {
   const navigate = useNavigate();
+  const { scrollY } = useScroll();
+  const yBg = useTransform(scrollY, [0, 500], [0, 200]); // Efeito Parallax: move o fundo mais devagar que o scroll
+  const filterBg = useTransform(scrollY, [0, 300], ["brightness(0.6) blur(0px)", "brightness(0.6) blur(10px)"]); // Efeito Blur progressivo
+  const textOpacity = useTransform(scrollY, [0, 300], [1, 0]); // Efeito Fade Out no texto
+  const buttonOpacity = useTransform(scrollY, [200, 500], [1, 0]); // Efeito Fade Out no botão (mais lento que o texto)
+
   const [config, setConfig] = useState({
     home_title: "TKookies",
     home_subtitle: "🍪 Um pedacinho de felicidade em cada mordida.",
@@ -270,66 +276,71 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
       }}>
         <Box 
           component={motion.div}
+          style={{ y: yBg, filter: filterBg }}
           initial={{ scale: 1.1 }}
           animate={{ scale: 1 }}
           transition={{ duration: 10 }}
           sx={{
             position: 'absolute',
-            top: 0, left: 0, width: '100%', height: '100%',
+            top: '-15%', left: 0, width: '100%', height: '130%', // Altura extra e offset para compensar o movimento do parallax
             backgroundImage: `url(${config.home_bg || "https://images.unsplash.com/photo-1499636138143-bd630f5cf388?q=80&w=2070&auto=format&fit=crop"})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            filter: 'brightness(0.6)'
+            willChange: 'transform, filter'
           }}
         />
         <Container maxWidth="lg" sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', position: 'relative', zIndex: 2, textAlign: 'center' }}>
-           <Typography 
-            variant="h1" 
-            component={motion.h1}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            sx={{ 
-              fontFamily: '"Playfair Display", serif', 
-              color: 'white', 
-              fontWeight: 900, 
-              fontSize: { xs: '3rem', md: '5rem' },
-              textShadow: '0 4px 20px rgba(0,0,0,0.5)',
-              mb: 2,
-              letterSpacing: '2px'
-            }}
-          >
-            {config.home_title.toUpperCase()}
-          </Typography>
-          <Typography 
-            variant="h5" 
-            component={motion.p}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            sx={{ color: '#FFCC80', mb: 4, fontWeight: 500, maxWidth: '600px', textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}
-          >
-            {config.home_subtitle}
-          </Typography>
-          
-          {!isLoggedIn && (
-             <Button 
-              variant="contained" 
-              size="large" 
-              onClick={() => document.getElementById('cardapio').scrollIntoView({ behavior: 'smooth' })} 
+          <Box component={motion.div} style={{ opacity: textOpacity }}>
+            <Typography 
+              variant="h1" 
+              component={motion.h1}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
               sx={{ 
-                bgcolor: primaryColor, 
+                fontFamily: '"Playfair Display", serif', 
                 color: 'white', 
-                fontSize: '1.2rem', 
-                fontWeight: 'bold',
-                px: 5, 
-                py: 1.5, 
-                borderRadius: '50px',
-                '&:hover': { bgcolor: '#E65100' }
+                fontWeight: 900, 
+                fontSize: { xs: '3rem', md: '5rem' },
+                textShadow: '0 4px 20px rgba(0,0,0,0.5)',
+                mb: 2,
+                letterSpacing: '2px'
               }}
             >
-              PEÇA JÁ!
-            </Button>
+              {config.home_title.toUpperCase()}
+            </Typography>
+            <Typography 
+              variant="h5" 
+              component={motion.p}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              sx={{ color: '#FFCC80', mb: 4, fontWeight: 500, maxWidth: '600px', mx: 'auto', textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}
+            >
+              {config.home_subtitle}
+            </Typography>
+          </Box>
+          
+          {!isLoggedIn && (
+             <Box component={motion.div} style={{ opacity: buttonOpacity }}>
+               <Button 
+                variant="contained" 
+                size="large" 
+                onClick={() => document.getElementById('cardapio').scrollIntoView({ behavior: 'smooth' })} 
+                sx={{ 
+                  bgcolor: primaryColor, 
+                  color: 'white', 
+                  fontSize: '1.2rem', 
+                  fontWeight: 'bold',
+                  px: 5, 
+                  py: 1.5, 
+                  borderRadius: '50px',
+                  '&:hover': { bgcolor: '#E65100' }
+                }}
+              >
+                PEÇA JÁ!
+              </Button>
+            </Box>
           )}
         </Container>
       </Box>
