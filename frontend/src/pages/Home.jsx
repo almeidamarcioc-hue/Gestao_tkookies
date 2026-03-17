@@ -276,7 +276,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           sx={{
             position: 'absolute',
             top: 0, left: 0, width: '100%', height: '100%',
-            backgroundImage: `url(${config.home_bg || "https://images.unsplash.com/photo-1550547660-d9450f859349?q=80&w=1965&auto=format&fit=crop"})`,
+            backgroundImage: `url(${config.home_bg || "https://images.unsplash.com/photo-1499636138143-bd630f5cf388?q=80&w=2070&auto=format&fit=crop"})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             filter: 'brightness(0.6)'
