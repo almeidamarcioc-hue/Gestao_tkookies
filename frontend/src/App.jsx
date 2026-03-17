@@ -37,10 +37,10 @@ import BestSellersReport from "./pages/BestSellersReport";
 
 const theme = createTheme({
   palette: {
-    primary: { main: "#FFB300" }, // Amber Yellow (Hamburgueria Artesanal)
-    secondary: { main: "#212121" }, // Black
-    background: { default: "#FAFAFA", paper: "#ffffff" },
-    text: { primary: "#212121", secondary: "#757575" },
+    primary: { main: "#4E342E" }, // Marrom Café Escuro
+    secondary: { main: "#8D6E63" }, // Marrom Claro
+    background: { default: "#EFEBE9", paper: "#ffffff" },
+    text: { primary: "#3E2723", secondary: "#5D4037" },
     success: { main: "#2E7D32" },
     error: { main: "#C62828" },
   },
@@ -56,18 +56,18 @@ const theme = createTheme({
     MuiAppBar: {
       styleOverrides: {
         root: {
-          backgroundColor: "#FFB300", // Amber Header
-          color: "#000000",
-          boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+          backgroundColor: "#ffffff",
+          color: "#4E342E",
+          boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.05)",
         },
       },
     },
     MuiButton: {
       styleOverrides: {
-        root: { borderRadius: 8, padding: "8px 24px", fontWeight: 'bold' }, // Updated shape
+        root: { borderRadius: 50, padding: "8px 24px" },
         contained: { 
-          boxShadow: "none",
-          "&:hover": { boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }
+          boxShadow: "0 4px 10px rgba(78, 52, 46, 0.2)",
+          "&:hover": { backgroundColor: "#3E2723" }
         },
       },
     },
@@ -75,7 +75,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.02)",
-          border: "none",
+          border: "1px solid #D7CCC8",
         },
       },
     },

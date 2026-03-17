@@ -34,14 +34,14 @@ const glassStyle = {
   color: "#3E2723"
 };
 
-const primaryColor = "#FFB300"; // Amber Yellow
-const secondaryColor = "#212121"; // Black
+const primaryColor = "#4E342E";
+const secondaryColor = "#2E7D32";
 
 export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addToCart, updateCartQuantity, removeFromCart }) {
   const navigate = useNavigate();
   const [config, setConfig] = useState({
-    home_title: "Hamburgueria Artesanal",
-    home_subtitle: "Sabor autêntico em cada detalhe.",
+    home_title: "TKookies",
+    home_subtitle: "🍪 Um pedacinho de felicidade em cada mordida.",
     home_location: "📍 Apenas delivery / Três de Maio - RS",
     home_bg: ""
   });
