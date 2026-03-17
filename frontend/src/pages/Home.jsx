@@ -392,6 +392,9 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                          <CardContent sx={{ flexGrow: 1, pb: 1 }}>
                             <Typography variant="h6" fontWeight="bold" gutterBottom>{prod.nome}</Typography>
                             <Typography variant="body2" color="text.secondary" noWrap>{prod.descricao}</Typography>
+                            <Button size="small" variant="outlined" onClick={() => handleOpenDetails(prod)} sx={{ mt: 1, borderRadius: 20, textTransform: 'none', fontSize: '0.8rem' }}>
+                              Ver Detalhes
+                            </Button>
                          </CardContent>
                          <Box sx={{ p: 2, pt: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <Typography variant="h6" fontWeight="bold" color="primary">R$ {Number(prod.preco_venda).toFixed(2)}</Typography>
@@ -445,19 +448,6 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                      </Button>
                   </Box>
                 )}
-              </Paper>
-
-              {/* Loyalty Program */}
-              <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: 4, bgcolor: '#FFF8E1', border: `1px solid ${primaryColor}` }}>
-                 <Typography variant="h6" fontWeight="bold" gutterBottom display="flex" alignItems="center" gap={1} color="primary.dark">
-                   <Loyalty /> Fidelidade
-                 </Typography>
-                 <Typography variant="body2" paragraph>
-                   Ganhe pontos a cada pedido e troque por burgers grátis!
-                 </Typography>
-                 <Button variant="outlined" size="small" fullWidth sx={{ borderColor: primaryColor, color: 'primary.dark' }}>
-                   Entrar no Clube
-                 </Button>
               </Paper>
 
               {/* Map */}
