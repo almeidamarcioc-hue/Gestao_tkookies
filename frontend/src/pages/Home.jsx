@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Box, Typography, Button, Container, Grid, IconButton, Badge, Dialog, DialogTitle, DialogContent, DialogActions, Chip, Paper, Fab, Snackbar, Alert, Card, CardContent, CardMedia, CardActionArea } from "@mui/material";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Add, Remove, ShoppingBag, Favorite, FavoriteBorder, Star, ArrowForward, AddCircleOutline, ListAlt, RestaurantMenu, PointOfSale, Inventory2, People, LocalOffer, Info, Close, Storefront, Map, Loyalty } from "@mui/icons-material";
+import { Add, Remove, ShoppingBag, Favorite, FavoriteBorder, Star, ArrowForward, AddCircleOutline, ListAlt, RestaurantMenu, PointOfSale, Inventory2, People, LocalOffer, Info, Close, Storefront, Map, Loyalty, DeleteOutline } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../services/api";
 import ResellerCTA from "../components/ResellerCTA";
@@ -37,7 +37,7 @@ const glassStyle = {
 const primaryColor = "#4E342E";
 const secondaryColor = "#2E7D32";
 
-export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addToCart, updateCartQuantity, removeFromCart }) {
+export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addToCart, updateCartQuantity, removeFromCart, clearCart }) {
   const navigate = useNavigate();
   const [config, setConfig] = useState({
     home_title: "TKookies",
@@ -421,48 +421,70 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
 
           {/* SIDEBAR COLUMN (Right) */}
           <Grid item xs={12} md={4}>
-            <Box sx={{ position: 'sticky', top: 100 }}>
+            <Box sx={{ 
+              position: 'sticky', 
+              top: 100,
+              // Limita a altura para garantir que não cubra o rodapé e permita rolagem interna se necessário
+              maxHeight: 'calc(100vh - 120px)', 
+              overflowY: 'auto',
+              pb: 2
+            }}>
               
               {/* Order Status / Bag */}
               <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: 4, bgcolor: 'white', border: '1px solid #eee' }}>
                 <Typography variant="h6" fontWeight="bold" gutterBottom display="flex" alignItems="center" gap={1}>
                   <ShoppingBag /> Sua Sacola
                 </Typography>
-                {cart.length === 0 ? (
-                  <Box textAlign="center" py={2}>
-                     <Typography variant="body2" color="text.secondary" gutterBottom>
-                       Sua sacola está vazia.
-                     </Typography>
-                     <Typography variant="caption" color="text.disabled">
-                       Adicione itens deliciosos!
-                     </Typography>
-                  </Box>
-                ) : (
-                  <Box>
-                     <Typography variant="body2" gutterBottom>{cart.length} item(s) adicionado(s)</Typography>
-                     <Typography variant="h6" color="primary" fontWeight="bold" gutterBottom>
-                       Total: R$ {totalPrice.toFixed(2)}
-                     </Typography>
-                     <Button fullWidth variant="contained" color="primary" onClick={handleCheckout} sx={{ mt: 1 }}>
-                       Ver Sacola
-                     </Button>
-                  </Box>
-                )}
-              </Paper>
-
-              {/* Map */}
-              <Paper elevation={0} sx={{ p: 0, borderRadius: 4, overflow: 'hidden', border: '1px solid #eee' }}>
-                 <Box sx={{ bgcolor: '#EEEEEE', height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', color: 'text.secondary' }}>
-                    <Map fontSize="large" sx={{ mb: 1, opacity: 0.5 }} />
-                    <Typography variant="caption">Mapa da Região</Typography>
-                 </Box>
-                 <Box p={2} bgcolor="white">
-                   <Typography variant="subtitle2" fontWeight="bold">Entrega em Três de Maio</Typography>
-                   <Box display="flex" justifyContent="space-between" mt={1}>
-                     <Typography variant="caption" color="text.secondary">Tempo Estimado</Typography>
-                     <Typography variant="caption" fontWeight="bold">30-45 min</Typography>
-                   </Box>
-                 </Box>
+                <AnimatePresence mode="wait">
+                  {cart.length === 0 ? (
+                    <motion.div
+                      key="empty-cart"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <Box textAlign="center" py={2}>
+                         <Typography variant="body2" color="text.secondary" gutterBottom>
+                           Sua sacola está vazia.
+                         </Typography>
+                         <Typography variant="caption" color="text.disabled">
+                           Adicione itens deliciosos!
+                         </Typography>
+                      </Box>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="full-cart"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <Box>
+                         <Typography variant="body2" gutterBottom>{cart.length} item(s) adicionado(s)</Typography>
+                         <Typography variant="h6" color="primary" fontWeight="bold" gutterBottom>
+                           Total: R$ {totalPrice.toFixed(2)}
+                         </Typography>
+                         <Button fullWidth variant="contained" color="primary" onClick={handleCheckout} sx={{ mt: 1 }}>
+                           Ver Sacola
+                         </Button>
+                         <Button 
+                           fullWidth 
+                           variant="text" 
+                           color="error" 
+                           size="small"
+                           startIcon={<DeleteOutline />}
+                           onClick={() => {
+                             if(confirm("Tem certeza que deseja esvaziar sua sacola?")) clearCart();
+                           }} 
+                           sx={{ mt: 1, textTransform: 'none' }}>
+                           Limpar Sacola
+                         </Button>
+                      </Box>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </Paper>
 
             </Box>
@@ -485,7 +507,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
       */}
 
       {/* SEÇÃO REVENDEDOR (B2B) - Com zIndex para garantir visibilidade */}
-      <Box id="revendedor" sx={{ position: 'relative', zIndex: 2 }}>
+      <Box id="revendedor" sx={{ position: 'relative', zIndex: 2, mt: 8 }}>
         <ResellerCTA />
       </Box>
 
