@@ -181,6 +181,12 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
     navigate("/carrinho");
   };
 
+  const handleClearCart = () => {
+    if (window.confirm("Tem certeza que deseja esvaziar sua sacola?")) {
+      clearCart();
+    }
+  };
+
   const handleOpenDetails = (prod) => {
     setSelectedProduct(prod);
     setSelectedImageIndex(0);
@@ -486,9 +492,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                            color="error" 
                            size="small"
                            startIcon={<DeleteOutline />}
-                       onClick={() => {
-                         if(window.confirm("Tem certeza que deseja esvaziar sua sacola?")) clearCart();
-                           }} 
+                           onClick={handleClearCart}
                            sx={{ mt: 1, textTransform: 'none' }}>
                            Limpar Sacola
                          </Button>
