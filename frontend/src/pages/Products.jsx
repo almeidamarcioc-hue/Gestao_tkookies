@@ -277,6 +277,12 @@ export default function Products() {
         <Box display="flex" gap={2} mb={3}>
           <TextField label="Nome do Produto" fullWidth value={nome} onChange={(e) => setNome(e.target.value)} />
           <TextField label="Rendimento (Qtd Cookies)" type="number" sx={{ width: 200 }} value={rendimento} onChange={(e) => setRendimento(e.target.value)} />
+          <TextField 
+            label="Custo Total (Receita)" 
+            value={`R$ ${custoTotal.toFixed(2)}`} 
+            InputProps={{ readOnly: true }} 
+            sx={{ width: 200, bgcolor: '#f5f5f5' }} 
+          />
         </Box>
 
         <Box mb={3}>
