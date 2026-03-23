@@ -23,7 +23,7 @@ import {
   Checkbox,
   Grid
 } from "@mui/material";
-import { Edit, Delete, Add, CloudUpload, Star, StarBorder } from "@mui/icons-material";
+import { Edit, Delete, Add, CloudUpload, Star, StarBorder, Calculate, Refresh } from "@mui/icons-material";
 
 export default function Dashboard() {
   const [produtos, setProdutos] = useState([]);
@@ -40,14 +40,26 @@ export default function Dashboard() {
   const [editMargemRevenda, setEditMargemRevenda] = useState(0);
   const [newIngApenasRevenda, setNewIngApenasRevenda] = useState(false);
 
-  const loadData = () => {
-    api.get("/produtos").then((res) => setProdutos(Array.isArray(res.data) ? res.data : []));
+  const [isRecalculating, setIsRecalculating] = useState(false);
+
+  const loadData = async () => {
+    await api.get("/produtos").then((res) => setProdutos(Array.isArray(res.data) ? res.data : []));
     api.get("/ingredientes").then((res) => setAllIngredientes(Array.isArray(res.data) ? res.data : []));
   };
 
   useEffect(() => {
     loadData();
   }, []);
+
+  // Função para forçar o recalculo dos custos buscando dados frescos
+  const handleRecalculate = async () => {
+    setIsRecalculating(true);
+    await loadData();
+    setTimeout(() => {
+      setIsRecalculating(false);
+      alert("Custos recalculados com base nos preços atuais dos ingredientes!");
+    }, 500);
+  };
 
   // Função para calcular custo baseado nos ingredientes retornados pelo backend
   const calcularCusto = (ingredientes) => {
@@ -56,11 +68,11 @@ export default function Dashboard() {
       if (ing.apenas_revenda) return acc; // Ignora se for apenas revenda
 
       const custoBase = Number(ing.custo_base) || 0;
-      const estoqueBase = Number(ing.estoque_base) || 1; // Evita divisão por zero
+      // Garante que não haja divisão por zero, assumindo 1 se for 0 ou inválido
+      const estoqueBase = Number(ing.estoque_base) > 0 ? Number(ing.estoque_base) : 1; 
       const qtd = Number(ing.quantidade) || 0;
       
-      if (estoqueBase === 0) return acc;
-      const custoUnitario = custoBase / estoqueBase;
+      const custoUnitario = Number((custoBase / estoqueBase).toFixed(4)); // Arredonda unitário para 4 casas para precisão
       return acc + (custoUnitario * qtd);
     }, 0);
   };
@@ -72,9 +84,10 @@ export default function Dashboard() {
       if (!ing.usado_para_revenda && !ing.apenas_revenda) return acc; // Soma se for revenda (flag ingrediente) OU apenas revenda (flag item)
       
       const custoBase = Number(ing.custo_base) || 0;
-      const estoqueBase = Number(ing.estoque_base) || 1;
+      const estoqueBase = Number(ing.estoque_base) > 0 ? Number(ing.estoque_base) : 1;
       const qtd = Number(ing.quantidade) || 0;
-      return acc + ((custoBase / estoqueBase) * qtd);
+      const custoUnitario = Number((custoBase / estoqueBase).toFixed(4));
+      return acc + (custoUnitario * qtd);
     }, 0);
   };
 
@@ -290,15 +303,25 @@ export default function Dashboard() {
   return (
     <Container maxWidth="xl">
       <Typography variant="h4" mb={3} fontWeight="bold">Consulta Produto</Typography>
-      
-      <TextField 
-        label="Buscar Produto" 
-        variant="outlined" 
-        fullWidth 
-        sx={{ mb: 3 }} 
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-      />
+
+      <Box display="flex" gap={2} mb={3}>
+        <TextField 
+          label="Buscar Produto" 
+          variant="outlined" 
+          fullWidth 
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <Button 
+          variant="contained" 
+          color="secondary" 
+          onClick={handleRecalculate}
+          startIcon={isRecalculating ? <Refresh sx={{ animation: 'spin 1s linear infinite' }} /> : <Calculate />}
+          sx={{ whiteSpace: 'nowrap', minWidth: '180px' }}
+        >
+          {isRecalculating ? "Calculando..." : "Recalcular Custos"}
+        </Button>
+      </Box>
 
       <Paper sx={{ width: '100%', overflowX: 'auto' }}>
         <Table>
@@ -569,6 +592,13 @@ export default function Dashboard() {
           <Button onClick={handleSaveEdit} variant="contained" color="primary">Salvar Alterações</Button>
         </DialogActions>
       </Dialog>
+
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </Container>
   );
 }
