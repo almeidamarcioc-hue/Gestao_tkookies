@@ -40,7 +40,8 @@ export default function ComboForm() {
           const custoBase = Number(ing.custo_base) || 0;
           const estoqueBase = Number(ing.estoque_base) || 1;
           const qtd = Number(ing.quantidade) || 0;
-          return acc + ((custoBase / estoqueBase) * qtd);
+          const custoUnitario = Number((custoBase / estoqueBase).toFixed(4));
+          return acc + (custoUnitario * qtd);
         }, 0);
         
         return { 

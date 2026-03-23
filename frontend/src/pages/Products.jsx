@@ -79,7 +79,8 @@ export default function Products() {
         const qtdNaEmbalagem = Number(ing.estoque) || 0;
         const qtdUsada = Number(item.quantidade) || 0;
         if (qtdNaEmbalagem > 0) {
-          const custoItem = (valorEmbalagem / qtdNaEmbalagem) * qtdUsada;
+          const custoUnitarioIng = Number((valorEmbalagem / qtdNaEmbalagem).toFixed(4));
+          const custoItem = custoUnitarioIng * qtdUsada;
           
           // Se for APENAS revenda, não soma no custo de produção
           if (!item.apenas_revenda) {
