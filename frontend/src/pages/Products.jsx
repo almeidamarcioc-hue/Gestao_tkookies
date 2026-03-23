@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import {
   Box,
@@ -23,6 +24,9 @@ import {
 import { Delete, CloudUpload, Star, StarBorder } from "@mui/icons-material";
 
 export default function Products() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const [ingredientes, setIngredientes] = useState([]);
   const [nome, setNome] = useState("");
   const [descricao, setDescricao] = useState("");
@@ -41,6 +45,48 @@ export default function Products() {
   const [imagens, setImagens] = useState([]);
   const [ehDestaque, setEhDestaque] = useState(false);
   const [descontoDestaque, setDescontoDestaque] = useState(0);
+
+  // Efeito para preencher o formulário ao duplicar um produto
+  useEffect(() => {
+    const productToDuplicate = location.state?.productToDuplicate;
+
+    if (productToDuplicate) {
+      console.log("✅ Duplicando produto:", productToDuplicate);
+
+      // Preenche os campos do formulário
+      setNome(productToDuplicate.nome || "");
+      setDescricao(productToDuplicate.descricao || "");
+      setRendimento(productToDuplicate.rendimento || 1);
+      setEhDestaque(productToDuplicate.eh_destaque || false);
+      setDescontoDestaque(productToDuplicate.desconto_destaque || 0);
+      
+      // Define as margens que irão recalcular os preços
+      setPercentual(productToDuplicate.margem_venda?.toFixed(2) || 0);
+      setMargemRevenda(productToDuplicate.margem_revenda || 0);
+      
+      // Preenche imagens
+      setImagens(productToDuplicate.imagens?.map(img => ({
+        imagem: img.imagem,
+        eh_capa: img.eh_capa,
+        _tempId: Math.random()
+      })) || []);
+
+      // Preenche ingredientes (itens)
+      const duplicatedItens = productToDuplicate.ingredientes?.map(ing => ({
+        ingrediente_id: ing.ingrediente_id,
+        nome: ing.nome,
+        unidade: ing.unidade,
+        quantidade: Number(ing.quantidade),
+        apenas_revenda: ing.apenas_revenda,
+        _tempId: Date.now() + Math.random()
+      })) || [];
+      setItens(duplicatedItens);
+
+      // Limpa o state da navegação para não duplicar de novo ao recarregar
+      navigate('.', { replace: true, state: {} });
+      alert("Produto carregado para duplicação. Ajuste o que for necessário e salve como um novo produto.");
+    }
+  }, [location, navigate]);
 
   useEffect(() => {
     async function carregar() {

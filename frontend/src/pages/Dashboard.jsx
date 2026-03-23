@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -23,10 +24,11 @@ import {
   Checkbox,
   Grid
 } from "@mui/material";
-import { Edit, Delete, Add, CloudUpload, Star, StarBorder, Calculate, Refresh } from "@mui/icons-material";
+import { Edit, Delete, Add, CloudUpload, Star, StarBorder, Calculate, Refresh, ContentCopy } from "@mui/icons-material";
 
 export default function Dashboard() {
   const [produtos, setProdutos] = useState([]);
+  const navigate = useNavigate();
   const [allIngredientes, setAllIngredientes] = useState([]); // Para o select do modal
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -285,6 +287,25 @@ export default function Dashboard() {
     }
   };
 
+  const handleDuplicateProduct = () => {
+    if (!editProduct) return;
+
+    // Calcula a margem de venda atual para passar para a tela de duplicação
+    const rendimento = Number(editRendimento) || 1;
+    const custoReceita = calcularCusto(editProduct.ingredientes);
+    const custoUnitario = custoReceita / rendimento;
+    const preco = Number(editProduct.preco_venda) || 0;
+    const margemVenda = custoUnitario > 0 ? (((preco / custoUnitario) - 1) * 100) : 0;
+
+    const productToDuplicate = {
+      ...editProduct,
+      nome: `${editProduct.nome} (Cópia)`,
+      margem_venda: margemVenda,
+    };
+
+    navigate('/produtos/novo', { state: { productToDuplicate } });
+  };
+
   const handleDeleteProduct = async (id) => {
     if (!confirm("Tem certeza que deseja excluir este produto?")) return;
     await api.delete(`/produtos/${id}`);
@@ -471,7 +492,7 @@ export default function Dashboard() {
                     helperText={`${(editProduct.descricao || "").length}/1000`}
                   />
                 </Grid>
-                <Grid item xs={8}>
+                <Grid item xs={6}>
                   <TextField 
                     label="Nome do Produto" 
                     fullWidth 
@@ -479,12 +500,21 @@ export default function Dashboard() {
                     onChange={(e) => setEditProduct({...editProduct, nome: e.target.value})} 
                   />
                 </Grid>
-                <Grid item xs={4}>
+                <Grid item xs={3}>
                   <TextField 
                     label="Rendimento" 
                     type="number" fullWidth 
                     value={editRendimento} 
                     onChange={(e) => setEditRendimento(e.target.value)} />
+                </Grid>
+                <Grid item xs={3}>
+                  <TextField 
+                    label="Custo Total (Receita)"
+                    value={`R$ ${calcularCusto(editProduct.ingredientes).toFixed(2)}`}
+                    InputProps={{ readOnly: true }}
+                    fullWidth
+                    variant="filled"
+                  />
                 </Grid>
                 
                 {/* Grupo Venda */}
@@ -588,8 +618,12 @@ export default function Dashboard() {
           )}
         </DialogContent>
         <DialogActions>
+          <Button onClick={handleDuplicateProduct} color="secondary" startIcon={<ContentCopy />}>
+            Duplicar
+          </Button>
+          <Box sx={{ flexGrow: 1 }} />
           <Button onClick={handleClose}>Cancelar</Button>
-          <Button onClick={handleSaveEdit} variant="contained" color="primary">Salvar Alterações</Button>
+          <Button onClick={handleSaveEdit} variant="contained" color="primary">Salvar</Button>
         </DialogActions>
       </Dialog>
 
