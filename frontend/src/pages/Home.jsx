@@ -65,6 +65,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
   const [zoomPosition, setZoomPosition] = useState('50% 50%'); // For image zoom
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [selectedAggregates, setSelectedAggregates] = useState({}); // { id_agregado: qtd }
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
   const [highlightItems, setHighlightItems] = useState([]);
@@ -158,7 +159,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
     if (next < 0) next = 0;
     if (next > maxStock) next = maxStock;
     if (next === 0) removeFromCart(prodId);
-    else if (currentQty === 0 && delta > 0) addToCart(prod);
+    else if (currentQty === 0 && delta > 0) addToCart(prod, next);
     else updateCartQuantity(prodId, next);
   };
 
@@ -190,6 +191,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
   const handleOpenDetails = (prod) => {
     setSelectedProduct(prod);
     setSelectedImageIndex(0);
+    setSelectedAggregates({}); // Reseta agregados ao abrir novo produto
     setDetailsOpen(true);
   };
 
@@ -649,7 +651,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           </Grid>
         </DialogContent>
         <DialogActions sx={{ justifyContent: 'center', pb: 3, gap: 2 }}>
-          <Button onClick={() => setCrossSellOpen(false)} sx={{ color: '#5D4037' }}>
+          <Button onClick={() => { setCrossSellOpen(false); handleCheckout(); }} sx={{ color: '#5D4037' }}>
             Continuar Comprando
           </Button>
           <Button onClick={() => { setCrossSellOpen(false); handleCheckout(); }} variant="contained" sx={{ bgcolor: '#4E342E', color: 'white', borderRadius: '50px' }}>
@@ -730,6 +732,44 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                 <Typography variant="body1" sx={{ color: '#5D4037', lineHeight: 1.6, whiteSpace: 'pre-line', mb: 3, fontSize: '1.1rem' }}>
                   {selectedProduct.descricao || "Sem descrição disponível."}
                 </Typography>
+
+                {/* SEÇÃO DE AGREGADOS / EXTRAS */}
+                {selectedProduct.agregados && selectedProduct.agregados.length > 0 && (
+                  <Box sx={{ mb: 3, p: 2, bgcolor: '#FFF8E1', borderRadius: 3 }}>
+                    <Typography variant="subtitle1" fontWeight="bold" color="primary" gutterBottom>
+                      Adicione Extras (Embalagens, etc.):
+                    </Typography>
+                    {selectedProduct.agregados.map(agg => {
+                       // Encontra o produto completo na lista de produtos para verificar estoque atual
+                       const fullAggProduct = products.find(p => p.id === agg.id) || agg;
+                       const stock = Number(fullAggProduct.estoque);
+                       const currentQty = selectedAggregates[agg.id] || 0;
+
+                       return (
+                         <Box key={agg.id} display="flex" justifyContent="space-between" alignItems="center" mb={1} sx={{ opacity: stock <= 0 ? 0.5 : 1 }}>
+                            <Box>
+                              <Typography variant="body2" fontWeight="bold">{agg.nome}</Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                + R$ {Number(agg.preco_venda).toFixed(2)}
+                                {stock <= 0 && <span style={{ color: 'red', marginLeft: 4 }}>(Esgotado)</span>}
+                              </Typography>
+                            </Box>
+                            {stock > 0 ? (
+                              <Box display="flex" alignItems="center" gap={1} bgcolor="white" borderRadius={4} border="1px solid #ddd">
+                                <IconButton size="small" onClick={() => handleAggregateQtyChange(agg.id, -1)} disabled={currentQty === 0}>
+                                  <Remove fontSize="small" />
+                                </IconButton>
+                                <Typography variant="body2" fontWeight="bold" sx={{ minWidth: 20, textAlign: 'center' }}>{currentQty}</Typography>
+                                <IconButton size="small" onClick={() => handleAggregateQtyChange(agg.id, 1)} disabled={currentQty >= stock}>
+                                  <Add fontSize="small" />
+                                </IconButton>
+                              </Box>
+                            ) : <Chip label="Indisponível" size="small" />}
+                         </Box>
+                       )
+                    })}
+                  </Box>
+                )}
                 
                 {clientUser?.is_revendedor && (
                   <Chip label="Preço de Revenda" color="warning" size="small" sx={{ mb: 2 }} />
@@ -742,11 +782,22 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                       : Number(selectedProduct.preco_venda).toFixed(2)
                     )}
                   </Typography>
-                  {!clientUser?.is_revendedor && selectedProduct.eh_destaque && selectedProduct.desconto_destaque > 0 && (
-                    <Typography variant="h6" sx={{ textDecoration: 'line-through', color: '#8D6E63' }}>
-                      R$ {Number(selectedProduct.preco_venda).toFixed(2)}
-                    </Typography>
-                  )}
+                  <Box textAlign="right">
+                     {!clientUser?.is_revendedor && selectedProduct.eh_destaque && selectedProduct.desconto_destaque > 0 && (
+                       <Typography variant="body2" sx={{ textDecoration: 'line-through', color: '#8D6E63' }}>
+                         De R$ {Number(selectedProduct.preco_venda).toFixed(2)}
+                       </Typography>
+                     )}
+                     {/* Calcula total visual com os agregados */}
+                     {Object.keys(selectedAggregates).length > 0 && (
+                        <Typography variant="caption" display="block" color="text.secondary">
+                           (+ R$ {Object.entries(selectedAggregates).reduce((acc, [id, qty]) => {
+                              const p = selectedProduct.agregados?.find(a => a.id === Number(id));
+                              return acc + (qty * (Number(p?.preco_venda) || 0));
+                           }, 0).toFixed(2)} em extras)
+                        </Typography>
+                     )}
+                  </Box>
                 </Box>
               </DialogContent>
               <DialogActions sx={{ justifyContent: 'center', p: 3, pt: 0 }}>
@@ -755,10 +806,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                   size="large"
                   fullWidth
                   startIcon={<Add />}
-                  onClick={() => {
-                    handleQtyChange(selectedProduct.id, 1);
-                    setDetailsOpen(false);
-                  }}
+                  onClick={handleAddToCartWithAggregates}
                   sx={{ bgcolor: '#4E342E', color: 'white', borderRadius: '50px', px: 4, py: 1.5 }}
                 >
                   Adicionar ao Carrinho

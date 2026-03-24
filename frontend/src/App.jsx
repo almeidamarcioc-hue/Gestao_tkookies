@@ -203,15 +203,15 @@ export default function App() {
   };
 
   // Funções do Carrinho
-  const addToCart = (product) => {
+  const addToCart = (product, quantity = 1) => {
     setCart((prev) => {
       const existing = prev.find((item) => item.id === product.id);
       if (existing) {
         return prev.map((item) =>
-          item.id === product.id ? { ...item, quantidade: item.quantidade + 1 } : item
+          item.id === product.id ? { ...item, quantidade: item.quantidade + quantity } : item
         );
       }
-      return [...prev, { ...product, quantidade: 1 }];
+      return [...prev, { ...product, quantidade: quantity }];
     });
   };
 
