@@ -1,13 +1,12 @@
 import { Router } from "express";
 import { pool } from "../db/index.js";
+import { initDatabase } from "../db/init.js";
 
 const router = Router();
 
-// LISTAR PRODUTOS (Com ingredientes e custos base)
-router.get("/", async (req, res) => {
-  try {
-    // Busca dados planos para evitar incompatibilidade de funções JSON entre Postgres e MySQL/TiDB
-    const result = await pool.query(`
+// Função auxiliar para buscar produtos (evita duplicação de código)
+async function fetchProducts() {
+  const result = await pool.query(`
       SELECT p.*, 
              i.id as ing_id, 
              i.nome as ing_nome, 
@@ -35,84 +34,103 @@ router.get("/", async (req, res) => {
       ORDER BY p.nome ASC
     `);
 
-    // Agrupa os ingredientes por produto via Javascript
-    const productsMap = new Map();
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  // Agrupa os ingredientes por produto via Javascript
+  const productsMap = new Map();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-    result.rows.forEach(row => {
-      if (!productsMap.has(row.id)) {
-        let isDestaque = row.eh_destaque === 1 || row.eh_destaque === true;
-        
-        // Lógica para expirar promoção automaticamente na listagem
-        if (isDestaque && row.validade_promocao) {
-          const validade = new Date(row.validade_promocao);
-          // Ajusta para comparar apenas datas (ignora hora)
-          validade.setHours(0, 0, 0, 0);
-          // Se a validade for menor que hoje, a promoção expirou
-          if (validade < today) {
-            isDestaque = false;
-          }
+  result.rows.forEach(row => {
+    if (!productsMap.has(row.id)) {
+      let isDestaque = row.eh_destaque === 1 || row.eh_destaque === true;
+      
+      // Lógica para expirar promoção automaticamente na listagem
+      if (isDestaque && row.validade_promocao) {
+        const validade = new Date(row.validade_promocao);
+        validade.setHours(0, 0, 0, 0);
+        if (validade < today) {
+          isDestaque = false;
         }
-
-        productsMap.set(row.id, {
-          id: row.id,
-          nome: row.nome,
-          descricao: row.descricao,
-          preco_venda: row.preco_venda,
-          margem_revenda: row.margem_revenda,
-          preco_revenda: row.preco_revenda,
-          rendimento: row.rendimento,
-          estoque: row.estoque,
-          ativo: row.ativo !== 0 && row.ativo !== false, // Garante booleano
-          eh_agregado: row.eh_agregado === 1 || row.eh_agregado === true,
-          custo: row.custo || 0,
-          eh_destaque: isDestaque,
-          desconto_destaque: row.desconto_destaque,
-          validade_promocao: row.validade_promocao ? new Date(row.validade_promocao).toISOString().split('T')[0] : null,
-          created_at: row.created_at,
-          ingredientes: [],
-          imagens: [],
-          agregados: []
-        });
       }
 
-      if (row.ing_id && !productsMap.get(row.id).ingredientes.some(i => i.ingrediente_id === row.ing_id)) {
-        productsMap.get(row.id).ingredientes.push({
-          ingrediente_id: row.ing_id,
-          nome: row.ing_nome,
-          quantidade: row.ing_quantidade,
-          unidade: row.ing_unidade,
-          custo_base: row.ing_custo,
-          estoque_base: row.ing_estoque,
-          usado_para_revenda: row.ing_usado_para_revenda === 1 || row.ing_usado_para_revenda === true,
-          apenas_revenda: row.ing_apenas_revenda === 1 || row.ing_apenas_revenda === true
-        });
-      }
+      productsMap.set(row.id, {
+        id: row.id,
+        nome: row.nome,
+        descricao: row.descricao,
+        preco_venda: row.preco_venda,
+        margem_revenda: row.margem_revenda,
+        preco_revenda: row.preco_revenda,
+        rendimento: row.rendimento,
+        estoque: row.estoque,
+        ativo: row.ativo !== 0 && row.ativo !== false,
+        eh_agregado: row.eh_agregado === 1 || row.eh_agregado === true,
+        custo: row.custo || 0,
+        eh_destaque: isDestaque,
+        desconto_destaque: row.desconto_destaque,
+        validade_promocao: row.validade_promocao ? new Date(row.validade_promocao).toISOString().split('T')[0] : null,
+        created_at: row.created_at,
+        ingredientes: [],
+        imagens: [],
+        agregados: []
+      });
+    }
 
-      if (row.img_id && !productsMap.get(row.id).imagens.some(img => img.id === row.img_id)) {
-        productsMap.get(row.id).imagens.push({
-          id: row.img_id,
-          imagem: row.img_conteudo,
-          eh_capa: row.img_eh_capa === 1 || row.img_eh_capa === true
-        });
-      }
+    if (row.ing_id && !productsMap.get(row.id).ingredientes.some(i => i.ingrediente_id === row.ing_id)) {
+      productsMap.get(row.id).ingredientes.push({
+        ingrediente_id: row.ing_id,
+        nome: row.ing_nome,
+        quantidade: row.ing_quantidade,
+        unidade: row.ing_unidade,
+        custo_base: row.ing_custo,
+        estoque_base: row.ing_estoque,
+        usado_para_revenda: row.ing_usado_para_revenda === 1 || row.ing_usado_para_revenda === true,
+        apenas_revenda: row.ing_apenas_revenda === 1 || row.ing_apenas_revenda === true
+      });
+    }
 
-      if (row.agg_id && !productsMap.get(row.id).agregados.some(a => a.id === row.agg_id)) {
-        productsMap.get(row.id).agregados.push({
-          id: row.agg_id,
-          nome: row.agg_nome,
-          preco: row.agg_preco,
-          estoque: row.agg_estoque,
-          imagem: row.agg_imagem
-        });
-      }
-    });
+    if (row.img_id && !productsMap.get(row.id).imagens.some(img => img.id === row.img_id)) {
+      productsMap.get(row.id).imagens.push({
+        id: row.img_id,
+        imagem: row.img_conteudo,
+        eh_capa: row.img_eh_capa === 1 || row.img_eh_capa === true
+      });
+    }
 
-    res.json(Array.from(productsMap.values()));
+    if (row.agg_id && !productsMap.get(row.id).agregados.some(a => a.id === row.agg_id)) {
+      productsMap.get(row.id).agregados.push({
+        id: row.agg_id,
+        nome: row.agg_nome,
+        preco: row.agg_preco,
+        estoque: row.agg_estoque,
+        imagem: row.agg_imagem
+      });
+    }
+  });
+
+  return Array.from(productsMap.values());
+}
+
+// LISTAR PRODUTOS (Com ingredientes e custos base)
+router.get("/", async (req, res) => {
+  try {
+    const produtos = await fetchProducts();
+    res.json(produtos);
   } catch (error) {
+    // Se o erro for de coluna desconhecida, tenta rodar a migração e tenta de novo
+    if (error.code === 'ER_BAD_FIELD_ERROR' || (error.message && error.message.includes("Unknown column"))) {
+      console.warn("⚠️ Detectado esquema de banco desatualizado. Tentando migração automática...");
+      try {
+        await initDatabase();
+        console.log("✅ Migração concluída. Tentando buscar produtos novamente...");
+        const produtosRetry = await fetchProducts();
+        return res.json(produtosRetry);
+      } catch (retryError) {
+        console.error("❌ Erro fatal após tentativa de migração:", retryError);
+        return res.status(500).json({ error: "Erro ao listar produtos após migração", details: retryError.message });
+      }
+    }
+
     console.error("Erro detalhado ao listar produtos:", error);
-    res.status(500).json({ error: "Erro ao procurar produtos" });
+    res.status(500).json({ error: "Erro ao procurar produtos", details: error.message });
   }
 });
 
