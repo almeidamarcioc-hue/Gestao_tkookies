@@ -22,14 +22,16 @@ import {
   Container,
   FormControlLabel,
   Checkbox,
-  Grid
+  Grid,
+  Alert
 } from "@mui/material";
-import { Edit, Delete, Add, CloudUpload, Star, StarBorder, Calculate, Refresh, ContentCopy } from "@mui/icons-material";
+import { Edit, Delete, Add, CloudUpload, Star, StarBorder, Calculate, Refresh, ContentCopy, Visibility, VisibilityOff } from "@mui/icons-material";
 
 export default function Dashboard() {
   const [produtos, setProdutos] = useState([]);
   const navigate = useNavigate();
   const [allIngredientes, setAllIngredientes] = useState([]); // Para o select do modal
+  const [allProductsList, setAllProductsList] = useState([]); // Para select de agregados
   const [searchTerm, setSearchTerm] = useState("");
 
   // Estados do Modal de Edição
@@ -44,6 +46,9 @@ export default function Dashboard() {
 
   const [isRecalculating, setIsRecalculating] = useState(false);
 
+  // Estados para Agregados no Modal
+  const [newAgregado, setNewAgregado] = useState(null);
+
   const loadData = async () => {
     await api.get("/produtos").then((res) => setProdutos(Array.isArray(res.data) ? res.data : []));
     api.get("/ingredientes").then((res) => setAllIngredientes(Array.isArray(res.data) ? res.data : []));
@@ -52,6 +57,9 @@ export default function Dashboard() {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Atualiza lista de produtos para o select de agregados sempre que produtos muda
+  useEffect(() => { setAllProductsList(produtos); }, [produtos]);
 
   // Função para forçar o recalculo dos custos buscando dados frescos
   const handleRecalculate = async () => {
@@ -116,6 +124,8 @@ export default function Dashboard() {
     prodCopy.imagens = prodCopy.imagens || [];
     
     setEditRendimento(rendimento);
+    // Garante que agregados seja um array (caso venha undefined do backend antigo)
+    prodCopy.agregados = prodCopy.agregados || [];
     setEditProduct(prodCopy);
     setOpen(true);
   };
@@ -129,6 +139,7 @@ export default function Dashboard() {
     setEditMargemRevenda(0);
     setEditRendimento(1);
     setNewIngApenasRevenda(false);
+    setNewAgregado(null);
   };
 
   // Recalcula o preço de venda no modal quando ingredientes ou margem mudam
@@ -259,6 +270,17 @@ export default function Dashboard() {
     setEditProduct({ ...editProduct, imagens: newImagens });
   };
 
+  const handleAddAgregadoEdit = () => {
+    if (!newAgregado) return;
+    if (editProduct.agregados.some(a => a.id === newAgregado.id)) return alert("Já adicionado.");
+    setEditProduct(prev => ({ ...prev, agregados: [...prev.agregados, newAgregado] }));
+    setNewAgregado(null);
+  };
+
+  const handleRemoveAgregadoEdit = (index) => {
+    setEditProduct(prev => ({ ...prev, agregados: prev.agregados.filter((_, i) => i !== index) }));
+  };
+
   const handleSaveEdit = async () => {
     try {
       const payload = {
@@ -275,7 +297,8 @@ export default function Dashboard() {
         })),
         imagens: editProduct.imagens || [],
         eh_destaque: editProduct.eh_destaque,
-        desconto_destaque: Number(editProduct.desconto_destaque)
+        desconto_destaque: Number(editProduct.desconto_destaque),
+        agregados: editProduct.agregados?.map(a => a.id) || []
       };
       await api.put(`/produtos/${editProduct.id}`, payload);
       alert("Produto atualizado!");
@@ -310,6 +333,15 @@ export default function Dashboard() {
     if (!confirm("Tem certeza que deseja excluir este produto?")) return;
     await api.delete(`/produtos/${id}`);
     loadData();
+  };
+
+  const handleToggleAtivo = async (prod) => {
+    try {
+      await api.patch(`/produtos/${prod.id}/ativo`, { ativo: !prod.ativo });
+      loadData();
+    } catch (err) {
+      alert("Erro ao alterar status do produto.");
+    }
   };
 
   const handleToggleDestaque = async (prod) => {
@@ -349,8 +381,9 @@ export default function Dashboard() {
           <TableHead>
             <TableRow>
               <TableCell rowSpan={2} sx={{ bgcolor: '#FFF', borderBottom: '1px solid #D7CCC8' }}><strong>Produto / Estoque</strong></TableCell>
-              <TableCell rowSpan={2} align="center" sx={{ bgcolor: '#FFF', borderBottom: '1px solid #D7CCC8' }}><strong>Imagem</strong></TableCell>
-              <TableCell rowSpan={2} align="center" sx={{ bgcolor: '#FFF', borderBottom: '1px solid #D7CCC8' }}><strong>Destaque</strong></TableCell>
+              <TableCell rowSpan={2} align="center" sx={{ bgcolor: '#FFF', borderBottom: '1px solid #D7CCC8' }}><strong>Img</strong></TableCell>
+              <TableCell rowSpan={2} align="center" sx={{ bgcolor: '#FFF', borderBottom: '1px solid #D7CCC8' }}><strong>Dest.</strong></TableCell>
+              <TableCell rowSpan={2} align="center" sx={{ bgcolor: '#FFF', borderBottom: '1px solid #D7CCC8' }}><strong>Ativo</strong></TableCell>
               <TableCell colSpan={3} align="center" sx={{ bgcolor: '#FFF8E1', color: '#F57F17', borderBottom: '1px solid #FFE0B2' }}><strong>REVENDA</strong></TableCell>
               <TableCell colSpan={3} align="center" sx={{ bgcolor: '#EFEBE9', color: '#3E2723', borderBottom: '1px solid #D7CCC8' }}><strong>VENDA</strong></TableCell>
               <TableCell rowSpan={2} align="center" sx={{ bgcolor: '#FFF', borderBottom: '1px solid #D7CCC8' }}><strong>Ações</strong></TableCell>
@@ -384,10 +417,10 @@ export default function Dashboard() {
               const capa = prod.imagens?.find(img => img.eh_capa) || prod.imagens?.[0];
 
               return (
-                <TableRow key={prod.id}>
+                <TableRow key={prod.id} sx={{ opacity: prod.ativo ? 1 : 0.6, bgcolor: prod.ativo ? 'inherit' : '#f5f5f5' }}>
                   <TableCell>
                     {prod.nome} <Typography variant="caption" color="text.secondary">({rendimento} un)</Typography>
-                    <Typography variant="body2" fontWeight="bold" color={Number(prod.estoque) <= 0 ? 'error' : 'text.primary'}>Estoque: {Number(prod.estoque)}</Typography>
+                    <Typography variant="body2" fontWeight="bold" color={Number(prod.estoque) <= 0 ? 'error' : 'text.primary'}>Est: {Number(prod.estoque)}</Typography>
                   </TableCell>
                   <TableCell align="center">
                     {capa ? <img src={capa.imagem} alt={prod.nome} style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 4 }} /> : '-'}
@@ -395,6 +428,11 @@ export default function Dashboard() {
                   <TableCell align="center">
                     <IconButton onClick={() => handleToggleDestaque(prod)} color={prod.eh_destaque ? "warning" : "default"}>
                       {prod.eh_destaque ? <Star /> : <StarBorder />}
+                    </IconButton>
+                  </TableCell>
+                  <TableCell align="center">
+                    <IconButton onClick={() => handleToggleAtivo(prod)} color={prod.ativo ? "success" : "default"} title={prod.ativo ? "Produto Ativo (Visível)" : "Produto Inativo (Oculto)"}>
+                      {prod.ativo ? <Visibility /> : <VisibilityOff />}
                     </IconButton>
                   </TableCell>
                   <TableCell align="right" sx={{ bgcolor: '#FFF8E1', color: '#E65100' }}>R$ {custoUnitarioRevenda.toFixed(2)}</TableCell>
@@ -424,7 +462,7 @@ export default function Dashboard() {
             })}
             {produtos.length === 0 && (
               <TableRow>
-                <TableCell colSpan={10} align="center">Nenhum produto cadastrado.</TableCell>
+                <TableCell colSpan={11} align="center">Nenhum produto cadastrado.</TableCell>
               </TableRow>
             )}
           </TableBody>
@@ -472,7 +510,11 @@ export default function Dashboard() {
               <Box display="flex" gap={2} mb={3} alignItems="center" sx={{ bgcolor: '#f5f5f5', p: 2, borderRadius: 2 }}>
                 <FormControlLabel 
                   control={<Checkbox checked={editProduct.eh_destaque || false} onChange={(e) => setEditProduct({...editProduct, eh_destaque: e.target.checked})} />} 
-                  label="Produto Destaque (Promoção)" 
+                  label="Destaque" 
+                />
+                <FormControlLabel 
+                  control={<Checkbox checked={editProduct.ativo !== false} onChange={(e) => setEditProduct({...editProduct, ativo: e.target.checked})} />} 
+                  label="Ativo no Cardápio" 
                 />
                 {editProduct.eh_destaque && (
                   <TextField label="% Desconto" type="number" size="small" sx={{ width: 150 }} value={editProduct.desconto_destaque || 0} onChange={(e) => setEditProduct({...editProduct, desconto_destaque: e.target.value})} />
@@ -612,6 +654,86 @@ export default function Dashboard() {
                       </TableRow>
                     );
                   })}
+                </TableBody>
+              </Table>
+
+              {/* Seção de Agregados no Modal de Edição */}
+              <Typography variant="subtitle1" fontWeight="bold" mt={3} mb={1} color="secondary">
+                Produtos Agregados / Extras
+              </Typography>
+              
+              <Alert severity="info" sx={{ mb: 2 }}>
+                <strong>Como funciona:</strong> Cadastre itens extras (como Embalagens, Cartões ou Adicionais) como produtos normais primeiro. 
+                Depois, pesquise e selecione-os abaixo para vinculá-los a este produto. 
+                O cliente poderá escolher adicioná-los ao carrinho na hora da compra.
+              </Alert>
+
+              <Box display="flex" gap={1} mb={2} alignItems="center">
+                <Autocomplete
+                  fullWidth
+                  size="small"
+                  options={allProductsList.filter(p => p.id !== editProduct.id)}
+                  getOptionLabel={(option) => `${option.nome} (R$ ${Number(option.preco_venda).toFixed(2)})`}
+                  value={newAgregado}
+                  onChange={(event, newValue) => setNewAgregado(newValue)}
+                  renderInput={(params) => <TextField {...params} label="Adicionar Produto Extra" />}
+                />
+                <Button variant="outlined" onClick={handleAddAgregadoEdit}><Add /></Button>
+              </Box>
+              <Table size="small">
+                <TableHead><TableRow><TableCell>Produto</TableCell><TableCell align="right">Preço</TableCell><TableCell align="right">Ação</TableCell></TableRow></TableHead>
+                <TableBody>
+                  {editProduct.agregados?.map((ag, idx) => (
+                    <TableRow key={ag.id}>
+                      <TableCell>{ag.nome}</TableCell>
+                      <TableCell align="right">R$ {Number(ag.preco_venda).toFixed(2)}</TableCell>
+                      <TableCell align="right">
+                        <IconButton size="small" color="error" onClick={() => handleRemoveAgregadoEdit(idx)}>
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              {/* Seção de Agregados no Modal de Edição */}
+              <Typography variant="subtitle1" fontWeight="bold" mt={3} mb={1} color="secondary">
+                Produtos Agregados / Extras
+              </Typography>
+              
+              <Alert severity="info" sx={{ mb: 2 }}>
+                <strong>Como funciona:</strong> Cadastre itens extras (como Embalagens, Cartões ou Adicionais) como produtos normais primeiro. 
+                Depois, pesquise e selecione-os abaixo para vinculá-los a este produto. 
+                O cliente poderá escolher adicioná-los ao carrinho na hora da compra.
+              </Alert>
+
+              <Box display="flex" gap={1} mb={2} alignItems="center">
+                <Autocomplete
+                  fullWidth
+                  size="small"
+                  options={allProductsList.filter(p => p.id !== editProduct.id)}
+                  getOptionLabel={(option) => `${option.nome} (R$ ${Number(option.preco_venda).toFixed(2)})`}
+                  value={newAgregado}
+                  onChange={(event, newValue) => setNewAgregado(newValue)}
+                  renderInput={(params) => <TextField {...params} label="Adicionar Produto Extra" />}
+                />
+                <Button variant="outlined" onClick={handleAddAgregadoEdit}><Add /></Button>
+              </Box>
+              <Table size="small">
+                <TableHead><TableRow><TableCell>Produto</TableCell><TableCell align="right">Preço</TableCell><TableCell align="right">Ação</TableCell></TableRow></TableHead>
+                <TableBody>
+                  {editProduct.agregados?.map((ag, idx) => (
+                    <TableRow key={ag.id}>
+                      <TableCell>{ag.nome}</TableCell>
+                      <TableCell align="right">R$ {Number(ag.preco_venda).toFixed(2)}</TableCell>
+                      <TableCell align="right">
+                        <IconButton size="small" color="error" onClick={() => handleRemoveAgregadoEdit(idx)}>
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </Box>
