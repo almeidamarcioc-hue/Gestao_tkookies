@@ -46,9 +46,14 @@ export default function Products() {
   const [imagens, setImagens] = useState([]);
   const [ehDestaque, setEhDestaque] = useState(false);
   const [descontoDestaque, setDescontoDestaque] = useState(0);
+  const [ativo, setAtivo] = useState(true);
+  const [ehAgregado, setEhAgregado] = useState(false);
+  const [estoqueManual, setEstoqueManual] = useState("");
+  const [custoManual, setCustoManual] = useState("");
 
   const [agregados, setAgregados] = useState([]); // Produtos sugeridos/agregados
   const [agregadoSelecionado, setAgregadoSelecionado] = useState(null);
+  const [agregadoPreco, setAgregadoPreco] = useState("");
 
   // Efeito para preencher o formulário ao duplicar um produto
   useEffect(() => {
@@ -63,6 +68,10 @@ export default function Products() {
       setRendimento(productToDuplicate.rendimento || 1);
       setEhDestaque(productToDuplicate.eh_destaque || false);
       setDescontoDestaque(productToDuplicate.desconto_destaque || 0);
+      setAtivo(productToDuplicate.ativo !== false);
+      setEhAgregado(productToDuplicate.eh_agregado || false);
+      setEstoqueManual(productToDuplicate.estoque || "");
+      setCustoManual(productToDuplicate.custo || "");
       
       // Define as margens que irão recalcular os preços
       setPercentual(productToDuplicate.margem_venda?.toFixed(2) || 0);
@@ -121,6 +130,17 @@ export default function Products() {
   }, []);
 
   useEffect(() => {
+    // Se for agregado, o custo vem do input manual, não dos ingredientes
+    if (ehAgregado) {
+        const custo = Number(custoManual) || 0;
+        setCustoTotal(custo);
+        // Recalcula margem se tiver preço de venda
+        if (precoVenda > 0 && custo > 0) {
+            // Não sobrescreve percentual aqui para evitar loop, o percentual é visual
+        }
+        return;
+    }
+
     let somaCusto = 0;
     let somaRevenda = 0;
     
@@ -163,7 +183,7 @@ export default function Products() {
     setPrecoVenda(custoUnitario * (1 + (Number(percentual) || 0) / 100));
     setPrecoRevenda(custoRevendaUnitario * (1 + (Number(margemRevenda) || 0) / 100));
 
-  }, [itens, percentual, margemRevenda, ingredientes, rendimento]);
+  }, [itens, percentual, margemRevenda, ingredientes, rendimento, ehAgregado, custoManual]);
 
   // Manipulador para alteração manual do Preço de Venda
   const handlePrecoVendaChange = (e) => {
@@ -267,7 +287,7 @@ export default function Products() {
   }
 
   function adicionarAgregado() {
-    if (!agregadoSelecionado) return;
+    if (!agregadoSelecionado || !agregadoPreco) return;
     
     // Evita duplicatas
     if (agregados.some(a => a.id === agregadoSelecionado.id)) {
@@ -275,12 +295,13 @@ export default function Products() {
       return;
     }
 
-    setAgregados([...agregados, agregadoSelecionado]);
+    setAgregados([...agregados, { ...agregadoSelecionado, preco: Number(agregadoPreco) }]);
     setAgregadoSelecionado(null);
+    setAgregadoPreco("");
   }
 
   async function salvarProduto() {
-    if (!nome || itens.length === 0) {
+    if (!nome || (itens.length === 0 && !ehAgregado)) {
       alert("Nome e ingredientes são necessários.");
       return;
     }
@@ -303,7 +324,11 @@ export default function Products() {
       imagens: imagens.map(img => ({ imagem: img.imagem, eh_capa: img.eh_capa })),
       eh_destaque: ehDestaque,
       desconto_destaque: Number(descontoDestaque),
-      agregados: agregados.map(a => a.id) // Envia apenas os IDs
+      ativo: ativo,
+      agregados: agregados.map(a => ({ id: a.id, preco: Number(a.preco) })),
+      eh_agregado: ehAgregado,
+      estoque: ehAgregado ? Number(estoqueManual) : 0,
+      custo: ehAgregado ? Number(custoManual) : 0
     };
 
     try {
@@ -324,6 +349,10 @@ export default function Products() {
       setEhDestaque(false);
       setAgregados([]);
       setDescontoDestaque(0);
+      setAtivo(true);
+      setEhAgregado(false);
+      setEstoqueManual("");
+      setCustoManual("");
       
       // Recarrega a lista
       const resProd = await api.get("/produtos");
@@ -409,6 +438,14 @@ export default function Products() {
             control={<Checkbox checked={ehDestaque} onChange={(e) => setEhDestaque(e.target.checked)} />} 
             label="Produto Destaque (Promoção)" 
           />
+          <FormControlLabel 
+            control={<Checkbox checked={ativo} onChange={(e) => setAtivo(e.target.checked)} />} 
+            label="Ativo no Cardápio" 
+          />
+          <FormControlLabel 
+            control={<Checkbox checked={ehAgregado} onChange={(e) => setEhAgregado(e.target.checked)} />} 
+            label="É Produto Agregado / Extra" 
+          />
           {ehDestaque && (
             <TextField label="% Desconto" type="number" size="small" sx={{ width: 150 }} value={descontoDestaque} onChange={(e) => setDescontoDestaque(e.target.value)} />
           )}
@@ -421,7 +458,17 @@ export default function Products() {
               <Typography variant="subtitle1" color="primary" fontWeight="bold" mb={2}>Venda (Produção)</Typography>
               <Box display="flex" flexDirection="column" gap={2}>
                 <TextField label="Margem Venda (%)" type="number" fullWidth value={percentual} onChange={(e) => setPercentual(e.target.value)} />
-                <TextField label="Custo Unitário" fullWidth value={`R$ ${(custoTotal / (Number(rendimento) || 1)).toFixed(2)}`} InputProps={{ readOnly: true }} />
+                {ehAgregado ? (
+                    <TextField 
+                        label="Custo Unitário (Compra)" 
+                        type="number" 
+                        fullWidth 
+                        value={custoManual} 
+                        onChange={(e) => setCustoManual(e.target.value)} 
+                    />
+                ) : (
+                    <TextField label="Custo Unitário" fullWidth value={`R$ ${(custoTotal / (Number(rendimento) || 1)).toFixed(2)}`} InputProps={{ readOnly: true }} />
+                )}
                 <TextField 
                   label="Preço Venda (Un)" 
                   type="number"
@@ -429,6 +476,9 @@ export default function Products() {
                   value={precoVenda} 
                   onChange={handlePrecoVendaChange}
                   sx={{ "& input": { color: '#1976d2', fontWeight: 'bold' } }} />
+                {ehAgregado && (
+                    <TextField label="Estoque Atual" type="number" fullWidth value={estoqueManual} onChange={(e) => setEstoqueManual(e.target.value)} />
+                )}
               </Box>
             </Paper>
           </Grid>
@@ -452,43 +502,47 @@ export default function Products() {
           </Grid>
         </Grid>
 
-        <Typography variant="h6" mb={2}>Ingredientes</Typography>
-        <Box display="flex" gap={2} mb={3}>
-          <Autocomplete
-            fullWidth
-            options={Array.isArray(ingredientes) ? ingredientes : []}
-            getOptionLabel={(option) => option.nome}
-            value={(Array.isArray(ingredientes) ? ingredientes.find((i) => Number(i.id) === Number(ingredienteSelecionado)) : null) || null}
-            onChange={(event, newValue) => {
-              setIngredienteSelecionado(newValue ? newValue.id : "");
-            }}
-            renderInput={(params) => <TextField {...params} label="Selecione o Ingrediente" />}
-          />
-          <TextField label="Qtd" type="number" value={quantidadeIngrediente} onChange={(e) => setQuantidadeIngrediente(e.target.value)} />
-          <FormControlLabel 
-            control={<Checkbox checked={apenasRevenda} onChange={(e) => setApenasRevenda(e.target.checked)} />} 
-            label="Apenas Revenda" 
-            sx={{ whiteSpace: 'nowrap' }}
-          />
-          <Button variant="contained" onClick={adicionarIngrediente} sx={{ bgcolor: "#b100c1" }}>INCLUIR</Button>
-        </Box>
-        <Table size="small" sx={{ mb: 4 }}>
-          <TableBody>
-            {itens.map((item, index) => (
-              <TableRow key={item._tempId} sx={item.apenas_revenda ? { bgcolor: '#FFF8E1' } : {}}>
-                <TableCell>{item.nome} {item.apenas_revenda && <Typography variant="caption" color="secondary" fontWeight="bold">(Revenda)</Typography>}</TableCell>
-                <TableCell>{`${item.quantidade} ${item.unidade}`}</TableCell>
-                <TableCell align="right">
-                  <IconButton color="error" onClick={() => {
-                    const novaLista = [...itens];
-                    novaLista.splice(index, 1);
-                    setItens(novaLista);
-                  }}><Delete /></IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        {!ehAgregado && (
+            <>
+            <Typography variant="h6" mb={2}>Ingredientes</Typography>
+            <Box display="flex" gap={2} mb={3}>
+            <Autocomplete
+                fullWidth
+                options={Array.isArray(ingredientes) ? ingredientes : []}
+                getOptionLabel={(option) => option.nome}
+                value={(Array.isArray(ingredientes) ? ingredientes.find((i) => Number(i.id) === Number(ingredienteSelecionado)) : null) || null}
+                onChange={(event, newValue) => {
+                setIngredienteSelecionado(newValue ? newValue.id : "");
+                }}
+                renderInput={(params) => <TextField {...params} label="Selecione o Ingrediente" />}
+            />
+            <TextField label="Qtd" type="number" value={quantidadeIngrediente} onChange={(e) => setQuantidadeIngrediente(e.target.value)} />
+            <FormControlLabel 
+                control={<Checkbox checked={apenasRevenda} onChange={(e) => setApenasRevenda(e.target.checked)} />} 
+                label="Apenas Revenda" 
+                sx={{ whiteSpace: 'nowrap' }}
+            />
+            <Button variant="contained" onClick={adicionarIngrediente} sx={{ bgcolor: "#b100c1" }}>INCLUIR</Button>
+            </Box>
+            <Table size="small" sx={{ mb: 4 }}>
+            <TableBody>
+                {itens.map((item, index) => (
+                <TableRow key={item._tempId} sx={item.apenas_revenda ? { bgcolor: '#FFF8E1' } : {}}>
+                    <TableCell>{item.nome} {item.apenas_revenda && <Typography variant="caption" color="secondary" fontWeight="bold">(Revenda)</Typography>}</TableCell>
+                    <TableCell>{`${item.quantidade} ${item.unidade}`}</TableCell>
+                    <TableCell align="right">
+                    <IconButton color="error" onClick={() => {
+                        const novaLista = [...itens];
+                        novaLista.splice(index, 1);
+                        setItens(novaLista);
+                    }}><Delete /></IconButton>
+                    </TableCell>
+                </TableRow>
+                ))}
+            </TableBody>
+            </Table>
+            </>
+        )}
         <Button variant="contained" fullWidth size="large" onClick={salvarProduto}>CADASTRAR PRODUTO</Button>
       </Paper>
 
@@ -505,12 +559,13 @@ export default function Products() {
         <Box display="flex" gap={2} mb={3}>
           <Autocomplete
             fullWidth
-            options={listaProdutos.filter(p => p.nome !== nome)} // Não pode adicionar a si mesmo
+            options={listaProdutos.filter(p => p.nome !== nome)} // Seleciona de Produtos, não ingredientes
             getOptionLabel={(option) => `${option.nome} (R$ ${Number(option.preco_venda).toFixed(2)})`}
             value={agregadoSelecionado}
             onChange={(event, newValue) => setAgregadoSelecionado(newValue)}
             renderInput={(params) => <TextField {...params} label="Buscar Produto Extra" />}
           />
+          <TextField label="Preço Venda (R$)" type="number" sx={{ width: 150 }} value={agregadoPreco} onChange={(e) => setAgregadoPreco(e.target.value)} />
           <Button variant="outlined" onClick={adicionarAgregado}>Adicionar</Button>
         </Box>
 
@@ -522,7 +577,7 @@ export default function Products() {
             {agregados.map((item, index) => (
               <TableRow key={item.id}>
                 <TableCell>{item.nome}</TableCell>
-                <TableCell align="right">R$ {Number(item.preco_venda).toFixed(2)}</TableCell>
+                <TableCell align="right">R$ {Number(item.preco).toFixed(2)}</TableCell>
                 <TableCell align="center">
                   <IconButton color="error" size="small" onClick={() => setAgregados(agregados.filter((_, i) => i !== index))}>
                     <Delete fontSize="small" />

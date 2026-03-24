@@ -142,11 +142,13 @@ export async function initDatabase() {
       )
     `);
 
-    // Tabela de Produtos Agregados (Venda casada opcional / Extras)
+    // Tabela de Produtos Agregados (Venda casada opcional / Extras) - RECRIAR PARA GARANTIR LINK COM PRODUTOS
+    await pool.query("DROP TABLE IF EXISTS produto_agregados");
     await pool.query(`
       CREATE TABLE IF NOT EXISTS produto_agregados (
         produto_id INT NOT NULL,
         agregado_id INT NOT NULL,
+        preco DECIMAL(10, 2) DEFAULT 0,
         PRIMARY KEY (produto_id, agregado_id),
         FOREIGN KEY (produto_id) REFERENCES produtos(id) ON DELETE CASCADE,
         FOREIGN KEY (agregado_id) REFERENCES produtos(id) ON DELETE CASCADE
@@ -242,6 +244,9 @@ export async function initDatabase() {
     logs.push(await addColumnSafe("combos", "ativo BOOLEAN DEFAULT TRUE"));
     logs.push(await addColumnSafe("pedidos", "desconto DECIMAL(10, 2) DEFAULT 0"));
     logs.push(await addColumnSafe("pedidos", "tipo_cliente VARCHAR(20) DEFAULT 'consumidor'"));
+    logs.push(await addColumnSafe("produtos", "ativo BOOLEAN DEFAULT TRUE"));
+    logs.push(await addColumnSafe("produtos", "eh_agregado BOOLEAN DEFAULT FALSE"));
+    logs.push(await addColumnSafe("produtos", "custo DECIMAL(10, 2) DEFAULT 0"));
 
     console.log("✅ Base de dados inicializada com sucesso");
     return logs;

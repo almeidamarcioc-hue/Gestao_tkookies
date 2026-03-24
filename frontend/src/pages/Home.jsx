@@ -82,7 +82,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
     api.get("/produtos").then(res => {
       const allProducts = Array.isArray(res.data) ? res.data : [];
       // Filtra apenas produtos com estoque positivo
-      const availableProducts = allProducts.filter(p => Number(p.estoque) > 0 && p.ativo !== false);
+      const availableProducts = allProducts.filter(p => Number(p.estoque) > 0 && p.ativo !== false && !p.eh_agregado);
       setProducts(availableProducts);
       
       // Encontra produtos destaque com estoque e seleciona um aleatório

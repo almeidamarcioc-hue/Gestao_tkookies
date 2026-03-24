@@ -22,13 +22,16 @@ router.get("/", async (req, res) => {
              pim.eh_capa as img_eh_capa,
              pagg.id as agg_id,
              pagg.nome as agg_nome,
-             pagg.preco_venda as agg_preco
+             pa.preco as agg_preco,
+             pagg.estoque as agg_estoque,
+             pagg_img.imagem as agg_imagem
       FROM produtos p
       LEFT JOIN produto_ingredientes pi ON p.id = pi.produto_id
       LEFT JOIN ingredientes i ON pi.ingrediente_id = i.id
       LEFT JOIN produto_imagens pim ON p.id = pim.produto_id
       LEFT JOIN produto_agregados pa ON p.id = pa.produto_id
       LEFT JOIN produtos pagg ON pa.agregado_id = pagg.id
+      LEFT JOIN produto_imagens pagg_img ON pagg.id = pagg_img.produto_id AND pagg_img.eh_capa = 1
       ORDER BY p.nome ASC
     `);
 
@@ -61,6 +64,9 @@ router.get("/", async (req, res) => {
           preco_revenda: row.preco_revenda,
           rendimento: row.rendimento,
           estoque: row.estoque,
+          ativo: row.ativo !== 0 && row.ativo !== false, // Garante booleano
+          eh_agregado: row.eh_agregado === 1 || row.eh_agregado === true,
+          custo: row.custo || 0,
           eh_destaque: isDestaque,
           desconto_destaque: row.desconto_destaque,
           validade_promocao: row.validade_promocao ? new Date(row.validade_promocao).toISOString().split('T')[0] : null,
@@ -96,7 +102,9 @@ router.get("/", async (req, res) => {
         productsMap.get(row.id).agregados.push({
           id: row.agg_id,
           nome: row.agg_nome,
-          preco_venda: row.agg_preco
+          preco: row.agg_preco,
+          estoque: row.agg_estoque,
+          imagem: row.agg_imagem
         });
       }
     });
@@ -127,13 +135,16 @@ router.get("/:id", async (req, res) => {
              pim.eh_capa as img_eh_capa,
              pagg.id as agg_id,
              pagg.nome as agg_nome,
-             pagg.preco_venda as agg_preco
+             pa.preco as agg_preco,
+             pagg.estoque as agg_estoque,
+             pagg_img.imagem as agg_imagem
       FROM produtos p
       LEFT JOIN produto_ingredientes pi ON p.id = pi.produto_id
       LEFT JOIN ingredientes i ON pi.ingrediente_id = i.id
       LEFT JOIN produto_imagens pim ON p.id = pim.produto_id
       LEFT JOIN produto_agregados pa ON p.id = pa.produto_id
       LEFT JOIN produtos pagg ON pa.agregado_id = pagg.id
+      LEFT JOIN produto_imagens pagg_img ON pagg.id = pagg_img.produto_id AND pagg_img.eh_capa = 1
       WHERE p.id = $1
     `, [id]);
 
@@ -149,6 +160,9 @@ router.get("/:id", async (req, res) => {
       preco_revenda: row.preco_revenda,
       rendimento: row.rendimento,
       estoque: row.estoque,
+      ativo: row.ativo !== 0 && row.ativo !== false,
+      eh_agregado: row.eh_agregado === 1 || row.eh_agregado === true,
+      custo: row.custo || 0,
       eh_destaque: row.eh_destaque === 1 || row.eh_destaque === true,
       desconto_destaque: row.desconto_destaque,
       validade_promocao: row.validade_promocao ? new Date(row.validade_promocao).toISOString().split('T')[0] : null,
@@ -189,7 +203,9 @@ router.get("/:id", async (req, res) => {
         product.agregados.push({
           id: r.agg_id,
           nome: r.agg_nome,
-          preco_venda: r.agg_preco
+          preco: r.agg_preco,
+          estoque: r.agg_estoque,
+          imagem: r.agg_imagem
         });
       }
     });
@@ -203,7 +219,7 @@ router.get("/:id", async (req, res) => {
 
 // CRIAR PRODUTO
 router.post("/", async (req, res) => {
-  const { nome, descricao, preco_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque, validade_promocao, agregados } = req.body;
+  const { nome, descricao, preco_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque, validade_promocao, agregados, ativo, eh_agregado, custo, estoque } = req.body;
   const client = await pool.connect();
 
   try {
@@ -214,8 +230,8 @@ router.post("/", async (req, res) => {
     const descontoFinal = isDestaque ? (desconto_destaque || 0) : 0;
 
     const resProd = await client.query(
-      "INSERT INTO produtos (nome, descricao, preco_venda, margem_revenda, preco_revenda, rendimento, eh_destaque, desconto_destaque, validade_promocao) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id",
-      [nome, descricao || null, preco_venda, margem_revenda || 0, preco_revenda || 0, rendimento || 1, isDestaque, descontoFinal, validadeFinal]
+      "INSERT INTO produtos (nome, descricao, preco_venda, margem_revenda, preco_revenda, rendimento, eh_destaque, desconto_destaque, validade_promocao, ativo, eh_agregado, custo, estoque) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id",
+      [nome, descricao || null, preco_venda, margem_revenda || 0, preco_revenda || 0, rendimento || 1, isDestaque, descontoFinal, validadeFinal, (ativo === false ? false : true), eh_agregado || false, custo || 0, estoque || 0]
     );
     const produtoId = resProd.rows[0].id;
 
@@ -238,10 +254,10 @@ router.post("/", async (req, res) => {
     }
 
     if (agregados && agregados.length > 0) {
-      for (const aggId of agregados) {
+      for (const agg of agregados) {
         await client.query(
-          "INSERT INTO produto_agregados (produto_id, agregado_id) VALUES ($1, $2)",
-          [produtoId, aggId]
+          "INSERT INTO produto_agregados (produto_id, agregado_id, preco) VALUES ($1, $2, $3)",
+          [produtoId, agg.id, agg.preco]
         );
       }
     }
@@ -271,7 +287,7 @@ router.post("/", async (req, res) => {
 // ATUALIZAR PRODUTO (Edição total)
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
-  const { nome, descricao, preco_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque, validade_promocao, agregados } = req.body;
+  const { nome, descricao, preco_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque, validade_promocao, agregados, ativo, eh_agregado, custo, estoque } = req.body;
   const client = await pool.connect();
 
   try {
@@ -283,8 +299,8 @@ router.put("/:id", async (req, res) => {
 
     // Atualiza dados básicos do produto
     await client.query(
-      "UPDATE produtos SET nome = $1, descricao = $2, preco_venda = $3, margem_revenda = $4, preco_revenda = $5, rendimento = $6, eh_destaque = $7, desconto_destaque = $8, validade_promocao = $9 WHERE id = $10",
-      [nome, descricao || null, preco_venda, margem_revenda || 0, preco_revenda || 0, rendimento || 1, isDestaque, descontoFinal, validadeFinal, id]
+      "UPDATE produtos SET nome = $1, descricao = $2, preco_venda = $3, margem_revenda = $4, preco_revenda = $5, rendimento = $6, eh_destaque = $7, desconto_destaque = $8, validade_promocao = $9, ativo = $10, eh_agregado = $11, custo = $12, estoque = $13 WHERE id = $14",
+      [nome, descricao || null, preco_venda, margem_revenda || 0, preco_revenda || 0, rendimento || 1, isDestaque, descontoFinal, validadeFinal, (ativo === false ? false : true), eh_agregado || false, custo || 0, estoque || 0, id]
     );
 
     // Remove ingredientes antigos para reinserir os atualizados
@@ -316,10 +332,10 @@ router.put("/:id", async (req, res) => {
     // Atualiza agregados (remove antigos e insere novos)
     await client.query("DELETE FROM produto_agregados WHERE produto_id = $1", [id]);
     if (agregados && agregados.length > 0) {
-      for (const aggId of agregados) {
+      for (const agg of agregados) {
         await client.query(
-          "INSERT INTO produto_agregados (produto_id, agregado_id) VALUES ($1, $2)",
-          [id, aggId]
+          "INSERT INTO produto_agregados (produto_id, agregado_id, preco) VALUES ($1, $2, $3)",
+          [id, agg.id, agg.preco]
         );
       }
     }
@@ -362,6 +378,27 @@ router.patch("/:id/destaque", async (req, res) => {
   } catch (error) {
     await client.query("ROLLBACK");
     res.status(500).json({ error: "Erro ao atualizar destaque" });
+  } finally {
+    client.release();
+  }
+});
+
+// ALTERAR STATUS ATIVO/INATIVO (PATCH)
+router.patch("/:id/ativo", async (req, res) => {
+  const { id } = req.params;
+  const { ativo } = req.body;
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    await client.query("UPDATE produtos SET ativo = $1 WHERE id = $2", [ativo, id]);
+
+    await client.query("COMMIT");
+    res.json({ message: "Status do produto atualizado!" });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    res.status(500).json({ error: "Erro ao atualizar status do produto" });
   } finally {
     client.release();
   }

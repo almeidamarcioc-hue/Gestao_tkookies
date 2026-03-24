@@ -46,10 +46,10 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
         id: `extra-${agg.id}`,
         original_id: agg.id,
         nome: agg.nome,
-        preco_venda: Number(agg.preco),
+        preco_venda: Number(agg.preco || 0),
         quantidade: 1,
         eh_agregado: true,
-        imagens: [] // Ingredientes/Agregados não tem imagem padrão aqui
+        imagens: agg.imagem ? [{ imagem: agg.imagem, eh_capa: true }] : []
     };
     addToCart(itemToAdd, 1);
   };
@@ -307,11 +307,33 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
                                 alignItems: 'center',
                                 bgcolor: '#FFF8E1', // Fundo amarelado para destaque
                                 borderRadius: 3,
-                                border: '1px dashed #FFB74D'
+                                border: '1px dashed #FFB74D',
+                                gap: 2
                             }}>
-                                <Box>
+                                {agg.imagem ? (
+                                    <Box 
+                                        component="img" 
+                                        src={agg.imagem} 
+                                        sx={{ width: 50, height: 50, borderRadius: 2, objectFit: 'cover' }} 
+                                    />
+                                ) : (
+                                <Box sx={{ 
+                                    width: 50, 
+                                    height: 50, 
+                                    borderRadius: 2, 
+                                    bgcolor: 'rgba(255, 255, 255, 0.5)', 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center', 
+                                    border: '1px solid #FFB74D',
+                                    flexShrink: 0
+                                }}>
+                                    <CardGiftcard sx={{ color: '#E65100' }} />
+                                </Box>
+                                )}
+                                <Box sx={{ flexGrow: 1 }}>
                                     <Typography variant="subtitle2" fontWeight="bold" color="#E65100">{agg.nome}</Typography>
-                                    <Typography variant="caption" color="text.secondary">Adicione por R$ {Number(agg.preco).toFixed(2)}</Typography>
+                                    <Typography variant="caption" color="text.secondary">Adicione por R$ {Number(agg.preco || 0).toFixed(2)}</Typography>
                                 </Box>
                                 <Button 
                                     size="small" 

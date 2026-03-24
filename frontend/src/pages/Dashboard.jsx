@@ -43,11 +43,15 @@ export default function Dashboard() {
   const [editMargem, setEditMargem] = useState(0);
   const [editMargemRevenda, setEditMargemRevenda] = useState(0);
   const [newIngApenasRevenda, setNewIngApenasRevenda] = useState(false);
+  const [editEhAgregado, setEditEhAgregado] = useState(false);
+  const [editCustoManual, setEditCustoManual] = useState("");
+  const [editEstoqueManual, setEditEstoqueManual] = useState("");
 
   const [isRecalculating, setIsRecalculating] = useState(false);
 
   // Estados para Agregados no Modal
   const [newAgregado, setNewAgregado] = useState(null);
+  const [newAgregadoPreco, setNewAgregadoPreco] = useState("");
 
   const loadData = async () => {
     await api.get("/produtos").then((res) => setProdutos(Array.isArray(res.data) ? res.data : []));
@@ -124,6 +128,9 @@ export default function Dashboard() {
     prodCopy.imagens = prodCopy.imagens || [];
     
     setEditRendimento(rendimento);
+    setEditEhAgregado(prodCopy.eh_agregado || false);
+    setEditCustoManual(prodCopy.custo || "");
+    setEditEstoqueManual(prodCopy.estoque || "");
     // Garante que agregados seja um array (caso venha undefined do backend antigo)
     prodCopy.agregados = prodCopy.agregados || [];
     setEditProduct(prodCopy);
@@ -140,13 +147,17 @@ export default function Dashboard() {
     setEditRendimento(1);
     setNewIngApenasRevenda(false);
     setNewAgregado(null);
+    setNewAgregadoPreco("");
+    setEditEhAgregado(false);
+    setEditCustoManual("");
+    setEditEstoqueManual("");
   };
 
   // Recalcula o preço de venda no modal quando ingredientes ou margem mudam
   useEffect(() => {
     if (open && editProduct) {
       const qtdCookies = Number(editRendimento) || 1;
-      const custoReceita = calcularCusto(editProduct.ingredientes);
+      const custoReceita = editEhAgregado ? (Number(editCustoManual) || 0) : calcularCusto(editProduct.ingredientes);
       const custoUnitario = custoReceita / qtdCookies;
       const margem = parseFloat(String(editMargem).replace(',', '.')) || 0;
       const novoPreco = custoUnitario * (1 + margem / 100);
@@ -163,8 +174,8 @@ export default function Dashboard() {
           preco_revenda: novoPrecoRevenda.toFixed(2)
         };
       });
-    }
-  }, [editProduct ? editProduct.ingredientes : null, editMargem, editMargemRevenda, editRendimento, open]);
+    } // Adicionada dependência editEhAgregado e editCustoManual
+  }, [editProduct ? editProduct.ingredientes : null, editMargem, editMargemRevenda, editRendimento, open, editEhAgregado, editCustoManual]);
 
   // Manipulador para alteração manual do Preço de Venda (Edição)
   const handleEditPrecoVendaChange = (e) => {
@@ -172,7 +183,7 @@ export default function Dashboard() {
     setEditProduct({ ...editProduct, preco_venda: novoPreco });
     
     const qtdCookies = Number(editRendimento) || 1;
-    const custoReceita = calcularCusto(editProduct.ingredientes);
+    const custoReceita = editEhAgregado ? (Number(editCustoManual) || 0) : calcularCusto(editProduct.ingredientes);
     const custoUnitario = custoReceita / qtdCookies;
     
     if (custoUnitario > 0) {
@@ -271,10 +282,11 @@ export default function Dashboard() {
   };
 
   const handleAddAgregadoEdit = () => {
-    if (!newAgregado) return;
+    if (!newAgregado || !newAgregadoPreco) return;
     if (editProduct.agregados.some(a => a.id === newAgregado.id)) return alert("Já adicionado.");
-    setEditProduct(prev => ({ ...prev, agregados: [...prev.agregados, newAgregado] }));
+    setEditProduct(prev => ({ ...prev, agregados: [...prev.agregados, { ...newAgregado, preco: Number(newAgregadoPreco) }] }));
     setNewAgregado(null);
+    setNewAgregadoPreco("");
   };
 
   const handleRemoveAgregadoEdit = (index) => {
@@ -298,7 +310,10 @@ export default function Dashboard() {
         imagens: editProduct.imagens || [],
         eh_destaque: editProduct.eh_destaque,
         desconto_destaque: Number(editProduct.desconto_destaque),
-        agregados: editProduct.agregados?.map(a => a.id) || []
+        agregados: editProduct.agregados?.map(a => ({ id: a.id, preco: Number(a.preco) })) || [],
+        eh_agregado: editEhAgregado,
+        custo: editEhAgregado ? Number(editCustoManual) : 0,
+        estoque: editEhAgregado ? Number(editEstoqueManual) : 0
       };
       await api.put(`/produtos/${editProduct.id}`, payload);
       alert("Produto atualizado!");
@@ -516,6 +531,10 @@ export default function Dashboard() {
                   control={<Checkbox checked={editProduct.ativo !== false} onChange={(e) => setEditProduct({...editProduct, ativo: e.target.checked})} />} 
                   label="Ativo no Cardápio" 
                 />
+                <FormControlLabel 
+                  control={<Checkbox checked={editEhAgregado} onChange={(e) => setEditEhAgregado(e.target.checked)} />} 
+                  label="É Produto Agregado / Extra" 
+                />
                 {editProduct.eh_destaque && (
                   <TextField label="% Desconto" type="number" size="small" sx={{ width: 150 }} value={editProduct.desconto_destaque || 0} onChange={(e) => setEditProduct({...editProduct, desconto_destaque: e.target.value})} />
                 )}
@@ -551,10 +570,12 @@ export default function Dashboard() {
                 </Grid>
                 <Grid item xs={3}>
                   <TextField 
-                    label="Custo Total (Receita)"
-                    value={`R$ ${calcularCusto(editProduct.ingredientes).toFixed(2)}`}
-                    InputProps={{ readOnly: true }}
+                    label={editEhAgregado ? "Custo (Manual)" : "Custo Total (Receita)"}
+                    value={editEhAgregado ? editCustoManual : `R$ ${calcularCusto(editProduct.ingredientes).toFixed(2)}`}
+                    onChange={editEhAgregado ? (e) => setEditCustoManual(e.target.value) : undefined}
+                    InputProps={{ readOnly: !editEhAgregado }}
                     fullWidth
+                    type={editEhAgregado ? "number" : "text"}
                     variant="filled"
                   />
                 </Grid>
@@ -565,7 +586,11 @@ export default function Dashboard() {
                     <Typography variant="subtitle2" color="primary" fontWeight="bold" mb={2}>VENDA</Typography>
                     <Box display="flex" flexDirection="column" gap={2}>
                       <TextField label="Margem (%)" type="number" fullWidth value={editMargem} onChange={(e) => setEditMargem(e.target.value)} />
-                      <TextField label="Custo Unitário" value={`R$ ${(calcularCusto(editProduct.ingredientes) / (Number(editRendimento) || 1)).toFixed(2)}`} fullWidth InputProps={{ readOnly: true }} variant="filled" />
+                      <TextField 
+                        label="Custo Unitário" 
+                        value={`R$ ${(editEhAgregado ? (Number(editCustoManual) || 0) : calcularCusto(editProduct.ingredientes) / (Number(editRendimento) || 1)).toFixed(2)}`} 
+                        fullWidth InputProps={{ readOnly: true }} variant="filled" 
+                      />
                       <TextField 
                         label="Preço de Venda" 
                         type="number"
@@ -573,6 +598,9 @@ export default function Dashboard() {
                         value={editProduct.preco_venda} 
                         onChange={handleEditPrecoVendaChange}
                         sx={{ "& input": { color: 'primary.main', fontWeight: 'bold' } }} />
+                      {editEhAgregado && (
+                        <TextField label="Estoque Atual" type="number" fullWidth value={editEstoqueManual} onChange={(e) => setEditEstoqueManual(e.target.value)} />
+                      )}
                     </Box>
                   </Paper>
                 </Grid>
@@ -596,66 +624,70 @@ export default function Dashboard() {
                 </Grid>
               </Grid>
 
-              <Typography variant="h6" gutterBottom>Ingredientes</Typography>
-              
-              {/* Adicionar novo ingrediente no modal */}
-              <Box display="flex" gap={1} mb={2} alignItems="center">
-                <Autocomplete
-                  fullWidth
-                  size="small"
-                  options={Array.isArray(allIngredientes) ? allIngredientes : []}
-                  getOptionLabel={(option) => `${option.nome} (${option.unidade})`}
-                  value={(Array.isArray(allIngredientes) ? allIngredientes.find((i) => i.id === newIngId) : null) || null}
-                  onChange={(event, newValue) => {
-                    setNewIngId(newValue ? newValue.id : "");
-                  }}
-                  renderInput={(params) => <TextField {...params} label="Adicionar Ingrediente" />}
-                />
-                <TextField 
-                  label="Qtd" 
-                  type="number" 
-                  size="small" 
-                  sx={{ width: 100 }} 
-                  value={newIngQtd} 
-                  onChange={(e) => setNewIngQtd(e.target.value)} 
-                />
-                <FormControlLabel 
-                  control={<Checkbox checked={newIngApenasRevenda} onChange={(e) => setNewIngApenasRevenda(e.target.checked)} />} 
-                  label="Apenas Revenda" 
-                  sx={{ whiteSpace: 'nowrap' }}
-                />
-                <Button variant="contained" onClick={handleAddIngredientToEdit}><Add /></Button>
-              </Box>
+              {!editEhAgregado && (
+                <>
+                <Typography variant="h6" gutterBottom>Ingredientes</Typography>
+                
+                {/* Adicionar novo ingrediente no modal */}
+                <Box display="flex" gap={1} mb={2} alignItems="center">
+                    <Autocomplete
+                    fullWidth
+                    size="small"
+                    options={Array.isArray(allIngredientes) ? allIngredientes : []}
+                    getOptionLabel={(option) => `${option.nome} (${option.unidade})`}
+                    value={(Array.isArray(allIngredientes) ? allIngredientes.find((i) => i.id === newIngId) : null) || null}
+                    onChange={(event, newValue) => {
+                        setNewIngId(newValue ? newValue.id : "");
+                    }}
+                    renderInput={(params) => <TextField {...params} label="Adicionar Ingrediente" />}
+                    />
+                    <TextField 
+                    label="Qtd" 
+                    type="number" 
+                    size="small" 
+                    sx={{ width: 100 }} 
+                    value={newIngQtd} 
+                    onChange={(e) => setNewIngQtd(e.target.value)} 
+                    />
+                    <FormControlLabel 
+                    control={<Checkbox checked={newIngApenasRevenda} onChange={(e) => setNewIngApenasRevenda(e.target.checked)} />} 
+                    label="Apenas Revenda" 
+                    sx={{ whiteSpace: 'nowrap' }}
+                    />
+                    <Button variant="contained" onClick={handleAddIngredientToEdit}><Add /></Button>
+                </Box>
 
-              {/* Lista de ingredientes do produto em edição */}
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Ingrediente</TableCell>
-                    <TableCell>Qtd</TableCell>
-                    <TableCell align="right">Custo</TableCell>
-                    <TableCell align="right">Ação</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {editProduct.ingredientes.map((ing, idx) => {
-                    const custoBase = Number(ing.custo_base) || 0;
-                    const estoqueBase = Number(ing.estoque_base) || 1;
-                    const custoItem = (custoBase / estoqueBase) * Number(ing.quantidade);
+                {/* Lista de ingredientes do produto em edição */}
+                <Table size="small">
+                    <TableHead>
+                    <TableRow>
+                        <TableCell>Ingrediente</TableCell>
+                        <TableCell>Qtd</TableCell>
+                        <TableCell align="right">Custo</TableCell>
+                        <TableCell align="right">Ação</TableCell>
+                    </TableRow>
+                    </TableHead>
+                    <TableBody>
+                    {editProduct.ingredientes.map((ing, idx) => {
+                        const custoBase = Number(ing.custo_base) || 0;
+                        const estoqueBase = Number(ing.estoque_base) || 1;
+                        const custoItem = (custoBase / estoqueBase) * Number(ing.quantidade);
 
-                    return (
-                      <TableRow key={ing._tempId} sx={ing.apenas_revenda ? { bgcolor: '#FFF8E1' } : {}}>
-                        <TableCell>{ing.nome} {ing.apenas_revenda && <Typography variant="caption" color="secondary" fontWeight="bold">(Revenda)</Typography>}</TableCell>
-                        <TableCell>{`${ing.quantidade} ${ing.unidade}`}</TableCell>
-                        <TableCell align="right">R$ {custoItem.toFixed(4)}</TableCell>
-                        <TableCell align="right">
-                          <IconButton size="small" color="error" onClick={() => handleRemoveIngredientFromEdit(idx)}><Delete fontSize="small" /></IconButton>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                        return (
+                        <TableRow key={ing._tempId} sx={ing.apenas_revenda ? { bgcolor: '#FFF8E1' } : {}}>
+                            <TableCell>{ing.nome} {ing.apenas_revenda && <Typography variant="caption" color="secondary" fontWeight="bold">(Revenda)</Typography>}</TableCell>
+                            <TableCell>{`${ing.quantidade} ${ing.unidade}`}</TableCell>
+                            <TableCell align="right">R$ {custoItem.toFixed(4)}</TableCell>
+                            <TableCell align="right">
+                            <IconButton size="small" color="error" onClick={() => handleRemoveIngredientFromEdit(idx)}><Delete fontSize="small" /></IconButton>
+                            </TableCell>
+                        </TableRow>
+                        );
+                    })}
+                    </TableBody>
+                </Table>
+                </>
+              )}
 
               {/* Seção de Agregados no Modal de Edição */}
               <Typography variant="subtitle1" fontWeight="bold" mt={3} mb={1} color="secondary">
@@ -676,8 +708,9 @@ export default function Dashboard() {
                   getOptionLabel={(option) => `${option.nome} (R$ ${Number(option.preco_venda).toFixed(2)})`}
                   value={newAgregado}
                   onChange={(event, newValue) => setNewAgregado(newValue)}
-                  renderInput={(params) => <TextField {...params} label="Adicionar Produto Extra" />}
+                  renderInput={(params) => <TextField {...params} label="Produto Extra" />}
                 />
+                <TextField label="Preço (R$)" type="number" size="small" sx={{ width: 120 }} value={newAgregadoPreco} onChange={(e) => setNewAgregadoPreco(e.target.value)} />
                 <Button variant="outlined" onClick={handleAddAgregadoEdit}><Add /></Button>
               </Box>
               <Table size="small">
@@ -686,7 +719,7 @@ export default function Dashboard() {
                   {editProduct.agregados?.map((ag, idx) => (
                     <TableRow key={ag.id}>
                       <TableCell>{ag.nome}</TableCell>
-                      <TableCell align="right">R$ {Number(ag.preco_venda).toFixed(2)}</TableCell>
+                      <TableCell align="right">R$ {Number(ag.preco).toFixed(2)}</TableCell>
                       <TableCell align="right">
                         <IconButton size="small" color="error" onClick={() => handleRemoveAgregadoEdit(idx)}>
                           <Delete fontSize="small" />
