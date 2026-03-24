@@ -62,6 +62,10 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
   }, []);
 
   const getItemPrice = (item) => {
+    // Agregados sempre usam o preço de venda definido no vínculo (extras)
+    if (item.eh_agregado) {
+      return Number(item.preco_venda);
+    }
     if (clientUser?.is_revendedor) {
       return Number(item.preco_revenda);
     }
@@ -219,11 +223,17 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
                   <TableRow key={item.id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                     <TableCell>
                       <Box display="flex" alignItems="center" gap={2}>
-                        <img 
-                          src={item.imagens?.find(img => img.eh_capa)?.imagem || item.imagens?.[0]?.imagem} 
-                          alt={item.nome} 
-                          style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8 }} 
-                        />
+                        {item.imagens && item.imagens.length > 0 ? (
+                          <img 
+                            src={item.imagens.find(img => img.eh_capa)?.imagem || item.imagens[0]?.imagem} 
+                            alt={item.nome} 
+                            style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8 }} 
+                          />
+                        ) : (
+                          <Box sx={{ width: 80, height: 80, borderRadius: 2, bgcolor: '#FFF8E1', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #FFB74D' }}>
+                              <CardGiftcard sx={{ color: '#E65100', fontSize: 40 }} />
+                          </Box>
+                        )}
                         <Box>
                           <Typography variant="subtitle1" fontWeight="bold" color="#4E342E">{item.nome}</Typography>
                           {item.eh_destaque && item.desconto_destaque > 0 && (

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Box, Typography, Button, Container, Grid, IconButton, Badge, Dialog, DialogTitle, DialogContent, DialogActions, Chip, Paper, Fab, Snackbar, Alert, Card, CardContent, CardMedia, CardActionArea } from "@mui/material";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Add, Remove, ShoppingBag, Favorite, FavoriteBorder, Star, ArrowForward, AddCircleOutline, ListAlt, RestaurantMenu, PointOfSale, Inventory2, People, LocalOffer, Info, Close, Storefront, Map, Loyalty, DeleteOutline } from "@mui/icons-material";
+import { Add, Remove, ShoppingBag, Favorite, FavoriteBorder, Star, ArrowForward, AddCircleOutline, ListAlt, RestaurantMenu, PointOfSale, Inventory2, People, LocalOffer, Info, Close, Storefront, Map, Loyalty, DeleteOutline, CardGiftcard } from "@mui/icons-material";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import api from "../services/api";
 import ResellerCTA from "../components/ResellerCTA";
@@ -398,6 +398,27 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                               sx={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
                               onClick={() => handleOpenDetails(prod)}
                             />
+                            
+                            {/* Marcador de Agregado Disponível */}
+                            {prod.agregados && prod.agregados.length > 0 && (
+                              <Chip 
+                                label="Embalagem especial disponível" 
+                                size="small" 
+                                sx={{ 
+                                  position: 'absolute', 
+                                  bottom: 8, 
+                                  left: 8, 
+                                  bgcolor: 'rgba(255, 255, 255, 0.95)', 
+                                  color: '#E65100', 
+                                  fontWeight: 'bold', 
+                                  fontSize: '0.7rem',
+                                  height: 24,
+                                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                                }} 
+                                icon={<CardGiftcard sx={{ '&&': { color: '#E65100', width: 16 } }} />}
+                              />
+                            )}
+
                             <IconButton 
                               size="small"
                               onClick={() => toggleFavorite(prod)}
