@@ -663,8 +663,8 @@ export default function Dashboard() {
               </Typography>
               
               <Alert severity="info" sx={{ mb: 2 }}>
-                <strong>Como funciona:</strong> Cadastre itens extras (como Embalagens, Cartões ou Adicionais) como produtos normais primeiro. 
-                Depois, pesquise e selecione-os abaixo para vinculá-los a este produto. 
+                <strong>Como funciona:</strong> Cadastre itens extras (Embalagens, Adicionais) como produtos normais. 
+                Selecione-os abaixo para vinculá-los. 
                 O cliente poderá escolher adicioná-los ao carrinho na hora da compra.
               </Alert>
 
