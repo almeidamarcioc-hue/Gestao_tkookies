@@ -18,7 +18,8 @@ import {
   Container,
   FormControlLabel,
   Checkbox,
-  Grid
+  Grid,
+  Alert
 } from "@mui/material";
 
 import { Delete, CloudUpload, Star, StarBorder } from "@mui/icons-material";
@@ -46,6 +47,9 @@ export default function Products() {
   const [ehDestaque, setEhDestaque] = useState(false);
   const [descontoDestaque, setDescontoDestaque] = useState(0);
 
+  const [agregados, setAgregados] = useState([]); // Produtos sugeridos/agregados
+  const [agregadoSelecionado, setAgregadoSelecionado] = useState(null);
+
   // Efeito para preencher o formulário ao duplicar um produto
   useEffect(() => {
     const productToDuplicate = location.state?.productToDuplicate;
@@ -70,6 +74,9 @@ export default function Products() {
         eh_capa: img.eh_capa,
         _tempId: Math.random()
       })) || []);
+
+      // Preenche agregados
+      setAgregados(productToDuplicate.agregados || []);
 
       // Preenche ingredientes (itens)
       const duplicatedItens = productToDuplicate.ingredientes?.map(ing => ({
@@ -259,6 +266,19 @@ export default function Products() {
     setApenasRevenda(false);
   }
 
+  function adicionarAgregado() {
+    if (!agregadoSelecionado) return;
+    
+    // Evita duplicatas
+    if (agregados.some(a => a.id === agregadoSelecionado.id)) {
+      alert("Este produto já foi adicionado como agregado.");
+      return;
+    }
+
+    setAgregados([...agregados, agregadoSelecionado]);
+    setAgregadoSelecionado(null);
+  }
+
   async function salvarProduto() {
     if (!nome || itens.length === 0) {
       alert("Nome e ingredientes são necessários.");
@@ -282,7 +302,8 @@ export default function Products() {
       })),
       imagens: imagens.map(img => ({ imagem: img.imagem, eh_capa: img.eh_capa })),
       eh_destaque: ehDestaque,
-      desconto_destaque: Number(descontoDestaque)
+      desconto_destaque: Number(descontoDestaque),
+      agregados: agregados.map(a => a.id) // Envia apenas os IDs
     };
 
     try {
@@ -301,6 +322,7 @@ export default function Products() {
       setPrecoRevenda(0);
       setImagens([]);
       setEhDestaque(false);
+      setAgregados([]);
       setDescontoDestaque(0);
       
       // Recarrega a lista
@@ -468,6 +490,48 @@ export default function Products() {
           </TableBody>
         </Table>
         <Button variant="contained" fullWidth size="large" onClick={salvarProduto}>CADASTRAR PRODUTO</Button>
+      </Paper>
+
+      {/* Seção de Produtos Agregados */}
+      <Paper sx={{ p: 3, mb: 4 }}>
+        <Typography variant="h6" mb={2} color="secondary">Produtos Agregados / Extras (Opcionais para o Cliente)</Typography>
+        
+        <Alert severity="info" sx={{ mb: 3 }}>
+          <strong>Como funciona:</strong> Cadastre itens extras (como Embalagens, Cartões ou Adicionais) como produtos normais primeiro. 
+          Depois, pesquise e selecione-os abaixo para vinculá-los a este produto. 
+          O cliente poderá escolher adicioná-los ao carrinho na hora da compra.
+        </Alert>
+        
+        <Box display="flex" gap={2} mb={3}>
+          <Autocomplete
+            fullWidth
+            options={listaProdutos.filter(p => p.nome !== nome)} // Não pode adicionar a si mesmo
+            getOptionLabel={(option) => `${option.nome} (R$ ${Number(option.preco_venda).toFixed(2)})`}
+            value={agregadoSelecionado}
+            onChange={(event, newValue) => setAgregadoSelecionado(newValue)}
+            renderInput={(params) => <TextField {...params} label="Buscar Produto Extra" />}
+          />
+          <Button variant="outlined" onClick={adicionarAgregado}>Adicionar</Button>
+        </Box>
+
+        <Table size="small">
+          <TableHead>
+            <TableRow><TableCell>Produto Extra</TableCell><TableCell align="right">Preço (+)</TableCell><TableCell align="center">Ação</TableCell></TableRow>
+          </TableHead>
+          <TableBody>
+            {agregados.map((item, index) => (
+              <TableRow key={item.id}>
+                <TableCell>{item.nome}</TableCell>
+                <TableCell align="right">R$ {Number(item.preco_venda).toFixed(2)}</TableCell>
+                <TableCell align="center">
+                  <IconButton color="error" size="small" onClick={() => setAgregados(agregados.filter((_, i) => i !== index))}>
+                    <Delete fontSize="small" />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </Paper>
 
       <Typography variant="h5" mb={2} fontWeight="bold">Produtos Já Cadastrados</Typography>

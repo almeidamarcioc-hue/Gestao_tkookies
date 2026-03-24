@@ -142,6 +142,17 @@ export async function initDatabase() {
       )
     `);
 
+    // Tabela de Produtos Agregados (Venda casada opcional / Extras)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS produto_agregados (
+        produto_id INT NOT NULL,
+        agregado_id INT NOT NULL,
+        PRIMARY KEY (produto_id, agregado_id),
+        FOREIGN KEY (produto_id) REFERENCES produtos(id) ON DELETE CASCADE,
+        FOREIGN KEY (agregado_id) REFERENCES produtos(id) ON DELETE CASCADE
+      )
+    `);
+
     // Tabela de Configurações do Sistema
     await pool.query(`
       CREATE TABLE IF NOT EXISTS configuracoes (
