@@ -379,15 +379,16 @@ router.delete("/:id", async (req, res) => {
     // 1. Verifica se o produto está em uso (Pedidos ou Combos)
     const checkPedidos = await client.query("SELECT COUNT(*) as total FROM itens_pedido WHERE produto_id = $1", [id]);
     const checkCombos = await client.query("SELECT COUNT(*) as total FROM combo_itens WHERE produto_id = $1", [id]);
+    const checkAgregados = await client.query("SELECT COUNT(*) as total FROM produto_agregados WHERE agregado_id = $1", [id]);
     
-    const totalUsos = Number(checkPedidos.rows[0].total) + Number(checkCombos.rows[0].total);
+    const totalUsos = Number(checkPedidos.rows[0].total) + Number(checkCombos.rows[0].total) + Number(checkAgregados.rows[0].total);
 
     if (totalUsos > 0 && confirm !== 'true') {
       await client.query("ROLLBACK");
       return res.status(409).json({ 
-        error: "Este produto está vinculado a pedidos ou combos.",
+        error: "Este produto está vinculado a pedidos, combos ou é agregado de outro produto.",
         confirmationRequired: true,
-        message: `Este item aparece em ${totalUsos} registros. Excluí-lo removerá esses itens do histórico. Deseja continuar?`
+        message: `Este item aparece em ${totalUsos} registros (pedidos, combos ou agregados). Excluí-lo removerá esses vínculos. Deseja continuar?`
       });
     }
 
