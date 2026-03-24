@@ -19,11 +19,16 @@ router.get("/", async (req, res) => {
              pi.apenas_revenda as ing_apenas_revenda,
              pim.id as img_id,
              pim.imagem as img_conteudo,
-             pim.eh_capa as img_eh_capa
+             pim.eh_capa as img_eh_capa,
+             pagg.id as agg_id,
+             pagg.nome as agg_nome,
+             pagg.preco_venda as agg_preco
       FROM produtos p
       LEFT JOIN produto_ingredientes pi ON p.id = pi.produto_id
       LEFT JOIN ingredientes i ON pi.ingrediente_id = i.id
       LEFT JOIN produto_imagens pim ON p.id = pim.produto_id
+      LEFT JOIN produto_agregados pa ON p.id = pa.produto_id
+      LEFT JOIN produtos pagg ON pa.agregado_id = pagg.id
       ORDER BY p.nome ASC
     `);
 
@@ -61,7 +66,8 @@ router.get("/", async (req, res) => {
           validade_promocao: row.validade_promocao ? new Date(row.validade_promocao).toISOString().split('T')[0] : null,
           created_at: row.created_at,
           ingredientes: [],
-          imagens: []
+          imagens: [],
+          agregados: []
         });
       }
 
@@ -83,6 +89,14 @@ router.get("/", async (req, res) => {
           id: row.img_id,
           imagem: row.img_conteudo,
           eh_capa: row.img_eh_capa === 1 || row.img_eh_capa === true
+        });
+      }
+
+      if (row.agg_id && !productsMap.get(row.id).agregados.some(a => a.id === row.agg_id)) {
+        productsMap.get(row.id).agregados.push({
+          id: row.agg_id,
+          nome: row.agg_nome,
+          preco_venda: row.agg_preco
         });
       }
     });
@@ -110,11 +124,16 @@ router.get("/:id", async (req, res) => {
              pi.apenas_revenda as ing_apenas_revenda,
              pim.id as img_id,
              pim.imagem as img_conteudo,
-             pim.eh_capa as img_eh_capa
+             pim.eh_capa as img_eh_capa,
+             pagg.id as agg_id,
+             pagg.nome as agg_nome,
+             pagg.preco_venda as agg_preco
       FROM produtos p
       LEFT JOIN produto_ingredientes pi ON p.id = pi.produto_id
       LEFT JOIN ingredientes i ON pi.ingrediente_id = i.id
       LEFT JOIN produto_imagens pim ON p.id = pim.produto_id
+      LEFT JOIN produto_agregados pa ON p.id = pa.produto_id
+      LEFT JOIN produtos pagg ON pa.agregado_id = pagg.id
       WHERE p.id = $1
     `, [id]);
 
@@ -135,11 +154,13 @@ router.get("/:id", async (req, res) => {
       validade_promocao: row.validade_promocao ? new Date(row.validade_promocao).toISOString().split('T')[0] : null,
       created_at: row.created_at,
       ingredientes: [],
-      imagens: []
+      imagens: [],
+      agregados: []
     };
 
     const ingMap = new Map();
     const imgMap = new Map();
+    const aggMap = new Map();
 
     result.rows.forEach(r => {
       if (r.ing_id && !ingMap.has(r.ing_id)) {
@@ -163,6 +184,14 @@ router.get("/:id", async (req, res) => {
           eh_capa: r.img_eh_capa === 1 || r.img_eh_capa === true
         });
       }
+      if (r.agg_id && !aggMap.has(r.agg_id)) {
+        aggMap.set(r.agg_id, true);
+        product.agregados.push({
+          id: r.agg_id,
+          nome: r.agg_nome,
+          preco_venda: r.agg_preco
+        });
+      }
     });
 
     res.json(product);
@@ -174,7 +203,7 @@ router.get("/:id", async (req, res) => {
 
 // CRIAR PRODUTO
 router.post("/", async (req, res) => {
-  const { nome, descricao, preco_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque, validade_promocao } = req.body;
+  const { nome, descricao, preco_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque, validade_promocao, agregados } = req.body;
   const client = await pool.connect();
 
   try {
@@ -208,6 +237,15 @@ router.post("/", async (req, res) => {
       }
     }
 
+    if (agregados && agregados.length > 0) {
+      for (const aggId of agregados) {
+        await client.query(
+          "INSERT INTO produto_agregados (produto_id, agregado_id) VALUES ($1, $2)",
+          [produtoId, aggId]
+        );
+      }
+    }
+
     await client.query("COMMIT");
     res.status(201).json({ message: "Produto criado com sucesso!", id: produtoId });
   } catch (error) {
@@ -233,7 +271,7 @@ router.post("/", async (req, res) => {
 // ATUALIZAR PRODUTO (Edição total)
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
-  const { nome, descricao, preco_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque, validade_promocao } = req.body;
+  const { nome, descricao, preco_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque, validade_promocao, agregados } = req.body;
   const client = await pool.connect();
 
   try {
@@ -272,6 +310,17 @@ router.put("/:id", async (req, res) => {
             [id, img.imagem, img.eh_capa || false]
           );
         }
+      }
+    }
+
+    // Atualiza agregados (remove antigos e insere novos)
+    await client.query("DELETE FROM produto_agregados WHERE produto_id = $1", [id]);
+    if (agregados && agregados.length > 0) {
+      for (const aggId of agregados) {
+        await client.query(
+          "INSERT INTO produto_agregados (produto_id, agregado_id) VALUES ($1, $2)",
+          [id, aggId]
+        );
       }
     }
 
@@ -345,6 +394,7 @@ router.delete("/:id", async (req, res) => {
     // 2. Se confirmado ou sem uso, remove as dependências manuais (caso o banco não tenha CASCADE configurado)
     await client.query("DELETE FROM itens_pedido WHERE produto_id = $1", [id]);
     await client.query("DELETE FROM combo_itens WHERE produto_id = $1", [id]);
+    await client.query("DELETE FROM produto_agregados WHERE produto_id = $1 OR agregado_id = $1", [id]);
     
     // 3. Remove o produto
     await client.query("DELETE FROM produtos WHERE id = $1", [id]);
