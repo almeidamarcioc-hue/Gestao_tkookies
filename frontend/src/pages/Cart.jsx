@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { Container, Typography, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, RadioGroup, FormControlLabel, Radio, Divider, IconButton, TextField, Grid } from "@mui/material";
-import { Delete, ArrowBack, RemoveShoppingCart, LocalShipping, AttachMoney, QrCode, Storefront, Add, Remove, ContentCopy } from "@mui/icons-material";
+import { Delete, ArrowBack, RemoveShoppingCart, LocalShipping, AttachMoney, QrCode, Storefront, Add, Remove, ContentCopy, CardGiftcard } from "@mui/icons-material";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import api from "../services/api";
 import { QrCodePix } from "qrcode-pix";
 import { QRCodeSVG } from "qrcode.react";
 
-export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, clientUser }) {
+export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, clientUser, addToCart }) {
   const [deliveryType, setDeliveryType] = useState("retira"); // 'retira' ou 'entrega'
   const [paymentMethod, setPaymentMethod] = useState("Dinheiro");
   const [addressOption, setAddressOption] = useState("cadastrado");
@@ -25,6 +25,33 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
     boxShadow: "0 8px 32px 0 rgba(78, 52, 46, 0.08)",
     borderRadius: "24px",
     color: "#3E2723"
+  };
+
+  // Lógica para sugestões de agregados (Embalagens/Extras)
+  // Coleta todos os agregados dos produtos no carrinho que ainda não foram adicionados
+  const suggestions = cart.reduce((acc, item) => {
+    if (item.agregados && Array.isArray(item.agregados)) {
+        item.agregados.forEach(agg => {
+            // Evita duplicatas na lista de sugestões e verifica se já não está no carrinho
+            if (!acc.some(a => a.id === agg.id) && !cart.some(c => c.id === `extra-${agg.id}`)) {
+                acc.push(agg);
+            }
+        });
+    }
+    return acc;
+  }, []);
+
+  const handleAddAggregate = (agg) => {
+    const itemToAdd = {
+        id: `extra-${agg.id}`,
+        original_id: agg.id,
+        nome: agg.nome,
+        preco_venda: Number(agg.preco),
+        quantidade: 1,
+        eh_agregado: true,
+        imagens: [] // Ingredientes/Agregados não tem imagem padrão aqui
+    };
+    addToCart(itemToAdd, 1);
   };
 
   useEffect(() => {
@@ -253,6 +280,44 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
             }}
           />
           </Box>
+
+          {/* Seção de Sugestões / Propaganda de Agregados */}
+          {suggestions.length > 0 && (
+            <Box sx={{ mt: 4, mb: 2 }}>
+                <Typography variant="h6" fontWeight="bold" sx={{ color: '#4E342E', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <CardGiftcard color="primary" /> Turbine seu presente
+                </Typography>
+                <Grid container spacing={2}>
+                    {suggestions.map((agg) => (
+                        <Grid item xs={12} sm={6} key={agg.id}>
+                            <Paper sx={{ 
+                                p: 2, 
+                                display: 'flex', 
+                                justifyContent: 'space-between', 
+                                alignItems: 'center',
+                                bgcolor: '#FFF8E1', // Fundo amarelado para destaque
+                                borderRadius: 3,
+                                border: '1px dashed #FFB74D'
+                            }}>
+                                <Box>
+                                    <Typography variant="subtitle2" fontWeight="bold" color="#E65100">{agg.nome}</Typography>
+                                    <Typography variant="caption" color="text.secondary">Adicione por R$ {Number(agg.preco).toFixed(2)}</Typography>
+                                </Box>
+                                <Button 
+                                    size="small" 
+                                    variant="contained" 
+                                    color="warning" 
+                                    onClick={() => handleAddAggregate(agg)}
+                                    sx={{ borderRadius: 20, textTransform: 'none', boxShadow: 'none' }}
+                                >
+                                    Adicionar
+                                </Button>
+                            </Paper>
+                        </Grid>
+                    ))}
+                </Grid>
+            </Box>
+          )}
         </Grid>
 
         {/* Coluna da Direita: Resumo e Opções */}
