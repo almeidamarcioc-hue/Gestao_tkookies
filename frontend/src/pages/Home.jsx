@@ -83,7 +83,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
     api.get("/produtos").then(res => {
       const allProducts = Array.isArray(res.data) ? res.data : [];
       // Filtra apenas produtos com estoque positivo
-      const availableProducts = allProducts.filter(p => Number(p.estoque) > 0);
+      const availableProducts = allProducts.filter(p => Number(p.estoque) > 0 && p.ativo !== false);
       setProducts(availableProducts);
       
       // Encontra produtos destaque com estoque e seleciona um aleatório
@@ -214,6 +214,32 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
     
     return acc + (item.quantidade * price);
   }, 0);
+
+  // Manipula quantidade de agregados no modal
+  const handleAggregateQtyChange = (aggId, delta) => {
+    const currentQty = selectedAggregates[aggId] || 0;
+    const nextQty = Math.max(0, currentQty + delta);
+    
+    // Opcional: Verificar estoque do agregado
+    const aggProduct = products.find(p => p.id === aggId);
+    if (aggProduct && nextQty > Number(aggProduct.estoque)) return; // Trava se sem estoque
+
+    setSelectedAggregates(prev => ({ ...prev, [aggId]: nextQty }));
+  };
+
+  // Adiciona produto principal + agregados ao carrinho
+  const handleAddToCartWithAggregates = () => {
+    // Adiciona o principal
+    handleQtyChange(selectedProduct.id, 1);
+
+    // Adiciona os agregados selecionados
+    Object.entries(selectedAggregates).forEach(([aggId, qty]) => {
+        if (qty > 0) {
+            handleQtyChange(Number(aggId), qty);
+        }
+    });
+    setDetailsOpen(false);
+  };
 
   useEffect(() => {
     if (totalItems > prevTotalItems.current) {
