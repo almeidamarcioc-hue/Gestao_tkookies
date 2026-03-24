@@ -392,7 +392,10 @@ router.patch("/:id/ativo", async (req, res) => {
   try {
     await client.query("BEGIN");
 
-    await client.query("UPDATE produtos SET ativo = $1 WHERE id = $2", [ativo, id]);
+    // Garante conversão segura para booleano
+    const ativoStatus = ativo === true || ativo === 'true' || ativo === 1;
+
+    await client.query("UPDATE produtos SET ativo = $1 WHERE id = $2", [ativoStatus, id]);
 
     await client.query("COMMIT");
     res.json({ message: "Status do produto atualizado!" });
