@@ -696,46 +696,6 @@ export default function Dashboard() {
                   ))}
                 </TableBody>
               </Table>
-
-              {/* Seção de Agregados no Modal de Edição */}
-              <Typography variant="subtitle1" fontWeight="bold" mt={3} mb={1} color="secondary">
-                Produtos Agregados / Extras
-              </Typography>
-              
-              <Alert severity="info" sx={{ mb: 2 }}>
-                <strong>Como funciona:</strong> Cadastre itens extras (como Embalagens, Cartões ou Adicionais) como produtos normais primeiro. 
-                Depois, pesquise e selecione-os abaixo para vinculá-los a este produto. 
-                O cliente poderá escolher adicioná-los ao carrinho na hora da compra.
-              </Alert>
-
-              <Box display="flex" gap={1} mb={2} alignItems="center">
-                <Autocomplete
-                  fullWidth
-                  size="small"
-                  options={allProductsList.filter(p => p.id !== editProduct.id)}
-                  getOptionLabel={(option) => `${option.nome} (R$ ${Number(option.preco_venda).toFixed(2)})`}
-                  value={newAgregado}
-                  onChange={(event, newValue) => setNewAgregado(newValue)}
-                  renderInput={(params) => <TextField {...params} label="Adicionar Produto Extra" />}
-                />
-                <Button variant="outlined" onClick={handleAddAgregadoEdit}><Add /></Button>
-              </Box>
-              <Table size="small">
-                <TableHead><TableRow><TableCell>Produto</TableCell><TableCell align="right">Preço</TableCell><TableCell align="right">Ação</TableCell></TableRow></TableHead>
-                <TableBody>
-                  {editProduct.agregados?.map((ag, idx) => (
-                    <TableRow key={ag.id}>
-                      <TableCell>{ag.nome}</TableCell>
-                      <TableCell align="right">R$ {Number(ag.preco_venda).toFixed(2)}</TableCell>
-                      <TableCell align="right">
-                        <IconButton size="small" color="error" onClick={() => handleRemoveAgregadoEdit(idx)}>
-                          <Delete fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
             </Box>
           )}
         </DialogContent>
