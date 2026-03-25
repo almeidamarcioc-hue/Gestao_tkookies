@@ -5,6 +5,7 @@ import { Add, Remove, ShoppingBag, Favorite, FavoriteBorder, Star, ArrowForward,
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import api from "../services/api";
 import ResellerCTA from "../components/ResellerCTA";
+import TestimonialsCarousel from "../components/TestimonialsCarousel";
 
 // Variantes de Animação (Framer Motion)
 const containerVariants = {
@@ -526,6 +527,11 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
             </Box>
           </Grid>
         </Grid>
+
+      {/* CARROSSEL DE DEPOIMENTOS */}
+      <Box sx={{ mt: 8 }}>
+        <TestimonialsCarousel />
+      </Box>
 
       {/* COMBOS - REMOVED FROM MAIN FLOW TO SIMPLIFY NEW LAYOUT, OR MOVE TO MAIN COLUMN IF NEEDED. 
           For now, strictly following Sidebar request, assuming Combos are part of menu or separate. 

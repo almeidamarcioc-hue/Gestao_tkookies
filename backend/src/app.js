@@ -15,6 +15,7 @@ import financialRouter from "./routes/financial.js";
 import resellersRouter from "./routes/resellers.js";
 import favoritesRouter from "./routes/favorites.js";
 import reportsRouter from "./routes/reports.js";
+import testimonialsRouter from "./routes/testimonials.js";
 
 const app = express();
 
@@ -78,6 +79,7 @@ app.use("/financeiro", financialRouter);
 app.use("/revendedores", resellersRouter);
 app.use("/favoritos", favoritesRouter);
 app.use("/relatorios", reportsRouter);
+app.use("/depoimentos", testimonialsRouter);
 
 // Rota especial para criar tabelas na Vercel (Executar uma vez após deploy)
 app.get("/api/migrate", async (req, res) => {

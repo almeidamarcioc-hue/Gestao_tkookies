@@ -5,6 +5,7 @@ import {
 } from "@mui/material";
 import { CloudUpload, Delete } from "@mui/icons-material";
 import DebugLogs from "../components/DebugLogs";
+import TestimonialsManager from "../components/TestimonialsManager";
 
 export default function Settings() {
   const [homeTitle, setHomeTitle] = useState("");
@@ -211,6 +212,11 @@ export default function Settings() {
             </Button>
           </Grid>
         </Grid>
+      </Paper>
+
+      {/* Gerenciamento de Depoimentos */}
+      <Paper sx={{ p: 3, mt: 3 }}>
+        <TestimonialsManager />
       </Paper>
 
       <Box mt={4}>

@@ -205,6 +205,19 @@ export async function initDatabase() {
       )
     `);
 
+    // Tabela de Depoimentos (Clientes/Revendedores)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS depoimentos (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        nome VARCHAR(255) NOT NULL,
+        cargo VARCHAR(100) DEFAULT 'Cliente',
+        texto TEXT NOT NULL,
+        imagem LONGTEXT,
+        ativo BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // Migrações (Colunas novas) - Executa uma por uma de forma segura
     logs.push(await addColumnSafe("ingredientes", "usado_para_revenda BOOLEAN DEFAULT TRUE"));
     logs.push(await addColumnSafe("produtos", "margem_revenda DECIMAL(10, 2) DEFAULT 0"));
@@ -247,6 +260,7 @@ export async function initDatabase() {
     logs.push(await addColumnSafe("produtos", "ativo BOOLEAN DEFAULT TRUE"));
     logs.push(await addColumnSafe("produtos", "eh_agregado BOOLEAN DEFAULT FALSE"));
     logs.push(await addColumnSafe("produtos", "custo DECIMAL(10, 2) DEFAULT 0"));
+    logs.push(await addColumnSafe("depoimentos", "cargo VARCHAR(100) DEFAULT 'Cliente'"));
 
     console.log("✅ Base de dados inicializada com sucesso");
     return logs;
