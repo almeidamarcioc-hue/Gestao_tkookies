@@ -44,6 +44,11 @@ const TestimonialsManager = () => {
   };
 
   const handleSave = async () => {
+    if (!formData.nome || !formData.texto) {
+      alert("Por favor, preencha o Nome e o Texto do depoimento.");
+      return;
+    }
+
     try {
       if (formData.id) {
         await api.put(`/depoimentos/${formData.id}`, formData);
@@ -53,7 +58,8 @@ const TestimonialsManager = () => {
       setOpen(false);
       loadData();
     } catch (error) {
-      alert('Erro ao salvar depoimento');
+      console.error(error);
+      alert('Erro ao salvar depoimento: ' + (error.response?.data?.details || error.response?.data?.error || error.message));
     }
   };
 

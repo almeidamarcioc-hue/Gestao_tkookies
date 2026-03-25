@@ -28,15 +28,20 @@ router.get("/", async (req, res) => {
 // CRIAR
 router.post("/", async (req, res) => {
   const { nome, cargo, texto, imagem, ativo } = req.body;
+
+  if (!nome || !texto) {
+    return res.status(400).json({ error: "Nome e Texto são obrigatórios." });
+  }
+
   try {
     await pool.query(
       "INSERT INTO depoimentos (nome, cargo, texto, imagem, ativo) VALUES ($1, $2, $3, $4, $5)",
-      [nome, cargo || 'Cliente', texto, imagem, ativo === undefined ? true : ativo]
+      [nome, cargo || 'Cliente', texto, imagem || null, ativo === undefined ? true : ativo]
     );
     res.status(201).json({ message: "Depoimento criado com sucesso!" });
   } catch (error) {
     console.error("Erro ao criar depoimento:", error);
-    res.status(500).json({ error: "Erro ao criar depoimento" });
+    res.status(500).json({ error: "Erro ao criar depoimento", details: error.message });
   }
 });
 
