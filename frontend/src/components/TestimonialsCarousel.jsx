@@ -44,7 +44,7 @@ const TestimonialsCarousel = () => {
       my: 4
     }}>
       <Typography variant="h5" sx={{ fontWeight: 'bold', color: theme.palette.primary.main, mb: 3 }}>
-        O que dizem nossos parceiros ❤️
+        O que dizem nossos parceiros e clientes ❤️
       </Typography>
 
       <Box sx={{ maxWidth: 800, mx: 'auto', px: 2 }}>
@@ -86,7 +86,14 @@ const TestimonialsCarousel = () => {
                 {activeTestimonial.nome.charAt(0)}
               </Avatar>
 
-              <Typography variant="body1" sx={{ fontStyle: 'italic', fontSize: '1.1rem', color: 'text.secondary', minHeight: 60 }}>
+              <Typography variant="body1" sx={{ 
+                fontStyle: 'italic', 
+                fontSize: '1.1rem', 
+                color: 'text.secondary', 
+                minHeight: 60,
+                maxWidth: '100%',
+                wordBreak: 'break-word'
+              }}>
                 "{activeTestimonial.texto}"
               </Typography>
 
