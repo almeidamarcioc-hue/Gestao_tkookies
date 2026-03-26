@@ -247,9 +247,35 @@ router.post("/", async (req, res) => {
     const validadeFinal = isDestaque ? (validade_promocao || null) : null;
     const descontoFinal = isDestaque ? (desconto_destaque || 0) : 0;
 
+    let insertFields = ["nome", "descricao", "preco_venda", "margem_revenda", "preco_revenda", "rendimento", "eh_destaque", "desconto_destaque", "validade_promocao", "ativo", "eh_agregado"];
+    let insertValues = ["$1", "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9", "$10", "$11"];
+    let insertParams = [
+      nome,
+      descricao || null,
+      preco_venda,
+      margem_revenda || 0,
+      preco_revenda || 0,
+      rendimento || 1,
+      isDestaque,
+      descontoFinal,
+      validadeFinal,
+      (ativo === false ? false : true),
+      eh_agregado || false
+    ];
+    let paramIndex = insertParams.length + 1;
+
+    if (eh_agregado) {
+      insertFields.push("custo");
+      insertValues.push(`$${paramIndex++}`);
+      insertParams.push(custo || 0);
+      insertFields.push("estoque");
+      insertValues.push(`$${paramIndex++}`);
+      insertParams.push(estoque || 0);
+    }
+
     const resProd = await client.query(
-      "INSERT INTO produtos (nome, descricao, preco_venda, margem_revenda, preco_revenda, rendimento, eh_destaque, desconto_destaque, validade_promocao, ativo, eh_agregado, custo, estoque) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id",
-      [nome, descricao || null, preco_venda, margem_revenda || 0, preco_revenda || 0, rendimento || 1, isDestaque, descontoFinal, validadeFinal, (ativo === false ? false : true), eh_agregado || false, custo || 0, estoque || 0]
+      `INSERT INTO produtos (${insertFields.join(", ")}) VALUES (${insertValues.join(", ")}) RETURNING id`,
+      insertParams
     );
     const produtoId = resProd.rows[0].id;
 
@@ -315,10 +341,46 @@ router.put("/:id", async (req, res) => {
     const validadeFinal = isDestaque ? (validade_promocao || null) : null;
     const descontoFinal = isDestaque ? (desconto_destaque || 0) : 0;
 
-    // Atualiza dados básicos do produto
+    let updateFields = [
+      "nome = $1",
+      "descricao = $2",
+      "preco_venda = $3",
+      "margem_revenda = $4",
+      "preco_revenda = $5",
+      "rendimento = $6",
+      "eh_destaque = $7",
+      "desconto_destaque = $8",
+      "validade_promocao = $9",
+      "ativo = $10",
+      "eh_agregado = $11"
+    ];
+    let updateParams = [
+      nome,
+      descricao || null,
+      preco_venda,
+      margem_revenda || 0,
+      preco_revenda || 0,
+      rendimento || 1,
+      isDestaque,
+      descontoFinal,
+      validadeFinal,
+      (ativo === false ? false : true),
+      eh_agregado || false
+    ];
+    let paramIndex = updateParams.length + 1;
+
+    if (eh_agregado) {
+      updateFields.push(`custo = $${paramIndex++}`);
+      updateParams.push(custo || 0);
+      updateFields.push(`estoque = $${paramIndex++}`);
+      updateParams.push(estoque || 0);
+    }
+
+    updateParams.push(id); // Add product ID for WHERE clause
+
     await client.query(
-      "UPDATE produtos SET nome = $1, descricao = $2, preco_venda = $3, margem_revenda = $4, preco_revenda = $5, rendimento = $6, eh_destaque = $7, desconto_destaque = $8, validade_promocao = $9, ativo = $10, eh_agregado = $11, custo = $12, estoque = $13 WHERE id = $14",
-      [nome, descricao || null, preco_venda, margem_revenda || 0, preco_revenda || 0, rendimento || 1, isDestaque, descontoFinal, validadeFinal, (ativo === false ? false : true), eh_agregado || false, custo || 0, estoque || 0, id]
+      `UPDATE produtos SET ${updateFields.join(", ")} WHERE id = $${paramIndex}`,
+      updateParams
     );
 
     // Remove ingredientes antigos para reinserir os atualizados

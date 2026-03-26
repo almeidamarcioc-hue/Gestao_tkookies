@@ -312,8 +312,10 @@ export default function Dashboard() {
         desconto_destaque: Number(editProduct.desconto_destaque),
         agregados: editProduct.agregados?.map(a => ({ id: a.id, preco: Number(a.preco) })) || [],
         eh_agregado: editEhAgregado,
-        custo: editEhAgregado ? Number(editCustoManual) : 0,
-        estoque: editEhAgregado ? Number(editEstoqueManual) : 0
+        ...(editEhAgregado && {
+          custo: Number(editCustoManual),
+          estoque: Number(editEstoqueManual)
+        })
       };
       await api.put(`/produtos/${editProduct.id}`, payload);
       alert("Produto atualizado!");

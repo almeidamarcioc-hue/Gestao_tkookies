@@ -327,8 +327,10 @@ export default function Products() {
       ativo: ativo,
       agregados: agregados.map(a => ({ id: a.id, preco: Number(a.preco) })),
       eh_agregado: ehAgregado,
-      estoque: ehAgregado ? Number(estoqueManual) : 0,
-      custo: ehAgregado ? Number(custoManual) : 0
+      ...(ehAgregado && {
+        estoque: Number(estoqueManual),
+        custo: Number(custoManual)
+      })
     };
 
     try {
