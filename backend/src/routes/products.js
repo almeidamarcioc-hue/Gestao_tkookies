@@ -30,7 +30,7 @@ async function fetchProducts() {
       LEFT JOIN produto_imagens pim ON p.id = pim.produto_id
       LEFT JOIN produto_agregados pa ON p.id = pa.produto_id
       LEFT JOIN produtos pagg ON pa.agregado_id = pagg.id
-      LEFT JOIN produto_imagens pagg_img ON pagg.id = pagg_img.produto_id AND pagg_img.eh_capa = 1
+      LEFT JOIN produto_imagens pagg_img ON pagg.id = pagg_img.produto_id AND pagg_img.eh_capa = TRUE
       ORDER BY p.nome ASC
     `);
 
@@ -162,7 +162,7 @@ router.get("/:id", async (req, res) => {
       LEFT JOIN produto_imagens pim ON p.id = pim.produto_id
       LEFT JOIN produto_agregados pa ON p.id = pa.produto_id
       LEFT JOIN produtos pagg ON pa.agregado_id = pagg.id
-      LEFT JOIN produto_imagens pagg_img ON pagg.id = pagg_img.produto_id AND pagg_img.eh_capa = 1
+      LEFT JOIN produto_imagens pagg_img ON pagg.id = pagg_img.produto_id AND pagg_img.eh_capa = TRUE
       WHERE p.id = $1
     `, [id]);
 

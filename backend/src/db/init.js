@@ -26,7 +26,7 @@ export async function initDatabase() {
     // Tabela de Ingredientes
     await pool.query(`
       CREATE TABLE IF NOT EXISTS ingredientes (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id SERIAL PRIMARY KEY,
         nome VARCHAR(255) NOT NULL,
         unidade VARCHAR(50) NOT NULL,
         estoque DECIMAL(10, 2) DEFAULT 0,
@@ -39,7 +39,7 @@ export async function initDatabase() {
     // Tabela de Produtos
     await pool.query(`
       CREATE TABLE IF NOT EXISTS produtos (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id SERIAL PRIMARY KEY,
         nome VARCHAR(255) NOT NULL,
         preco_venda DECIMAL(10, 2) NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -49,7 +49,7 @@ export async function initDatabase() {
     // Tabela de Ligação (Composição)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS produto_ingredientes (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id SERIAL PRIMARY KEY,
         produto_id INT,
         ingrediente_id INT,
         quantidade DECIMAL(10, 2) NOT NULL,
@@ -62,9 +62,9 @@ export async function initDatabase() {
     // Tabela de Imagens do Produto
     await pool.query(`
       CREATE TABLE IF NOT EXISTS produto_imagens (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id SERIAL PRIMARY KEY,
         produto_id INT,
-        imagem LONGTEXT,
+        imagem TEXT,
         eh_capa BOOLEAN DEFAULT FALSE,
         FOREIGN KEY (produto_id) REFERENCES produtos(id) ON DELETE CASCADE
       )
@@ -73,7 +73,7 @@ export async function initDatabase() {
     // Tabela de Clientes
     await pool.query(`
       CREATE TABLE IF NOT EXISTS clientes (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id SERIAL PRIMARY KEY,
         nome VARCHAR(255) NOT NULL,
         telefone VARCHAR(50),
         endereco VARCHAR(255),
@@ -90,7 +90,7 @@ export async function initDatabase() {
     // Tabela de Pedidos
     await pool.query(`
       CREATE TABLE IF NOT EXISTS pedidos (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id SERIAL PRIMARY KEY,
         cliente_id INT,
         data_pedido TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         valor_total DECIMAL(10, 2) DEFAULT 0,
@@ -106,7 +106,7 @@ export async function initDatabase() {
     // Tabela de Itens do Pedido
     await pool.query(`
       CREATE TABLE IF NOT EXISTS itens_pedido (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id SERIAL PRIMARY KEY,
         pedido_id INT,
         produto_id INT,
         quantidade DECIMAL(10, 2) NOT NULL,
@@ -120,7 +120,7 @@ export async function initDatabase() {
     // Tabela de Combos
     await pool.query(`
       CREATE TABLE IF NOT EXISTS combos (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id SERIAL PRIMARY KEY,
         nome VARCHAR(255) NOT NULL,
         preco_venda DECIMAL(10, 2) NOT NULL,
         estoque DECIMAL(10, 2) DEFAULT 0,
@@ -133,7 +133,7 @@ export async function initDatabase() {
     // Tabela de Itens do Combo
     await pool.query(`
       CREATE TABLE IF NOT EXISTS combo_itens (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id SERIAL PRIMARY KEY,
         combo_id INT,
         produto_id INT,
         quantidade DECIMAL(10, 2) NOT NULL,
@@ -158,16 +158,16 @@ export async function initDatabase() {
     // Tabela de Configurações do Sistema
     await pool.query(`
       CREATE TABLE IF NOT EXISTS configuracoes (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id SERIAL PRIMARY KEY,
         chave VARCHAR(50) NOT NULL UNIQUE,
-        valor LONGTEXT
+        valor TEXT
       )
     `);
 
     // Tabela de Favoritos
     await pool.query(`
       CREATE TABLE IF NOT EXISTS favoritos (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id SERIAL PRIMARY KEY,
         cliente_id INT,
         produto_id INT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -180,7 +180,7 @@ export async function initDatabase() {
     // Tabela de Revendedores (B2B)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS revendedores (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id SERIAL PRIMARY KEY,
         razao_social VARCHAR(255) NOT NULL,
         cpf_cnpj VARCHAR(20) NOT NULL,
         nome_contato VARCHAR(100) NOT NULL,
@@ -195,7 +195,7 @@ export async function initDatabase() {
     // Tabela de Lançamentos Financeiros (Contas a Pagar/Receber)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS lancamentos_financeiros (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id SERIAL PRIMARY KEY,
         tipo VARCHAR(20) NOT NULL, -- 'Entrada' ou 'Saída'
         descricao VARCHAR(255) NOT NULL,
         valor DECIMAL(10, 2) NOT NULL,
@@ -208,11 +208,11 @@ export async function initDatabase() {
     // Tabela de Depoimentos (Clientes/Revendedores)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS depoimentos (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id SERIAL PRIMARY KEY,
         nome VARCHAR(255) NOT NULL,
         cargo VARCHAR(100) DEFAULT 'Cliente',
         texto TEXT NOT NULL,
-        imagem LONGTEXT,
+        imagem TEXT,
         ativo BOOLEAN DEFAULT TRUE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
