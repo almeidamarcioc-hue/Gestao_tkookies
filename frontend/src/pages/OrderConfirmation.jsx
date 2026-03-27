@@ -43,7 +43,7 @@ export default function OrderConfirmation({ clearCart }) {
       return () => clearInterval(interval);
     }).catch(() => console.log("Confetti opcional não carregado"));
 
-  }, [orderId, navigate]);
+  }, [orderId, navigate, clearCart]);
 
   if (!orderId) return null;
 

@@ -224,62 +224,66 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
                 </TableRow>
               </TableHead>
               <TableBody>
-                {cart.map((item) => (
-                  <TableRow key={item.id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                    <TableCell>
-                      <Box display="flex" alignItems="center" gap={2}>
-                        {item.imagens && item.imagens.length > 0 ? (
-                          <img 
-                            src={item.imagens.find(img => img.eh_capa)?.imagem || item.imagens[0]?.imagem} 
-                            alt={item.nome} 
-                            style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8 }} 
-                          />
-                        ) : (
-                          <Box sx={{ width: 80, height: 80, borderRadius: 2, bgcolor: '#FFF8E1', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #FFB74D' }}>
-                              <CardGiftcard sx={{ color: '#E65100', fontSize: 40 }} />
-                          </Box>
-                        )}
-                        <Box>
-                          <Typography variant="subtitle1" fontWeight="bold" color="#4E342E">{item.nome}</Typography>
-                          {item.eh_destaque && item.desconto_destaque > 0 && (
-                            <Typography variant="caption" color="error">Oferta Especial</Typography>
+                {cart.map((item) => {
+                  const price = getItemPrice(item);
+                  const stock = Number(item.estoque) || 0;
+                  return (
+                    <TableRow key={item.id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                      <TableCell>
+                        <Box display="flex" alignItems="center" gap={2}>
+                          {item.imagens && item.imagens.length > 0 ? (
+                            <img 
+                              src={item.imagens.find(img => img.eh_capa)?.imagem || item.imagens[0]?.imagem} 
+                              alt={item.nome} 
+                              style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8 }} 
+                            />
+                          ) : (
+                            <Box sx={{ width: 80, height: 80, borderRadius: 2, bgcolor: '#FFF8E1', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #FFB74D' }}>
+                                <CardGiftcard sx={{ color: '#E65100', fontSize: 40 }} />
+                            </Box>
                           )}
+                          <Box>
+                            <Typography variant="subtitle1" fontWeight="bold" color="#4E342E">{item.nome}</Typography>
+                            {item.eh_destaque && item.desconto_destaque > 0 && (
+                              <Typography variant="caption" color="error">Oferta Especial</Typography>
+                            )}
+                          </Box>
                         </Box>
-                      </Box>
-                    </TableCell>
-                    <TableCell align="center">
-                      <Typography variant="body2" color="#5D4037">R$ {getItemPrice(item).toFixed(2)}</Typography>
-                      {!clientUser?.is_revendedor && item.eh_destaque && item.desconto_destaque > 0 && (
-                        <Typography variant="caption" sx={{ textDecoration: 'line-through', color: '#8D6E63' }}>
-                          R$ {Number(item.preco_venda).toFixed(2)}
-                        </Typography>
-                      )}
-                    </TableCell>
-                    <TableCell align="center">
-                      <Box display="flex" alignItems="center" justifyContent="center" border="1px solid rgba(78, 52, 46, 0.2)" borderRadius={2} width="fit-content" mx="auto" sx={{ opacity: item.estoque <= 0 ? 0.5 : 1 }}>
-                        <IconButton 
-                          size="small" 
-                          onClick={() => updateQuantity(item.id, item.quantidade - 1)} 
-                          sx={{ color: '#4E342E' }} 
-                          disabled={item.estoque <= 0 || item.quantidade <= 1}
-                        ><Remove fontSize="small" /></IconButton>
-                        <Typography sx={{ px: 2, fontWeight: 'bold', color: '#4E342E' }}>{item.quantidade}</Typography>
-                        <IconButton 
-                          size="small" 
-                          onClick={() => updateQuantity(item.id, item.quantidade + 1)} 
-                          sx={{ color: '#4E342E' }} 
-                          disabled={item.estoque <= 0 || item.quantidade >= item.estoque}
-                        ><Add fontSize="small" /></IconButton>
-                      </Box>
-                    </TableCell>
-                    <TableCell align="right">
-                      <Typography fontWeight="bold" color="#2E7D32">R$ {(item.quantidade * getItemPrice(item)).toFixed(2)}</Typography>
-                    </TableCell>
-                    <TableCell align="center">
-                      <IconButton onClick={() => removeFromCart(item.id)} sx={{ color: '#C62828' }}><Delete /></IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                      <TableCell align="center">
+                        <Typography variant="body2" color="#5D4037">R$ {price.toFixed(2)}</Typography>
+                        {!clientUser?.is_revendedor && item.eh_destaque && item.desconto_destaque > 0 && (
+                          <Typography variant="caption" sx={{ textDecoration: 'line-through', color: '#8D6E63' }}>
+                            R$ {Number(item.preco_venda).toFixed(2)}
+                          </Typography>
+                        )}
+                      </TableCell>
+                      <TableCell align="center">
+                        <Box display="flex" alignItems="center" justifyContent="center" border="1px solid rgba(78, 52, 46, 0.2)" borderRadius={2} width="fit-content" mx="auto" sx={{ opacity: stock <= 0 ? 0.5 : 1 }}>
+                          <IconButton 
+                            size="small" 
+                            onClick={() => updateQuantity(item.id, item.quantidade - 1)} 
+                            sx={{ color: '#4E342E' }} 
+                            disabled={stock <= 0 || item.quantidade <= 1}
+                          ><Remove fontSize="small" /></IconButton>
+                          <Typography sx={{ px: 2, fontWeight: 'bold', color: '#4E342E' }}>{item.quantidade}</Typography>
+                          <IconButton 
+                            size="small" 
+                            onClick={() => updateQuantity(item.id, item.quantidade + 1)} 
+                            sx={{ color: '#4E342E' }} 
+                            disabled={stock <= 0 || item.quantidade >= stock}
+                          ><Add fontSize="small" /></IconButton>
+                        </Box>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Typography fontWeight="bold" color="#2E7D32">R$ {(item.quantidade * price).toFixed(2)}</Typography>
+                      </TableCell>
+                      <TableCell align="center">
+                        <IconButton onClick={() => removeFromCart(item.id)} sx={{ color: '#C62828' }}><Delete /></IconButton>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
                 {cart.some(item => (Number(item.estoque) || 0) <= 0 || item.quantidade > (Number(item.estoque) || 0)) && (
                   <TableRow>
                     <TableCell colSpan={5}>
@@ -468,7 +472,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
               fullWidth 
               size="large" 
               onClick={handleCheckout} // This will now trigger the stock check inside handleCheckout
-              disabled={cart.length === 0 || cart.some(item => item.estoque <= 0 || item.quantidade > item.estoque)}
+              disabled={cart.length === 0 || cart.some(item => (Number(item.estoque) || 0) <= 0 || item.quantidade > (Number(item.estoque) || 0))}
               sx={{ 
                 py: 1.5, 
                 fontWeight: 'bold', 
@@ -515,7 +519,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
       <Button 
         variant="contained" 
         onClick={handleCheckout}
-        disabled={cart.length === 0 || cart.some(item => item.estoque <= 0 || item.quantidade > item.estoque)}
+        disabled={cart.length === 0 || cart.some(item => (Number(item.estoque) || 0) <= 0 || item.quantidade > (Number(item.estoque) || 0))}
         sx={{ borderRadius: 50, bgcolor: '#4E342E', '&:hover': { bgcolor: '#3E2723' }, px: 4, py: 1.2, fontWeight: 'bold' }}
       >
         FINALIZAR
