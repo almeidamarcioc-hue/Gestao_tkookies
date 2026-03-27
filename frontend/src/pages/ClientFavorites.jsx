@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Container, Typography, Grid, Button, IconButton, Box, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import { Container, Typography, Grid, Button, IconButton, Box, Dialog, DialogTitle, DialogContent, DialogActions, Chip } from "@mui/material";
 import { Delete, AddShoppingCart, ArrowBack, Favorite, Close } from "@mui/icons-material";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
