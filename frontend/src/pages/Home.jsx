@@ -327,6 +327,32 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
               {config.home_subtitle}
             </Typography>
           </Box>
+
+          {isLoggedIn && (
+            <Box component={motion.div} initial={{ opacity: 0 }} animate={{ opacity: 1 }} sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
+              <Button 
+                variant="contained" 
+                startIcon={<Favorite />}
+                onClick={() => navigate("/favoritos")}
+                sx={{ 
+                  bgcolor: 'rgba(255,255,255,0.9)', 
+                  color: primaryColor, 
+                  fontWeight: 'bold',
+                  px: 3, borderRadius: '50px',
+                  '&:hover': { bgcolor: 'white' }
+                }}
+              >
+                MEUS FAVORITOS ({favorites.length})
+              </Button>
+              <Button 
+                variant="outlined" 
+                onClick={() => document.getElementById('cardapio').scrollIntoView({ behavior: 'smooth' })} 
+                sx={{ color: 'white', borderColor: 'white', borderRadius: '50px', px: 3 }}
+              >
+                CARDÁPIO
+              </Button>
+            </Box>
+          )}
           
           {!isLoggedIn && (
              <Box component={motion.div} style={{ opacity: buttonOpacity }}>
@@ -607,15 +633,21 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
             borderRadius: '16px'
           }}>
             <Box display="flex" alignItems="center" gap={1.5} sx={{ width: { xs: '100%', sm: 'auto' }, justifyContent: { xs: 'center', sm: 'flex-start' } }}>
-              <Box sx={{ position: 'relative' }}>
-                <ShoppingBag sx={{ color: primaryColor, fontSize: { xs: 24, md: 30 } }} />
-                <Badge 
-                  badgeContent={totalItems} 
-                  color="error" 
-                  sx={{ position: 'absolute', top: -5, right: -5 }}
-                />
-              </Box>
-              <Box>
+              <IconButton onClick={() => navigate("/carrinho")} sx={{ color: primaryColor }}>
+                <Badge badgeContent={totalItems} color="error">
+                  <ShoppingBag />
+                </Badge>
+              </IconButton>
+
+              {isLoggedIn && (
+                <IconButton onClick={() => navigate("/favoritos")} sx={{ color: '#ef4444' }}>
+                  <Badge badgeContent={favorites.length} color="default">
+                    <Favorite />
+                  </Badge>
+                </IconButton>
+              )}
+
+              <Box sx={{ ml: 1 }}>
                 <Typography variant="caption" sx={{ color: '#5D4037', lineHeight: 1 }}>Total</Typography>
                 <Typography variant="h6" fontWeight="bold" color="primary.main" sx={{ lineHeight: 1.2, fontSize: { xs: '1.1rem', md: '1.25rem' } }}>R$ {totalPrice.toFixed(2)}</Typography>
               </Box>
