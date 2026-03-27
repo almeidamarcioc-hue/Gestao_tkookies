@@ -12,6 +12,7 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
   const [formData, setFormData] = useState({});
   const [senhaAtual, setSenhaAtual] = useState("");
   const [isStoreOpen, setIsStoreOpen] = useState(true);
+  const [config, setConfig] = useState({ open_time: "", close_time: "" });
 
   const checkIfOpen = (openTime, closeTime) => {
     if (!openTime || !closeTime) return true;
@@ -29,6 +30,7 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
 
     api.get("/configuracoes").then(res => {
       if (res.data) {
+        setConfig(res.data);
         setIsStoreOpen(checkIfOpen(res.data.open_time, res.data.close_time));
       }
     });
@@ -56,7 +58,8 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
   };
 
   const handleRepeatOrder = async (orderId) => {
-    if (!isStoreOpen) {
+    if (!checkIfOpen(config.open_time, config.close_time)) {
+      setIsStoreOpen(false);
       alert("No momento estamos fechados. Volte dentro do horário de atendimento!");
       return;
     }
@@ -84,7 +87,8 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
   };
 
   const handleBuyItem = async (item) => {
-    if (!isStoreOpen) {
+    if (!checkIfOpen(config.open_time, config.close_time)) {
+      setIsStoreOpen(false);
       alert("No momento estamos fechados. Volte dentro do horário de atendimento!");
       return;
     }

@@ -12,6 +12,7 @@ export default function ClientFavorites({ clientUser, addToCart, onLoginClick })
   const [crossSellOpen, setCrossSellOpen] = useState(false);
   const [crossSellItems, setCrossSellItems] = useState([]);
   const [isStoreOpen, setIsStoreOpen] = useState(true);
+  const [config, setConfig] = useState({ open_time: "", close_time: "" });
 
   useEffect(() => {
     if (clientUser) {
@@ -30,6 +31,7 @@ export default function ClientFavorites({ clientUser, addToCart, onLoginClick })
   const loadAllProducts = async () => {
     try {
       const cfg = await api.get("/configuracoes");
+      setConfig(cfg.data);
       setIsStoreOpen(checkIfOpen(cfg.data.open_time, cfg.data.close_time));
 
       const res = await api.get("/produtos");
@@ -61,7 +63,8 @@ export default function ClientFavorites({ clientUser, addToCart, onLoginClick })
       onLoginClick();
       return;
     }
-    if (!isStoreOpen) {
+    if (!checkIfOpen(config.open_time, config.close_time)) {
+      setIsStoreOpen(false);
       alert("Estamos fechados no momento.");
       return;
     }

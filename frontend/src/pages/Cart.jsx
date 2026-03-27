@@ -16,6 +16,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
   const [freightValue, setFreightValue] = useState(0);
   const [observacao, setObservacao] = useState("");
   const [isStoreOpen, setIsStoreOpen] = useState(true);
+  const [config, setConfig] = useState({ open_time: "", close_time: "" });
   const navigate = useNavigate();
 
   // Estilos "Organic Soft Tech" (Versão Light/Café)
@@ -65,6 +66,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
   useEffect(() => {
     // Busca configurações para validar horário
     api.get("/configuracoes").then(res => {
+      setConfig(res.data);
       setIsStoreOpen(checkIfOpen(res.data.open_time, res.data.close_time));
     });
 
@@ -120,7 +122,8 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
       return;
     }
 
-    if (!isStoreOpen) {
+    if (!checkIfOpen(config.open_time, config.close_time)) {
+      setIsStoreOpen(false);
       alert("Infelizmente acabamos de fechar. Não é possível finalizar pedidos agora.");
       return;
     }

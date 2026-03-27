@@ -161,7 +161,8 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
   };
 
   const handleQtyChange = async (prodId, delta) => {
-    if (!isStoreOpen && delta > 0) {
+    if (delta > 0 && !checkIfOpen(config.open_time, config.close_time)) {
+      setIsStoreOpen(false);
       alert("No momento estamos fechados. Volte dentro do horário de atendimento!");
       return;
     }
@@ -195,7 +196,8 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
   };
 
   const handleAddFeatured = async () => {
-    if (!isStoreOpen) {
+    if (!checkIfOpen(config.open_time, config.close_time)) {
+      setIsStoreOpen(false);
       alert("No momento estamos fechados. Volte dentro do horário de atendimento!");
       return;
     }
