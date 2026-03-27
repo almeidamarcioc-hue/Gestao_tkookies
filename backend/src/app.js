@@ -41,7 +41,7 @@ app.use((req, res, next) => {
 app.use((req, res, next) => {
   res.setHeader(
     "Content-Security-Policy",
-    "default-src 'self'; style-src 'self' 'unsafe-inline' https://www.gstatic.com https://fonts.googleapis.com; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.gstatic.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: http: *.google-analytics.com *.googletagmanager.com; connect-src 'self' https: http: *.google-analytics.com *.analytics.google.com *.googletagmanager.com;"
+    "default-src 'self'; style-src 'self' 'unsafe-inline' https://www.gstatic.com https://fonts.googleapis.com; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.gstatic.com https://www.google-analytics.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: http: *.google-analytics.com *.googletagmanager.com; connect-src 'self' https: http: *.google-analytics.com *.analytics.google.com *.googletagmanager.com https://www.google-analytics.com;"
   );
   next();
 });
