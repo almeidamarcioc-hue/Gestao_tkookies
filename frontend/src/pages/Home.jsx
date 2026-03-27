@@ -152,6 +152,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
 
   const handleQtyChange = (prodId, delta) => {
     if (!clientUser && delta > 0) { // Se tentar adicionar e não estiver logado
+      alert("Faça login ou cadastre-se para aproveitar os Sabores da TKookies");
       onLoginClick();
       return;
     }
@@ -170,6 +171,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
 
   const handleAddFeatured = () => {
     if (!clientUser) {
+      alert("Faca login ou cadastre-se para aproveitar os Sabores da TKookies");
       onLoginClick();
       return;
     }
