@@ -112,7 +112,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
       return;
     }
 
-    if (cart.some(item => item.estoque <= 0 || item.quantidade > item.estoque)) {
+    if (cart.some(item => (Number(item.estoque) || 0) <= 0 || item.quantidade > (Number(item.estoque) || 0))) {
       alert("Por favor, ajuste as quantidades dos produtos no carrinho. Alguns itens estão com estoque insuficiente ou esgotados.");
       return;
     }
@@ -280,7 +280,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
                     </TableCell>
                   </TableRow>
                 ))}
-                {cart.some(item => item.estoque <= 0 || item.quantidade > item.estoque) && (
+                {cart.some(item => (Number(item.estoque) || 0) <= 0 || item.quantidade > (Number(item.estoque) || 0)) && (
                   <TableRow>
                     <TableCell colSpan={5}>
                       <Alert severity="warning">Alguns produtos no seu carrinho estão com estoque baixo ou esgotado. Ajuste as quantidades para prosseguir.</Alert>
