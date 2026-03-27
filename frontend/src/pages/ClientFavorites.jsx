@@ -1,18 +1,32 @@
 import { useState, useEffect } from "react";
-import { Container, Typography, Grid, Button, IconButton, Box } from "@mui/material";
-import { Delete, AddShoppingCart, ArrowBack, Favorite } from "@mui/icons-material";
-import { Link } from "react-router-dom";
+import { Container, Typography, Grid, Button, IconButton, Box, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import { Delete, AddShoppingCart, ArrowBack, Favorite, Close } from "@mui/icons-material";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import api from "../services/api";
 
 export default function ClientFavorites({ clientUser, addToCart }) {
+  const navigate = useNavigate();
   const [favorites, setFavorites] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
+  const [crossSellOpen, setCrossSellOpen] = useState(false);
+  const [crossSellItems, setCrossSellItems] = useState([]);
 
   useEffect(() => {
     if (clientUser) {
       loadFavorites();
+      loadAllProducts();
     }
   }, [clientUser]);
+
+  const loadAllProducts = async () => {
+    try {
+      const res = await api.get("/produtos");
+      setAllProducts(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error("Erro ao carregar produtos para sugestão", err);
+    }
+  };
 
   const loadFavorites = () => {
     api.get(`/favoritos/${clientUser.id}`)
@@ -26,6 +40,24 @@ export default function ClientFavorites({ clientUser, addToCart }) {
       setFavorites(prev => prev.filter(p => p.id !== produtoId));
     } catch (err) {
       alert("Erro ao remover favorito");
+    }
+  };
+
+  const handleAddWithPopup = (prod) => {
+    // Adiciona o produto selecionado ao carrinho
+    addToCart(prod, 1);
+
+    // Prepara sugestões aleatórias (exclui o produto atual e itens sem estoque ou agregados)
+    const available = allProducts.filter(p => p.id !== prod.id && Number(p.estoque) > 0 && !p.eh_agregado);
+    const shuffled = [...available].sort(() => 0.5 - Math.random());
+    const selected = shuffled.slice(0, 2);
+
+    if (selected.length > 0) {
+      setCrossSellItems(selected);
+      setCrossSellOpen(true);
+    } else {
+      // Se não houver sugestões, vai direto para o carrinho para feedback visual
+      navigate("/carrinho");
     }
   };
 
@@ -116,7 +148,7 @@ export default function ClientFavorites({ clientUser, addToCart }) {
                     </Typography>
                   </Box>
                   <Box sx={{ p: 2, pt: 0 }}>
-                    <Button variant="contained" fullWidth startIcon={<AddShoppingCart />} onClick={() => addToCart(prod)} sx={{ borderRadius: 50, bgcolor: '#4E342E', '&:hover': { bgcolor: '#3E2723' } }}>
+                    <Button variant="contained" fullWidth startIcon={<AddShoppingCart />} onClick={() => handleAddWithPopup(prod)} sx={{ borderRadius: 50, bgcolor: '#4E342E', '&:hover': { bgcolor: '#3E2723' } }}>
                       Adicionar ao Carrinho
                     </Button>
                   </Box>
@@ -126,6 +158,49 @@ export default function ClientFavorites({ clientUser, addToCart }) {
           })}
         </Grid>
       )}
+
+      {/* Modal Cross-Selling (Sugestões de Compra) */}
+      <Dialog open={crossSellOpen} onClose={() => setCrossSellOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '24px', bgcolor: '#fff', color: '#3E2723' } }}>
+        <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', fontSize: '1.5rem', color: '#4E342E' }}>
+          Ótima escolha! 🍪
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" textAlign="center" mb={3} sx={{ color: '#5D4037' }}>
+            Que tal aproveitar e levar também?
+          </Typography>
+          <Grid container spacing={2}>
+            {crossSellItems.map(prod => {
+              const coverImage = prod.imagens?.find(img => img.eh_capa)?.imagem || prod.imagens?.[0]?.imagem;
+              return (
+                <Grid item xs={6} key={prod.id}>
+                  <Box sx={{ bgcolor: '#EFEBE9', borderRadius: '16px', overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column', border: '1px solid #D7CCC8' }}>
+                     {coverImage && (
+                        <Box component="img" src={coverImage} sx={{ width: '100%', height: 100, objectFit: 'cover' }} />
+                      )}
+                    <Box sx={{ p: 2, textAlign: 'center', flexGrow: 1 }}>
+                      <Typography variant="subtitle2" fontWeight="bold" color="primary.main" noWrap>{prod.nome}</Typography>
+                      <Typography variant="body2" sx={{ color: '#2E7D32', fontWeight: 'bold' }}>R$ {Number(prod.preco_venda).toFixed(2)}</Typography>
+                    </Box>
+                    <Box sx={{ p: 1, display: 'flex', justifyContent: 'center' }}>
+                      <Button size="small" variant="contained" onClick={() => addToCart(prod, 1)} sx={{ borderRadius: '20px', bgcolor: '#4E342E' }}>
+                        Adicionar
+                      </Button>
+                    </Box>
+                  </Box>
+                </Grid>
+              );
+            })}
+          </Grid>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'center', pb: 3, gap: 2 }}>
+          <Button onClick={() => setCrossSellOpen(false)} sx={{ color: '#5D4037' }}>
+            Continuar vendo favoritos
+          </Button>
+          <Button onClick={() => { setCrossSellOpen(false); navigate("/carrinho"); }} variant="contained" sx={{ bgcolor: '#4E342E', color: 'white', borderRadius: '50px' }}>
+            Ver meu carrinho
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
     </Box>
   );
