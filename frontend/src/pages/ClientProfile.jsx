@@ -4,7 +4,7 @@ import api from "../services/api";
 import { Box, Typography, Paper, Container, Table, TableHead, TableBody, TableRow, TableCell, Chip, Button, TextField, Grid, IconButton, Tooltip, Card, CardContent, CardActions } from "@mui/material";
 import { Replay, AddShoppingCart } from "@mui/icons-material";
 
-export default function ClientProfile({ user, onUserUpdate }) {
+export default function ClientProfile({ user, onUserUpdate, addToCart }) {
   const navigate = useNavigate();
   const [pedidos, setPedidos] = useState([]);
   const [maisComprados, setMaisComprados] = useState([]);
@@ -45,30 +45,20 @@ export default function ClientProfile({ user, onUserUpdate }) {
     try {
       const res = await api.get(`/pedidos/${orderId}`);
       const pedido = res.data;
-      const itemsToRepeat = pedido.itens.map(item => ({
-        produto_id: item.produto_id,
-        nome: item.produto_nome,
-        quantidade: Number(item.quantidade),
-        valor_unitario: Number(item.valor_unitario),
-        valor_total: Number(item.valor_total),
-        _tempId: Math.random()
-      }));
-      navigate("/pedidos/novo", { state: { items: itemsToRepeat } });
+      
+      pedido.itens.forEach(item => {
+        addToCart({ ...item, id: item.produto_id, nome: item.produto_nome, preco_venda: item.valor_unitario }, Number(item.quantidade));
+      });
+      
+      navigate("/carrinho");
     } catch (err) {
       alert("Erro ao carregar pedido para repetição.");
     }
   };
 
   const handleBuyItem = (item) => {
-    const orderItem = {
-      produto_id: item.id,
-      nome: item.nome,
-      quantidade: 1,
-      valor_unitario: Number(item.preco_venda),
-      valor_total: Number(item.preco_venda),
-      _tempId: Math.random()
-    };
-    navigate("/pedidos/novo", { state: { items: [orderItem] } });
+    addToCart(item, 1);
+    navigate("/carrinho");
   };
 
   const getStatusColor = (status) => {
