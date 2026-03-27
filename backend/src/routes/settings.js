@@ -47,10 +47,10 @@ router.post("/", async (req, res) => {
     await client.query("BEGIN");
 
     for (const [key, value] of Object.entries(configs)) {
-      // Upsert (Insert or Update) - Sintaxe compatível com MySQL/TiDB
+      // Upsert (Insert or Update) - Sintaxe compatível com PostgreSQL
       await client.query(
-        `INSERT INTO configuracoes (chave, valor) VALUES (?, ?) 
-         ON DUPLICATE KEY UPDATE valor = VALUES(valor)`,
+        `INSERT INTO configuracoes (chave, valor) VALUES ($1, $2) 
+         ON CONFLICT (chave) DO UPDATE SET valor = EXCLUDED.valor`,
         [key, value]
       );
     }

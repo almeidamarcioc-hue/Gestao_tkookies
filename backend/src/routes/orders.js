@@ -175,8 +175,8 @@ router.patch("/:id/status", async (req, res) => {
 // CONFIG FRETE
 router.get("/config/frete", async (req, res) => {
   try {
-    const result = await pool.query("SELECT valor_frete FROM configuracoes LIMIT 1");
-    res.json({ valor: result.rows[0]?.valor_frete || 0 });
+    const result = await pool.query("SELECT valor FROM configuracoes WHERE chave = 'valor_frete'");
+    res.json({ valor: result.rows[0]?.valor || 0 });
   } catch (error) {
     res.json({ valor: 0 });
   }

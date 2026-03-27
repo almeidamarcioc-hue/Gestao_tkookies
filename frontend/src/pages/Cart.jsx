@@ -57,7 +57,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
   useEffect(() => {
     // Busca o valor do frete configurado no sistema
     api.get("/pedidos/config/frete")
-      .then((res) => setFreightValue(res.data.valor))
+      .then((res) => setFreightValue(Number(res.data.valor) || 0))
       .catch((err) => console.error("Erro ao buscar frete", err));
   }, []);
 
