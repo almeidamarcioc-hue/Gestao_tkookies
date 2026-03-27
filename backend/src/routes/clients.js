@@ -43,12 +43,13 @@ router.get("/:id/mais-comprados", async (req, res) => {
   const { id } = req.params;
   try {
     const result = await pool.query(`
-      SELECT p.id, p.nome, p.preco_venda, SUM(ip.quantidade) as total_comprado
+      SELECT p.id, p.nome, p.preco_venda, p.preco_revenda, p.eh_destaque, p.desconto_destaque, SUM(ip.quantidade) as total_comprado,
+             (SELECT imagem FROM produto_imagens WHERE produto_id = p.id ORDER BY eh_capa DESC LIMIT 1) as imagem
       FROM itens_pedido ip
       JOIN pedidos ped ON ip.pedido_id = ped.id
       JOIN produtos p ON ip.produto_id = p.id
       WHERE ped.cliente_id = $1
-      GROUP BY p.id, p.nome, p.preco_venda
+      GROUP BY p.id, p.nome, p.preco_venda, p.preco_revenda, p.eh_destaque, p.desconto_destaque
       ORDER BY total_comprado DESC
       LIMIT 5
     `, [id]);
