@@ -302,7 +302,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
                       </TableCell>
                     </TableRow>
                   );
-              })}`
+              })}
                 {cart.some(item => (Number(item.estoque) || 0) <= 0 || item.quantidade > (Number(item.estoque) || 0)) && (
                   <TableRow>
                     <TableCell colSpan={5}>
