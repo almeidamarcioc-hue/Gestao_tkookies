@@ -176,6 +176,7 @@ export default function App() {
     setClientUser(null);
     localStorage.removeItem("cookie_erp_admin");
     localStorage.removeItem("cookie_erp_client");
+    clearCart();
     handleClose();
     navigate("/");
   };
