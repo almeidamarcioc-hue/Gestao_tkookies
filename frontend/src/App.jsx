@@ -118,7 +118,16 @@ export default function App() {
 
   // Efeito para resetar o scroll para o topo sempre que a rota (página) mudar
   useEffect(() => {
-    window.scrollTo(0, 0);
+    const forceScrollTop = () => {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      document.documentElement.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      document.body.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    };
+
+    forceScrollTop();
+    // Executa uma segunda vez após um micro-delay para garantir que o DOM renderizou
+    const timer = setTimeout(forceScrollTop, 10);
+    return () => clearTimeout(timer);
   }, [pathname]);
 
   useEffect(() => {
