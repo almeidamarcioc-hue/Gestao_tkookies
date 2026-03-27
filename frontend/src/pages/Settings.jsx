@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../services/api";
 import { 
-  Box, Button, TextField, Typography, Paper, Container, IconButton, InputAdornment, Grid 
+  Box, Button, TextField, Typography, Paper, Container, IconButton, InputAdornment, Grid, Checkbox, FormControlLabel, FormGroup 
 } from "@mui/material";
 import { CloudUpload, Delete } from "@mui/icons-material";
 import DebugLogs from "../components/DebugLogs";
@@ -15,6 +15,17 @@ export default function Settings() {
   const [valorFrete, setValorFrete] = useState("");
   const [openTime, setOpenTime] = useState("");
   const [closeTime, setCloseTime] = useState("");
+  const [openDays, setOpenDays] = useState([1, 2, 3, 4, 5, 6]); // Padrão: Seg a Sáb
+
+  const daysOfWeek = [
+    { label: "Dom", value: 0 },
+    { label: "Seg", value: 1 },
+    { label: "Ter", value: 2 },
+    { label: "Qua", value: 3 },
+    { label: "Qui", value: 4 },
+    { label: "Sex", value: 5 },
+    { label: "Sáb", value: 6 },
+  ];
 
   // Estados para a página Sobre Nós
   const [aboutTitle, setAboutTitle] = useState("");
@@ -39,6 +50,7 @@ export default function Settings() {
         setValorFrete(cfg.valor_frete || "");
         setOpenTime(cfg.open_time || "08:00");
         setCloseTime(cfg.close_time || "18:00");
+        setOpenDays(cfg.open_days ? cfg.open_days.split(',').map(Number) : [1, 2, 3, 4, 5, 6]);
 
         setAboutTitle(cfg.about_title || "Sobre a TKookies");
         setAboutDesc(cfg.about_desc || "Nascemos da paixão por criar momentos doces e inesquecíveis. Acreditamos que um cookie não é apenas uma sobremesa, é um abraço em forma de sabor.");
@@ -63,6 +75,12 @@ export default function Settings() {
     }
   };
 
+  const handleDayToggle = (day) => {
+    setOpenDays(prev => 
+      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day].sort()
+    );
+  };
+
   const handleSave = async () => {
     try {
       await api.post("/configuracoes", {
@@ -73,6 +91,7 @@ export default function Settings() {
         valor_frete: valorFrete,
         open_time: openTime,
         close_time: closeTime,
+        open_days: openDays.join(','),
         
         about_title: aboutTitle,
         about_desc: aboutDesc,
@@ -156,6 +175,24 @@ export default function Settings() {
                 InputLabelProps={{ shrink: true }}
               />
             </Box>
+          </Grid>
+
+          <Grid item xs={12}>
+            <Typography variant="subtitle2" mb={1}>Dias de Atendimento</Typography>
+            <FormGroup row>
+              {daysOfWeek.map((day) => (
+                <FormControlLabel
+                  key={day.value}
+                  control={
+                    <Checkbox 
+                      checked={openDays.includes(day.value)} 
+                      onChange={() => handleDayToggle(day.value)} 
+                    />
+                  }
+                  label={day.label}
+                />
+              ))}
+            </FormGroup>
           </Grid>
 
           <Grid item xs={12}>

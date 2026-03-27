@@ -16,7 +16,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
   const [freightValue, setFreightValue] = useState(0);
   const [observacao, setObservacao] = useState("");
   const [isStoreOpen, setIsStoreOpen] = useState(true);
-  const [config, setConfig] = useState({ open_time: "", close_time: "" });
+  const [config, setConfig] = useState({ open_time: "", close_time: "", open_days: "" });
   const navigate = useNavigate();
 
   // Estilos "Organic Soft Tech" (Versão Light/Café)
@@ -56,9 +56,16 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
     addToCart(itemToAdd, 1);
   };
 
-  const checkIfOpen = (openTime, closeTime) => {
-    if (!openTime || !closeTime) return true;
+  const checkIfOpen = (openTime, closeTime, openDaysStr) => {
     const now = new Date();
+
+    // Verifica dia da semana
+    if (openDaysStr) {
+      const allowedDays = openDaysStr.split(',').map(Number);
+      if (!allowedDays.includes(now.getDay())) return false;
+    }
+
+    if (!openTime || !closeTime) return true;
     const current = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
     return current >= openTime && current <= closeTime;
   };
@@ -67,7 +74,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
     // Busca configurações para validar horário
     api.get("/configuracoes").then(res => {
       setConfig(res.data);
-      setIsStoreOpen(checkIfOpen(res.data.open_time, res.data.close_time));
+      setIsStoreOpen(checkIfOpen(res.data.open_time, res.data.close_time, res.data.open_days));
     });
 
     // Busca o valor do frete configurado no sistema
@@ -122,7 +129,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
       return;
     }
 
-    if (!checkIfOpen(config.open_time, config.close_time)) {
+    if (!checkIfOpen(config.open_time, config.close_time, config.open_days)) {
       setIsStoreOpen(false);
       alert("Infelizmente acabamos de fechar. Não é possível finalizar pedidos agora.");
       return;

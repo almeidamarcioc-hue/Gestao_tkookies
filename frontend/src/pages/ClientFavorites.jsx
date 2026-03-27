@@ -12,7 +12,7 @@ export default function ClientFavorites({ clientUser, addToCart, onLoginClick })
   const [crossSellOpen, setCrossSellOpen] = useState(false);
   const [crossSellItems, setCrossSellItems] = useState([]);
   const [isStoreOpen, setIsStoreOpen] = useState(true);
-  const [config, setConfig] = useState({ open_time: "", close_time: "" });
+  const [config, setConfig] = useState({ open_time: "", close_time: "", open_days: "" });
 
   useEffect(() => {
     if (clientUser) {
@@ -21,9 +21,16 @@ export default function ClientFavorites({ clientUser, addToCart, onLoginClick })
     }
   }, [clientUser]);
 
-  const checkIfOpen = (openTime, closeTime) => {
-    if (!openTime || !closeTime) return true;
+  const checkIfOpen = (openTime, closeTime, openDaysStr) => {
     const now = new Date();
+
+    // Verifica dia da semana
+    if (openDaysStr) {
+      const allowedDays = openDaysStr.split(',').map(Number);
+      if (!allowedDays.includes(now.getDay())) return false;
+    }
+
+    if (!openTime || !closeTime) return true;
     const current = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
     return current >= openTime && current <= closeTime;
   };
@@ -32,7 +39,7 @@ export default function ClientFavorites({ clientUser, addToCart, onLoginClick })
     try {
       const cfg = await api.get("/configuracoes");
       setConfig(cfg.data);
-      setIsStoreOpen(checkIfOpen(cfg.data.open_time, cfg.data.close_time));
+      setIsStoreOpen(checkIfOpen(cfg.data.open_time, cfg.data.close_time, cfg.data.open_days));
 
       const res = await api.get("/produtos");
       // Carrega todos os produtos (ativos e não agregados) para poder exibir "Indisponível"
@@ -63,7 +70,7 @@ export default function ClientFavorites({ clientUser, addToCart, onLoginClick })
       onLoginClick();
       return;
     }
-    if (!checkIfOpen(config.open_time, config.close_time)) {
+    if (!checkIfOpen(config.open_time, config.close_time, config.open_days)) {
       setIsStoreOpen(false);
       alert("Estamos fechados no momento.");
       return;

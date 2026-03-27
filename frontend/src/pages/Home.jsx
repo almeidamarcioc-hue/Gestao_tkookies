@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Box, Typography, Button, Container, Grid, IconButton, Badge, Dialog, DialogTitle, DialogContent, DialogActions, Chip, Paper, Fab, Snackbar, Alert, Card, CardContent, CardMedia, CardActionArea } from "@mui/material";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Add, Remove, ShoppingBag, Favorite, FavoriteBorder, Star, ArrowForward, AddCircleOutline, ListAlt, RestaurantMenu, PointOfSale, Inventory2, People, LocalOffer, Info, Close, Storefront, Map, Loyalty, DeleteOutline, CardGiftcard } from "@mui/icons-material";
+import { Add, Remove, ShoppingBag, Favorite, FavoriteBorder, Star, ArrowForward, AddCircleOutline, ListAlt, RestaurantMenu, PointOfSale, Inventory2, People, LocalOffer, Info, Close, Storefront, Map, Loyalty, DeleteOutline, CardGiftcard, AccessTime } from "@mui/icons-material";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import api from "../services/api";
 import ResellerCTA from "../components/ResellerCTA";
@@ -50,7 +50,8 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
     home_title: "TKookies",
     home_subtitle: "🍪 Um pedacinho de felicidade em cada mordida.",
     home_location: "📍 Apenas delivery / Três de Maio - RS",
-    home_bg: ""
+    home_bg: "",
+    open_days: ""
   });
   const [isStoreOpen, setIsStoreOpen] = useState(true);
 
@@ -73,18 +74,41 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
 
   const handleCloseSnackbar = () => setSnackbarOpen(false);
 
-  const checkIfOpen = (openTime, closeTime) => {
-    if (!openTime || !closeTime) return true;
+  const checkIfOpen = (openTime, closeTime, openDaysStr) => {
     const now = new Date();
+
+    // Verifica dia da semana
+    if (openDaysStr) {
+      const allowedDays = openDaysStr.split(',').map(Number);
+      if (!allowedDays.includes(now.getDay())) return false;
+    }
+
+    if (!openTime || !closeTime) return true;
     const current = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
     return current >= openTime && current <= closeTime;
+  };
+
+  const getReadableDays = (daysStr) => {
+    if (!daysStr) return "Todos os dias";
+    const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+    const days = daysStr.split(',').map(Number).sort((a, b) => a - b);
+    
+    if (days.length === 7) return "Todos os dias";
+    
+    // Verifica se é uma sequência (ex: Segunda a Sexta)
+    const isConsecutive = days.every((d, i) => i === 0 || d === days[i-1] + 1);
+    if (isConsecutive && days.length > 1) {
+      return `${dayNames[days[0]]} a ${dayNames[days[days.length - 1]]}`;
+    }
+    
+    return days.map(d => dayNames[d]).join(', ');
   };
 
   useEffect(() => {
     api.get("/configuracoes").then(res => {
       if (res.data && Object.keys(res.data).length > 0) {
         setConfig(prev => ({ ...prev, ...res.data }));
-        setIsStoreOpen(checkIfOpen(res.data.open_time, res.data.close_time));
+        setIsStoreOpen(checkIfOpen(res.data.open_time, res.data.close_time, res.data.open_days));
       }
     }).catch(err => console.log("Usando configurações padrão"));
 
@@ -161,7 +185,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
   };
 
   const handleQtyChange = async (prodId, delta) => {
-    if (delta > 0 && !checkIfOpen(config.open_time, config.close_time)) {
+    if (delta > 0 && !checkIfOpen(config.open_time, config.close_time, config.open_days)) {
       setIsStoreOpen(false);
       alert("No momento estamos fechados. Volte dentro do horário de atendimento!");
       return;
@@ -196,7 +220,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
   };
 
   const handleAddFeatured = async () => {
-    if (!checkIfOpen(config.open_time, config.close_time)) {
+    if (!checkIfOpen(config.open_time, config.close_time, config.open_days)) {
       setIsStoreOpen(false);
       alert("No momento estamos fechados. Volte dentro do horário de atendimento!");
       return;
@@ -473,6 +497,25 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
               <Typography variant="h5" gutterBottom fontWeight="900" sx={{ mb: 3, borderLeft: `6px solid ${primaryColor}`, pl: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
                 Cardápio
               </Typography>
+
+              {/* Banner Informativo de Horários */}
+              <Box sx={{ mb: 4, p: 2, borderRadius: 3, bgcolor: 'rgba(78, 52, 46, 0.05)', border: '1px solid rgba(78, 52, 46, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+                <Box display="flex" alignItems="center" gap={2}>
+                  <AccessTime sx={{ color: primaryColor }} />
+                  <Box>
+                    <Typography variant="subtitle2" fontWeight="bold" color="primary">Horário de Atendimento</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {getReadableDays(config.open_days)} • {config.open_time} às {config.close_time}
+                    </Typography>
+                  </Box>
+                </Box>
+                <Chip 
+                  label={isStoreOpen ? "ABERTO AGORA" : "FECHADO NO MOMENTO"} 
+                  color={isStoreOpen ? "success" : "error"} 
+                  size="small" 
+                  sx={{ fontWeight: 'bold' }} 
+                />
+              </Box>
 
               {!isStoreOpen && (
                 <Alert severity="error" sx={{ mb: 4, borderRadius: 3, fontWeight: 'bold', fontSize: '1.1rem' }}>

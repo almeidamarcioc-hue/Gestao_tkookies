@@ -12,11 +12,18 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
   const [formData, setFormData] = useState({});
   const [senhaAtual, setSenhaAtual] = useState("");
   const [isStoreOpen, setIsStoreOpen] = useState(true);
-  const [config, setConfig] = useState({ open_time: "", close_time: "" });
+  const [config, setConfig] = useState({ open_time: "", close_time: "", open_days: "" });
 
-  const checkIfOpen = (openTime, closeTime) => {
-    if (!openTime || !closeTime) return true;
+  const checkIfOpen = (openTime, closeTime, openDaysStr) => {
     const now = new Date();
+
+    // Verifica dia da semana
+    if (openDaysStr) {
+      const allowedDays = openDaysStr.split(',').map(Number);
+      if (!allowedDays.includes(now.getDay())) return false;
+    }
+
+    if (!openTime || !closeTime) return true;
     const current = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
     return current >= openTime && current <= closeTime;
   };
@@ -31,7 +38,7 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
     api.get("/configuracoes").then(res => {
       if (res.data) {
         setConfig(res.data);
-        setIsStoreOpen(checkIfOpen(res.data.open_time, res.data.close_time));
+        setIsStoreOpen(checkIfOpen(res.data.open_time, res.data.close_time, res.data.open_days));
       }
     });
   }, [user]);
@@ -58,7 +65,7 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
   };
 
   const handleRepeatOrder = async (orderId) => {
-    if (!checkIfOpen(config.open_time, config.close_time)) {
+    if (!checkIfOpen(config.open_time, config.close_time, config.open_days)) {
       setIsStoreOpen(false);
       alert("No momento estamos fechados. Volte dentro do horário de atendimento!");
       return;
@@ -87,7 +94,7 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
   };
 
   const handleBuyItem = async (item) => {
-    if (!checkIfOpen(config.open_time, config.close_time)) {
+    if (!checkIfOpen(config.open_time, config.close_time, config.open_days)) {
       setIsStoreOpen(false);
       alert("No momento estamos fechados. Volte dentro do horário de atendimento!");
       return;
