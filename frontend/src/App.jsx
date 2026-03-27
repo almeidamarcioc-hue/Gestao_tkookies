@@ -1,6 +1,6 @@
 // App.jsx
 import { useState, useEffect } from "react";
-import { Routes, Route, Link, Navigate, useNavigate } from "react-router-dom";
+import { Routes, Route, Link, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { AppBar, Toolbar, Button, Box, Typography, Menu, MenuItem, createTheme, ThemeProvider, CssBaseline, TextField, IconButton, Drawer, List, ListItem, ListItemButton, ListItemText, Divider, Container, Grid, Badge, CircularProgress } from "@mui/material";
 import { Menu as MenuIcon, Instagram, WhatsApp, Facebook, AccountCircle, ShoppingCart, Favorite, Lock, Assessment } from "@mui/icons-material";
 import Dashboard from "./pages/Dashboard";
@@ -95,6 +95,7 @@ const theme = createTheme({
 
 export default function App() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [anchorCad, setAnchorCad] = useState(null);
   const [anchorCons, setAnchorCons] = useState(null);
   const [anchorPed, setAnchorPed] = useState(null);
@@ -114,6 +115,11 @@ export default function App() {
   const [loginMode, setLoginMode] = useState('client'); // 'client' | 'reseller'
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Efeito para resetar o scroll para o topo sempre que a rota (página) mudar
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
 
   useEffect(() => {
     const adminLogged = localStorage.getItem("cookie_erp_admin");
