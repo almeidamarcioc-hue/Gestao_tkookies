@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
-import { Box, Typography, Paper, Container, Table, TableHead, TableBody, TableRow, TableCell, Chip, Button, TextField, Grid, IconButton, Tooltip, Card, CardContent, CardActions } from "@mui/material";
+import { Box, Typography, Paper, Container, Table, TableHead, TableBody, TableRow, TableCell, Chip, Button, TextField, Grid, IconButton, Tooltip, Card, CardContent, CardActions, CardMedia } from "@mui/material";
 import { Replay, AddShoppingCart } from "@mui/icons-material";
 
 export default function ClientProfile({ user, onUserUpdate, addToCart }) {
@@ -143,8 +143,14 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
           <Grid container spacing={2} mb={4}>
             {maisComprados.map(item => (
               <Grid item xs={6} sm={4} md={3} key={item.id}>
-                <Card variant="outlined">
-                  <CardContent sx={{ pb: 1 }}>
+                <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderRadius: 3 }}>
+                  <Box
+                    component="img"
+                    src={item.imagem || (item.imagens?.[0]?.imagem) || "https://via.placeholder.com/300?text=Sem+Imagem"}
+                    alt={item.nome}
+                    sx={{ width: '100%', height: 120, objectFit: 'cover' }}
+                  />
+                  <CardContent sx={{ pb: 1, flexGrow: 1 }}>
                     <Typography variant="subtitle2" noWrap fontWeight="bold">{item.nome}</Typography>
                     <Typography variant="caption" color="text.secondary">Comprado {item.total_comprado}x</Typography>
                   </CardContent>
