@@ -328,12 +328,12 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
             </Typography>
           </Box>
 
-          {isLoggedIn && (
+          {clientUser && (
             <Box component={motion.div} initial={{ opacity: 0 }} animate={{ opacity: 1 }} sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
               <Button 
                 variant="contained" 
                 startIcon={<Favorite />}
-                onClick={() => navigate("/favoritos")}
+                onClick={() => navigate("/meus-favoritos")}
                 sx={{ 
                   bgcolor: 'rgba(255,255,255,0.9)', 
                   color: primaryColor, 
@@ -354,7 +354,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
             </Box>
           )}
           
-          {!isLoggedIn && (
+          {!isLoggedIn && !clientUser && (
              <Box component={motion.div} style={{ opacity: buttonOpacity }}>
                <Button 
                 variant="contained" 
@@ -639,8 +639,8 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                 </Badge>
               </IconButton>
 
-              {isLoggedIn && (
-                <IconButton onClick={() => navigate("/favoritos")} sx={{ color: '#ef4444' }}>
+              {clientUser && (
+                <IconButton onClick={() => navigate("/meus-favoritos")} sx={{ color: '#ef4444' }}>
                   <Badge badgeContent={favorites.length} color="default">
                     <Favorite />
                   </Badge>

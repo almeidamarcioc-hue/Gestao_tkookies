@@ -385,6 +385,7 @@ export default function App() {
                clientUser ? (
                  <>
                    <ListItem disablePadding><ListItemButton component={Link} to="/perfil"><ListItemText primary="Meu Perfil" /></ListItemButton></ListItem>
+                   <ListItem disablePadding><ListItemButton component={Link} to="/meus-favoritos"><ListItemText primary="Meus Favoritos" /></ListItemButton></ListItem>
                    <ListItem disablePadding><ListItemButton component={Link} to="/meus-pedidos"><ListItemText primary="Meus Pedidos" /></ListItemButton></ListItem>
                    <ListItem disablePadding><ListItemButton onClick={handleLogout}><ListItemText primary="SAIR" sx={{ color: 'error.main' }} /></ListItemButton></ListItem>
                  </>
