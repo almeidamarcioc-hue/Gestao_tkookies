@@ -3,7 +3,7 @@ import { Container, Typography, Box, Button, Paper } from "@mui/material";
 import { CheckCircleOutline, ReceiptLong, Home } from "@mui/icons-material";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
-export default function OrderConfirmation() {
+export default function OrderConfirmation({ clearCart }) {
   const location = useLocation();
   const navigate = useNavigate();
   const orderId = location.state?.orderId;
@@ -12,6 +12,11 @@ export default function OrderConfirmation() {
     if (!orderId) {
       navigate("/");
       return;
+    }
+
+    // Garante que o carrinho foi limpo após o sucesso
+    if (clearCart) {
+      clearCart();
     }
 
     // Carrega confete dinamicamente para efeito visual
