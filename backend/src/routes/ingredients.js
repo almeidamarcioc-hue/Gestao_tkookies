@@ -14,8 +14,8 @@ router.get("/", async (req, res) => {
     let paramIndex = 1;
 
     if (search) {
-      query += ` WHERE nome ILIKE $${paramIndex}`;
-      countQuery += ` WHERE nome ILIKE $${paramIndex}`;
+      query += ` WHERE nome LIKE $${paramIndex}`;
+      countQuery += ` WHERE nome LIKE $${paramIndex}`;
       params.push(`%${search}%`);
       paramIndex++;
     }

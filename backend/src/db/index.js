@@ -36,15 +36,25 @@ const mysqlPool = mysql.createPool(dbConfig);
 
 // Wrapper para emular o comportamento do 'pg' (PostgreSQL) usando 'mysql2'
 // Aceita um 'executor' (pode ser o pool ou uma conexão específica)
-const executeQuery = async (executor, text, params, retries = 3) => {
-  // 1. Remove RETURNING id (sintaxe PG não suportada no MySQL)
-  let sql = text.replace(/RETURNING\s+id/i, "");
-  
-  // 2. Substitui $1, $2, etc por ? (placeholders)
-  sql = sql.replace(/\$\d+/g, "?");
+const executeQuery = async (executor, text, params = [], retries = 3) => {
+  let sql = text;
+  let finalParams = params;
+
+  // Se a query utiliza a sintaxe de parâmetros indexados ($1, $2...)
+  if (sql.includes('$')) {
+    // 1. Remove RETURNING id (Sintaxe Postgres não suportada nativamente no MySQL)
+    sql = sql.replace(/RETURNING\s+id/i, "");
+
+    // 2. Mapeia os valores para a ordem dos placeholders '?' do MySQL (lida com duplicatas)
+    const matches = sql.match(/\$\d+/g);
+    if (matches) {
+      finalParams = matches.map(m => params[parseInt(m.substring(1)) - 1]);
+      sql = sql.replace(/\$\d+/g, "?");
+    }
+  }
 
   try {
-    const [results] = await executor.query(sql, params);
+    const [results] = await executor.query(sql, finalParams);
 
     // 3. Adapta o retorno para o formato do 'pg' { rows: [], rowCount: 0 }
     

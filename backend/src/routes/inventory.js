@@ -20,8 +20,8 @@ router.post("/reservar", async (req, res) => {
   try {
     // Executa o update apenas se houver estoque disponível (operação atômica)
     const result = await pool.query(
-      "UPDATE produtos SET estoque = estoque - $1 WHERE id = $2 AND estoque >= $1",
-      [Number(quantidade), produto_id]
+      "UPDATE produtos SET estoque = estoque - $1 WHERE id = $2 AND estoque >= $3",
+      [Number(quantidade), produto_id, Number(quantidade)]
     );
     if (result.rowCount === 0) {
       return res.status(400).json({ error: "Estoque insuficiente para este produto." });
