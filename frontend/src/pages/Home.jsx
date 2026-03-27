@@ -314,8 +314,13 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           <Typography variant={isLarge ? "h5" : "body1"} fontWeight="bold" color={secondaryColor}>
              R$ {Number(prod.preco_venda).toFixed(2)}
           </Typography>
-          {prod.estoque > 0 && isStoreOpen ? (
-            <Fab size="small" sx={{ bgcolor: primaryColor, color: 'white', '&:hover': { bgcolor: '#E65100' } }} onClick={(e) => { e.stopPropagation(); handleQtyChange(prod.id, 1); }}>
+          {prod.estoque > 0 ? (
+            <Fab 
+              size="small" 
+              disabled={!isStoreOpen}
+              sx={{ bgcolor: isStoreOpen ? primaryColor : '#bdbdbd', color: 'white', '&:hover': { bgcolor: '#E65100' } }} 
+              onClick={(e) => { e.stopPropagation(); handleQtyChange(prod.id, 1); }}
+            >
               <Add />
             </Fab>
           ) : (
@@ -537,10 +542,10 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                          </CardContent>
                          <Box sx={{ p: 2, pt: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <Typography variant="h6" fontWeight="bold" color="primary">R$ {Number(prod.preco_venda).toFixed(2)}</Typography>
-                            {prod.estoque <= 0 || !isStoreOpen ? (
+                            {prod.estoque <= 0 ? (
                               <Chip label="Indisponível" color="error" size="small" sx={{ fontWeight: 'bold' }} />
                             ) : qty === 0 ? (
-                              <Button variant="contained" size="small" onClick={() => handleQtyChange(prod.id, 1)} sx={{ borderRadius: 20 }}>
+                              <Button variant="contained" size="small" disabled={!isStoreOpen} onClick={() => handleQtyChange(prod.id, 1)} sx={{ borderRadius: 20 }}>
                                 Adicionar
                               </Button>
                             ) : (
@@ -549,10 +554,15 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                                   size="small" 
                                   onClick={() => handleQtyChange(prod.id, -1)} 
                                   sx={{ border: '1px solid #ddd' }}
-                                  disabled={qty <= 0} // Desabilita se a quantidade já for 0
+                                  disabled={qty <= 0 || !isStoreOpen}
                                 ><Remove fontSize="small" /></IconButton>
-                                <Typography fontWeight="bold">{qty}</Typography>
-                                <IconButton size="small" onClick={() => handleQtyChange(prod.id, 1)} sx={{ bgcolor: primaryColor, color: 'white', '&:hover': { bgcolor: '#FF8F00' } }}><Add fontSize="small" /></IconButton>
+                                <Typography fontWeight="bold" sx={{ opacity: isStoreOpen ? 1 : 0.5 }}>{qty}</Typography>
+                                <IconButton 
+                                  size="small" 
+                                  onClick={() => handleQtyChange(prod.id, 1)} 
+                                  sx={{ bgcolor: isStoreOpen ? primaryColor : '#bdbdbd', color: 'white', '&:hover': { bgcolor: '#FF8F00' } }}
+                                  disabled={!isStoreOpen}
+                                ><Add fontSize="small" /></IconButton>
                               </Box>
                             )}
                          </Box>
@@ -899,7 +909,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                     handleQtyChange(selectedProduct.id, 1);
                     setDetailsOpen(false);
                   }}
-                  disabled={selectedProduct.estoque <= 0}
+                  disabled={selectedProduct.estoque <= 0 || !isStoreOpen}
                   sx={{ bgcolor: '#4E342E', color: 'white', borderRadius: '50px', px: 4, py: 1.5 }}
                 >
                   Adicionar ao Carrinho
