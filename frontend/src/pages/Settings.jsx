@@ -13,6 +13,8 @@ export default function Settings() {
   const [homeLocation, setHomeLocation] = useState("");
   const [homeBg, setHomeBg] = useState("");
   const [valorFrete, setValorFrete] = useState("");
+  const [openTime, setOpenTime] = useState("");
+  const [closeTime, setCloseTime] = useState("");
 
   // Estados para a página Sobre Nós
   const [aboutTitle, setAboutTitle] = useState("");
@@ -35,6 +37,8 @@ export default function Settings() {
         setHomeLocation(cfg.home_location || "");
         setHomeBg(cfg.home_bg || "");
         setValorFrete(cfg.valor_frete || "");
+        setOpenTime(cfg.open_time || "08:00");
+        setCloseTime(cfg.close_time || "18:00");
 
         setAboutTitle(cfg.about_title || "Sobre a TKookies");
         setAboutDesc(cfg.about_desc || "Nascemos da paixão por criar momentos doces e inesquecíveis. Acreditamos que um cookie não é apenas uma sobremesa, é um abraço em forma de sabor.");
@@ -67,6 +71,8 @@ export default function Settings() {
         home_location: homeLocation,
         home_bg: homeBg,
         valor_frete: valorFrete,
+        open_time: openTime,
+        close_time: closeTime,
         
         about_title: aboutTitle,
         about_desc: aboutDesc,
@@ -128,6 +134,28 @@ export default function Settings() {
               onChange={e => setHomeLocation(e.target.value)} 
               placeholder="Ex: Apenas delivery / Três de Maio - RS"
             />
+          </Grid>
+
+          <Grid item xs={12}>
+            <Typography variant="subtitle2" mb={1}>Horário de Atendimento (Compras Online)</Typography>
+            <Box display="flex" gap={2}>
+              <TextField 
+                label="Abertura" 
+                type="time"
+                fullWidth 
+                value={openTime} 
+                onChange={e => setOpenTime(e.target.value)} 
+                InputLabelProps={{ shrink: true }}
+              />
+              <TextField 
+                label="Fechamento" 
+                type="time"
+                fullWidth 
+                value={closeTime} 
+                onChange={e => setCloseTime(e.target.value)} 
+                InputLabelProps={{ shrink: true }}
+              />
+            </Box>
           </Grid>
 
           <Grid item xs={12}>

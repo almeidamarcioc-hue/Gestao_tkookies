@@ -11,6 +11,7 @@ export default function ClientFavorites({ clientUser, addToCart, onLoginClick })
   const [allProducts, setAllProducts] = useState([]);
   const [crossSellOpen, setCrossSellOpen] = useState(false);
   const [crossSellItems, setCrossSellItems] = useState([]);
+  const [isStoreOpen, setIsStoreOpen] = useState(true);
 
   useEffect(() => {
     if (clientUser) {
@@ -19,8 +20,18 @@ export default function ClientFavorites({ clientUser, addToCart, onLoginClick })
     }
   }, [clientUser]);
 
+  const checkIfOpen = (openTime, closeTime) => {
+    if (!openTime || !closeTime) return true;
+    const now = new Date();
+    const current = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+    return current >= openTime && current <= closeTime;
+  };
+
   const loadAllProducts = async () => {
     try {
+      const cfg = await api.get("/configuracoes");
+      setIsStoreOpen(checkIfOpen(cfg.data.open_time, cfg.data.close_time));
+
       const res = await api.get("/produtos");
       // Carrega todos os produtos (ativos e não agregados) para poder exibir "Indisponível"
       setAllProducts(Array.isArray(res.data) ? res.data.filter(p => p.ativo !== false && !p.eh_agregado) : []);
@@ -50,6 +61,11 @@ export default function ClientFavorites({ clientUser, addToCart, onLoginClick })
       onLoginClick();
       return;
     }
+    if (!isStoreOpen) {
+      alert("Estamos fechados no momento.");
+      return;
+    }
+
     if ((Number(prod.estoque) || 0) <= 0) {
       alert(`O produto "${prod.nome}" está indisponível no momento.`);
       return;
@@ -168,7 +184,7 @@ export default function ClientFavorites({ clientUser, addToCart, onLoginClick })
                     )}
                   </Box>
                   <Box sx={{ p: 2, pt: 0 }}>
-                    <Button variant="contained" fullWidth startIcon={<AddShoppingCart />} onClick={() => handleAddWithPopup(prod)} sx={{ borderRadius: 50, bgcolor: '#4E342E', '&:hover': { bgcolor: '#3E2723' } }} disabled={prod.estoque <= 0}>
+                    <Button variant="contained" fullWidth startIcon={<AddShoppingCart />} onClick={() => handleAddWithPopup(prod)} sx={{ borderRadius: 50, bgcolor: '#4E342E', '&:hover': { bgcolor: '#3E2723' } }} disabled={prod.estoque <= 0 || !isStoreOpen}>
                       Adicionar ao Carrinho
                     </Button>
                   </Box>

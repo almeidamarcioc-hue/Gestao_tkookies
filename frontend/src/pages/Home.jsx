@@ -52,6 +52,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
     home_location: "📍 Apenas delivery / Três de Maio - RS",
     home_bg: ""
   });
+  const [isStoreOpen, setIsStoreOpen] = useState(true);
 
   const [products, setProducts] = useState([]);
   const [combos, setCombos] = useState([]);
@@ -72,10 +73,18 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
 
   const handleCloseSnackbar = () => setSnackbarOpen(false);
 
+  const checkIfOpen = (openTime, closeTime) => {
+    if (!openTime || !closeTime) return true;
+    const now = new Date();
+    const current = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+    return current >= openTime && current <= closeTime;
+  };
+
   useEffect(() => {
     api.get("/configuracoes").then(res => {
       if (res.data && Object.keys(res.data).length > 0) {
         setConfig(prev => ({ ...prev, ...res.data }));
+        setIsStoreOpen(checkIfOpen(res.data.open_time, res.data.close_time));
       }
     }).catch(err => console.log("Usando configurações padrão"));
 
@@ -152,6 +161,11 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
   };
 
   const handleQtyChange = async (prodId, delta) => {
+    if (!isStoreOpen && delta > 0) {
+      alert("No momento estamos fechados. Volte dentro do horário de atendimento!");
+      return;
+    }
+
     if (!clientUser && delta > 0) { // Se tentar adicionar e não estiver logado
       alert("Faça login ou cadastre-se para aproveitar os Sabores da TKookies.");
       onLoginClick();
@@ -181,6 +195,11 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
   };
 
   const handleAddFeatured = async () => {
+    if (!isStoreOpen) {
+      alert("No momento estamos fechados. Volte dentro do horário de atendimento!");
+      return;
+    }
+
     if (!clientUser) {
       alert("Faca login ou cadastre-se para aproveitar os Sabores da TKookies");
       onLoginClick();
@@ -295,7 +314,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           <Typography variant={isLarge ? "h5" : "body1"} fontWeight="bold" color={secondaryColor}>
              R$ {Number(prod.preco_venda).toFixed(2)}
           </Typography>
-          {prod.estoque > 0 ? (
+          {prod.estoque > 0 && isStoreOpen ? (
             <Fab size="small" sx={{ bgcolor: primaryColor, color: 'white', '&:hover': { bgcolor: '#E65100' } }} onClick={(e) => { e.stopPropagation(); handleQtyChange(prod.id, 1); }}>
               <Add />
             </Fab>
@@ -447,6 +466,13 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
               <Typography variant="h5" gutterBottom fontWeight="900" sx={{ mb: 3, borderLeft: `6px solid ${primaryColor}`, pl: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
                 Cardápio
               </Typography>
+
+              {!isStoreOpen && (
+                <Alert severity="error" sx={{ mb: 4, borderRadius: 3, fontWeight: 'bold', fontSize: '1.1rem' }}>
+                  Estamos Fechados! Nosso horário de atendimento é das {config.open_time} às {config.close_time}.
+                </Alert>
+              )}
+
               <Grid container spacing={3} component={motion.div} variants={containerVariants} initial="hidden" animate="visible">
                 {products.filter(p => !combos.some(c => c.produto_vinculado_id === p.id)).map(prod => {
                   const coverImage = prod.imagens?.find(img => img.eh_capa)?.imagem || prod.imagens?.[0]?.imagem;
@@ -511,7 +537,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                          </CardContent>
                          <Box sx={{ p: 2, pt: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <Typography variant="h6" fontWeight="bold" color="primary">R$ {Number(prod.preco_venda).toFixed(2)}</Typography>
-                            {prod.estoque <= 0 ? (
+                            {prod.estoque <= 0 || !isStoreOpen ? (
                               <Chip label="Indisponível" color="error" size="small" sx={{ fontWeight: 'bold' }} />
                             ) : qty === 0 ? (
                               <Button variant="contained" size="small" onClick={() => handleQtyChange(prod.id, 1)} sx={{ borderRadius: 20 }}>

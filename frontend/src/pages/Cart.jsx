@@ -15,6 +15,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
   const [pixPayload, setPixPayload] = useState('');
   const [freightValue, setFreightValue] = useState(0);
   const [observacao, setObservacao] = useState("");
+  const [isStoreOpen, setIsStoreOpen] = useState(true);
   const navigate = useNavigate();
 
   // Estilos "Organic Soft Tech" (Versão Light/Café)
@@ -54,7 +55,19 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
     addToCart(itemToAdd, 1);
   };
 
+  const checkIfOpen = (openTime, closeTime) => {
+    if (!openTime || !closeTime) return true;
+    const now = new Date();
+    const current = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+    return current >= openTime && current <= closeTime;
+  };
+
   useEffect(() => {
+    // Busca configurações para validar horário
+    api.get("/configuracoes").then(res => {
+      setIsStoreOpen(checkIfOpen(res.data.open_time, res.data.close_time));
+    });
+
     // Busca o valor do frete configurado no sistema
     api.get("/pedidos/config/frete")
       .then((res) => setFreightValue(Number(res.data.valor) || 0))
@@ -104,6 +117,11 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
   const handleCheckout = async () => {
     if (!clientUser) {
       alert("Por favor, faça login para finalizar o pedido.");
+      return;
+    }
+
+    if (!isStoreOpen) {
+      alert("Infelizmente acabamos de fechar. Não é possível finalizar pedidos agora.");
       return;
     }
 
@@ -473,7 +491,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
               fullWidth 
               size="large" 
               onClick={handleCheckout} // This will now trigger the stock check inside handleCheckout
-              disabled={cart.length === 0 || cart.some(item => (Number(item.estoque) || 0) <= 0 || item.quantidade > (Number(item.estoque) || 0))}
+              disabled={cart.length === 0 || !isStoreOpen || cart.some(item => (Number(item.estoque) || 0) <= 0 || item.quantidade > (Number(item.estoque) || 0))}
               sx={{ 
                 py: 1.5, 
                 fontWeight: 'bold', 
