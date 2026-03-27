@@ -283,14 +283,14 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
                       </TableCell>
                     </TableRow>
                   );
-                })}
+              })}`
                 {cart.some(item => (Number(item.estoque) || 0) <= 0 || item.quantidade > (Number(item.estoque) || 0)) && (
                   <TableRow>
                     <TableCell colSpan={5}>
                       <Alert severity="warning">Alguns produtos no seu carrinho estão com estoque baixo ou esgotado. Ajuste as quantidades para prosseguir.</Alert>
                     </TableCell>
                   </TableRow>
-                ))}
+              )}
               </TableBody>
             </Table>
           </TableContainer>
