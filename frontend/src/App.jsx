@@ -171,12 +171,12 @@ export default function App() {
     setMobileOpen(!mobileOpen);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setIsLoggedIn(false);
     setClientUser(null);
     localStorage.removeItem("cookie_erp_admin");
     localStorage.removeItem("cookie_erp_client");
-    clearCart();
+    await clearCart();
     handleClose();
     navigate("/");
   };

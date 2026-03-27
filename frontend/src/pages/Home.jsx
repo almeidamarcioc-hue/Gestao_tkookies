@@ -206,9 +206,9 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
     navigate("/carrinho");
   };
 
-  const handleClearCart = () => {
+  const handleClearCart = async () => {
     if (window.confirm("Tem certeza que deseja esvaziar sua sacola?")) {
-      clearCart();
+      await clearCart();
     }
   };
 

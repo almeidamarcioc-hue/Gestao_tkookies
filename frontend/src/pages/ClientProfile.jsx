@@ -46,8 +46,8 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
       const res = await api.get(`/pedidos/${orderId}`);
       const pedido = res.data;
       
-      pedido.itens.forEach(item => {
-        await addToCart({ 
+      for (const item of pedido.itens) {
+        await addToCart({
           ...item, 
           id: item.produto_id, 
           nome: item.produto_nome, 
@@ -56,7 +56,7 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
           imagens: item.imagem ? [{ imagem: item.imagem, eh_capa: true }] : (item.imagens || []),
           estoque: item.estoque // Inclui o estoque do produto
         }, Number(item.quantidade));
-      });
+      }
       
       navigate("/carrinho");
     } catch (err) {
@@ -64,7 +64,7 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
     }
   };
 
-  const handleBuyItem = (item) => {
+  const handleBuyItem = async (item) => {
     await addToCart({
       ...item,
       // Garante que a imagem apareça no carrinho ao comprar novamente um item individual

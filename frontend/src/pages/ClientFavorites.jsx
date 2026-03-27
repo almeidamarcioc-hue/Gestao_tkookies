@@ -44,7 +44,7 @@ export default function ClientFavorites({ clientUser, addToCart, onLoginClick })
     }
   };
 
-  const handleAddWithPopup = (prod) => {
+  const handleAddWithPopup = async (prod) => {
     if (!clientUser) {
       alert("Faça login ou cadastre-se para aproveitar os Sabores da TKookies.");
       onLoginClick();
