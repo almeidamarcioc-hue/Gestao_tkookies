@@ -81,13 +81,13 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
 
     // Carregar produtos para o cardápio
     api.get("/produtos").then(res => {
-      const allProducts = Array.isArray(res.data) ? res.data : [];
-      // Filtra apenas produtos com estoque positivo
-      const availableProducts = allProducts.filter(p => Number(p.estoque) > 0 && p.ativo !== false && !p.eh_agregado);
-      setProducts(availableProducts);
+      const allProductsData = Array.isArray(res.data) ? res.data : [];
+      // Filtra produtos ativos e não agregados, mas mantém os com estoque 0 para exibir "Indisponível"
+      const displayableProducts = allProductsData.filter(p => p.ativo !== false && !p.eh_agregado);
+      setProducts(displayableProducts);
       
       // Encontra produtos destaque com estoque e seleciona um aleatório
-      const featuredList = availableProducts.filter(p => p.eh_destaque);
+      const featuredList = displayableProducts.filter(p => p.eh_destaque && Number(p.estoque) > 0);
       if (featuredList.length > 0) {
         const randomFeatured = featuredList[Math.floor(Math.random() * featuredList.length)];
         setFeaturedProduct(randomFeatured);
@@ -119,6 +119,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
 
   const toggleFavorite = async (prod) => {
     if (!clientUser) {
+      alert("Faça login ou cadastre-se para aproveitar os Sabores da TKookies.");
       onLoginClick();
       return;
     }
@@ -152,18 +153,28 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
 
   const handleQtyChange = (prodId, delta) => {
     if (!clientUser && delta > 0) { // Se tentar adicionar e não estiver logado
-      alert("Faça login ou cadastre-se para aproveitar os Sabores da TKookies");
+      alert("Faça login ou cadastre-se para aproveitar os Sabores da TKookies.");
       onLoginClick();
       return;
     }
 
     const prod = products.find(p => p.id === prodId);
     if (!prod) return;
+
     const currentQty = getQty(prodId);
     const maxStock = Number(prod.estoque) || 0;
     let next = currentQty + delta;
+
     if (next < 0) next = 0;
-    if (next > maxStock) next = maxStock;
+    
+    if (next > maxStock) {
+      alert(`Estoque insuficiente para ${prod.nome}. Disponível: ${maxStock} unidade(s).`);
+      // Se o usuário tentou adicionar mais do que o estoque, ajusta para o máximo disponível
+      if (currentQty < maxStock) {
+        next = maxStock;
+      } else return; // Se já está no máximo ou tentando adicionar a 0 estoque, não faz nada
+    }
+
     if (next === 0) removeFromCart(prodId);
     else if (currentQty === 0 && delta > 0) addToCart(prod, next);
     else updateCartQuantity(prodId, next);
@@ -260,6 +271,15 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           filter: 'brightness(0.9)'
         }}
       />
+      {/* Tarja de Indisponível para produtos do mosaico */}
+      {prod.estoque <= 0 && (
+        <Chip
+          label="Indisponível"
+          color="error"
+          size="small"
+          sx={{ position: 'absolute', top: 12, left: 12, fontWeight: 'bold', zIndex: 1 }}
+        />
+      />
       <Box sx={{ 
         position: 'absolute', 
         bottom: 0, 
@@ -274,9 +294,13 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           <Typography variant={isLarge ? "h5" : "body1"} fontWeight="bold" color={secondaryColor}>
              R$ {Number(prod.preco_venda).toFixed(2)}
           </Typography>
-          <Fab size="small" sx={{ bgcolor: primaryColor, color: 'white', '&:hover': { bgcolor: '#E65100' } }} onClick={(e) => { e.stopPropagation(); handleQtyChange(prod.id, 1); }}>
-            <Add />
-          </Fab>
+          {prod.estoque > 0 ? (
+            <Fab size="small" sx={{ bgcolor: primaryColor, color: 'white', '&:hover': { bgcolor: '#E65100' } }} onClick={(e) => { e.stopPropagation(); handleQtyChange(prod.id, 1); }}>
+              <Add />
+            </Fab>
+          ) : (
+            <Chip label="Esgotado" color="error" size="small" sx={{ fontWeight: 'bold' }} />
+          )}
         </Box>
       </Box>
     </Box>
@@ -458,6 +482,17 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                               />
                             )}
 
+                        {/* Tarja de Indisponível */}
+                        {prod.estoque <= 0 && (
+                          <Chip
+                            label="Indisponível"
+                            color="error"
+                            size="small"
+                            sx={{ position: 'absolute', top: 8, left: 8, fontWeight: 'bold' }}
+                          />
+                        )}
+
+
                             <IconButton 
                               size="small"
                               onClick={() => toggleFavorite(prod)}
@@ -475,13 +510,20 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                          </CardContent>
                          <Box sx={{ p: 2, pt: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <Typography variant="h6" fontWeight="bold" color="primary">R$ {Number(prod.preco_venda).toFixed(2)}</Typography>
-                            {qty === 0 ? (
+                            {prod.estoque <= 0 ? (
+                              <Chip label="Indisponível" color="error" size="small" sx={{ fontWeight: 'bold' }} />
+                            ) : qty === 0 ? (
                               <Button variant="contained" size="small" onClick={() => handleQtyChange(prod.id, 1)} sx={{ borderRadius: 20 }}>
                                 Adicionar
                               </Button>
                             ) : (
                               <Box display="flex" alignItems="center" gap={1}>
-                                <IconButton size="small" onClick={() => handleQtyChange(prod.id, -1)} sx={{ border: '1px solid #ddd' }}><Remove fontSize="small" /></IconButton>
+                                <IconButton 
+                                  size="small" 
+                                  onClick={() => handleQtyChange(prod.id, -1)} 
+                                  sx={{ border: '1px solid #ddd' }}
+                                  disabled={qty <= 0} // Desabilita se a quantidade já for 0
+                                ><Remove fontSize="small" /></IconButton>
                                 <Typography fontWeight="bold">{qty}</Typography>
                                 <IconButton size="small" onClick={() => handleQtyChange(prod.id, 1)} sx={{ bgcolor: primaryColor, color: 'white', '&:hover': { bgcolor: '#FF8F00' } }}><Add fontSize="small" /></IconButton>
                               </Box>
@@ -815,6 +857,11 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                   </Typography>
                 </Box>
               </DialogContent>
+              {selectedProduct.estoque <= 0 && (
+                <Alert severity="error" sx={{ mx: 3, mb: 2 }}>
+                  Este produto está indisponível no momento.
+                </Alert>
+              )}
               <DialogActions sx={{ justifyContent: 'center', p: 3, pt: 0 }}>
                 <Button 
                   variant="contained" 
@@ -825,6 +872,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                     handleQtyChange(selectedProduct.id, 1);
                     setDetailsOpen(false);
                   }}
+                  disabled={selectedProduct.estoque <= 0}
                   sx={{ bgcolor: '#4E342E', color: 'white', borderRadius: '50px', px: 4, py: 1.5 }}
                 >
                   Adicionar ao Carrinho

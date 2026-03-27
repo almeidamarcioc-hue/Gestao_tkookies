@@ -112,6 +112,11 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
       return;
     }
 
+    if (cart.some(item => item.estoque <= 0 || item.quantidade > item.estoque)) {
+      alert("Por favor, ajuste as quantidades dos produtos no carrinho. Alguns itens estão com estoque insuficiente ou esgotados.");
+      return;
+    }
+
     let obsFinal = observacao;
     if (deliveryType === "entrega") {
       if (addressOption === "outro") {
@@ -251,10 +256,20 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
                       )}
                     </TableCell>
                     <TableCell align="center">
-                      <Box display="flex" alignItems="center" justifyContent="center" border="1px solid rgba(78, 52, 46, 0.2)" borderRadius={2} width="fit-content" mx="auto">
-                        <IconButton size="small" onClick={() => updateQuantity(item.id, item.quantidade - 1)} sx={{ color: '#4E342E' }}><Remove fontSize="small" /></IconButton>
+                      <Box display="flex" alignItems="center" justifyContent="center" border="1px solid rgba(78, 52, 46, 0.2)" borderRadius={2} width="fit-content" mx="auto" sx={{ opacity: item.estoque <= 0 ? 0.5 : 1 }}>
+                        <IconButton 
+                          size="small" 
+                          onClick={() => updateQuantity(item.id, item.quantidade - 1)} 
+                          sx={{ color: '#4E342E' }} 
+                          disabled={item.estoque <= 0 || item.quantidade <= 1}
+                        ><Remove fontSize="small" /></IconButton>
                         <Typography sx={{ px: 2, fontWeight: 'bold', color: '#4E342E' }}>{item.quantidade}</Typography>
-                        <IconButton size="small" onClick={() => updateQuantity(item.id, item.quantidade + 1)} sx={{ color: '#4E342E' }}><Add fontSize="small" /></IconButton>
+                        <IconButton 
+                          size="small" 
+                          onClick={() => updateQuantity(item.id, item.quantidade + 1)} 
+                          sx={{ color: '#4E342E' }} 
+                          disabled={item.estoque <= 0 || item.quantidade >= item.estoque}
+                        ><Add fontSize="small" /></IconButton>
                       </Box>
                     </TableCell>
                     <TableCell align="right">
@@ -262,6 +277,13 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
                     </TableCell>
                     <TableCell align="center">
                       <IconButton onClick={() => removeFromCart(item.id)} sx={{ color: '#C62828' }}><Delete /></IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {cart.some(item => item.estoque <= 0 || item.quantidade > item.estoque) && (
+                  <TableRow>
+                    <TableCell colSpan={5}>
+                      <Alert severity="warning">Alguns produtos no seu carrinho estão com estoque baixo ou esgotado. Ajuste as quantidades para prosseguir.</Alert>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -445,8 +467,8 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
               variant="contained" 
               fullWidth 
               size="large" 
-              onClick={handleCheckout}
-              disabled={cart.length === 0}
+              onClick={handleCheckout} // This will now trigger the stock check inside handleCheckout
+              disabled={cart.length === 0 || cart.some(item => item.estoque <= 0 || item.quantidade > item.estoque)}
               sx={{ 
                 py: 1.5, 
                 fontWeight: 'bold', 
@@ -493,7 +515,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
       <Button 
         variant="contained" 
         onClick={handleCheckout}
-        disabled={cart.length === 0}
+        disabled={cart.length === 0 || cart.some(item => item.estoque <= 0 || item.quantidade > item.estoque)}
         sx={{ borderRadius: 50, bgcolor: '#4E342E', '&:hover': { bgcolor: '#3E2723' }, px: 4, py: 1.2, fontWeight: 'bold' }}
       >
         FINALIZAR

@@ -53,7 +53,8 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
           nome: item.produto_nome, 
           preco_venda: item.valor_unitario,
           // Converte o campo 'imagem' simples para o formato de array esperado pelo carrinho
-          imagens: item.imagem ? [{ imagem: item.imagem, eh_capa: true }] : (item.imagens || [])
+          imagens: item.imagem ? [{ imagem: item.imagem, eh_capa: true }] : (item.imagens || []),
+          estoque: item.estoque // Inclui o estoque do produto
         }, Number(item.quantidade));
       });
       
@@ -67,7 +68,8 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
     addToCart({
       ...item,
       // Garante que a imagem apareça no carrinho ao comprar novamente um item individual
-      imagens: item.imagens || (item.imagem ? [{ imagem: item.imagem, eh_capa: true }] : [])
+      imagens: item.imagens || (item.imagem ? [{ imagem: item.imagem, eh_capa: true }] : []),
+      estoque: item.estoque // Inclui o estoque do produto
     }, 1);
     navigate("/carrinho");
   };

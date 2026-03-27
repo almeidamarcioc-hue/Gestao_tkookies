@@ -54,7 +54,7 @@ router.get("/:id", async (req, res) => {
     // Buscar Itens
     const queryItens = `
       SELECT pi.*, p.nome as produto_nome, p.preco_revenda, p.eh_destaque, p.desconto_destaque,
-             (SELECT imagem FROM produto_imagens WHERE produto_id = p.id ORDER BY eh_capa DESC LIMIT 1) as imagem
+             (SELECT imagem FROM produto_imagens WHERE produto_id = p.id ORDER BY eh_capa DESC LIMIT 1) as imagem, p.estoque
       FROM itens_pedido pi
       JOIN produtos p ON pi.produto_id = p.id
       WHERE pi.pedido_id = $1

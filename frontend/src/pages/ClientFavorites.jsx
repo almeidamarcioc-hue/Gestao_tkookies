@@ -22,7 +22,8 @@ export default function ClientFavorites({ clientUser, addToCart, onLoginClick })
   const loadAllProducts = async () => {
     try {
       const res = await api.get("/produtos");
-      setAllProducts(Array.isArray(res.data) ? res.data : []);
+      // Carrega todos os produtos (ativos e não agregados) para poder exibir "Indisponível"
+      setAllProducts(Array.isArray(res.data) ? res.data.filter(p => p.ativo !== false && !p.eh_agregado) : []);
     } catch (err) {
       console.error("Erro ao carregar produtos para sugestão", err);
     }
@@ -45,8 +46,12 @@ export default function ClientFavorites({ clientUser, addToCart, onLoginClick })
 
   const handleAddWithPopup = (prod) => {
     if (!clientUser) {
-      alert("Faça login ou cadastre-se para aproveitar os Sabores da TKookies");
+      alert("Faça login ou cadastre-se para aproveitar os Sabores da TKookies.");
       onLoginClick();
+      return;
+    }
+    if (prod.estoque <= 0) {
+      alert(`O produto "${prod.nome}" está indisponível no momento.`);
       return;
     }
 
@@ -152,9 +157,17 @@ export default function ClientFavorites({ clientUser, addToCart, onLoginClick })
                     <Typography variant="h6" sx={{ color: '#2E7D32', fontWeight: 'bold' }}>
                       R$ {Number(prod.preco_venda).toFixed(2)}
                     </Typography>
+                    {prod.estoque <= 0 && (
+                      <Chip
+                        label="Indisponível"
+                        color="error"
+                        size="small"
+                        sx={{ mt: 1, fontWeight: 'bold' }}
+                      />
+                    )}
                   </Box>
                   <Box sx={{ p: 2, pt: 0 }}>
-                    <Button variant="contained" fullWidth startIcon={<AddShoppingCart />} onClick={() => handleAddWithPopup(prod)} sx={{ borderRadius: 50, bgcolor: '#4E342E', '&:hover': { bgcolor: '#3E2723' } }}>
+                    <Button variant="contained" fullWidth startIcon={<AddShoppingCart />} onClick={() => handleAddWithPopup(prod)} sx={{ borderRadius: 50, bgcolor: '#4E342E', '&:hover': { bgcolor: '#3E2723' } }} disabled={prod.estoque <= 0}>
                       Adicionar ao Carrinho
                     </Button>
                   </Box>
