@@ -47,10 +47,10 @@ router.post("/", async (req, res) => {
     await client.query("BEGIN");
 
     for (const [key, value] of Object.entries(configs)) {
-      // Upsert (Insert or Update) - Sintaxe compatível com PostgreSQL
+      // Upsert (Insert or Update) - Sintaxe compatível com MySQL/TiDB (via wrapper)
       await client.query(
         `INSERT INTO configuracoes (chave, valor) VALUES ($1, $2) 
-         ON CONFLICT (chave) DO UPDATE SET valor = EXCLUDED.valor`,
+         ON DUPLICATE KEY UPDATE valor = VALUES(valor)`,
         [key, value]
       );
     }
@@ -58,9 +58,11 @@ router.post("/", async (req, res) => {
     await client.query("COMMIT");
     res.json({ message: "Configurações salvas!" });
   } catch (error) {
-    await client.query("ROLLBACK");
-    console.error(error);
-    res.status(500).json({ error: "Erro ao salvar configurações" });
+    if (client) {
+      try { await client.query("ROLLBACK"); } catch (rbErr) {}
+    }
+    console.error("Erro ao salvar configurações:", error);
+    res.status(500).json({ error: "Erro ao salvar configurações", details: error.message });
   } finally {
     client.release();
   }

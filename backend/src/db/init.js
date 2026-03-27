@@ -173,7 +173,7 @@ export async function initDatabase() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE,
         FOREIGN KEY (produto_id) REFERENCES produtos(id) ON DELETE CASCADE,
-        UNIQUE (cliente_id, produto_id)
+        CONSTRAINT unique_fav UNIQUE (cliente_id, produto_id)
       )
     `);
 

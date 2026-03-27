@@ -55,7 +55,7 @@ router.get("/:id/mais-comprados", async (req, res) => {
     res.json(result.rows);
   } catch (error) {
     console.error("Erro ao buscar mais comprados:", error);
-    res.status(500).json({ error: "Erro ao buscar itens mais comprados" });
+    res.status(500).json({ error: "Erro ao buscar itens mais comprados", details: error.message });
   }
 });
 
@@ -130,7 +130,7 @@ router.get("/:id/pedidos", async (req, res) => {
     res.json(result.rows);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Erro ao criar cliente" });
+    res.status(500).json({ error: "Erro ao buscar pedidos do cliente", details: error.message });
   }
 });
 
