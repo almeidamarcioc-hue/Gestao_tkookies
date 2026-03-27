@@ -127,6 +127,14 @@ export default function App() {
     forceScrollTop();
     // Executa uma segunda vez após um micro-delay para garantir que o DOM renderizou
     const timer = setTimeout(forceScrollTop, 10);
+
+    // Rastreamento de visualização de página no Google Analytics (gtag.js)
+    if (window.gtag) {
+      window.gtag('config', 'G-B4WSKWXZBY', {
+        page_path: pathname,
+      });
+    }
+
     return () => clearTimeout(timer);
   }, [pathname]);
 
