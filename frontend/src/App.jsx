@@ -387,7 +387,7 @@ export default function App() {
           </Typography>
           <Divider />
           <List>
-            <ListItem disablePadding><ListItemButton component={Link} to="/"><ListItemText primary="HOME" /></ListItemButton></ListItem>
+            <ListItem disablePadding><ListItemButton component={Link} to="/" onClick={handleDrawerToggle}><ListItemText primary="HOME" /></ListItemButton></ListItem>
             {isLoggedIn ? (
               <>
                 <ListItem disablePadding><ListItemButton component={Link} to="/pedidos/novo"><ListItemText primary="Novo Pedido" /></ListItemButton></ListItem>
@@ -407,9 +407,9 @@ export default function App() {
             ) : (
                clientUser ? (
                  <>
-                   <ListItem disablePadding><ListItemButton component={Link} to="/perfil"><ListItemText primary="Meu Perfil" /></ListItemButton></ListItem>
-                   <ListItem disablePadding><ListItemButton component={Link} to="/meus-favoritos"><ListItemText primary="Meus Favoritos" /></ListItemButton></ListItem>
-                   <ListItem disablePadding><ListItemButton component={Link} to="/meus-pedidos"><ListItemText primary="Meus Pedidos" /></ListItemButton></ListItem>
+                   <ListItem disablePadding><ListItemButton component={Link} to="/perfil" onClick={handleDrawerToggle}><ListItemText primary="Meu Perfil" /></ListItemButton></ListItem>
+                   <ListItem disablePadding><ListItemButton component={Link} to="/meus-favoritos" onClick={handleDrawerToggle}><ListItemText primary="Meus Favoritos" /></ListItemButton></ListItem>
+                   <ListItem disablePadding><ListItemButton component={Link} to="/meus-pedidos" onClick={handleDrawerToggle}><ListItemText primary="Meus Pedidos" /></ListItemButton></ListItem>
                    <ListItem disablePadding><ListItemButton onClick={handleLogout}><ListItemText primary="SAIR" sx={{ color: 'error.main' }} /></ListItemButton></ListItem>
                  </>
                ) : (
@@ -419,7 +419,7 @@ export default function App() {
                  </>
                )
             )}
-            <ListItem disablePadding><ListItemButton component={Link} to="/carrinho"><ListItemText primary="Carrinho" /></ListItemButton></ListItem>
+            <ListItem disablePadding><ListItemButton component={Link} to="/carrinho" onClick={handleDrawerToggle}><ListItemText primary="Carrinho" /></ListItemButton></ListItem>
             {!isLoggedIn && (
               <ListItem disablePadding sx={{ justifyContent: 'center', mt: 2 }}>
                 <IconButton onClick={() => setAdminLoginOpen(true)} sx={{ color: 'text.secondary', opacity: 0.5 }}>
@@ -437,10 +437,10 @@ export default function App() {
           <Route path="/cadastro" element={<ClientRegister />} />
           <Route path="/perfil" element={<ClientProfile user={clientUser} onUserUpdate={setClientUser} addToCart={addToCart} />} />
           <Route path="/carrinho" element={<Cart cart={cart} updateQuantity={updateCartQuantity} removeFromCart={removeFromCart} clearCart={clearCart} clientUser={clientUser} addToCart={addToCart} />} />
-          <Route path="/pedido-confirmado" element={<OrderConfirmation />} />
+          <Route path="/pedido-confirmado" element={<OrderConfirmation clearCart={clearCart} />} />
           <Route path="/meus-pedidos" element={<ProtectedRoute isAllowed={!!clientUser}><ClientOrders clientUser={clientUser} /></ProtectedRoute>} />
           <Route path="/meus-pedidos/:id" element={<ProtectedRoute isAllowed={!!clientUser}><ClientOrderDetails /></ProtectedRoute>} />
-          <Route path="/meus-favoritos" element={<ProtectedRoute isAllowed={!!clientUser}><ClientFavorites clientUser={clientUser} addToCart={addToCart} /></ProtectedRoute>} />
+          <Route path="/meus-favoritos" element={<ProtectedRoute isAllowed={!!clientUser}><ClientFavorites clientUser={clientUser} addToCart={addToCart} onLoginClick={() => handleOpenLogin('client')} /></ProtectedRoute>} />
           <Route path="/acesso-negado" element={<AccessDenied isLoggedIn={isLoggedIn || !!clientUser} onLoginClick={() => setClientLoginOpen(true)} />} />
           <Route path="/sobre" element={<About />} />
           

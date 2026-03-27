@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import api from "../services/api";
 
-export default function ClientFavorites({ clientUser, addToCart }) {
+export default function ClientFavorites({ clientUser, addToCart, onLoginClick }) {
   const navigate = useNavigate();
   const [favorites, setFavorites] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
@@ -44,6 +44,11 @@ export default function ClientFavorites({ clientUser, addToCart }) {
   };
 
   const handleAddWithPopup = (prod) => {
+    if (!clientUser) {
+      onLoginClick();
+      return;
+    }
+
     // Adiciona o produto selecionado ao carrinho
     addToCart(prod, 1);
 

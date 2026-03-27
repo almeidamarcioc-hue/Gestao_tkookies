@@ -151,6 +151,11 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
   };
 
   const handleQtyChange = (prodId, delta) => {
+    if (!clientUser && delta > 0) { // Se tentar adicionar e não estiver logado
+      onLoginClick();
+      return;
+    }
+
     const prod = products.find(p => p.id === prodId);
     if (!prod) return;
     const currentQty = getQty(prodId);
@@ -164,6 +169,11 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
   };
 
   const handleAddFeatured = () => {
+    if (!clientUser) {
+      onLoginClick();
+      return;
+    }
+
     if (!featuredProduct) return;
     
     handleQtyChange(featuredProduct.id, 1);
