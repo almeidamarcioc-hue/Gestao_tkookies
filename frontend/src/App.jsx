@@ -227,28 +227,67 @@ export default function App() {
   };
 
   // Funções do Carrinho
-  const addToCart = (product, quantity = 1) => {
-    setCart((prev) => {
-      const existing = prev.find((item) => item.id === product.id);
-      if (existing) {
-        return prev.map((item) =>
-          item.id === product.id ? { ...item, quantidade: item.quantidade + quantity } : item
-        );
-      }
-      return [...prev, { ...product, quantidade: quantity }];
-    });
+  const addToCart = async (product, quantity = 1) => {
+    const dbId = product.original_id || product.id; // Usa original_id para agregados
+    try {
+      await api.post("/estoque/reservar", { produto_id: dbId, quantidade: quantity });
+      setCart((prev) => {
+        const existing = prev.find((item) => item.id === product.id);
+        if (existing) {
+          return prev.map((item) =>
+            item.id === product.id ? { ...item, quantidade: item.quantidade + quantity } : item
+          );
+        }
+        return [...prev, { ...product, quantidade: quantity }];
+      });
+      return true; // Sucesso
+    } catch (err) {
+      alert(err.response?.data?.error || "Estoque insuficiente.");
+      return false; // Falha
+    }
   };
 
-  const removeFromCart = (productId) => {
+  const removeFromCart = async (productId) => {
+    const item = cart.find(i => i.id === productId);
+    if (item) {
+      const dbId = item.original_id || item.id;
+      await api.post("/estoque/liberar", { produto_id: dbId, quantidade: item.quantidade })
+               .catch(e => console.error("Erro ao liberar estoque:", e));
+    }
     setCart((prev) => prev.filter((item) => item.id !== productId));
   };
 
-  const updateCartQuantity = (productId, newQty) => {
+  const updateCartQuantity = async (productId, newQty) => {
     if (newQty < 1) return;
-    setCart((prev) => prev.map((item) => item.id === productId ? { ...item, quantidade: newQty } : item));
+    const item = cart.find(i => i.id === productId);
+    if (!item) return;
+
+    const delta = newQty - item.quantidade;
+    const dbId = item.original_id || item.id;
+
+    try {
+      if (delta > 0) {
+        await api.post("/estoque/reservar", { produto_id: dbId, quantidade: delta });
+      } else if (delta < 0) {
+        await api.post("/estoque/liberar", { produto_id: dbId, quantidade: Math.abs(delta) });
+      }
+      setCart((prev) => prev.map((i) => i.id === productId ? { ...i, quantidade: newQty } : i));
+      return true; // Sucesso
+    } catch (err) {
+      alert(err.response?.data?.error || "Não há estoque suficiente para esta quantidade.");
+      return false; // Falha
+    }
   };
 
-  const clearCart = () => setCart([]);
+  const clearCart = async () => {
+    // Libera todos os itens do carrinho no banco
+    for (const item of cart) {
+      const dbId = item.original_id || item.id;
+      await api.post("/estoque/liberar", { produto_id: dbId, quantidade: item.quantidade })
+               .catch(e => console.error("Erro ao liberar estoque:", e));
+    }
+    setCart([]);
+  };
 
   return (
     <ThemeProvider theme={theme}>

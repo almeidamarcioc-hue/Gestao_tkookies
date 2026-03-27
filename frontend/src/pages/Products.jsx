@@ -321,7 +321,7 @@ export default function Products() {
       return;
     }
 
-    setAgregados([...agregados, { ...agregadoSelecionado, preco: Number(agregadoPreco) }]);
+    setAgregados([...agregados, { ...agregadoSelecionado, original_id: agregadoSelecionado.id, preco: Number(agregadoPreco) }]);
     setAgregadoSelecionado(null);
     setAgregadoPreco("");
   }

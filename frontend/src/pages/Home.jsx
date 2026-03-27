@@ -151,7 +151,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
     return item ? item.quantidade : 0;
   };
 
-  const handleQtyChange = (prodId, delta) => {
+  const handleQtyChange = async (prodId, delta) => {
     if (!clientUser && delta > 0) { // Se tentar adicionar e não estiver logado
       alert("Faça login ou cadastre-se para aproveitar os Sabores da TKookies.");
       onLoginClick();
@@ -175,12 +175,12 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
       } else return; // Se já está no máximo ou tentando adicionar a 0 estoque, não faz nada
     }
 
-    if (next === 0) removeFromCart(prodId);
-    else if (currentQty === 0 && delta > 0) addToCart(prod, next);
-    else updateCartQuantity(prodId, next);
+    if (next === 0) await removeFromCart(prodId);
+    else if (currentQty === 0 && delta > 0) await addToCart(prod, next);
+    else await updateCartQuantity(prodId, next);
   };
 
-  const handleAddFeatured = () => {
+  const handleAddFeatured = async () => {
     if (!clientUser) {
       alert("Faca login ou cadastre-se para aproveitar os Sabores da TKookies");
       onLoginClick();
@@ -189,7 +189,8 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
 
     if (!featuredProduct) return;
     
-    handleQtyChange(featuredProduct.id, 1);
+    const success = await addToCart(featuredProduct, 1);
+    if (!success) return; // Não abre o modal se falhou ao adicionar
 
     const available = products.filter(p => p.id !== featuredProduct.id && Number(p.estoque) > 0);
     const shuffled = [...available].sort(() => 0.5 - Math.random());

@@ -47,7 +47,7 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
       const pedido = res.data;
       
       pedido.itens.forEach(item => {
-        addToCart({ 
+        await addToCart({ 
           ...item, 
           id: item.produto_id, 
           nome: item.produto_nome, 
@@ -65,7 +65,7 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
   };
 
   const handleBuyItem = (item) => {
-    addToCart({
+    await addToCart({
       ...item,
       // Garante que a imagem apareça no carrinho ao comprar novamente um item individual
       imagens: item.imagens || (item.imagem ? [{ imagem: item.imagem, eh_capa: true }] : []),

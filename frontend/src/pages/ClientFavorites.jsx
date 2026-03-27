@@ -50,13 +50,14 @@ export default function ClientFavorites({ clientUser, addToCart, onLoginClick })
       onLoginClick();
       return;
     }
-    if (prod.estoque <= 0) {
+    if ((Number(prod.estoque) || 0) <= 0) {
       alert(`O produto "${prod.nome}" está indisponível no momento.`);
       return;
     }
 
     // Adiciona o produto selecionado ao carrinho
-    addToCart(prod, 1);
+    const success = await addToCart(prod, 1);
+    if (!success) return; // Não abre o modal se falhou ao adicionar
 
     // Prepara sugestões aleatórias (exclui o produto atual e itens sem estoque ou agregados)
     const available = allProducts.filter(p => p.id !== prod.id && Number(p.estoque) > 0 && !p.eh_agregado);

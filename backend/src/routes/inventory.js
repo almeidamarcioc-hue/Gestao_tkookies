@@ -14,6 +14,35 @@ router.get("/", async (req, res) => {
   }
 });
 
+// RESERVAR ESTOQUE (Ao adicionar ao carrinho)
+router.post("/reservar", async (req, res) => {
+  const { produto_id, quantidade } = req.body;
+  try {
+    // Executa o update apenas se houver estoque disponível (operação atômica)
+    const result = await pool.query(
+      "UPDATE produtos SET estoque = estoque - $1 WHERE id = $2 AND estoque >= $1",
+      [Number(quantidade), produto_id]
+    );
+    if (result.rowCount === 0) {
+      return res.status(400).json({ error: "Estoque insuficiente para este produto." });
+    }
+    res.json({ message: "Estoque reservado com sucesso." });
+  } catch (error) {
+    res.status(500).json({ error: "Erro ao reservar estoque", details: error.message });
+  }
+});
+
+// LIBERAR ESTOQUE (Ao remover do carrinho ou limpar)
+router.post("/liberar", async (req, res) => {
+  const { produto_id, quantidade } = req.body;
+  try {
+    await pool.query("UPDATE produtos SET estoque = estoque + $1 WHERE id = $2", [Number(quantidade), produto_id]);
+    res.json({ message: "Estoque liberado." });
+  } catch (error) {
+    res.status(500).json({ error: "Erro ao liberar estoque", details: error.message });
+  }
+});
+
 // LANÇAR ESTOQUE (SOMAR AO ATUAL)
 router.post("/lancar", async (req, res) => {
   const { produto_id, quantidade } = req.body;

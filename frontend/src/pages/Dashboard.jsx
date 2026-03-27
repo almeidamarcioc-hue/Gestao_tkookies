@@ -310,7 +310,7 @@ export default function Dashboard() {
   const handleAddAgregadoEdit = () => {
     if (!newAgregado || !newAgregadoPreco) return;
     if (editProduct.agregados.some(a => a.id === newAgregado.id)) return alert("Já adicionado.");
-    setEditProduct(prev => ({ ...prev, agregados: [...prev.agregados, { ...newAgregado, preco: Number(newAgregadoPreco) }] }));
+    setEditProduct(prev => ({ ...prev, agregados: [...prev.agregados, { ...newAgregado, original_id: newAgregado.id, preco: Number(newAgregadoPreco) }] }));
     setNewAgregado(null);
     setNewAgregadoPreco("");
   };

@@ -71,7 +71,7 @@ router.get("/:id", async (req, res) => {
 
 // CRIAR PEDIDO
 router.post("/", async (req, res) => {
-  const { cliente_id, data_pedido, forma_pagamento, observacao, frete, desconto, status, tipo_cliente, itens } = req.body;
+  const { cliente_id, data_pedido, forma_pagamento, observacao, frete, desconto, status, tipo_cliente, itens, origem } = req.body;
   
   const client = await pool.connect();
   try {
@@ -95,8 +95,10 @@ router.post("/", async (req, res) => {
         [pedidoId, item.produto_id, item.quantidade, item.valor_unitario, Number(item.quantidade) * Number(item.valor_unitario)]
       );
       
-      // Baixar estoque do produto
-      await client.query("UPDATE produtos SET estoque = estoque - $1 WHERE id = $2", [item.quantidade, item.produto_id]);
+      // Baixar estoque do produto apenas se não veio do carrinho (onde já foi baixado na reserva)
+      if (origem !== 'carrinho') {
+        await client.query("UPDATE produtos SET estoque = estoque - $1 WHERE id = $2", [item.quantidade, item.produto_id]);
+      }
     }
 
     await client.query("COMMIT");

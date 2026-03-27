@@ -142,7 +142,8 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
       itens: cart.map(item => ({
         produto_id: item.id,
         quantidade: item.quantidade,
-        valor_unitario: getItemPrice(item)
+        valor_unitario: getItemPrice(item),
+        origem: 'carrinho' // Indica que o estoque já foi reservado
       }))
     };
 
