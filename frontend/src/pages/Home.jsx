@@ -93,7 +93,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
         setFeaturedProduct(randomFeatured);
 
         // Select 2 additional items for the mosaic (excluding the main featured one)
-        const others = availableProducts.filter(p => p.id !== randomFeatured.id)
+        const others = displayableProducts.filter(p => p.id !== randomFeatured.id)
                                       .sort(() => 0.5 - Math.random()).slice(0, 2);
         setHighlightItems(others);
       }
@@ -279,7 +279,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           size="small"
           sx={{ position: 'absolute', top: 12, left: 12, fontWeight: 'bold', zIndex: 1 }}
         />
-      />
+      )}
       <Box sx={{ 
         position: 'absolute', 
         bottom: 0, 
