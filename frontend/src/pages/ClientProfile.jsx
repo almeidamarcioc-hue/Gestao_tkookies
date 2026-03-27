@@ -11,6 +11,14 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({});
   const [senhaAtual, setSenhaAtual] = useState("");
+  const [isStoreOpen, setIsStoreOpen] = useState(true);
+
+  const checkIfOpen = (openTime, closeTime) => {
+    if (!openTime || !closeTime) return true;
+    const now = new Date();
+    const current = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+    return current >= openTime && current <= closeTime;
+  };
 
   useEffect(() => {
     if (user) {
@@ -18,6 +26,12 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
       api.get(`/clientes/${user.id}/pedidos`).then(res => setPedidos(res.data));
       api.get(`/clientes/${user.id}/mais-comprados`).then(res => setMaisComprados(res.data));
     }
+
+    api.get("/configuracoes").then(res => {
+      if (res.data) {
+        setIsStoreOpen(checkIfOpen(res.data.open_time, res.data.close_time));
+      }
+    });
   }, [user]);
 
   const handleChange = (e) => {
@@ -42,6 +56,11 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
   };
 
   const handleRepeatOrder = async (orderId) => {
+    if (!isStoreOpen) {
+      alert("No momento estamos fechados. Volte dentro do horário de atendimento!");
+      return;
+    }
+
     try {
       const res = await api.get(`/pedidos/${orderId}`);
       const pedido = res.data;
@@ -65,6 +84,11 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
   };
 
   const handleBuyItem = async (item) => {
+    if (!isStoreOpen) {
+      alert("No momento estamos fechados. Volte dentro do horário de atendimento!");
+      return;
+    }
+
     await addToCart({
       ...item,
       // Garante que a imagem apareça no carrinho ao comprar novamente um item individual
@@ -157,7 +181,13 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
                     <Typography variant="caption" color="text.secondary">Comprado {item.total_comprado}x</Typography>
                   </CardContent>
                   <CardActions>
-                    <Button size="small" fullWidth startIcon={<AddShoppingCart />} onClick={() => handleBuyItem(item)}>
+                    <Button 
+                      size="small" 
+                      fullWidth 
+                      startIcon={<AddShoppingCart />} 
+                      onClick={() => handleBuyItem(item)}
+                      disabled={!isStoreOpen}
+                    >
                       Comprar
                     </Button>
                   </CardActions>
@@ -189,8 +219,12 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
                   </TableCell>
                   <TableCell align="right" sx={{ fontWeight: 'bold' }}>R$ {Number(pedido.valor_total).toFixed(2)}</TableCell>
                   <TableCell align="center">
-                    <Tooltip title="Repetir Pedido">
-                      <IconButton color="primary" onClick={() => handleRepeatOrder(pedido.id)}><Replay /></IconButton>
+                    <Tooltip title={isStoreOpen ? "Repetir Pedido" : "Loja Fechada"}>
+                      <IconButton 
+                        color="primary" 
+                        onClick={() => handleRepeatOrder(pedido.id)}
+                        disabled={!isStoreOpen}
+                      ><Replay /></IconButton>
                     </Tooltip>
                   </TableCell>
                 </TableRow>
