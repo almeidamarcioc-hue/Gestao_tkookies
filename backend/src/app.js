@@ -108,7 +108,7 @@ app.get("/api/fix-revendedores", async (req, res) => {
   try {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS revendedores (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id SERIAL PRIMARY KEY,
         razao_social VARCHAR(255) NOT NULL,
         cpf_cnpj VARCHAR(20) NOT NULL,
         nome_contato VARCHAR(100) NOT NULL,

@@ -64,7 +64,7 @@ export async function initDatabase() {
       CREATE TABLE IF NOT EXISTS produto_imagens (
         id SERIAL PRIMARY KEY,
         produto_id INT,
-        imagem LONGTEXT,
+        imagem TEXT,
         eh_capa BOOLEAN DEFAULT FALSE,
         FOREIGN KEY (produto_id) REFERENCES produtos(id) ON DELETE CASCADE
       )
@@ -125,7 +125,7 @@ export async function initDatabase() {
         preco_venda DECIMAL(10, 2) NOT NULL,
         estoque DECIMAL(10, 2) DEFAULT 0,
         produto_id INT,
-        imagem LONGTEXT,
+        imagem TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -160,7 +160,7 @@ export async function initDatabase() {
       CREATE TABLE IF NOT EXISTS configuracoes (
         id SERIAL PRIMARY KEY,
         chave VARCHAR(50) NOT NULL UNIQUE,
-        valor LONGTEXT
+        valor TEXT
       )
     `);
 
@@ -173,7 +173,7 @@ export async function initDatabase() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE,
         FOREIGN KEY (produto_id) REFERENCES produtos(id) ON DELETE CASCADE,
-        UNIQUE KEY unique_fav (cliente_id, produto_id)
+        UNIQUE (cliente_id, produto_id)
       )
     `);
 
@@ -212,7 +212,7 @@ export async function initDatabase() {
         nome VARCHAR(255) NOT NULL,
         cargo VARCHAR(100) DEFAULT 'Cliente',
         texto TEXT NOT NULL,
-        imagem LONGTEXT,
+        imagem TEXT,
         ativo BOOLEAN DEFAULT TRUE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
@@ -249,7 +249,7 @@ export async function initDatabase() {
     logs.push(await addColumnSafe("lancamentos_financeiros", "total_parcelas INT DEFAULT 1"));
     logs.push(await addColumnSafe("lancamentos_financeiros", "group_id VARCHAR(50)"));
     logs.push(await addColumnSafe("combos", "produto_id INT"));
-    logs.push(await addColumnSafe("combos", "imagem LONGTEXT"));
+    logs.push(await addColumnSafe("combos", "imagem TEXT"));
     logs.push(await addColumnSafe("produtos", "descricao VARCHAR(1000)"));
     logs.push(await addColumnSafe("clientes", "is_revendedor BOOLEAN DEFAULT FALSE"));
     logs.push(await addColumnSafe("revendedores", "login VARCHAR(100)"));
@@ -261,11 +261,6 @@ export async function initDatabase() {
     logs.push(await addColumnSafe("produtos", "eh_agregado BOOLEAN DEFAULT FALSE"));
     logs.push(await addColumnSafe("produtos", "custo DECIMAL(10, 2) DEFAULT 0"));
     logs.push(await addColumnSafe("depoimentos", "cargo VARCHAR(100) DEFAULT 'Cliente'"));
-
-    // Garante que campos de imagem suportem Base64 grandes no MySQL (TEXT -> LONGTEXT)
-    try { await pool.query("ALTER TABLE produto_imagens MODIFY COLUMN imagem LONGTEXT"); } catch(e){}
-    try { await pool.query("ALTER TABLE configuracoes MODIFY COLUMN valor LONGTEXT"); } catch(e){}
-    try { await pool.query("ALTER TABLE depoimentos MODIFY COLUMN imagem LONGTEXT"); } catch(e){}
 
     console.log("✅ Base de dados inicializada com sucesso");
     return logs;

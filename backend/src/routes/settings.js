@@ -10,8 +10,8 @@ router.get("/migrate", async (req, res) => {
   try {
     const logs = await initDatabase();
     
-    // Diagnóstico: Retorna as colunas da tabela clientes para confirmar
-    const columnsRes = await pool.query("SHOW COLUMNS FROM clientes");
+    // Diagnóstico Postgres: Busca colunas via information_schema
+    const columnsRes = await pool.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'clientes'");
     res.json({ 
       message: "Banco de dados atualizado com sucesso!",
       logs: logs,

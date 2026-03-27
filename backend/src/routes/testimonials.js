@@ -25,7 +25,7 @@ router.get("/public", async (req, res) => {
     res.json(result.rows);
   } catch (error) {
     // Se o erro for tabela inexistente, tenta criar e não retorna erro (retorna array vazio)
-    if (error.message && error.message.includes("doesn't exist")) {
+    if (error.message && (error.message.includes("doesn't exist") || error.message.includes("does not exist"))) {
       await ensureTableExists();
       return res.json([]); 
     }
@@ -39,7 +39,7 @@ router.get("/", async (req, res) => {
     const result = await pool.query("SELECT * FROM depoimentos ORDER BY created_at DESC");
     res.json(result.rows);
   } catch (error) {
-    if (error.message && error.message.includes("doesn't exist")) {
+    if (error.message && (error.message.includes("doesn't exist") || error.message.includes("does not exist"))) {
       await ensureTableExists();
       return res.json([]);
     }
@@ -63,7 +63,7 @@ router.post("/", async (req, res) => {
     res.status(201).json({ message: "Depoimento criado com sucesso!" });
   } catch (error) {
     // Se falhar na inserção por tabela inexistente, cria e tenta de novo uma vez
-    if (error.message && error.message.includes("doesn't exist")) {
+    if (error.message && (error.message.includes("doesn't exist") || error.message.includes("does not exist"))) {
       await ensureTableExists();
       await pool.query(
         "INSERT INTO depoimentos (nome, cargo, texto, imagem, ativo) VALUES ($1, $2, $3, $4, $5)",
