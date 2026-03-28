@@ -143,7 +143,6 @@ export async function initDatabase() {
     `);
 
     // Tabela de Produtos Agregados (Venda casada opcional / Extras) - RECRIAR PARA GARANTIR LINK COM PRODUTOS
-    await pool.query("DROP TABLE IF EXISTS produto_agregados");
     await pool.query(`
       CREATE TABLE IF NOT EXISTS produto_agregados (
         produto_id INT NOT NULL,
