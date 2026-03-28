@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../services/api";
 import { 
-  Box, Button, TextField, Typography, Paper, Container, IconButton, InputAdornment, Grid, Checkbox, FormControlLabel, FormGroup 
+  Box, Button, TextField, Typography, Paper, Container, IconButton, InputAdornment, Grid, Checkbox, FormControlLabel, FormGroup, Switch, Divider 
 } from "@mui/material";
 import { CloudUpload, Delete } from "@mui/icons-material";
 import DebugLogs from "../components/DebugLogs";
@@ -13,19 +13,15 @@ export default function Settings() {
   const [homeLocation, setHomeLocation] = useState("");
   const [homeBg, setHomeBg] = useState("");
   const [valorFrete, setValorFrete] = useState("");
-  const [openTime, setOpenTime] = useState("");
-  const [closeTime, setCloseTime] = useState("");
-  const [openDays, setOpenDays] = useState([1, 2, 3, 4, 5, 6]); // Padrão: Seg a Sáb
-
-  const daysOfWeek = [
-    { label: "Dom", value: 0 },
-    { label: "Seg", value: 1 },
-    { label: "Ter", value: 2 },
-    { label: "Qua", value: 3 },
-    { label: "Qui", value: 4 },
-    { label: "Sex", value: 5 },
-    { label: "Sáb", value: 6 },
-  ];
+  const [openingHours, setOpeningHours] = useState([
+    { day: 0, label: "Domingo", open: false, open_time: "08:00", close_time: "18:00" },
+    { day: 1, label: "Segunda", open: true, open_time: "08:00", close_time: "18:00" },
+    { day: 2, label: "Terça", open: true, open_time: "08:00", close_time: "18:00" },
+    { day: 3, label: "Quarta", open: true, open_time: "08:00", close_time: "18:00" },
+    { day: 4, label: "Quinta", open: true, open_time: "08:00", close_time: "18:00" },
+    { day: 5, label: "Sexta", open: true, open_time: "08:00", close_time: "18:00" },
+    { day: 6, label: "Sábado", open: true, open_time: "08:00", close_time: "18:00" },
+  ]);
 
   // Estados para a página Sobre Nós
   const [aboutTitle, setAboutTitle] = useState("");
@@ -48,9 +44,18 @@ export default function Settings() {
         setHomeLocation(cfg.home_location || "");
         setHomeBg(cfg.home_bg || "");
         setValorFrete(cfg.valor_frete || "");
-        setOpenTime(cfg.open_time || "08:00");
-        setCloseTime(cfg.close_time || "18:00");
-        setOpenDays(cfg.open_days ? cfg.open_days.split(',').map(Number) : [1, 2, 3, 4, 5, 6]);
+
+        if (cfg.opening_hours) {
+          setOpeningHours(JSON.parse(cfg.opening_hours));
+        } else if (cfg.open_days) {
+          const days = cfg.open_days.split(',').map(Number);
+          setOpeningHours(prev => prev.map(h => ({
+            ...h,
+            open: days.includes(h.day),
+            open_time: cfg.open_time || "08:00",
+            close_time: cfg.close_time || "18:00"
+          })));
+        }
 
         setAboutTitle(cfg.about_title || "Sobre a TKookies");
         setAboutDesc(cfg.about_desc || "Nascemos da paixão por criar momentos doces e inesquecíveis. Acreditamos que um cookie não é apenas uma sobremesa, é um abraço em forma de sabor.");
@@ -75,10 +80,16 @@ export default function Settings() {
     }
   };
 
-  const handleDayToggle = (day) => {
-    setOpenDays(prev => 
-      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day].sort()
-    );
+  const handleScheduleToggle = (idx) => {
+    const newHours = [...openingHours];
+    newHours[idx].open = !newHours[idx].open;
+    setOpeningHours(newHours);
+  };
+
+  const handleScheduleTimeChange = (idx, field, val) => {
+    const newHours = [...openingHours];
+    newHours[idx][field] = val;
+    setOpeningHours(newHours);
   };
 
   const handleSave = async () => {
@@ -89,9 +100,11 @@ export default function Settings() {
         home_location: homeLocation,
         home_bg: homeBg,
         valor_frete: valorFrete,
-        open_time: openTime,
-        close_time: closeTime,
-        open_days: openDays.join(','),
+        opening_hours: JSON.stringify(openingHours),
+        // Mantém as chaves antigas para compatibilidade se necessário
+        open_time: openingHours.find(h => h.open)?.open_time || "08:00",
+        close_time: openingHours.find(h => h.open)?.close_time || "18:00",
+        open_days: openingHours.filter(h => h.open).map(h => h.day).join(','),
         
         about_title: aboutTitle,
         about_desc: aboutDesc,
@@ -156,43 +169,34 @@ export default function Settings() {
           </Grid>
 
           <Grid item xs={12}>
-            <Typography variant="subtitle2" mb={1}>Horário de Atendimento (Compras Online)</Typography>
-            <Box display="flex" gap={2}>
-              <TextField 
-                label="Abertura" 
-                type="time"
-                fullWidth 
-                value={openTime} 
-                onChange={e => setOpenTime(e.target.value)} 
-                InputLabelProps={{ shrink: true }}
-              />
-              <TextField 
-                label="Fechamento" 
-                type="time"
-                fullWidth 
-                value={closeTime} 
-                onChange={e => setCloseTime(e.target.value)} 
-                InputLabelProps={{ shrink: true }}
-              />
-            </Box>
-          </Grid>
-
-          <Grid item xs={12}>
-            <Typography variant="subtitle2" mb={1}>Dias de Atendimento</Typography>
-            <FormGroup row>
-              {daysOfWeek.map((day) => (
-                <FormControlLabel
-                  key={day.value}
-                  control={
-                    <Checkbox 
-                      checked={openDays.includes(day.value)} 
-                      onChange={() => handleDayToggle(day.value)} 
-                    />
-                  }
-                  label={day.label}
-                />
+            <Typography variant="h6" sx={{ mt: 2, mb: 2 }}>Grade de Horários por Dia</Typography>
+            <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
+              {openingHours.map((h, idx) => (
+                <Box key={h.day} sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: idx === 6 ? 0 : 2, flexWrap: 'wrap' }}>
+                  <Typography sx={{ width: 80, fontWeight: 'bold' }}>{h.label}</Typography>
+                  <FormControlLabel
+                    control={<Switch checked={h.open} onChange={() => handleScheduleToggle(idx)} color="primary" />}
+                    label={h.open ? "Aberto" : "Fechado"}
+                    sx={{ width: 120 }}
+                  />
+                  <TextField 
+                    disabled={!h.open}
+                    type="time" 
+                    size="small" 
+                    value={h.open_time} 
+                    onChange={(e) => handleScheduleTimeChange(idx, 'open_time', e.target.value)} 
+                  />
+                  <Typography>até</Typography>
+                  <TextField 
+                    disabled={!h.open}
+                    type="time" 
+                    size="small" 
+                    value={h.close_time} 
+                    onChange={(e) => handleScheduleTimeChange(idx, 'close_time', e.target.value)} 
+                  />
+                </Box>
               ))}
-            </FormGroup>
+            </Paper>
           </Grid>
 
           <Grid item xs={12}>

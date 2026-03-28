@@ -51,7 +51,8 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
     home_subtitle: "🍪 Um pedacinho de felicidade em cada mordida.",
     home_location: "📍 Apenas delivery / Três de Maio - RS",
     home_bg: "",
-    open_days: ""
+    open_days: "",
+    opening_hours: ""
   });
   const [isStoreOpen, setIsStoreOpen] = useState(true);
 
@@ -74,18 +75,30 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
 
   const handleCloseSnackbar = () => setSnackbarOpen(false);
 
-  const checkIfOpen = (openTime, closeTime, openDaysStr) => {
+  const checkIfOpen = (cfg) => {
     const now = new Date();
+    const day = now.getDay();
+    const current = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
 
-    // Verifica dia da semana
-    if (openDaysStr) {
-      const allowedDays = openDaysStr.split(',').map(Number);
-      if (!allowedDays.includes(now.getDay())) return false;
+    if (cfg.opening_hours) {
+      try {
+        const schedule = JSON.parse(cfg.opening_hours);
+        const today = schedule.find(s => s.day === day);
+        if (!today || !today.open) return false;
+        return current >= today.open_time && current <= today.close_time;
+      } catch (e) {
+        console.error("Erro no parsing do horário", e);
+      }
     }
 
-    if (!openTime || !closeTime) return true;
-    const current = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
-    return current >= openTime && current <= closeTime;
+    // Verifica dia da semana
+    if (cfg.open_days) {
+      const allowedDays = cfg.open_days.split(',').map(Number);
+      if (!allowedDays.includes(day)) return false;
+    }
+
+    if (!cfg.open_time || !cfg.close_time) return true;
+    return current >= cfg.open_time && current <= cfg.close_time;
   };
 
   const getReadableDays = (daysStr) => {
@@ -94,21 +107,35 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
     const days = daysStr.split(',').map(Number).sort((a, b) => a - b);
     
     if (days.length === 7) return "Todos os dias";
-    
+
     // Verifica se é uma sequência (ex: Segunda a Sexta)
     const isConsecutive = days.every((d, i) => i === 0 || d === days[i-1] + 1);
     if (isConsecutive && days.length > 1) {
       return `${dayNames[days[0]]} a ${dayNames[days[days.length - 1]]}`;
     }
-    
+
     return days.map(d => dayNames[d]).join(', ');
+  };
+
+  const getTodayScheduleLabel = (cfg) => {
+    if (!cfg.opening_hours) {
+      return `${getReadableDays(cfg.open_days)} • ${cfg.open_time} às ${cfg.close_time}`;
+    }
+    try {
+      const schedule = JSON.parse(cfg.opening_hours);
+      const today = schedule.find(s => s.day === new Date().getDay());
+      if (!today || !today.open) return "Fechado hoje";
+      return `Aberto hoje até as ${today.close_time}`;
+    } catch (e) {
+      return "Horário indisponível";
+    }
   };
 
   useEffect(() => {
     api.get("/configuracoes").then(res => {
       if (res.data && Object.keys(res.data).length > 0) {
         setConfig(prev => ({ ...prev, ...res.data }));
-        setIsStoreOpen(checkIfOpen(res.data.open_time, res.data.close_time, res.data.open_days));
+        setIsStoreOpen(checkIfOpen(res.data));
       }
     }).catch(err => console.log("Usando configurações padrão"));
 
@@ -185,7 +212,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
   };
 
   const handleQtyChange = async (prodId, delta) => {
-    if (delta > 0 && !checkIfOpen(config.open_time, config.close_time, config.open_days)) {
+    if (delta > 0 && !checkIfOpen(config)) {
       setIsStoreOpen(false);
       alert("No momento estamos fechados. Volte dentro do horário de atendimento!");
       return;
@@ -220,7 +247,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
   };
 
   const handleAddFeatured = async () => {
-    if (!checkIfOpen(config.open_time, config.close_time, config.open_days)) {
+    if (!checkIfOpen(config)) {
       setIsStoreOpen(false);
       alert("No momento estamos fechados. Volte dentro do horário de atendimento!");
       return;
@@ -522,7 +549,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                   <Box>
                     <Typography variant="subtitle2" fontWeight="bold" color="primary">Horário de Atendimento</Typography>
                     <Typography variant="body2" color="text.secondary">
-                      {getReadableDays(config.open_days)} • {config.open_time} às {config.close_time}
+                      {getTodayScheduleLabel(config)}
                     </Typography>
                   </Box>
                 </Box>
