@@ -123,15 +123,23 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
     }
     try {
       const schedule = JSON.parse(cfg.opening_hours);
-      const today = schedule.find(s => s.day === new Date().getDay());
-      if (!today || !today.open) return "Fechado hoje";
-      return `Aberto hoje até as ${today.close_time}`;
+      const now = new Date();
+      const day = now.getDay(); // 0 for Sunday, 1 for Monday, etc.
+      const todaySchedule = schedule.find(s => s.day === day);
+
+      if (!todaySchedule || !todaySchedule.open) {
+        return "Fechado hoje";
+      }
+      
+      return `Aberto hoje das ${todaySchedule.open_time} às ${todaySchedule.close_time}`;
     } catch (e) {
+      console.error("Erro ao parsear opening_hours:", e);
       return "Horário indisponível";
     }
   };
 
   useEffect(() => {
+    // Removido o parseamento de res.data.opening_hours aqui, pois já é feito em checkIfOpen e getTodayScheduleLabel
     api.get("/configuracoes").then(res => {
       if (res.data && Object.keys(res.data).length > 0) {
         setConfig(prev => ({ ...prev, ...res.data }));
