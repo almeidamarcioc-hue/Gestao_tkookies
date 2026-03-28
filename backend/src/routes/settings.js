@@ -4,6 +4,17 @@ import { initDatabase } from "../db/init.js";
 
 const router = Router();
 
+// Função auxiliar para garantir que a tabela exista (Auto-migração)
+async function ensureTableExists() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS configuracoes (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      chave VARCHAR(50) NOT NULL UNIQUE,
+      valor TEXT
+    )
+  `);
+}
+
 // ROTA DE MIGRAÇÃO (Para garantir que tabelas/colunas existam no Vercel)
 router.get("/migrate", async (req, res) => {
   console.log("Iniciando migração do banco de dados...");
@@ -33,8 +44,13 @@ router.get("/", async (req, res) => {
     });
     res.json(config);
   } catch (error) {
+    // Se a tabela não existir (ER_NO_SUCH_TABLE ou mensagem de erro), tenta criar
+    if (error.code === 'ER_NO_SUCH_TABLE' || (error.message && error.message.includes("doesn't exist"))) {
+      await ensureTableExists();
+      return res.json({});
+    }
     console.error(error);
-    res.status(500).json({ error: "Erro ao carregar configurações" });
+    res.status(500).json({ error: "Erro ao carregar configurações", details: error.message });
   }
 });
 
@@ -58,6 +74,11 @@ router.post("/", async (req, res) => {
     await client.query("COMMIT");
     res.json({ message: "Configurações salvas!" });
   } catch (error) {
+    // Tenta criar tabela se o erro for de falta de tabela
+    if (error.code === 'ER_NO_SUCH_TABLE' || (error.message && error.message.includes("doesn't exist"))) {
+      await ensureTableExists();
+      // Após criar, você pode sugerir ao usuário tentar salvar novamente
+    }
     if (client) {
       try { await client.query("ROLLBACK"); } catch (rbErr) {}
     }
