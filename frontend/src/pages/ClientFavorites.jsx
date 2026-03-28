@@ -184,6 +184,11 @@ export default function ClientFavorites({ clientUser, addToCart, onLoginClick })
                     <Typography variant="h6" sx={{ color: '#2E7D32', fontWeight: 'bold' }}>
                       R$ {Number(prod.preco_venda).toFixed(2)}
                     </Typography>
+                    {Number(prod.estoque) > 0 && (
+                      <Typography variant="caption" sx={{ color: '#5D4037', display: 'block', mt: 0.5, fontWeight: 500 }}>
+                        Estoque: {Number(prod.estoque)} un.
+                      </Typography>
+                    )}
                     {prod.estoque <= 0 && (
                       <Chip
                         label="Indisponível"

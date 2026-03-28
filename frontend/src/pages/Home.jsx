@@ -336,6 +336,11 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
         color: 'white'
       }}>
         <Typography variant={isLarge ? "h4" : "h6"} fontWeight="bold">{prod.nome}</Typography>
+        {prod.estoque > 0 && (
+          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.8)', display: 'block' }}>
+            {Number(prod.estoque)} disponíveis em estoque
+          </Typography>
+        )}
         <Box display="flex" justifyContent="space-between" alignItems="center" mt={1}>
           <Typography variant={isLarge ? "h5" : "body1"} fontWeight="bold" color={secondaryColor}>
              R$ {Number(prod.preco_venda).toFixed(2)}
@@ -575,6 +580,11 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                          <CardContent sx={{ flexGrow: 1, pb: 1 }}>
                             <Typography variant="h6" fontWeight="bold" gutterBottom>{prod.nome}</Typography>
                             <Typography variant="body2" color="text.secondary" noWrap>{prod.descricao}</Typography>
+                            {Number(prod.estoque) > 0 && (
+                              <Typography variant="caption" color="primary" sx={{ fontWeight: 'bold', mt: 1, display: 'block' }}>
+                                Estoque: {Number(prod.estoque)} unidades
+                              </Typography>
+                            )}
                             <Button size="small" variant="outlined" onClick={() => handleOpenDetails(prod)} sx={{ mt: 1, borderRadius: 20, textTransform: 'none', fontSize: '0.8rem' }}>
                               Ver Detalhes
                             </Button>
@@ -919,6 +929,12 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                 <Typography variant="body1" sx={{ color: '#5D4037', lineHeight: 1.6, whiteSpace: 'pre-line', mb: 3, fontSize: '1.1rem' }}>
                   {selectedProduct.descricao || "Sem descrição disponível."}
                 </Typography>
+
+                {Number(selectedProduct.estoque) > 0 && (
+                  <Typography variant="subtitle2" sx={{ color: primaryColor, mb: 2, fontWeight: 'bold' }}>
+                    Disponibilidade: {Number(selectedProduct.estoque)} unidades
+                  </Typography>
+                )}
 
                 {clientUser?.is_revendedor && (
                   <Chip label="Preço de Revenda" color="warning" size="small" sx={{ mb: 2 }} />
