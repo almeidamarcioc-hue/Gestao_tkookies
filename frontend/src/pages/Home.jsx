@@ -517,12 +517,6 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                 />
               </Box>
 
-              {!isStoreOpen && (
-                <Alert severity="error" sx={{ mb: 4, borderRadius: 3, fontWeight: 'bold', fontSize: '1.1rem' }}>
-                  Estamos Fechados! Nosso horário de atendimento é das {config.open_time} às {config.close_time}.
-                </Alert>
-              )}
-
               <Grid container spacing={3} component={motion.div} variants={containerVariants} initial="hidden" animate="visible">
                 {products.filter(p => !combos.some(c => c.produto_vinculado_id === p.id)).map(prod => {
                   const coverImage = prod.imagens?.find(img => img.eh_capa)?.imagem || prod.imagens?.[0]?.imagem;
