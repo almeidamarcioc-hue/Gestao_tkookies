@@ -258,6 +258,18 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
   };
 
   const handleOpenDetails = (prod) => {
+    // Google Analytics: Rastrear clique no produto
+    if (window.gtag) {
+      window.gtag('event', 'select_item', {
+        item_list_id: "cardapio_principal",
+        item_list_name: "Cardápio Principal",
+        items: [{
+          item_id: String(prod.id),
+          item_name: prod.nome,
+          price: Number(prod.preco_venda)
+        }]
+      });
+    }
     setSelectedProduct(prod);
     setSelectedImageIndex(0);
     setDetailsOpen(true);

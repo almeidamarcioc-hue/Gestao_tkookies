@@ -235,11 +235,26 @@ export default function App() {
         const existing = prev.find((item) => item.id === product.id);
         if (existing) {
           return prev.map((item) =>
-            item.id === product.id ? { ...item, quantidade: item.quantidade + quantity } : item
+          item.id === product.id ? { ...item, quantidade: item.quantidade + quantity } : item
           );
         }
-        return [...prev, { ...product, quantidade: quantity }];
+      return [...prev, { ...product, quantidade: quantity }];
       });
+
+    // Google Analytics: Rastrear adição ao carrinho (Movido para fora do updater para evitar bugs)
+    if (window.gtag) {
+      window.gtag('event', 'add_to_cart', {
+        currency: 'BRL',
+        value: Number(product.preco_venda || product.valor_unitario) * quantity,
+        items: [{
+          item_id: String(dbId),
+          item_name: product.nome || product.produto_nome,
+          price: Number(product.preco_venda || product.valor_unitario),
+          quantity: quantity
+        }]
+      });
+    }
+
       return true; // Sucesso
     } catch (err) {
       alert(err.response?.data?.error || "Estoque insuficiente.");
