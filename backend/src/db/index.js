@@ -48,7 +48,7 @@ const executeQuery = async (executor, text, params = [], retries = 3) => {
     // 2. Mapeia os valores para a ordem dos placeholders '?' do MySQL (lida com duplicatas)
     const matches = sql.match(/\$\d+/g);
     if (matches) {
-      finalParams = matches.map(m => params[parseInt(m.substring(1)) - 1]);
+      finalParams = matches.map(m => (params && params.length >= parseInt(m.substring(1))) ? params[parseInt(m.substring(1)) - 1] : null);
       sql = sql.replace(/\$\d+/g, "?");
     }
   }

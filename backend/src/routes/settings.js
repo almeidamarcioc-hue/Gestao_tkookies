@@ -39,13 +39,13 @@ router.get("/", async (req, res) => {
   try {
     const result = await pool.query("SELECT chave, valor FROM configuracoes");
     const config = {};
-    result.rows.forEach(row => {
+    (result.rows || []).forEach(row => {
       config[row.chave] = row.valor;
     });
     res.json(config);
   } catch (error) {
     // Se a tabela não existir (ER_NO_SUCH_TABLE ou mensagem de erro), tenta criar
-    if (error.code === 'ER_NO_SUCH_TABLE' || (error.message && error.message.includes("doesn't exist"))) {
+    if (error.code === 'ER_NO_SUCH_TABLE' || error.code === '1146' || (error.message && error.message.includes("doesn't exist"))) {
       await ensureTableExists();
       return res.json({});
     }
