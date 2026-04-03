@@ -29,6 +29,18 @@ const api = axios.create({
   timeout: 20000, // Timeout aumentado para suportar cold starts do serverless
 });
 
+// Interceptor para adicionar token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("cookie_erp_token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 // Interceptor para tratar erros de forma global
 api.interceptors.response.use(
   // Se a resposta for bem-sucedida, apenas a retorna

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import api from "../services/api";
 import { 
   Box, Button, TextField, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, 
@@ -59,20 +60,35 @@ export default function OrderForm({ clientUser, isAdmin }) {
     }
   }, [id, location.state, isAdmin, clientUser]);
 
-  async function carregarDados() {
-    const resProd = await api.get("/produtos");
-    setListaProdutos(Array.isArray(resProd.data) ? resProd.data : []);
+  const { data: produtosData } = useQuery({
+    queryKey: ['produtos'],
+    queryFn: () => api.get("/produtos").then(res => res.data),
+    staleTime: 5 * 60 * 1000, // 5 minutos
+  });
 
-    if (isAdmin) {
-      const resCli = await api.get("/clientes?limit=1000");
-      setListaClientes(resCli.data.data || (Array.isArray(resCli.data) ? resCli.data : []));
-      
-      // Carregar Revendedores
-      const resRev = await api.get("/revendedores");
-      setListaRevendedores(Array.isArray(resRev.data) ? resRev.data : []);
-    } else if (clientUser) {
-      setListaClientes([clientUser]);
-    }
+  const { data: clientesData } = useQuery({
+    queryKey: ['clientes'],
+    queryFn: () => api.get("/clientes?limit=1000").then(res => res.data.data || res.data),
+    enabled: isAdmin,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: revendedoresData } = useQuery({
+    queryKey: ['revendedores'],
+    queryFn: () => api.get("/revendedores").then(res => res.data),
+    enabled: isAdmin,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  useEffect(() => {
+    if (produtosData) setListaProdutos(Array.isArray(produtosData) ? produtosData : []);
+    if (clientesData) setListaClientes(clientesData);
+    if (revendedoresData) setListaRevendedores(Array.isArray(revendedoresData) ? revendedoresData : []);
+    if (!isAdmin && clientUser) setListaClientes([clientUser]);
+  }, [produtosData, clientesData, revendedoresData, isAdmin, clientUser]);
+
+  async function carregarDados() {
+    // Removido, agora usa useQuery
   }
 
   async function carregarPedido(pedidoId) {

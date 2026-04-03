@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { pool } from "../db/index.js";
 import { initDatabase } from "../db/init.js";
+import { authenticateToken, requireRole } from "../middlewares/auth.js";
 
 const router = Router();
 
@@ -236,7 +237,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // CRIAR PRODUTO
-router.post("/", async (req, res) => {
+router.post("/", authenticateToken, requireRole('admin'), async (req, res) => {
   const { nome, descricao, preco_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque, validade_promocao, agregados, ativo, eh_agregado, custo, estoque } = req.body;
   const client = await pool.connect();
 
@@ -329,7 +330,7 @@ router.post("/", async (req, res) => {
 });
 
 // ATUALIZAR PRODUTO (Edição total)
-router.put("/:id", async (req, res) => {
+router.put("/:id", authenticateToken, requireRole('admin'), async (req, res) => {
   const { id } = req.params;
   const { nome, descricao, preco_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque, validade_promocao, agregados, ativo, eh_agregado, custo, estoque } = req.body;
   const client = await pool.connect();
@@ -443,7 +444,7 @@ router.put("/:id", async (req, res) => {
 });
 
 // ALTERAR DESTAQUE (PATCH)
-router.patch("/:id/destaque", async (req, res) => {
+router.patch("/:id/destaque", authenticateToken, requireRole('admin'), async (req, res) => {
   const { id } = req.params;
   const { eh_destaque } = req.body;
   const client = await pool.connect();
@@ -464,7 +465,7 @@ router.patch("/:id/destaque", async (req, res) => {
 });
 
 // ALTERAR STATUS ATIVO/INATIVO (PATCH)
-router.patch("/:id/ativo", async (req, res) => {
+router.patch("/:id/ativo", authenticateToken, requireRole('admin'), async (req, res) => {
   const { id } = req.params;
   const { ativo } = req.body;
   const client = await pool.connect();
@@ -488,7 +489,7 @@ router.patch("/:id/ativo", async (req, res) => {
 });
 
 // DELETAR PRODUTO
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", authenticateToken, requireRole('admin'), async (req, res) => {
   const { id } = req.params;
   const { confirm } = req.query; // ?confirm=true para forçar exclusão
   const client = await pool.connect();

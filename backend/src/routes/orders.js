@@ -1,11 +1,12 @@
 import { Router } from "express";
 import { pool } from "../db/index.js";
 import { printUsb, checkUsb } from "../utils/printer.js";
+import { requireRole } from "../middlewares/auth.js";
 
 const router = Router();
 
-// LISTAR PEDIDOS
-router.get("/", async (req, res) => {
+// LISTAR PEDIDOS (apenas admin)
+router.get("/", requireRole('admin'), async (req, res) => {
   try {
     // Busca nome do cliente ou razão social do revendedor baseado no tipo_cliente
     const query = `
@@ -29,6 +30,7 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
   try {
+    // Busca primeiro para validar propriedade
     const queryHeader = `
       SELECT p.*,
              COALESCE(c.nome, r.razao_social, 'Cliente Balcão') as cliente_nome,
@@ -50,6 +52,11 @@ router.get("/:id", async (req, res) => {
     }
 
     const pedido = headerRes.rows[0];
+
+    // Clientes só podem ver seus próprios pedidos
+    if (req.user.role !== 'admin' && pedido.cliente_id !== req.user.id) {
+      return res.status(403).json({ error: "Permissão negada" });
+    }
 
     // Buscar Itens
     const queryItens = `
@@ -112,8 +119,8 @@ router.post("/", async (req, res) => {
   }
 });
 
-// ATUALIZAR PEDIDO
-router.put("/:id", async (req, res) => {
+// ATUALIZAR PEDIDO (apenas admin)
+router.put("/:id", requireRole('admin'), async (req, res) => {
   const { id } = req.params;
   const { cliente_id, data_pedido, forma_pagamento, observacao, frete, desconto, status, tipo_cliente, itens } = req.body;
 
@@ -163,8 +170,8 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-// ATUALIZAR STATUS
-router.patch("/:id/status", async (req, res) => {
+// ATUALIZAR STATUS (apenas admin)
+router.patch("/:id/status", requireRole('admin'), async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
   try {

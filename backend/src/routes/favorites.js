@@ -6,6 +6,10 @@ const router = Router();
 // LISTAR FAVORITOS DO CLIENTE
 router.get("/:clienteId", async (req, res) => {
   const { clienteId } = req.params;
+  // Usuário só pode ver seus próprios favoritos (admin pode ver qualquer um)
+  if (req.user.role !== 'admin' && req.user.id !== parseInt(clienteId)) {
+    return res.status(403).json({ error: "Permissão negada" });
+  }
   try {
     const result = await pool.query(`
       SELECT p.*, p.id as id, f.created_at as favoritado_em,
@@ -49,10 +53,14 @@ router.get("/:clienteId", async (req, res) => {
 // ADICIONAR FAVORITO
 router.post("/", async (req, res) => {
   const { cliente_id, produto_id } = req.body;
+  // Usuário só pode adicionar favoritos à sua própria lista
+  if (req.user.role !== 'admin' && req.user.id !== parseInt(cliente_id)) {
+    return res.status(403).json({ error: "Permissão negada" });
+  }
   try {
     // Verifica se já existe antes de inserir (garante unicidade e evita erros)
     const check = await pool.query("SELECT id FROM favoritos WHERE cliente_id = $1 AND produto_id = $2", [cliente_id, produto_id]);
-    
+
     if (check.rows.length === 0) {
       await pool.query("INSERT INTO favoritos (cliente_id, produto_id) VALUES ($1, $2)", [cliente_id, produto_id]);
     }
@@ -66,6 +74,10 @@ router.post("/", async (req, res) => {
 // REMOVER FAVORITO
 router.delete("/:clienteId/:produtoId", async (req, res) => {
   const { clienteId, produtoId } = req.params;
+  // Usuário só pode remover favoritos da sua própria lista
+  if (req.user.role !== 'admin' && req.user.id !== parseInt(clienteId)) {
+    return res.status(403).json({ error: "Permissão negada" });
+  }
   try {
     await pool.query("DELETE FROM favoritos WHERE cliente_id = $1 AND produto_id = $2", [clienteId, produtoId]);
     res.json({ message: "Removido dos favoritos" });

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { pool } from "../db/index.js";
+import { authenticateToken, requireRole } from "../middlewares/auth.js";
 
 const router = Router();
 
@@ -34,7 +35,7 @@ router.get("/public", async (req, res) => {
 });
 
 // LISTAR (Admin - Todos para o painel de configuração)
-router.get("/", async (req, res) => {
+router.get("/", authenticateToken, requireRole('admin'), async (req, res) => {
   try {
     const result = await pool.query("SELECT * FROM depoimentos ORDER BY created_at DESC");
     res.json(result.rows);
@@ -48,7 +49,7 @@ router.get("/", async (req, res) => {
 });
 
 // CRIAR
-router.post("/", async (req, res) => {
+router.post("/", authenticateToken, requireRole('admin'), async (req, res) => {
   const { nome, cargo, texto, imagem, ativo } = req.body;
 
   if (!nome || !texto) {
@@ -77,7 +78,7 @@ router.post("/", async (req, res) => {
 });
 
 // ATUALIZAR
-router.put("/:id", async (req, res) => {
+router.put("/:id", authenticateToken, requireRole('admin'), async (req, res) => {
   const { id } = req.params;
   const { nome, cargo, texto, imagem, ativo } = req.body;
   try {
@@ -92,7 +93,7 @@ router.put("/:id", async (req, res) => {
 });
 
 // ALTERAR STATUS (Toggle Ativo/Inativo)
-router.patch("/:id/status", async (req, res) => {
+router.patch("/:id/status", authenticateToken, requireRole('admin'), async (req, res) => {
   const { id } = req.params;
   const { ativo } = req.body;
   try {
@@ -104,7 +105,7 @@ router.patch("/:id/status", async (req, res) => {
 });
 
 // DELETAR
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", authenticateToken, requireRole('admin'), async (req, res) => {
   const { id } = req.params;
   try {
     await pool.query("DELETE FROM depoimentos WHERE id = $1", [id]);

@@ -1,6 +1,7 @@
 // App.jsx
 import { useState, useEffect } from "react";
 import { Routes, Route, Link, Navigate, useNavigate, useLocation } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppBar, Toolbar, Button, Box, Typography, Menu, MenuItem, createTheme, ThemeProvider, CssBaseline, TextField, IconButton, Drawer, List, ListItem, ListItemButton, ListItemText, Divider, Container, Grid, Badge, CircularProgress } from "@mui/material";
 import { Menu as MenuIcon, Instagram, WhatsApp, Facebook, AccountCircle, ShoppingCart, Favorite, Lock, Assessment } from "@mui/icons-material";
 import Dashboard from "./pages/Dashboard";
@@ -94,6 +95,7 @@ const theme = createTheme({
 });
 
 export default function App() {
+  const queryClient = new QueryClient();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [anchorCad, setAnchorCad] = useState(null);
@@ -205,6 +207,7 @@ export default function App() {
 
       setClientUser(user);
       localStorage.setItem("cookie_erp_client", JSON.stringify(user));
+      if (user.token) localStorage.setItem("cookie_erp_token", user.token);
       setClientLoginOpen(false);
       setClientLoginData({ login: "", senha: "" });
       navigate("/");
@@ -214,14 +217,17 @@ export default function App() {
     }
   };
 
-  const handleAdminLogin = () => {
-    if (adminLoginData.login === "tkookies_" && adminLoginData.senha === "TKookies") {
+  const handleAdminLogin = async () => {
+    try {
+      const res = await api.post("/clientes/admin/login", adminLoginData);
+      const { token } = res.data;
+      localStorage.setItem("cookie_erp_token", token);
       setIsLoggedIn(true);
       localStorage.setItem("cookie_erp_admin", "true");
       setAdminLoginOpen(false);
       setAdminLoginData({ login: "", senha: "" });
       navigate("/produtos");
-    } else {
+    } catch (err) {
       alert("Credenciais de administrador inválidas.");
     }
   };
@@ -305,15 +311,16 @@ export default function App() {
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-    {loading ? (
-      <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh', gap: 2 }}>
-        <CircularProgress color="primary" />
-        <Typography variant="h6" color="primary">Carregando...</Typography>
-      </Box>
-    ) : (
-      <>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+      {loading ? (
+        <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh', gap: 2 }}>
+          <CircularProgress color="primary" />
+          <Typography variant="h6" color="primary">Carregando...</Typography>
+        </Box>
+      ) : (
+        <>
       <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <AppBar position="sticky" sx={{ top: 0, zIndex: 1100 }}>
         <Toolbar>
@@ -662,5 +669,6 @@ export default function App() {
       </>
     )}
     </ThemeProvider>
+    </QueryClientProvider>
   );
 }

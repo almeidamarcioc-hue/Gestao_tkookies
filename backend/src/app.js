@@ -1,6 +1,8 @@
 import express from "express";
 import "express-async-errors";
 import cors from "cors";
+import compression from "compression";
+import rateLimit from "express-rate-limit";
 import { pool } from "./db/index.js";
 import { initDatabase } from "./db/init.js";
 import ingredientRoutes from "./routes/ingredients.js";
@@ -16,17 +18,42 @@ import resellersRouter from "./routes/resellers.js";
 import favoritesRouter from "./routes/favorites.js";
 import reportsRouter from "./routes/reports.js";
 import testimonialsRouter from "./routes/testimonials.js";
+import { authenticateToken, requireRole } from "./middlewares/auth.js";
 
 const app = express();
 
-// Configuração CORS simplificada e robusta
-app.use(cors({
-  origin: "*", // Em produção, idealmente troque "*" pela URL do seu frontend (https://tkookies.vercel.app)
+// Configuração CORS
+// Em produção defina FRONTEND_URL nas variáveis de ambiente do Vercel (ex: https://tkookies.vercel.app)
+const allowedOrigins = process.env.FRONTEND_URL
+  ? [process.env.FRONTEND_URL]
+  : ["http://localhost:5173", "http://localhost:3000", "http://localhost:5174"];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Permite requisições sem origin (mobile / Postman) apenas em ambiente sem FRONTEND_URL
+    if (!origin && !process.env.FRONTEND_URL) return callback(null, true);
+    if (origin && allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error("Origem não permitida pelo CORS"));
+  },
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-})); 
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
+};
+
+app.use(cors(corsOptions));
 // Habilita Pre-Flight para todas as rotas explicitamente
-app.options('*', cors());
+app.options('*', cors(corsOptions));
+
+// Compressão de respostas
+app.use(compression());
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100, // limite de 100 requests por windowMs
+  message: "Muitas requisições, tente novamente mais tarde."
+});
+app.use(limiter);
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -67,22 +94,22 @@ app.get("/", (req, res) => {
   res.json({ message: "Backend Cookie ERP Online", timestamp: new Date() });
 });
 
-app.use("/ingredientes", ingredientRoutes);
-app.use("/produtos", productRoutes);
-app.use("/clientes", clientsRouter);
-app.use("/pedidos", ordersRouter);
-app.use("/producao", productionRouter);
-app.use("/combos", combosRouter);
-app.use("/estoque", inventoryRouter);
-app.use("/configuracoes", settingsRouter);
-app.use("/financeiro", financialRouter);
-app.use("/revendedores", resellersRouter);
-app.use("/favoritos", favoritesRouter);
-app.use("/relatorios", reportsRouter);
-app.use("/depoimentos", testimonialsRouter);
+app.use("/ingredientes", authenticateToken, requireRole('admin'), ingredientRoutes);
+app.use("/produtos", productRoutes); // Produtos podem ser públicos para a loja
+app.use("/clientes", clientsRouter); // Login é público, outros protegidos internamente
+app.use("/pedidos", authenticateToken, ordersRouter); // Pedidos precisam de auth
+app.use("/producao", authenticateToken, requireRole('admin'), productionRouter);
+app.use("/combos", authenticateToken, requireRole('admin'), combosRouter);
+app.use("/estoque", authenticateToken, requireRole('admin'), inventoryRouter);
+app.use("/configuracoes", authenticateToken, requireRole('admin'), settingsRouter);
+app.use("/financeiro", authenticateToken, requireRole('admin'), financialRouter);
+app.use("/revendedores", authenticateToken, requireRole('admin'), resellersRouter);
+app.use("/favoritos", authenticateToken, favoritesRouter); // Favoritos para clientes logados
+app.use("/relatorios", authenticateToken, requireRole('admin'), reportsRouter);
+app.use("/depoimentos", testimonialsRouter); // Depoimentos podem ser públicos
 
 // Rota especial para criar tabelas na Vercel (Executar uma vez após deploy)
-app.get("/api/migrate", async (req, res) => {
+app.get("/api/migrate", authenticateToken, requireRole('admin'), async (req, res) => {
   try {
     console.log("Iniciando migração de banco de dados via HTTP...");
     const logs = await initDatabase();
@@ -94,7 +121,7 @@ app.get("/api/migrate", async (req, res) => {
 });
 
 // Rota de emergência para forçar a criação da coluna descricao
-app.get("/api/fix-descricao", async (req, res) => {
+app.get("/api/fix-descricao", authenticateToken, requireRole('admin'), async (req, res) => {
   try {
     await pool.query("ALTER TABLE produtos ADD COLUMN descricao VARCHAR(1000)");
     res.json({ message: "Coluna 'descricao' adicionada com sucesso!" });
@@ -104,7 +131,7 @@ app.get("/api/fix-descricao", async (req, res) => {
 });
 
 // Rota de emergência para criar tabela de revendedores se não existir
-app.get("/api/fix-revendedores", async (req, res) => {
+app.get("/api/fix-revendedores", authenticateToken, requireRole('admin'), async (req, res) => {
   try {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS revendedores (

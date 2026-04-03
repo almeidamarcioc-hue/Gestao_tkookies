@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { pool } from "../db/index.js";
+import { hashPassword, verifyPassword } from "../middlewares/auth.js";
 
 const router = Router();
 
@@ -15,12 +16,13 @@ router.get("/", async (req, res) => {
 
 // CADASTRAR REVENDEDOR
 router.post("/", async (req, res) => {
-  const { razao_social, cpf_cnpj, nome_contato, telefone, cep, cidade, estado } = req.body;
+  const { razao_social, cpf_cnpj, nome_contato, telefone, cep, cidade, estado, login, senha } = req.body;
   
   try {
+    const hashedSenha = senha ? await hashPassword(senha) : null;
     await pool.query(
-      "INSERT INTO revendedores (razao_social, cpf_cnpj, nome_contato, telefone, cep, cidade, estado) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      [razao_social, cpf_cnpj, nome_contato, telefone, cep, cidade, estado]
+      "INSERT INTO revendedores (razao_social, cpf_cnpj, nome_contato, telefone, cep, cidade, estado, login, senha) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [razao_social, cpf_cnpj, nome_contato, telefone, cep, cidade, estado, login, hashedSenha]
     );
     res.status(201).json({ message: "Solicitação enviada com sucesso!" });
   } catch (error) {
@@ -35,9 +37,10 @@ router.put("/:id", async (req, res) => {
   const { razao_social, cpf_cnpj, nome_contato, telefone, cep, cidade, estado, login, senha } = req.body;
   
   try {
+    const hashedSenha = senha ? await hashPassword(senha) : null;
     await pool.query(
       "UPDATE revendedores SET razao_social=?, cpf_cnpj=?, nome_contato=?, telefone=?, cep=?, cidade=?, estado=?, login=?, senha=? WHERE id=?",
-      [razao_social, cpf_cnpj, nome_contato, telefone, cep, cidade, estado, login, senha, id]
+      [razao_social, cpf_cnpj, nome_contato, telefone, cep, cidade, estado, login, hashedSenha, id]
     );
     res.json({ message: "Revendedor atualizado com sucesso!" });
   } catch (error) {

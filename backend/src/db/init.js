@@ -240,6 +240,7 @@ export async function initDatabase() {
     }
 
     logs.push(await addColumnSafe("clientes", "senha VARCHAR(255)"));
+    logs.push(await addColumnSafe("clientes", "role VARCHAR(20) DEFAULT 'cliente'"));
     logs.push(await addColumnSafe("clientes", "complemento VARCHAR(255)"));
     logs.push(await addColumnSafe("pedidos", "status_financeiro VARCHAR(20) DEFAULT 'A Receber'"));
     logs.push(await addColumnSafe("pedidos", "data_pagamento TIMESTAMP"));
@@ -248,6 +249,26 @@ export async function initDatabase() {
     logs.push(await addColumnSafe("lancamentos_financeiros", "total_parcelas INT DEFAULT 1"));
     logs.push(await addColumnSafe("lancamentos_financeiros", "group_id VARCHAR(50)"));
     logs.push(await addColumnSafe("combos", "produto_id INT"));
+
+    // Índices para performance
+    try {
+      await pool.query("CREATE INDEX IF NOT EXISTS idx_pedidos_cliente_id ON pedidos(cliente_id)");
+      logs.push("[pedidos] Index cliente_id criado");
+    } catch (e) {
+      logs.push(`[pedidos] Index cliente_id erro: ${e.message}`);
+    }
+    try {
+      await pool.query("CREATE INDEX IF NOT EXISTS idx_itens_pedido_pedido_id ON itens_pedido(pedido_id)");
+      logs.push("[itens_pedido] Index pedido_id criado");
+    } catch (e) {
+      logs.push(`[itens_pedido] Index pedido_id erro: ${e.message}`);
+    }
+    try {
+      await pool.query("CREATE INDEX IF NOT EXISTS idx_produto_ingredientes_produto_id ON produto_ingredientes(produto_id)");
+      logs.push("[produto_ingredientes] Index produto_id criado");
+    } catch (e) {
+      logs.push(`[produto_ingredientes] Index produto_id erro: ${e.message}`);
+    }
     logs.push(await addColumnSafe("combos", "imagem TEXT"));
     logs.push(await addColumnSafe("produtos", "descricao VARCHAR(1000)"));
     logs.push(await addColumnSafe("clientes", "is_revendedor BOOLEAN DEFAULT FALSE"));

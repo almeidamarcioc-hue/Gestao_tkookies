@@ -1,10 +1,12 @@
 import { Router } from "express";
 import { pool } from "../db/index.js";
+import { authenticateToken, requireRole, hashPassword, verifyPassword } from "../middlewares/auth.js";
+import jwt from 'jsonwebtoken';
 
 const router = Router();
 
 // LISTAR
-router.get("/", async (req, res) => {
+router.get("/", authenticateToken, requireRole('admin'), async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const offset = (page - 1) * limit;
@@ -39,8 +41,11 @@ router.get("/", async (req, res) => {
 });
 
 // ITENS MAIS COMPRADOS
-router.get("/:id/mais-comprados", async (req, res) => {
+router.get("/:id/mais-comprados", authenticateToken, async (req, res) => {
   const { id } = req.params;
+  if (req.user.role !== 'admin' && req.user.id !== parseInt(id)) {
+    return res.status(403).json({ error: "Permissão negada" });
+  }
   try {
     const result = await pool.query(`
       SELECT p.id, p.nome, p.preco_venda, p.preco_revenda, p.eh_destaque, p.desconto_destaque, p.estoque, SUM(ip.quantidade) as total_comprado,
@@ -65,8 +70,9 @@ router.post("/", async (req, res) => {
   const { nome, telefone, endereco, numero, complemento, bairro, cidade, login, senha, is_revendedor } = req.body;
   console.log("Criando cliente:", nome, "Login:", login);
   try {
+    const hashedSenha = senha && senha.trim() ? await hashPassword(senha) : null;
     await pool.query(
-      "INSERT INTO clientes (nome, telefone, endereco, numero, complemento, bairro, cidade, login, senha, is_revendedor) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
+      "INSERT INTO clientes (nome, telefone, endereco, numero, complemento, bairro, cidade, login, senha, is_revendedor, role) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
       [
         nome, 
         telefone || null,
@@ -76,8 +82,9 @@ router.post("/", async (req, res) => {
         bairro || null,
         cidade || null,
         (login && login.trim()) ? login : null,
-        (senha && senha.trim()) ? senha : null,
-        is_revendedor || false
+        hashedSenha,
+        is_revendedor || false,
+        'cliente'
       ]
     );
     res.status(201).json({ message: "Cliente criado!" });
@@ -94,40 +101,69 @@ router.post("/", async (req, res) => {
 router.post("/login", async (req, res) => {
   const { login, senha } = req.body;
   try {
-    const result = await pool.query("SELECT * FROM clientes WHERE login = $1 AND senha = $2", [login, senha]);
+    const result = await pool.query("SELECT * FROM clientes WHERE login = $1", [login]);
     if (result.rows.length > 0) {
-      res.json(result.rows[0]);
+      const user = result.rows[0];
+      const isValid = await verifyPassword(senha, user.senha);
+      if (isValid) {
+        const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        res.json({ ...user, token });
+        return;
+      }
     } else {
       // Se não achou em clientes, tenta em revendedores
-      const resRev = await pool.query("SELECT * FROM revendedores WHERE login = $1 AND senha = $2", [login, senha]);
+      const resRev = await pool.query("SELECT * FROM revendedores WHERE login = $1", [login]);
       
       if (resRev.rows.length > 0) {
         const rev = resRev.rows[0];
-        // Retorna um objeto compatível com o frontend, forçando is_revendedor = true
-        res.json({
-          id: rev.id,
-          nome: rev.razao_social, // Mapeia Razão Social para Nome
-          telefone: rev.telefone,
-          endereco: `CEP: ${rev.cep}`, // Endereço genérico
-          cidade: rev.cidade,
-          login: rev.login,
-          is_revendedor: true, // Garante acesso à área de parceiro
-          tipo_usuario: 'revendedor'
-        });
-      } else {
-        res.status(401).json({ error: "Credenciais inválidas" });
+        const isValid = await verifyPassword(senha, rev.senha);
+        if (isValid) {
+          const token = jwt.sign({ id: rev.id, role: 'revendedor' }, process.env.JWT_SECRET, { expiresIn: '1h' });
+          // Retorna um objeto compatível com o frontend, forçando is_revendedor = true
+          res.json({
+            id: rev.id,
+            nome: rev.razao_social, // Mapeia Razão Social para Nome
+            telefone: rev.telefone,
+            endereco: `CEP: ${rev.cep}`, // Endereço genérico
+            cidade: rev.cidade,
+            login: rev.login,
+            is_revendedor: true, // Garante acesso à área de parceiro
+            tipo_usuario: 'revendedor',
+            token
+          });
+          return;
+        }
       }
     }
+    res.status(401).json({ error: "Credenciais inválidas" });
   } catch (error) {
     console.error("Erro no login:", error);
     res.status(500).json({ error: "Erro no login", details: error.message });
   }
 });
 
+// LOGIN ADMIN
+router.post("/admin/login", async (req, res) => {
+  const { login, senha } = req.body;
+  if (!process.env.ADMIN_LOGIN || !process.env.ADMIN_SENHA) {
+    return res.status(500).json({ error: 'Configuração de admin ausente no servidor' });
+  }
+  if (login === process.env.ADMIN_LOGIN && senha === process.env.ADMIN_SENHA) {
+    const token = jwt.sign({ id: 0, role: 'admin' }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    res.json({ token, role: 'admin' });
+  } else {
+    res.status(401).json({ error: "Credenciais inválidas" });
+  }
+});
+
 // PEDIDOS DO CLIENTE
-router.get("/:id/pedidos", async (req, res) => {
+router.get("/:id/pedidos", authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  if (req.user.role !== 'admin' && req.user.id !== parseInt(id)) {
+    return res.status(403).json({ error: "Permissão negada" });
+  }
   try {
-    const result = await pool.query("SELECT * FROM pedidos WHERE cliente_id = $1 ORDER BY created_at DESC", [req.params.id]);
+    const result = await pool.query("SELECT * FROM pedidos WHERE cliente_id = $1 ORDER BY created_at DESC", [id]);
     res.json(result.rows);
   } catch (error) {
     console.error(error);
@@ -136,8 +172,11 @@ router.get("/:id/pedidos", async (req, res) => {
 });
 
 // ATUALIZAR
-router.put("/:id", async (req, res) => {
+router.put("/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
+  if (req.user.role !== 'admin' && req.user.id !== parseInt(id)) {
+    return res.status(403).json({ error: "Permissão negada" });
+  }
   const { nome, telefone, endereco, numero, complemento, bairro, cidade, senha, senha_atual, is_revendedor } = req.body;
   console.log("Atualizando cliente:", id);
   try {
@@ -149,13 +188,15 @@ router.put("/:id", async (req, res) => {
       const userRes = await pool.query("SELECT senha FROM clientes WHERE id = $1", [id]);
       if (userRes.rows.length === 0) return res.status(404).json({ error: "Cliente não encontrado" });
       
-      if (userRes.rows[0].senha !== senha_atual) {
+      const isValid = await verifyPassword(senha_atual, userRes.rows[0].senha);
+      if (!isValid) {
           return res.status(401).json({ error: "Senha atual incorreta." });
       }
 
+      const hashedSenha = await hashPassword(senha);
       await pool.query(
         "UPDATE clientes SET nome = $1, telefone = $2, endereco = $3, numero = $4, complemento = $5, bairro = $6, cidade = $7, senha = $8, is_revendedor = $9 WHERE id = $10",
-        [nome, telefone, endereco, numero, complemento, bairro, cidade, senha, is_revendedor || false, id]
+        [nome, telefone, endereco, numero, complemento, bairro, cidade, hashedSenha, is_revendedor || false, id]
       );
     } else {
       await pool.query(
@@ -171,7 +212,7 @@ router.put("/:id", async (req, res) => {
 });
 
 // DELETAR
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", authenticateToken, requireRole('admin'), async (req, res) => {
   const { id } = req.params;
   try {
     await pool.query("DELETE FROM clientes WHERE id = $1", [id]);
