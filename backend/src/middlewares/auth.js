@@ -1,19 +1,21 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
+if (!process.env.JWT_SECRET) {
+  // Em serverless (Vercel) process.exit não é adequado — apenas loga o erro crítico
   console.error('FATAL: JWT_SECRET não definido nas variáveis de ambiente.');
-  process.exit(1);
 }
 
 // Middleware de autenticação JWT
 export const authenticateToken = (req, res, next) => {
+  if (!process.env.JWT_SECRET) {
+    return res.status(500).json({ error: 'Configuração de segurança ausente no servidor' });
+  }
   const token = req.header('Authorization')?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ error: 'Acesso negado' });
 
   try {
-    const verified = jwt.verify(token, JWT_SECRET);
+    const verified = jwt.verify(token, process.env.JWT_SECRET);
     req.user = verified;
     next();
   } catch (err) {
