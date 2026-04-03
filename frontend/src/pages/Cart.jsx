@@ -19,13 +19,12 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
   const [config, setConfig] = useState({ open_time: "", close_time: "", open_days: "", pix_key: "", pix_name: "TKOOKIES", pix_city: "TRES DE MAIO" });
   const navigate = useNavigate();
 
-  // Estilos "Organic Soft Tech" (Versão Light/Café)
-  const glassStyle = {
-    background: "rgba(255, 255, 255, 0.7)",
-    backdropFilter: "blur(12px)",
-    border: "1px solid rgba(255, 255, 255, 0.8)",
-    boxShadow: "0 8px 32px 0 rgba(78, 52, 46, 0.08)",
-    borderRadius: "24px",
+  // Estilos "Cozy Bakery"
+  const cardStyle = {
+    background: "#FFFFFF",
+    borderRadius: "16px",
+    boxShadow: "0 2px 20px rgba(78, 52, 46, 0.08)",
+    border: "1px solid rgba(78, 52, 46, 0.05)",
     color: "#3E2723"
   };
 
@@ -190,25 +189,9 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
 
   if (cart.length === 0) {
     return (
-      <Box sx={{ bgcolor: '#D7CCC8', minHeight: '100vh', color: '#3E2723', overflowX: 'hidden', position: 'relative' }}>
-        {/* Background Wrapper Animado */}
-        <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-          <motion.div 
-            animate={{ 
-              background: [
-                `radial-gradient(circle at 20% 30%, rgba(141, 110, 99, 0.15) 0%, transparent 50%)`,
-                `radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.2) 0%, transparent 50%)`
-              ]
-            }}
-            transition={{ duration: 10, repeat: Infinity, repeatType: "reverse" }}
-            style={{ width: '100%', height: '100%', position: 'absolute' }}
-          />
-          <Box sx={{ position: 'absolute', top: '-20%', left: '-10%', width: '50%', height: '50%', background: '#EFEBE9', filter: 'blur(150px)', opacity: 0.4, borderRadius: '50%' }} />
-          <Box sx={{ position: 'absolute', bottom: '-10%', right: '-10%', width: '60%', height: '60%', background: '#FFE0B2', filter: 'blur(180px)', opacity: 0.3, borderRadius: '50%' }} />
-        </Box>
-
-        <Container maxWidth="md" sx={{ mt: 8, textAlign: "center", position: 'relative', zIndex: 1 }}>
-          <Box sx={{ ...glassStyle, p: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <Box sx={{ bgcolor: '#FFFAF5', minHeight: '100vh', color: '#3E2723' }}>
+        <Container maxWidth="md" sx={{ mt: 8, textAlign: "center", mt: 4 }}>
+          <Box sx={{ ...cardStyle, p: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <RemoveShoppingCart sx={{ fontSize: 80, color: "#8D6E63", mb: 2 }} />
             <Typography variant="h4" gutterBottom sx={{ color: "#4E342E", fontWeight: 900 }}>Seu carrinho está vazio</Typography>
             <Typography variant="body1" sx={{ color: "#5D4037", mb: 4 }}>Que tal adicionar alguns cookies deliciosos?</Typography>
@@ -220,38 +203,22 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
   }
 
   return (
-    <Box sx={{ bgcolor: '#D7CCC8', minHeight: '100vh', color: '#3E2723', overflowX: 'hidden', position: 'relative', pb: { xs: 14, md: 0 } }}>
-      {/* Background Wrapper Animado */}
-      <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-        <motion.div 
-          animate={{ 
-            background: [
-              `radial-gradient(circle at 20% 30%, rgba(141, 110, 99, 0.15) 0%, transparent 50%)`,
-              `radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.2) 0%, transparent 50%)`
-            ]
-          }}
-          transition={{ duration: 10, repeat: Infinity, repeatType: "reverse" }}
-          style={{ width: '100%', height: '100%', position: 'absolute' }}
-        />
-        <Box sx={{ position: 'absolute', top: '-20%', left: '-10%', width: '50%', height: '50%', background: '#EFEBE9', filter: 'blur(150px)', opacity: 0.4, borderRadius: '50%' }} />
-        <Box sx={{ position: 'absolute', bottom: '-10%', right: '-10%', width: '60%', height: '60%', background: '#FFE0B2', filter: 'blur(180px)', opacity: 0.3, borderRadius: '50%' }} />
-      </Box>
-
-    <Container maxWidth="lg" sx={{ mt: 6, mb: 8, position: 'relative', zIndex: 1 }}>
+    <Box sx={{ bgcolor: '#FFFAF5', minHeight: '100vh', color: '#3E2723', pb: { xs: 14, md: 0 } }}>
+    <Container maxWidth="lg" sx={{ mt: 6, mb: 8 }}>
       <Typography variant="h3" fontWeight="900" gutterBottom sx={{ mb: 4, color: '#4E342E', textAlign: 'center' }}>Meu Carrinho</Typography>
 
       <Grid container spacing={5}>
         {/* Coluna da Esquerda: Tabela de Itens */}
         <Grid item xs={12} md={8}>
-          <Box sx={{ ...glassStyle, p: 0, overflow: 'hidden', mb: 4 }}>
+          <Box sx={{ ...cardStyle, p: 0, overflow: 'hidden', mb: 4 }}>
           <TableContainer component={Box} sx={{ bgcolor: 'transparent' }}>
             <Table>
-              <TableHead>
+              <TableHead sx={{ bgcolor: '#FFF8F0' }}>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 'bold', textTransform: 'uppercase', color: '#5D4037', borderBottom: '1px solid rgba(78, 52, 46, 0.1)' }}>Produto</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 'bold', textTransform: 'uppercase', color: '#5D4037', borderBottom: '1px solid rgba(78, 52, 46, 0.1)' }}>Preço</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 'bold', textTransform: 'uppercase', color: '#5D4037', borderBottom: '1px solid rgba(78, 52, 46, 0.1)' }}>Qtd</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 'bold', textTransform: 'uppercase', color: '#5D4037', borderBottom: '1px solid rgba(78, 52, 46, 0.1)' }}>Total</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', textTransform: 'uppercase', color: '#795548', borderBottom: '1px solid rgba(78, 52, 46, 0.1)' }}>Produto</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 'bold', textTransform: 'uppercase', color: '#795548', borderBottom: '1px solid rgba(78, 52, 46, 0.1)' }}>Preço</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 'bold', textTransform: 'uppercase', color: '#795548', borderBottom: '1px solid rgba(78, 52, 46, 0.1)' }}>Qtd</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 'bold', textTransform: 'uppercase', color: '#795548', borderBottom: '1px solid rgba(78, 52, 46, 0.1)' }}>Total</TableCell>
                   <TableCell align="center" sx={{ borderBottom: '1px solid rgba(78, 52, 46, 0.1)' }}></TableCell>
                 </TableRow>
               </TableHead>
@@ -332,7 +299,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
              <Button startIcon={<ArrowBack />} component={Link} to="/" sx={{ textTransform: 'none', fontWeight: 'bold', color: '#4E342E', borderRadius: 50, bgcolor: 'rgba(255,255,255,0.5)' }}>Continuar Comprando</Button>
           </Box>
 
-          <Box sx={{ ...glassStyle, p: 3 }}>
+          <Box sx={{ ...cardStyle, p: 3 }}>
           <TextField
             label="Observações do Pedido"
             placeholder="Ex: Sem talheres, troco para 50..."
@@ -412,7 +379,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
 
         {/* Coluna da Direita: Resumo e Opções */}
         <Grid item xs={12} md={4}>
-          <Box sx={{ ...glassStyle, p: 4 }}>
+          <Box sx={{ ...cardStyle, p: 4 }}>
             <Typography variant="h5" fontWeight="bold" gutterBottom sx={{ mb: 3, color: '#4E342E' }}>Resumo do Pedido</Typography>
             
             <Box display="flex" justifyContent="space-between" mb={2}>
@@ -534,8 +501,8 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
         px: 3,
         py: 2,
         pb: 'max(16px, env(safe-area-inset-bottom))',
-        bgcolor: 'rgba(255, 255, 255, 0.95)',
-        backdropFilter: 'blur(10px)',
+        bgcolor: '#FFFFFF',
+        borderTop: '1px solid rgba(78,52,46,0.08)',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         display: { xs: 'flex', md: 'none' },

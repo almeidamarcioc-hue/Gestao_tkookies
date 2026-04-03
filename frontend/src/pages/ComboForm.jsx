@@ -18,13 +18,19 @@ export default function ComboForm() {
   const [ativo, setAtivo] = useState(true);
   const [itens, setItens] = useState([]);
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
+  const [ingredienteSelecionado, setIngredienteSelecionado] = useState(null);
+  const [comboIngredientes, setComboIngredientes] = useState([]);
   const [qtdProduto, setQtdProduto] = useState(1);
+  const [qtdIngrediente, setQtdIngrediente] = useState(1);
+  const [precoVendaIngrediente, setPrecoVendaIngrediente] = useState(0);
   const [listaProdutos, setListaProdutos] = useState([]);
+  const [listaIngredientes, setListaIngredientes] = useState([]);
   // const [custoTotalCombo, setCustoTotalCombo] = useState(0); // Removido estado para usar cálculo derivado
   const [margemDesejada, setMargemDesejada] = useState("");
 
   useEffect(() => {
     carregarProdutos();
+    carregarIngredientes();
   }, []);
 
   async function carregarProdutos() {
@@ -62,6 +68,15 @@ export default function ComboForm() {
     }
   }
 
+  async function carregarIngredientes() {
+    try {
+      const res = await api.get("/ingredientes");
+      setListaIngredientes(Array.isArray(res.data) ? res.data : (res.data.data || []));
+    } catch (err) {
+      console.error("Erro ao carregar ingredientes", err);
+    }
+  }
+
   async function carregarCombo(comboId, produtos) {
     try {
       const res = await api.get(`/combos/${comboId}`);
@@ -84,14 +99,34 @@ export default function ComboForm() {
         };
       });
       setItens(itensMapeados);
+
+      const ingsMapeados = (combo.ingredientes || []).map(ing => ({
+        ...ing,
+        _tempId: Math.random()
+      }));
+      setComboIngredientes(ingsMapeados);
     } catch (err) {
       alert("Erro ao carregar combo");
     }
   }
 
   // Cálculo derivado (sempre atualizado)
-  const valorTotalTabela = itens.reduce((acc, item) => acc + (item.quantidade * (Number(item.preco_original) || 0)), 0);
-  const custoRealTotal = itens.reduce((acc, item) => acc + (item.quantidade * (Number(item.custo_producao) || 0)), 0);
+  const valorTotalTabela = 
+    itens.reduce((acc, item) => acc + (item.quantidade * (Number(item.preco_original) || 0)), 0) +
+    comboIngredientes.reduce((acc, ing) => acc + (Number(ing.quantidade) * (Number(ing.preco_venda) || 0)), 0);
+
+  const custoRealTotal = 
+    itens.reduce((acc, item) => acc + (item.quantidade * (Number(item.custo_producao) || 0)), 0) +
+    comboIngredientes.reduce((acc, ing) => {
+      const ingOriginal = listaIngredientes.find(i => i.id === ing.ingrediente_id);
+      if (ingOriginal) {
+        const custoBase = Number(ingOriginal.custo) || 0;
+        const estoqueBase = Number(ingOriginal.estoque) || 1;
+        const custoUnitario = custoBase / estoqueBase;
+        return acc + (Number(ing.quantidade) * custoUnitario);
+      }
+      return acc;
+    }, 0);
 
   useEffect(() => {
     if (custoRealTotal > 0 && precoVenda) {
@@ -118,6 +153,23 @@ export default function ComboForm() {
     setQtdProduto(1);
   }
 
+  function adicionarIngrediente() {
+    if (!ingredienteSelecionado || qtdIngrediente <= 0) return;
+
+    const novoIng = {
+      ingrediente_id: ingredienteSelecionado.id,
+      nome: ingredienteSelecionado.nome,
+      quantidade: Number(qtdIngrediente),
+      preco_venda: Number(precoVendaIngrediente),
+      _tempId: Math.random()
+    };
+
+    setComboIngredientes([...comboIngredientes, novoIng]);
+    setIngredienteSelecionado(null);
+    setQtdIngrediente(1);
+    setPrecoVendaIngrediente(0);
+  }
+
   function removerItem(index) {
     const novaLista = [...itens];
     novaLista.splice(index, 1);
@@ -130,6 +182,18 @@ export default function ComboForm() {
     setItens(novaLista);
   }
 
+  function removerIngrediente(index) {
+    const novaLista = [...comboIngredientes];
+    novaLista.splice(index, 1);
+    setComboIngredientes(novaLista);
+  }
+
+  function atualizarQuantidadeIngrediente(index, novaQtd) {
+    const novaLista = [...comboIngredientes];
+    novaLista[index] = { ...novaLista[index], quantidade: Number(novaQtd) };
+    setComboIngredientes(novaLista);
+  }
+
   async function salvarCombo() {
     if (!nome) return alert("Nome do combo é obrigatório");
     if (itens.length === 0) return alert("Adicione produtos ao combo");
@@ -139,6 +203,7 @@ export default function ComboForm() {
       nome,
       preco_venda: Number(precoVenda),
       itens,
+      ingredientes: comboIngredientes,
       imagem,
       ativo
     };
@@ -269,7 +334,44 @@ export default function ComboForm() {
           </TableBody>
         </Table>
 
-        <Box sx={{ bgcolor: '#f5f5f5', p: 3, borderRadius: 2, mt: 2 }}>
+        <Typography variant="h6" mt={4} mb={2}>Ingredientes Adicionais (Opcionais)</Typography>
+        <Box display="flex" gap={2} mb={2} alignItems="center">
+          <Autocomplete
+            sx={{ flexGrow: 1 }}
+            options={listaIngredientes}
+            getOptionLabel={(option) => option.nome}
+            value={ingredienteSelecionado}
+            onChange={(e, val) => setIngredienteSelecionado(val)}
+            renderInput={(params) => <TextField {...params} label="Adicionar Ingrediente" />}
+          />
+          <TextField label="Qtd" type="number" sx={{ width: 80 }} value={qtdIngrediente} onChange={e => setQtdIngrediente(e.target.value)} />
+          <TextField label="Preço Adicional" type="number" sx={{ width: 130 }} value={precoVendaIngrediente} onChange={e => setPrecoVendaIngrediente(e.target.value)} />
+          <Button variant="contained" color="secondary" onClick={adicionarIngrediente}><Add /></Button>
+        </Box>
+
+        <Table size="small" sx={{ mb: 2 }}>
+          <TableHead><TableRow><TableCell>Ingrediente</TableCell><TableCell>Qtd</TableCell><TableCell>Preço Venda</TableCell><TableCell></TableCell></TableRow></TableHead>
+          <TableBody>
+            {comboIngredientes.map((ing, idx) => (
+              <TableRow key={ing._tempId}>
+                <TableCell>{ing.nome}</TableCell>
+                <TableCell>
+                  <TextField 
+                    type="number" 
+                    size="small" 
+                    value={ing.quantidade} 
+                    onChange={(e) => atualizarQuantidadeIngrediente(idx, e.target.value)}
+                    sx={{ width: 80 }}
+                  />
+                </TableCell>
+                <TableCell>R$ {Number(ing.preco_venda).toFixed(2)}</TableCell>
+                <TableCell><IconButton color="error" size="small" onClick={() => removerIngrediente(idx)}><Delete /></IconButton></TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+
+        <Box sx={{ bgcolor: '#f5f5f5', p: 3, borderRadius: 2, mt: 4 }}>
             <Grid container spacing={3}>
                 <Grid item xs={12} md={6}>
                     <Typography variant="subtitle1" fontWeight="bold" color="primary" gutterBottom>SIMULAÇÃO COMBO</Typography>

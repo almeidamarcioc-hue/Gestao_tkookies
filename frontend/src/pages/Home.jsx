@@ -526,7 +526,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
             {/* 2. DESTAQUES (Mosaic Grid) */}
             {featuredProduct && (
               <Box sx={{ mb: 8 }}>
-                 <Typography variant="h5" fontWeight="900" gutterBottom sx={{ mb: 3, borderLeft: `6px solid ${primaryColor}`, pl: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
+                 <Typography variant="h5" fontWeight="900" gutterBottom sx={{ mb: 3, borderLeft: `4px solid #E65100`, pl: 2, textTransform: 'uppercase', letterSpacing: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
                     Destaques
                  </Typography>
                  <Grid container spacing={2} sx={{ height: { md: 450 } }}>
@@ -546,12 +546,12 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
 
             {/* SEÇÃO CARDÁPIO */}
             <Box id="cardapio">
-              <Typography variant="h5" gutterBottom fontWeight="900" sx={{ mb: 3, borderLeft: `6px solid ${primaryColor}`, pl: 2, textTransform: 'uppercase', letterSpacing: 1 }}>
+              <Typography variant="h5" gutterBottom fontWeight="900" sx={{ mb: 3, borderLeft: `4px solid #E65100`, pl: 2, textTransform: 'uppercase', letterSpacing: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
                 Cardápio
               </Typography>
 
               {/* Banner Informativo de Horários */}
-              <Box sx={{ mb: 4, p: 2, borderRadius: 3, bgcolor: 'rgba(78, 52, 46, 0.05)', border: '1px solid rgba(78, 52, 46, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+              <Box sx={{ mb: 4, p: 2, borderRadius: 3, bgcolor: '#FFF8F0', border: '1px solid #FFCC80', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
                 <Box display="flex" alignItems="center" gap={2}>
                   <AccessTime sx={{ color: primaryColor }} />
                   <Box>
@@ -576,8 +576,8 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                   
                   return (
                     <Grid item xs={12} sm={6} key={prod.id} component={motion.div} variants={itemVariants}>
-                      <Card sx={{ borderRadius: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.05)', height: '100%', display: 'flex', flexDirection: 'column' }}>
-                         <Box sx={{ position: 'relative', height: 180 }}>
+                      <Card sx={{ borderRadius: 4, boxShadow: '0 2px 16px rgba(78,52,46,0.08)', transition: 'all 0.25s ease', '&:hover': { boxShadow: '0 8px 32px rgba(78,52,46,0.15)', transform: 'translateY(-4px)' }, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                         <Box sx={{ position: 'relative', height: 220 }}>
                             <Box 
                               component="img" 
                               src={coverImage} 
@@ -634,7 +634,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                             </IconButton>
                          </Box>
                          <CardContent sx={{ flexGrow: 1, pb: 1 }}>
-                            <Typography variant="h6" fontWeight="bold" gutterBottom>{prod.nome}</Typography>
+                            <Typography variant="subtitle1" fontWeight="bold" gutterBottom sx={{ lineHeight: 1.3 }}>{prod.nome}</Typography>
                             <Typography variant="body2" color="text.secondary" noWrap>{prod.descricao}</Typography>
                             {Number(prod.estoque) > 0 && (
                               <Typography variant="caption" color="primary" sx={{ fontWeight: 'bold', mt: 1, display: 'block' }}>
@@ -705,7 +705,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
             }}>
               
               {/* Order Status / Bag */}
-              <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: 4, bgcolor: 'white', border: '1px solid #eee' }}>
+              <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: 4, bgcolor: 'white', border: '1px solid rgba(78,52,46,0.08)', boxShadow: '0 2px 12px rgba(78,52,46,0.06)' }}>
                 <Typography variant="h6" fontWeight="bold" gutterBottom display="flex" alignItems="center" gap={1}>
                   <ShoppingBag /> Sua Sacola
                 </Typography>
@@ -829,10 +829,10 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
             zIndex: 1200,
           }}
         >
-          <Box sx={{ 
-            bgcolor: 'rgba(255, 255, 255, 0.95)', 
+          <Box sx={{
+            bgcolor: '#FFFFFF',
             p: { xs: 1.5, md: 2 },
-            display: 'flex', 
+            display: 'flex',
             flexDirection: { xs: 'column', sm: 'row' },
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -857,7 +857,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
               )}
 
               <Box sx={{ ml: 1 }}>
-                <Typography variant="caption" sx={{ color: '#5D4037', lineHeight: 1 }}>Total</Typography>
+                <Typography variant="caption" sx={{ color: '#795548', lineHeight: 1, display: 'block' }}>Total do pedido</Typography>
                 <Typography variant="h6" fontWeight="bold" color="primary.main" sx={{ lineHeight: 1.2, fontSize: { xs: '1.1rem', md: '1.25rem' } }}>R$ {totalPrice.toFixed(2)}</Typography>
               </Box>
             </Box>

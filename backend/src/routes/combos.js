@@ -10,10 +10,14 @@ router.get("/", async (req, res) => {
     let query = `
       SELECT c.*, 
              ci.id as item_id, ci.quantidade as item_quantidade,
-             p.id as produto_id, p.nome as produto_nome, p.preco_venda as produto_preco
+             p.id as produto_id, p.nome as produto_nome, p.preco_venda as produto_preco,
+             cing.id as cing_id, cing.ingrediente_id, cing.quantidade as cing_quantidade, cing.preco_venda as cing_preco,
+             ing.nome as ingrediente_nome
       FROM combos c
       LEFT JOIN combo_itens ci ON c.id = ci.combo_id
       LEFT JOIN produtos p ON ci.produto_id = p.id
+      LEFT JOIN combo_ingredientes cing ON c.id = cing.combo_id
+      LEFT JOIN ingredientes ing ON cing.ingrediente_id = ing.id
     `;
     
     const params = [];
@@ -36,7 +40,8 @@ router.get("/", async (req, res) => {
           preco_venda: row.preco_venda,
           imagem: row.imagem,
           ativo: row.ativo,
-          itens: [] // Garante que itens seja um array, evitando o erro de reduce
+          itens: [],
+          ingredientes: []
         });
       }
       
@@ -47,6 +52,16 @@ router.get("/", async (req, res) => {
           nome: row.produto_nome,
           quantidade: row.item_quantidade,
           preco_original: row.produto_preco
+        });
+      }
+
+      if (row.cing_id && !combosMap.get(row.id).ingredientes.some(i => i.id === row.cing_id)) {
+        combosMap.get(row.id).ingredientes.push({
+          id: row.cing_id,
+          ingrediente_id: row.ingrediente_id,
+          nome: row.ingrediente_nome,
+          quantidade: row.cing_quantidade,
+          preco_venda: row.cing_preco
         });
       }
     });
@@ -77,6 +92,14 @@ router.get("/:id", async (req, res) => {
     
     combo.itens = itensRes.rows;
     
+    const ingRes = await pool.query(`
+      SELECT ci.*, i.nome 
+      FROM combo_ingredientes ci
+      JOIN ingredientes i ON ci.ingrediente_id = i.id
+      WHERE ci.combo_id = $1
+    `, [id]);
+    combo.ingredientes = ingRes.rows;
+
     res.json(combo);
   } catch (error) {
     console.error(error);
@@ -86,7 +109,7 @@ router.get("/:id", async (req, res) => {
 
 // CRIAR
 router.post("/", async (req, res) => {
-  const { nome, preco_venda, imagem, itens, ativo } = req.body;
+  const { nome, preco_venda, imagem, itens, ingredientes, ativo } = req.body;
   const client = await pool.connect();
   
   try {
@@ -116,6 +139,16 @@ router.post("/", async (req, res) => {
       }
     }
     
+    // Insere os ingredientes extras
+    if (ingredientes && ingredientes.length > 0) {
+      for (const ing of ingredientes) {
+        await client.query(
+          "INSERT INTO combo_ingredientes (combo_id, ingrediente_id, quantidade, preco_venda) VALUES ($1, $2, $3, $4)",
+          [comboId, ing.ingrediente_id, ing.quantidade, ing.preco_venda]
+        );
+      }
+    }
+
     await client.query("COMMIT");
     res.status(201).json({ message: "Combo criado!", id: comboId });
   } catch (error) {
@@ -130,7 +163,7 @@ router.post("/", async (req, res) => {
 // ATUALIZAR
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
-  const { nome, preco_venda, imagem, itens, ativo } = req.body;
+  const { nome, preco_venda, imagem, itens, ingredientes, ativo } = req.body;
   const client = await pool.connect();
   
   try {
@@ -153,6 +186,17 @@ router.put("/:id", async (req, res) => {
       }
     }
     
+    // Atualiza ingredientes extras
+    await client.query("DELETE FROM combo_ingredientes WHERE combo_id = $1", [id]);
+    if (Array.isArray(ingredientes) && ingredientes.length > 0) {
+      for (const ing of ingredientes) {
+        await client.query(
+          "INSERT INTO combo_ingredientes (combo_id, ingrediente_id, quantidade, preco_venda) VALUES ($1, $2, $3, $4)",
+          [id, ing.ingrediente_id, ing.quantidade, ing.preco_venda]
+        );
+      }
+    }
+
     await client.query("COMMIT");
     res.json({ message: "Combo atualizado!" });
   } catch (error) {
@@ -171,7 +215,8 @@ router.delete("/:id", async (req, res) => {
   try {
     await client.query("BEGIN");
     
-    // 1. Remover itens do combo primeiro (Correção do erro 500)
+    // 1. Remover itens e ingredientes do combo primeiro
+    await client.query("DELETE FROM combo_ingredientes WHERE combo_id = $1", [id]);
     await client.query("DELETE FROM combo_itens WHERE combo_id = $1", [id]);
     
     // 2. Remover o combo

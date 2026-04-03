@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Avatar, Card, CardContent, Rating, useTheme } from '@mui/material';
+import { Box, Typography, Avatar, Card, CardContent, Rating } from '@mui/material';
 import FormatQuoteIcon from '@mui/icons-material/FormatQuote';
 import api from '../services/api';
 
 const TestimonialsCarousel = () => {
   const [testimonials, setTestimonials] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
-  const theme = useTheme();
 
   useEffect(() => {
     const fetchTestimonials = async () => {
@@ -34,92 +33,108 @@ const TestimonialsCarousel = () => {
   const activeTestimonial = testimonials[activeIndex];
 
   return (
-    <Box sx={{ 
-      py: 4, 
-      backgroundColor: theme.palette.grey[50], 
-      borderRadius: 4, 
-      textAlign: 'center',
-      position: 'relative',
-      overflow: 'hidden',
-      my: 4
-    }}>
-      <Typography variant="h5" sx={{ fontWeight: 'bold', color: theme.palette.primary.main, mb: 3 }}>
+    <Box sx={{ py: 6, textAlign: 'center' }}>
+      <Typography
+        variant="h5"
+        sx={{ fontWeight: 900, color: '#4E342E', mb: 4, letterSpacing: 0.5 }}
+      >
         O que dizem nossos parceiros e clientes ❤️
       </Typography>
 
-      <Box sx={{ maxWidth: 800, mx: 'auto', px: 2 }}>
-        <Card 
-          elevation={3} 
-          sx={{ 
-            borderRadius: 4, 
+      <Box sx={{ maxWidth: 680, mx: 'auto', px: 2 }}>
+        <Card
+          elevation={0}
+          sx={{
+            background: '#FFFFFF',
+            borderRadius: '20px',
+            boxShadow: '0 2px 20px rgba(78,52,46,0.09)',
+            border: '1px solid rgba(78,52,46,0.06)',
             position: 'relative',
             overflow: 'visible',
-            mt: 4 
           }}
         >
-          {/* Ícone de Citação Decorativo */}
-          <FormatQuoteIcon sx={{ 
-            fontSize: 60, 
-            color: theme.palette.primary.light, 
-            opacity: 0.2, 
-            position: 'absolute', 
-            top: 10, 
-            left: 10 
-          }} />
+          {/* Decorative quote icon */}
+          <FormatQuoteIcon
+            sx={{
+              fontSize: 64,
+              color: '#E65100',
+              opacity: 0.12,
+              position: 'absolute',
+              top: 16,
+              left: 16,
+            }}
+          />
 
-          <CardContent sx={{ pt: 6, pb: 4, px: 4 }}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-              
-              {/* Imagem do Cliente */}
-              <Avatar 
-                src={activeTestimonial.imagem || undefined} 
+          <CardContent sx={{ pt: 5, pb: 4, px: { xs: 3, md: 6 } }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2.5 }}>
+
+              {/* Avatar */}
+              <Avatar
+                src={activeTestimonial.imagem || undefined}
                 alt={activeTestimonial.nome}
-                sx={{ 
-                  width: 80, 
-                  height: 80, 
-                  border: `4px solid ${theme.palette.background.paper}`,
-                  boxShadow: theme.shadows[3],
-                  mt: -8, // Sobe o avatar para ficar na borda do card
-                  bgcolor: theme.palette.primary.main
+                sx={{
+                  width: 72,
+                  height: 72,
+                  border: '3px solid #FFCC80',
+                  boxShadow: '0 4px 12px rgba(78,52,46,0.15)',
+                  bgcolor: '#4E342E',
+                  fontSize: '1.5rem',
+                  fontWeight: 'bold',
                 }}
               >
                 {activeTestimonial.nome.charAt(0)}
               </Avatar>
 
-              <Typography variant="body1" sx={{ 
-                fontStyle: 'italic', 
-                fontSize: '1.1rem', 
-                color: 'text.secondary', 
-                minHeight: 60,
-                maxWidth: '100%',
-                wordBreak: 'break-word'
-              }}>
+              {/* Stars */}
+              <Rating value={5} readOnly size="small" sx={{ color: '#E65100' }} />
+
+              {/* Quote text */}
+              <Typography
+                variant="body1"
+                sx={{
+                  fontStyle: 'italic',
+                  fontSize: '1.1rem',
+                  color: '#795548',
+                  lineHeight: 1.7,
+                  minHeight: 60,
+                  maxWidth: '100%',
+                  wordBreak: 'break-word',
+                }}
+              >
                 "{activeTestimonial.texto}"
               </Typography>
 
+              {/* Name and role */}
               <Box>
-                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#4E342E' }}>
                   {activeTestimonial.nome}
                 </Typography>
-                <Typography variant="caption" sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 1 }}>
+                <Typography
+                  variant="caption"
+                  sx={{ color: '#795548', textTransform: 'uppercase', letterSpacing: 1 }}
+                >
                   {activeTestimonial.cargo || 'Cliente'}
                 </Typography>
               </Box>
-              
-              {/* Indicadores de Slide */}
-              <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+
+              {/* Navigation dots */}
+              <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
                 {testimonials.map((_, idx) => (
-                  <Box 
+                  <Box
                     key={idx}
                     onClick={() => setActiveIndex(idx)}
-                    sx={{ 
-                      width: 10, height: 10, borderRadius: '50%', cursor: 'pointer',
-                      bgcolor: idx === activeIndex ? theme.palette.primary.main : theme.palette.grey[300],
-                      transition: 'all 0.3s'
-                    }} 
+                    sx={{
+                      width: idx === activeIndex ? 24 : 10,
+                      height: 10,
+                      borderRadius: '5px',
+                      cursor: 'pointer',
+                      bgcolor: idx === activeIndex ? '#E65100' : 'rgba(78,52,46,0.15)',
+                      transition: 'all 0.3s ease',
+                    }}
                   />
                 ))}
               </Box>
+
             </Box>
           </CardContent>
         </Card>

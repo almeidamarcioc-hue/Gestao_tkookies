@@ -62,7 +62,7 @@ export default function About() {
   };
 
   return (
-    <Box sx={{ bgcolor: '#D7CCC8', minHeight: '100vh', color: '#3E2723', overflowX: 'hidden', position: 'relative' }}>
+    <Box sx={{ bgcolor: '#FFFAF5', minHeight: '100vh', color: '#3E2723' }}>
       {/* Background Wrapper Animado */}
       <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
         <motion.div
