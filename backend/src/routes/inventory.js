@@ -80,9 +80,13 @@ router.post("/produzir", async (req, res) => {
     // 2. Buscar ingredientes da receita
     const resIng = await client.query("SELECT ingrediente_id, quantidade FROM produto_ingredientes WHERE produto_id = $1", [produto_id]);
     
-    // 3. Baixar estoque dos ingredientes proporcionalmente
+    // 3. Verificar e baixar estoque dos ingredientes proporcionalmente
     for (const item of resIng.rows) {
       const qtdNecessaria = (Number(item.quantidade) / rendimentoBase) * Number(quantidade);
+      const resEstoque = await client.query("SELECT estoque_atual, nome FROM ingredientes WHERE id = $1", [item.ingrediente_id]);
+      if (resEstoque.rows.length > 0 && Number(resEstoque.rows[0].estoque_atual) < qtdNecessaria) {
+        throw new Error(`Estoque insuficiente do ingrediente "${resEstoque.rows[0].nome}". Disponível: ${resEstoque.rows[0].estoque_atual}, Necessário: ${qtdNecessaria.toFixed(2)}`);
+      }
       await client.query("UPDATE ingredientes SET estoque_atual = estoque_atual - $1 WHERE id = $2", [qtdNecessaria, item.ingrediente_id]);
     }
 
@@ -94,7 +98,8 @@ router.post("/produzir", async (req, res) => {
   } catch (error) {
     await client.query("ROLLBACK");
     console.error("Erro na produção:", error);
-    res.status(500).json({ error: "Erro ao registrar produção." });
+    const status = error.message.includes("Estoque insuficiente") ? 400 : 500;
+    res.status(status).json({ error: error.message || "Erro ao registrar produção." });
   } finally {
     client.release();
   }

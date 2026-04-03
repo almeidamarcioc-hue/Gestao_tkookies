@@ -281,6 +281,15 @@ export async function initDatabase() {
     logs.push(await addColumnSafe("produtos", "eh_agregado BOOLEAN DEFAULT FALSE"));
     logs.push(await addColumnSafe("produtos", "custo DECIMAL(10, 2) DEFAULT 0"));
     logs.push(await addColumnSafe("depoimentos", "cargo VARCHAR(100) DEFAULT 'Cliente'"));
+    logs.push(await addColumnSafe("ingredientes", "estoque_atual DECIMAL(10, 2) DEFAULT 0"));
+
+    // Sincroniza estoque_atual com estoque para ingredientes que nunca tiveram movimentação
+    try {
+      await pool.query("UPDATE ingredientes SET estoque_atual = estoque WHERE estoque_atual = 0 AND estoque > 0");
+      logs.push("[ingredientes] Sincronizado estoque_atual a partir de estoque");
+    } catch (e) {
+      logs.push(`[ingredientes] Erro ao sincronizar estoque_atual: ${e.message}`);
+    }
 
     console.log("✅ Base de dados inicializada com sucesso");
     return logs;
