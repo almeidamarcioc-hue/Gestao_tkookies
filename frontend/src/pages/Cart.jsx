@@ -16,7 +16,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
   const [freightValue, setFreightValue] = useState(0);
   const [observacao, setObservacao] = useState("");
   const [isStoreOpen, setIsStoreOpen] = useState(true);
-  const [config, setConfig] = useState({ open_time: "", close_time: "", open_days: "" });
+  const [config, setConfig] = useState({ open_time: "", close_time: "", open_days: "", pix_key: "", pix_name: "TKOOKIES", pix_city: "TRES DE MAIO" });
   const navigate = useNavigate();
 
   // Estilos "Organic Soft Tech" (Versão Light/Café)
@@ -103,11 +103,14 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
 
   useEffect(() => {
     if (paymentMethod === 'Pix' && totalOrder > 0) {
+      const pixKey = config.pix_key || '54209675000174';
+      const pixName = config.pix_name || 'TKOOKIES';
+      const pixCity = config.pix_city || 'TRES DE MAIO';
       const pix = QrCodePix({
         version: '01',
-        key: '54209675000174', // Seu CNPJ
-        name: 'TKOOKIES',
-        city: 'TRES DE MAIO',
+        key: pixKey,
+        name: pixName,
+        city: pixCity,
         value: parseFloat(totalOrder.toFixed(2)),
       });
       setPixPayload(pix.payload());
@@ -548,7 +551,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
       <Button 
         variant="contained" 
         onClick={handleCheckout}
-        disabled={cart.length === 0 || cart.some(item => (Number(item.estoque) || 0) <= 0 || item.quantidade > (Number(item.estoque) || 0))}
+        disabled={cart.length === 0 || !isStoreOpen || cart.some(item => (Number(item.estoque) || 0) <= 0 || item.quantidade > (Number(item.estoque) || 0))}
         sx={{ borderRadius: 50, bgcolor: '#4E342E', '&:hover': { bgcolor: '#3E2723' }, px: 4, py: 1.2, fontWeight: 'bold' }}
       >
         FINALIZAR

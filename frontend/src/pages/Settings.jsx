@@ -13,6 +13,9 @@ export default function Settings() {
   const [homeLocation, setHomeLocation] = useState("");
   const [homeBg, setHomeBg] = useState("");
   const [valorFrete, setValorFrete] = useState("");
+  const [pixKey, setPixKey] = useState("");
+  const [pixName, setPixName] = useState("");
+  const [pixCity, setPixCity] = useState("");
   const [openingHours, setOpeningHours] = useState([
     { day: 0, label: "Domingo", open: false, open_time: "08:00", close_time: "18:00" },
     { day: 1, label: "Segunda", open: true, open_time: "08:00", close_time: "18:00" },
@@ -44,6 +47,9 @@ export default function Settings() {
         setHomeLocation(cfg.home_location || "");
         setHomeBg(cfg.home_bg || "");
         setValorFrete(cfg.valor_frete || "");
+        setPixKey(cfg.pix_key || "");
+        setPixName(cfg.pix_name || "");
+        setPixCity(cfg.pix_city || "");
 
         if (cfg.opening_hours) {
           setOpeningHours(JSON.parse(cfg.opening_hours));
@@ -115,7 +121,10 @@ export default function Settings() {
         about_card3_title: aboutCard3Title,
         about_card3_desc: aboutCard3Desc,
         about_cta_title: aboutCtaTitle,
-        about_cta_desc: aboutCtaDesc
+        about_cta_desc: aboutCtaDesc,
+        pix_key: pixKey,
+        pix_name: pixName,
+        pix_city: pixCity
       });
       alert("Configurações salvas!");
     } catch (err) {
@@ -211,6 +220,41 @@ export default function Settings() {
             />
           </Grid>
           
+          <Grid item xs={12}>
+            <Divider sx={{ my: 1 }} />
+            <Typography variant="h6" sx={{ mb: 2 }}>Configurações de PIX</Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <TextField
+                  label="Chave PIX"
+                  fullWidth
+                  value={pixKey}
+                  onChange={e => setPixKey(e.target.value)}
+                  placeholder="CPF, CNPJ, e-mail, telefone ou chave aleatória"
+                  helperText="Esta chave será usada para gerar o QR Code de pagamento"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Nome do Recebedor"
+                  fullWidth
+                  value={pixName}
+                  onChange={e => setPixName(e.target.value)}
+                  placeholder="Ex: TKOOKIES"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Cidade do Recebedor"
+                  fullWidth
+                  value={pixCity}
+                  onChange={e => setPixCity(e.target.value)}
+                  placeholder="Ex: TRES DE MAIO"
+                />
+              </Grid>
+            </Grid>
+          </Grid>
+
           <Grid item xs={12}>
             <Typography variant="subtitle2" mb={1}>Imagem de Fundo</Typography>
             <Box display="flex" alignItems="center" gap={2}>

@@ -262,7 +262,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
     }
 
     if (!clientUser) {
-      alert("Faca login ou cadastre-se para aproveitar os Sabores da TKookies");
+      alert("Faça login ou cadastre-se para aproveitar os Sabores da TKookies");
       onLoginClick();
       return;
     }
@@ -605,13 +605,22 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                               />
                             )}
 
+                        {/* Badge de Desconto */}
+                        {prod.eh_destaque && Number(prod.desconto_destaque) > 0 && (
+                          <Chip
+                            label={`${Number(prod.desconto_destaque).toFixed(0)}% OFF`}
+                            size="small"
+                            sx={{ position: 'absolute', top: 8, left: 8, fontWeight: 'bold', bgcolor: '#E53935', color: 'white', zIndex: 1 }}
+                          />
+                        )}
+
                         {/* Tarja de Indisponível */}
                         {prod.estoque <= 0 && (
                           <Chip
                             label="Indisponível"
                             color="error"
                             size="small"
-                            sx={{ position: 'absolute', top: 8, left: 8, fontWeight: 'bold' }}
+                            sx={{ position: 'absolute', top: prod.eh_destaque && Number(prod.desconto_destaque) > 0 ? 40 : 8, left: 8, fontWeight: 'bold' }}
                           />
                         )}
 
@@ -637,7 +646,20 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                             </Button>
                          </CardContent>
                          <Box sx={{ p: 2, pt: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <Typography variant="h6" fontWeight="bold" color="primary">R$ {Number(prod.preco_venda).toFixed(2)}</Typography>
+                            <Box>
+                              {prod.eh_destaque && Number(prod.desconto_destaque) > 0 ? (
+                                <>
+                                  <Typography variant="caption" sx={{ textDecoration: 'line-through', color: '#9E9E9E', display: 'block', lineHeight: 1 }}>
+                                    R$ {Number(prod.preco_venda).toFixed(2)}
+                                  </Typography>
+                                  <Typography variant="h6" fontWeight="bold" color="error">
+                                    R$ {(Number(prod.preco_venda) * (1 - Number(prod.desconto_destaque) / 100)).toFixed(2)}
+                                  </Typography>
+                                </>
+                              ) : (
+                                <Typography variant="h6" fontWeight="bold" color="primary">R$ {Number(prod.preco_venda).toFixed(2)}</Typography>
+                              )}
+                            </Box>
                             {prod.estoque <= 0 ? (
                               <Chip label="Indisponível" color="error" size="small" sx={{ fontWeight: 'bold' }} />
                             ) : qty === 0 ? (
