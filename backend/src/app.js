@@ -30,9 +30,10 @@ const allowedOrigins = process.env.FRONTEND_URL
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Permite requisições sem origin (mobile / Postman) apenas em ambiente sem FRONTEND_URL
-    if (!origin && !process.env.FRONTEND_URL) return callback(null, true);
-    if (origin && allowedOrigins.includes(origin)) return callback(null, true);
+    // Requisições sem Origin (mobile, apps, Postman, server-to-server) sempre permitidas
+    // CORS é um mecanismo de browsers — somente origens de browser precisam ser validadas
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
     callback(new Error("Origem não permitida pelo CORS"));
   },
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
