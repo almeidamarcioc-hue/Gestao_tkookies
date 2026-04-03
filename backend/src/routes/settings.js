@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { pool } from "../db/index.js";
 import { initDatabase } from "../db/init.js";
+import { authenticateToken, requireRole } from "../middlewares/auth.js";
 
 const router = Router();
 
@@ -16,7 +17,7 @@ async function ensureTableExists() {
 }
 
 // ROTA DE MIGRAÇÃO (Para garantir que tabelas/colunas existam no Vercel)
-router.get("/migrate", async (req, res) => {
+router.get("/migrate", authenticateToken, requireRole('admin'), async (req, res) => {
   console.log("Iniciando migração do banco de dados...");
   try {
     const logs = await initDatabase();
@@ -55,7 +56,7 @@ router.get("/", async (req, res) => {
 });
 
 // SALVAR CONFIGURAÇÕES
-router.post("/", async (req, res) => {
+router.post("/", authenticateToken, requireRole('admin'), async (req, res) => {
   const configs = req.body; // Espera objeto { home_title: "...", home_bg: "..." }
   const client = await pool.connect();
 

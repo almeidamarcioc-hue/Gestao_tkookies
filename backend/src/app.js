@@ -102,7 +102,7 @@ app.use("/pedidos", authenticateToken, ordersRouter); // Pedidos precisam de aut
 app.use("/producao", authenticateToken, requireRole('admin'), productionRouter);
 app.use("/combos", authenticateToken, requireRole('admin'), combosRouter);
 app.use("/estoque", authenticateToken, requireRole('admin'), inventoryRouter);
-app.use("/configuracoes", authenticateToken, requireRole('admin'), settingsRouter);
+app.use("/configuracoes", settingsRouter); // GET é público; POST é protegido internamente
 app.use("/financeiro", authenticateToken, requireRole('admin'), financialRouter);
 app.use("/revendedores", authenticateToken, requireRole('admin'), resellersRouter);
 app.use("/favoritos", authenticateToken, favoritesRouter); // Favoritos para clientes logados
