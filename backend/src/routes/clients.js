@@ -104,19 +104,40 @@ router.post("/login", async (req, res) => {
     const result = await pool.query("SELECT * FROM clientes WHERE login = $1", [login]);
     if (result.rows.length > 0) {
       const user = result.rows[0];
-      const isValid = await verifyPassword(senha, user.senha);
+      const isBcrypt = user.senha && (user.senha.startsWith('$2b$') || user.senha.startsWith('$2a$'));
+      let isValid = false;
+      if (isBcrypt) {
+        isValid = await verifyPassword(senha, user.senha);
+      } else {
+        // Senha em texto plano (legado) — compara diretamente e re-hasheia
+        isValid = user.senha === senha;
+        if (isValid) {
+          const novaHash = await hashPassword(senha);
+          await pool.query("UPDATE clientes SET senha = $1 WHERE id = $2", [novaHash, user.id]);
+        }
+      }
       if (isValid) {
-        const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ id: user.id, role: user.role || 'cliente' }, process.env.JWT_SECRET, { expiresIn: '1h' });
         res.json({ ...user, token });
         return;
       }
     } else {
       // Se não achou em clientes, tenta em revendedores
       const resRev = await pool.query("SELECT * FROM revendedores WHERE login = $1", [login]);
-      
+
       if (resRev.rows.length > 0) {
         const rev = resRev.rows[0];
-        const isValid = await verifyPassword(senha, rev.senha);
+        const isBcryptRev = rev.senha && (rev.senha.startsWith('$2b$') || rev.senha.startsWith('$2a$'));
+        let isValid = false;
+        if (isBcryptRev) {
+          isValid = await verifyPassword(senha, rev.senha);
+        } else {
+          isValid = rev.senha === senha;
+          if (isValid) {
+            const novaHash = await hashPassword(senha);
+            await pool.query("UPDATE revendedores SET senha = $1 WHERE id = $2", [novaHash, rev.id]);
+          }
+        }
         if (isValid) {
           const token = jwt.sign({ id: rev.id, role: 'revendedor' }, process.env.JWT_SECRET, { expiresIn: '1h' });
           // Retorna um objeto compatível com o frontend, forçando is_revendedor = true
