@@ -105,7 +105,14 @@ app.use("/combos", (req, res, next) => {
   if (req.method === 'GET') return next();
   authenticateToken(req, res, () => requireRole('admin')(req, res, next));
 }, combosRouter);
-app.use("/estoque", authenticateToken, requireRole('admin'), inventoryRouter);
+// reservar/liberar acessível a qualquer cliente logado; demais rotas exigem admin
+app.use("/estoque", (req, res, next) => {
+  const clientePaths = ['/reservar', '/liberar'];
+  if (req.method === 'POST' && clientePaths.includes(req.path)) {
+    return authenticateToken(req, res, next);
+  }
+  authenticateToken(req, res, () => requireRole('admin')(req, res, next));
+}, inventoryRouter);
 app.use("/configuracoes", settingsRouter); // GET é público; POST é protegido internamente
 app.use("/financeiro", authenticateToken, requireRole('admin'), financialRouter);
 app.use("/revendedores", authenticateToken, requireRole('admin'), resellersRouter);
