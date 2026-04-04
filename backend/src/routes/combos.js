@@ -23,8 +23,8 @@ router.get("/", async (req, res) => {
     const params = [];
 
     if (apenas_ativos === 'true') {
-      // Garante que pegamos apenas os ativos (1) e ignoramos nulos ou desativados (0)
-      query += " WHERE c.ativo = 1 OR c.ativo IS TRUE";
+      // Filtra apenas combos ativos (MySQL utiliza 1 para true)
+      query += " WHERE c.ativo = 1";
     }
     
     query += " ORDER BY c.nome ASC";
@@ -40,7 +40,7 @@ router.get("/", async (req, res) => {
           nome: row.nome,
           preco_venda: row.preco_venda,
           imagem: row.imagem,
-          ativo: row.ativo,
+          ativo: !!row.ativo, // Converte 1/0 ou Buffer para boolean real
           itens: [],
           ingredientes: []
         });
@@ -85,6 +85,9 @@ router.get("/:id", async (req, res) => {
     
     const combo = result.rows[0];
     
+    // Garante que ativo seja booleano
+    combo.ativo = !!combo.ativo;
+
     // Buscar itens do combo
     const itensRes = await pool.query(`
       SELECT ci.*, p.nome 
