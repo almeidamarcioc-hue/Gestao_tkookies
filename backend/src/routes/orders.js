@@ -97,14 +97,24 @@ router.post("/", async (req, res) => {
     const pedidoId = resPedido.rows[0].id;
 
     for (const item of itens) {
-      await client.query(
-        "INSERT INTO itens_pedido (pedido_id, produto_id, quantidade, valor_unitario, valor_total) VALUES ($1, $2, $3, $4, $5)",
-        [pedidoId, item.produto_id, item.quantidade, item.valor_unitario, Number(item.quantidade) * Number(item.valor_unitario)]
-      );
-      
-      // Baixar estoque do produto apenas se não veio do carrinho (onde já foi baixado na reserva)
-      if (origem !== 'carrinho') {
-        await client.query("UPDATE produtos SET estoque = estoque - $1 WHERE id = $2", [item.quantidade, item.produto_id]);
+      const isCombo = item.tipo === 'combo';
+      const itemOrigem = item.origem || origem; // suporta origem por item ou no root
+
+      if (isCombo) {
+        await client.query(
+          "INSERT INTO itens_pedido (pedido_id, produto_id, combo_id, tipo, quantidade, valor_unitario, valor_total) VALUES ($1, NULL, $2, 'combo', $3, $4, $5)",
+          [pedidoId, item.produto_id, item.quantidade, item.valor_unitario, Number(item.quantidade) * Number(item.valor_unitario)]
+        );
+        // Estoque do combo já foi reservado ao adicionar no carrinho
+      } else {
+        await client.query(
+          "INSERT INTO itens_pedido (pedido_id, produto_id, tipo, quantidade, valor_unitario, valor_total) VALUES ($1, $2, 'produto', $3, $4, $5)",
+          [pedidoId, item.produto_id, item.quantidade, item.valor_unitario, Number(item.quantidade) * Number(item.valor_unitario)]
+        );
+        // Baixar estoque do produto apenas se não veio do carrinho (onde já foi baixado na reserva)
+        if (itemOrigem !== 'carrinho') {
+          await client.query("UPDATE produtos SET estoque = estoque - $1 WHERE id = $2", [item.quantidade, item.produto_id]);
+        }
       }
     }
 

@@ -282,6 +282,8 @@ export async function initDatabase() {
     logs.push(await addColumnSafe("produtos", "custo DECIMAL(10, 2) DEFAULT 0"));
     logs.push(await addColumnSafe("depoimentos", "cargo VARCHAR(100) DEFAULT 'Cliente'"));
     logs.push(await addColumnSafe("ingredientes", "estoque_atual DECIMAL(10, 2) DEFAULT 0"));
+    logs.push(await addColumnSafe("itens_pedido", "combo_id INT NULL"));
+    logs.push(await addColumnSafe("itens_pedido", "tipo VARCHAR(20) DEFAULT 'produto'"));
 
     // Sincroniza estoque_atual com estoque para ingredientes que nunca tiveram movimentação
     try {

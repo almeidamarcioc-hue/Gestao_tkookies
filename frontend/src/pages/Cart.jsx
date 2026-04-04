@@ -142,10 +142,6 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
       return;
     }
 
-    if (cart.some(item => (Number(item.estoque) || 0) <= 0 || item.quantidade > (Number(item.estoque) || 0))) {
-      alert("Por favor, ajuste as quantidades dos produtos no carrinho. Alguns itens estão com estoque insuficiente ou esgotados.");
-      return;
-    }
 
     let obsFinal = observacao;
     if (deliveryType === "entrega") {
@@ -169,11 +165,12 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
       observacao: obsFinal,
       frete: finalFreight,
       status: "Novo",
+      origem: 'carrinho',
       itens: cart.map(item => ({
-        produto_id: item.id,
+        produto_id: item.original_id || item.id,
+        tipo: (item.itens || item.ingredientes) ? 'combo' : 'produto',
         quantidade: item.quantidade,
         valor_unitario: getItemPrice(item),
-        origem: 'carrinho' // Indica que o estoque já foi reservado
       }))
     };
 
