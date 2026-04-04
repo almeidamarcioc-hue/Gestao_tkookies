@@ -16,7 +16,7 @@ import settingsRouter from "./routes/settings.js";
 import financialRouter from "./routes/financial.js";
 import resellersRouter from "./routes/resellers.js";
 import favoritesRouter from "./routes/favorites.js";
-import relatoriosRoutes from "./routes/relatorios.js";
+import relatoriosRoutes from "./routes/relatorios.js"; // Garante que aponta para backend/src/routes/
 import testimonialsRouter from "./routes/testimonials.js";
 import { authenticateToken, requireRole } from "./middlewares/auth.js";
 
