@@ -9,7 +9,7 @@ router.get("/", async (req, res) => {
 
   try {
     let query = "SELECT * FROM ingredientes";
-    let countQuery = "SELECT COUNT(*) FROM ingredientes";
+    let countQuery = "SELECT COUNT(*) AS total FROM ingredientes";
     const params = [];
     let paramIndex = 1;
 
@@ -31,7 +31,7 @@ router.get("/", async (req, res) => {
       params.push(limitInt, offset);
 
       const countRes = await pool.query(countQuery, search ? [`%${search}%`] : []);
-      const total = parseInt(countRes.rows[0].count);
+      const total = parseInt(countRes.rows[0].total || countRes.rows[0]['COUNT(*)'] || 0);
       const result = await pool.query(query, params);
 
       return res.json({
