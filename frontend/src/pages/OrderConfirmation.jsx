@@ -13,37 +13,18 @@ export default function OrderConfirmation({ clearCart }) {
       navigate("/");
       return;
     }
+    if (clearCart) clearCart();
+  }, [orderId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // Garante que o carrinho foi limpo após o sucesso
-    if (clearCart) {
-      clearCart();
-    }
-
-    // Carrega confete dinamicamente para efeito visual
+  // Confete dispara uma única vez ao montar a página
+  useEffect(() => {
+    if (!orderId) return;
     import("canvas-confetti").then((module) => {
       const confetti = module.default;
-      const duration = 3 * 1000;
-      const animationEnd = Date.now() + duration;
-      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-
-      const randomInRange = (min, max) => Math.random() * (max - min) + min;
-
-      const interval = setInterval(function() {
-        const timeLeft = animationEnd - Date.now();
-
-        if (timeLeft <= 0) {
-          return clearInterval(interval);
-        }
-
-        const particleCount = 50 * (timeLeft / duration);
-        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
-        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
-      }, 250);
-
-      return () => clearInterval(interval);
-    }).catch(() => console.log("Confetti opcional não carregado"));
-
-  }, [orderId, navigate, clearCart]);
+      confetti({ particleCount: 120, spread: 80, origin: { x: 0.3, y: 0.5 } });
+      confetti({ particleCount: 120, spread: 80, origin: { x: 0.7, y: 0.5 } });
+    }).catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!orderId) return null;
 
