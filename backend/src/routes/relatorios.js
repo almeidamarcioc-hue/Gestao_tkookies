@@ -10,8 +10,8 @@ const router = Router();
  */
 router.get("/usuarios", authenticateToken, requireRole('admin'), async (req, res) => {
   try {
-    // Busca dados de acesso. Note que 'password' nunca deve ser retornado no SELECT.
-    const result = await pool.query("SELECT id, nome, email, role, created_at FROM usuarios ORDER BY nome ASC");
+    // No sistema Cookie ERP, os usuários com acesso estão na tabela 'clientes'
+    const result = await pool.query("SELECT id, nome, login as email, role, created_at FROM clientes WHERE login IS NOT NULL ORDER BY nome ASC");
     res.json(result.rows);
   } catch (error) {
     console.error("Erro ao buscar relatório de usuários:", error);

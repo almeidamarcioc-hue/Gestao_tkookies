@@ -106,7 +106,7 @@ app.use("/configuracoes", settingsRouter); // GET é público; POST é protegido
 app.use("/financeiro", authenticateToken, requireRole('admin'), financialRouter);
 app.use("/revendedores", authenticateToken, requireRole('admin'), resellersRouter);
 app.use("/favoritos", authenticateToken, favoritesRouter); // Favoritos para clientes logados
-app.use("/api/relatorios", relatoriosRoutes);
+app.use("/relatorios", authenticateToken, requireRole('admin'), relatoriosRoutes);
 app.use("/depoimentos", testimonialsRouter); // Depoimentos podem ser públicos
 
 // Rota especial para criar tabelas na Vercel (Executar uma vez após deploy)
