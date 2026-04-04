@@ -82,7 +82,7 @@ const TestimonialsCarousel = () => {
                   fontWeight: 'bold',
                 }}
               >
-                {activeTestimonial.nome.charAt(0)}
+                {activeTestimonial.nome?.charAt(0)}
               </Avatar>
 
               {/* Stars */}
