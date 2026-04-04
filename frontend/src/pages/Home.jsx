@@ -396,14 +396,14 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           </Typography>
         )}
         <Box display="flex" justifyContent="space-between" alignItems="center" mt={1}>
-          <Typography variant={isLarge ? "h5" : "body1"} fontWeight="bold" color={secondaryColor}>
+          <Typography variant={isLarge ? "h5" : "body1"} fontWeight="bold" sx={{ color: terracotta }}>
              R$ {Number(prod.preco_venda).toFixed(2)}
           </Typography>
           {prod.estoque > 0 ? (
             <Fab 
               size="small" 
               disabled={!isStoreOpen}
-              sx={{ bgcolor: isStoreOpen ? primaryColor : '#bdbdbd', color: 'white', '&:hover': { bgcolor: '#E65100' } }} 
+              sx={{ bgcolor: isStoreOpen ? terracotta : '#bdbdbd', color: 'white', '&:hover': { bgcolor: '#B84508' } }}
               onClick={(e) => { e.stopPropagation(); handleQtyChange(prod.id, 1); }}
             >
               <Add />
@@ -573,7 +573,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
               {/* Banner Informativo de Horários */}
               <Box sx={{ mb: 4, p: 2, borderRadius: 3, bgcolor: '#FFF8F0', border: '1px solid #FFCC80', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
                 <Box display="flex" alignItems="center" gap={2}>
-                  <AccessTime sx={{ color: primaryColor }} />
+                  <AccessTime sx={{ color: terracotta }} />
                   <Box>
                     <Typography variant="subtitle2" fontWeight="bold" color="primary">Horário de Atendimento</Typography>
                     <Typography variant="body2" color="text.secondary">
