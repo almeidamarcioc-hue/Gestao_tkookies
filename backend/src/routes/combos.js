@@ -21,9 +21,10 @@ router.get("/", async (req, res) => {
     `;
     
     const params = [];
-    
+
     if (apenas_ativos === 'true') {
-      query += " WHERE c.ativo = TRUE";
+      // Garante que pegamos apenas os ativos (1) e ignoramos nulos ou desativados (0)
+      query += " WHERE c.ativo = 1 OR c.ativo IS TRUE";
     }
     
     query += " ORDER BY c.nome ASC";
@@ -45,7 +46,8 @@ router.get("/", async (req, res) => {
         });
       }
       
-      if (row.item_id) {
+      // Correção: Verifica se o item já foi adicionado para evitar duplicatas causadas pelo JOIN dos ingredientes
+      if (row.item_id && !combosMap.get(row.id).itens.some(i => i.id === row.item_id)) {
         combosMap.get(row.id).itens.push({
           id: row.item_id,
           produto_id: row.produto_id,
@@ -55,6 +57,7 @@ router.get("/", async (req, res) => {
         });
       }
 
+      // Correção: Verifica se o ingrediente extra já foi adicionado
       if (row.cing_id && !combosMap.get(row.id).ingredientes.some(i => i.id === row.cing_id)) {
         combosMap.get(row.id).ingredientes.push({
           id: row.cing_id,
