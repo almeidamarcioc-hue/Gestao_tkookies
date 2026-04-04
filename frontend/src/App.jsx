@@ -53,7 +53,7 @@ const theme = createTheme({
     h6: { fontWeight: 700 },
     button: { fontWeight: 700, textTransform: "none" },
   },
-  shape: { borderRadius: 16 },
+  shape: { borderRadius: 4 },
   components: {
     MuiAppBar: {
       styleOverrides: {
@@ -66,7 +66,7 @@ const theme = createTheme({
     },
     MuiButton: {
       styleOverrides: {
-        root: { borderRadius: 50, padding: "8px 24px" },
+        root: { borderRadius: 4, padding: "8px 24px" },
         contained: { 
           boxShadow: "0 4px 10px rgba(78, 52, 46, 0.2)",
           "&:hover": { backgroundColor: "#3E2723" }
@@ -89,7 +89,7 @@ const theme = createTheme({
     },
     MuiTextField: {
       styleOverrides: {
-        root: { "& .MuiOutlinedInput-root": { borderRadius: 12 } },
+        root: { "& .MuiOutlinedInput-root": { borderRadius: 4 } },
       },
     },
   },
@@ -649,7 +649,7 @@ export default function App() {
             fullWidth 
             value={clientLoginData.login} 
             onChange={(e) => setClientLoginData({...clientLoginData, login: e.target.value})} 
-            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', bgcolor: 'rgba(255,255,255,0.5)' } }}
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px', bgcolor: 'rgba(255,255,255,0.5)' } }}
           />
           <TextField 
             label="Senha" 
@@ -657,12 +657,12 @@ export default function App() {
             fullWidth 
             value={clientLoginData.senha} 
             onChange={(e) => setClientLoginData({...clientLoginData, senha: e.target.value})} 
-            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', bgcolor: 'rgba(255,255,255,0.5)' } }}
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px', bgcolor: 'rgba(255,255,255,0.5)' } }}
           />
-          <Button variant="contained" fullWidth onClick={handleClientLogin} sx={{ borderRadius: 50, bgcolor: '#4E342E', '&:hover': { bgcolor: '#3E2723' }, py: 1.5 }}>ENTRAR</Button>
+          <Button variant="contained" fullWidth onClick={handleClientLogin} sx={{ borderRadius: 4, bgcolor: '#4E342E', '&:hover': { bgcolor: '#3E2723' }, py: 1.5 }}>ENTRAR</Button>
           <Button color="primary" onClick={() => { setClientLoginOpen(false); }} sx={{ textTransform: 'none', color: '#5D4037' }}>Esqueci minha senha</Button>
           {loginMode === 'client' && (
-            <Button variant="outlined" fullWidth component={Link} to="/cadastro" onClick={() => setClientLoginOpen(false)} sx={{ borderRadius: 50, borderColor: '#4E342E', color: '#4E342E', py: 1.5 }}>CRIAR CONTA</Button>
+            <Button variant="outlined" fullWidth component={Link} to="/cadastro" onClick={() => setClientLoginOpen(false)} sx={{ borderRadius: 4, borderColor: '#4E342E', color: '#4E342E', py: 1.5 }}>CRIAR CONTA</Button>
           )}
         </Box>
       </Drawer>
@@ -685,9 +685,9 @@ export default function App() {
           <Typography variant="h5" fontWeight="bold" sx={{ color: '#4E342E', textAlign: 'center' }}>
             Acesso Administrativo
           </Typography>
-          <TextField label="Usuário Admin" fullWidth value={adminLoginData.login} onChange={(e) => setAdminLoginData({...adminLoginData, login: e.target.value})} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', bgcolor: 'rgba(255,255,255,0.5)' } }} />
-          <TextField label="Senha" type="password" fullWidth value={adminLoginData.senha} onChange={(e) => setAdminLoginData({...adminLoginData, senha: e.target.value})} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px', bgcolor: 'rgba(255,255,255,0.5)' } }} />
-          <Button variant="contained" fullWidth onClick={handleAdminLogin} sx={{ borderRadius: 50, bgcolor: '#4E342E', '&:hover': { bgcolor: '#3E2723' }, py: 1.5 }}>ENTRAR</Button>
+          <TextField label="Usuário Admin" fullWidth value={adminLoginData.login} onChange={(e) => setAdminLoginData({...adminLoginData, login: e.target.value})} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px', bgcolor: 'rgba(255,255,255,0.5)' } }} />
+          <TextField label="Senha" type="password" fullWidth value={adminLoginData.senha} onChange={(e) => setAdminLoginData({...adminLoginData, senha: e.target.value})} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px', bgcolor: 'rgba(255,255,255,0.5)' } }} />
+          <Button variant="contained" fullWidth onClick={handleAdminLogin} sx={{ borderRadius: 4, bgcolor: '#4E342E', '&:hover': { bgcolor: '#3E2723' }, py: 1.5 }}>ENTRAR</Button>
         </Box>
       </Drawer>
       </>

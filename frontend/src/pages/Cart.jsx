@@ -22,7 +22,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
   // Estilos "Cozy Bakery"
   const cardStyle = {
     background: "#FFFFFF",
-    borderRadius: "16px",
+    borderRadius: "4px",
     boxShadow: "0 2px 20px rgba(78, 52, 46, 0.08)",
     border: "1px solid rgba(78, 52, 46, 0.05)",
     color: "#3E2723"
@@ -189,13 +189,13 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
 
   if (cart.length === 0) {
     return (
-      <Box sx={{ bgcolor: '#FFFAF5', minHeight: '100vh', color: '#3E2723' }}>
-        <Container maxWidth="md" sx={{ mt: 8, textAlign: "center", mt: 4 }}>
-          <Box sx={{ ...cardStyle, p: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <RemoveShoppingCart sx={{ fontSize: 80, color: "#8D6E63", mb: 2 }} />
-            <Typography variant="h4" gutterBottom sx={{ color: "#4E342E", fontWeight: 900 }}>Seu carrinho está vazio</Typography>
-            <Typography variant="body1" sx={{ color: "#5D4037", mb: 4 }}>Que tal adicionar alguns cookies deliciosos?</Typography>
-            <Button variant="contained" size="large" component={Link} to="/" sx={{ borderRadius: 50, px: 4, bgcolor: '#4E342E', '&:hover': { bgcolor: '#3E2723' } }}>Voltar para o Menu</Button>
+      <Box sx={{ bgcolor: '#FFFAF5', minHeight: '100vh', color: '#2C1810' }}>
+        <Container maxWidth="md" sx={{ mt: 4, textAlign: "center" }}>
+          <Box sx={{ ...cardStyle, p: 8, display: 'flex', flexDirection: 'column', alignItems: 'center', borderRadius: 4, boxShadow: '0 4px 24px rgba(44,24,16,0.10)' }}>
+            <RemoveShoppingCart sx={{ fontSize: 80, color: "#D4580A", mb: 2 }} />
+            <Typography variant="h4" gutterBottom sx={{ color: "#2C1810", fontWeight: 900 }}>Seu carrinho está vazio</Typography>
+            <Typography variant="body1" sx={{ color: "#795548", mb: 4 }}>Que tal adicionar alguns cookies deliciosos?</Typography>
+            <Button variant="contained" size="large" component={Link} to="/" sx={{ borderRadius: 50, px: 4 }}>Voltar para o Menu</Button>
           </Box>
         </Container>
       </Box>
@@ -203,9 +203,9 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
   }
 
   return (
-    <Box sx={{ bgcolor: '#FFFAF5', minHeight: '100vh', color: '#3E2723', pb: { xs: 14, md: 0 } }}>
+    <Box sx={{ bgcolor: '#FFFAF5', minHeight: '100vh', color: '#2C1810', pb: { xs: 14, md: 0 } }}>
     <Container maxWidth="lg" sx={{ mt: 6, mb: 8 }}>
-      <Typography variant="h3" fontWeight="900" gutterBottom sx={{ mb: 4, color: '#4E342E', textAlign: 'center' }}>Meu Carrinho</Typography>
+      <Typography variant="h3" fontWeight="900" gutterBottom sx={{ mb: 4, color: '#2C1810', textAlign: 'center' }}>Meu Carrinho</Typography>
 
       <Grid container spacing={5}>
         {/* Coluna da Esquerda: Tabela de Itens */}
@@ -466,19 +466,17 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
               <Typography variant="h6" fontWeight="bold" color="#2E7D32">R$ {totalOrder.toFixed(2)}</Typography>
             </Box>
 
-            <Button 
-              variant="contained" 
-              fullWidth 
-              size="large" 
-              onClick={handleCheckout} // This will now trigger the stock check inside handleCheckout
+            <Button
+              variant="contained"
+              fullWidth
+              size="large"
+              onClick={handleCheckout}
               disabled={cart.length === 0 || !isStoreOpen || cart.some(item => (Number(item.estoque) || 0) <= 0 || item.quantidade > (Number(item.estoque) || 0))}
-              sx={{ 
-                py: 1.5, 
-                fontWeight: 'bold', 
-                borderRadius: 50, 
-                boxShadow: 'none', 
-                bgcolor: '#4E342E', 
-                '&:hover': { bgcolor: '#3E2723' },
+              sx={{
+                py: 1.5,
+                fontWeight: 'bold',
+                borderRadius: 50,
+                boxShadow: 'none',
                 display: { xs: 'none', md: 'block' }
               }}
             >
@@ -490,19 +488,19 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
     </Container>
 
     {/* Sticky Footer for Mobile */}
-    <Paper 
+    <Paper
       elevation={10}
-      sx={{ 
-        position: 'fixed', 
-        bottom: 0, 
-        left: 0, 
-        right: 0, 
+      sx={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
         zIndex: 1100,
         px: 3,
         py: 2,
         pb: 'max(16px, env(safe-area-inset-bottom))',
-        bgcolor: '#FFFFFF',
-        borderTop: '1px solid rgba(78,52,46,0.08)',
+        bgcolor: '#2C1810',
+        borderTop: '1px solid rgba(212,88,10,0.2)',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         display: { xs: 'flex', md: 'none' },
@@ -512,14 +510,14 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
       }}
     >
       <Box>
-        <Typography variant="caption" color="#5D4037" fontWeight="bold" display="block">TOTAL</Typography>
-        <Typography variant="h5" fontWeight="bold" color="#2E7D32">R$ {totalOrder.toFixed(2)}</Typography>
+        <Typography variant="caption" color="rgba(255,255,255,0.7)" fontWeight="bold" display="block">TOTAL</Typography>
+        <Typography variant="h5" fontWeight="bold" sx={{ color: '#C4922A' }}>R$ {totalOrder.toFixed(2)}</Typography>
       </Box>
-      <Button 
-        variant="contained" 
+      <Button
+        variant="contained"
         onClick={handleCheckout}
         disabled={cart.length === 0 || !isStoreOpen || cart.some(item => (Number(item.estoque) || 0) <= 0 || item.quantidade > (Number(item.estoque) || 0))}
-        sx={{ borderRadius: 50, bgcolor: '#4E342E', '&:hover': { bgcolor: '#3E2723' }, px: 4, py: 1.2, fontWeight: 'bold' }}
+        sx={{ borderRadius: 50, px: 4, py: 1.2, fontWeight: 'bold' }}
       >
         FINALIZAR
       </Button>
