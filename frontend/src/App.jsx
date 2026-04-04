@@ -35,6 +35,7 @@ import AccessDenied from "./pages/AccessDenied";
 import OrdersDashboard from "./pages/OrdersDashboard";
 import TitheReport from "./pages/TitheReport";
 import BestSellersReport from "./pages/BestSellersReport";
+import RelatorioUsuarios from "./pages/RelatorioUsuarios";
 
 const theme = createTheme({
   palette: {
@@ -379,6 +380,7 @@ export default function App() {
                 <Menu anchorEl={anchorRel} open={openRel} onClose={handleClose}>
                   <MenuItem component={Link} to="/relatorios/dizimo" onClick={handleClose}>Dízimo</MenuItem>
                   <MenuItem component={Link} to="/relatorios/top-produtos" onClick={handleClose}>Sabores mais Amados</MenuItem>
+                  <MenuItem component={Link} to="/relatorios/usuarios" onClick={handleClose}>Usuários e Acessos</MenuItem>
                 </Menu>
 
                 <Button color="inherit" onClick={handleLogout}>SAIR</Button>
@@ -464,6 +466,7 @@ export default function App() {
                 <ListItem disablePadding><ListItemButton component={Link} to="/configuracoes"><ListItemText primary="Configurações" /></ListItemButton></ListItem>
                 <ListItem disablePadding><ListItemButton component={Link} to="/relatorios/dizimo"><ListItemText primary="Relatório Dízimo" /></ListItemButton></ListItem>
                 <ListItem disablePadding><ListItemButton component={Link} to="/relatorios/top-produtos"><ListItemText primary="Top Produtos" /></ListItemButton></ListItem>
+                <ListItem disablePadding><ListItemButton component={Link} to="/relatorios/usuarios"><ListItemText primary="Relatório de Usuários" /></ListItemButton></ListItem>
                 <ListItem disablePadding><ListItemButton onClick={handleLogout}><ListItemText primary="SAIR" sx={{ color: 'error.main' }} /></ListItemButton></ListItem>
               </>
             ) : (
@@ -539,6 +542,7 @@ export default function App() {
           <Route path="/producao/:id" element={<ProtectedRoute isAllowed={isLoggedIn}><ProductionRecipe /></ProtectedRoute>} />
           <Route path="/relatorios/dizimo" element={<ProtectedRoute isAllowed={isLoggedIn}><TitheReport /></ProtectedRoute>} />
           <Route path="/relatorios/top-produtos" element={<ProtectedRoute isAllowed={isLoggedIn}><BestSellersReport /></ProtectedRoute>} />
+          <Route path="/relatorios/usuarios" element={<ProtectedRoute isAllowed={isLoggedIn}><RelatorioUsuarios /></ProtectedRoute>} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

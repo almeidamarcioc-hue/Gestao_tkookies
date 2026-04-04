@@ -16,7 +16,7 @@ import settingsRouter from "./routes/settings.js";
 import financialRouter from "./routes/financial.js";
 import resellersRouter from "./routes/resellers.js";
 import favoritesRouter from "./routes/favorites.js";
-import reportsRouter from "./routes/reports.js";
+import relatoriosRoutes from "./routes/relatorios.js";
 import testimonialsRouter from "./routes/testimonials.js";
 import { authenticateToken, requireRole } from "./middlewares/auth.js";
 
@@ -106,7 +106,7 @@ app.use("/configuracoes", settingsRouter); // GET é público; POST é protegido
 app.use("/financeiro", authenticateToken, requireRole('admin'), financialRouter);
 app.use("/revendedores", authenticateToken, requireRole('admin'), resellersRouter);
 app.use("/favoritos", authenticateToken, favoritesRouter); // Favoritos para clientes logados
-app.use("/relatorios", authenticateToken, requireRole('admin'), reportsRouter);
+app.use("/api/relatorios", relatoriosRoutes);
 app.use("/depoimentos", testimonialsRouter); // Depoimentos podem ser públicos
 
 // Rota especial para criar tabelas na Vercel (Executar uma vez após deploy)
