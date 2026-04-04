@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../services/api";
 import { 
-  Box, Button, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, Container, TextField, Dialog, DialogTitle, DialogContent, DialogActions 
+  Box, Button, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow, Container, TextField, Dialog, DialogTitle, DialogContent, DialogActions, Chip 
 } from "@mui/material";
 import { Add } from "@mui/icons-material";
 

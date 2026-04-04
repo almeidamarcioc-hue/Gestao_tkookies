@@ -31,14 +31,14 @@ const espresso = '#2C1810';
 const caramel = '#C4922A';
 
 const cardSx = {
-  borderRadius: 20,
+  borderRadius: 8,
   overflow: 'hidden',
   bgcolor: '#FFFFFF',
-  boxShadow: '0 4px 24px rgba(44,24,16,0.10)',
+  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
   transition: 'all 0.3s ease',
   '&:hover': {
-    transform: 'translateY(-8px)',
-    boxShadow: '0 16px 40px rgba(44,24,16,0.18)'
+    transform: 'translateY(-4px)',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
   },
   height: '100%',
   display: 'flex',
@@ -352,9 +352,9 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
       sx={{ 
         height: '100%', 
         position: 'relative', 
-        borderRadius: '16px', 
+        borderRadius: '8px', 
         overflow: 'hidden', 
-        boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
         transition: 'transform 0.3s',
         '&:hover': { transform: 'scale(1.02)' },
         bgcolor: 'white'
@@ -541,6 +541,25 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           {/* MAIN CONTENT COLUMN */}
           <Grid item xs={12} md={8}>
             
+            {/* Banner Informativo de Horários - Agora no topo da listagem */}
+            <Box sx={{ mb: 4, p: 2, borderRadius: 2, bgcolor: '#FFF8F0', border: '1px solid #FFCC80', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+              <Box display="flex" alignItems="center" gap={2}>
+                <AccessTime sx={{ color: terracotta }} />
+                <Box>
+                  <Typography variant="subtitle2" fontWeight="bold" color="primary">Horário de Atendimento</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {getTodayScheduleLabel(config)}
+                  </Typography>
+                </Box>
+              </Box>
+              <Chip 
+                label={isStoreOpen ? "ABERTO AGORA" : "FECHADO NO MOMENTO"} 
+                color={isStoreOpen ? "success" : "error"} 
+                size="small" 
+                sx={{ fontWeight: 'bold' }} 
+              />
+            </Box>
+
             {/* 2. DESTAQUES (Mosaic Grid) */}
             {featuredProduct && (
               <Box sx={{ mb: 8 }}>
@@ -631,25 +650,6 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                 Cardápio
               </Typography>
               <Box sx={{ bgcolor: terracotta, height: 3, width: 48, borderRadius: 2, mb: 3 }} />
-
-              {/* Banner Informativo de Horários */}
-              <Box sx={{ mb: 4, p: 2, borderRadius: 3, bgcolor: '#FFF8F0', border: '1px solid #FFCC80', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
-                <Box display="flex" alignItems="center" gap={2}>
-                  <AccessTime sx={{ color: terracotta }} />
-                  <Box>
-                    <Typography variant="subtitle2" fontWeight="bold" color="primary">Horário de Atendimento</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {getTodayScheduleLabel(config)}
-                    </Typography>
-                  </Box>
-                </Box>
-                <Chip 
-                  label={isStoreOpen ? "ABERTO AGORA" : "FECHADO NO MOMENTO"} 
-                  color={isStoreOpen ? "success" : "error"} 
-                  size="small" 
-                  sx={{ fontWeight: 'bold' }} 
-                />
-              </Box>
 
               <Grid container spacing={3} component={motion.div} variants={containerVariants} initial="hidden" animate="visible">
                 {products.filter(p => !combos.some(c => c.produto_vinculado_id === p.id)).map(prod => {
