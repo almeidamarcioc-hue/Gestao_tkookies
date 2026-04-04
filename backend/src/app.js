@@ -25,8 +25,8 @@ const app = express();
 // Configuração CORS
 // Em produção defina FRONTEND_URL nas variáveis de ambiente do Vercel (ex: https://tkookies.vercel.app)
 const allowedOrigins = process.env.FRONTEND_URL
-  ? [process.env.FRONTEND_URL]
-  : ["http://localhost:5173", "http://localhost:3000", "http://localhost:5174"];
+  ? [process.env.FRONTEND_URL, "https://tkookies.vercel.app"]
+  : ["https://tkookies.vercel.app", "http://localhost:5173", "http://localhost:3000", "http://localhost:5174"];
 
 const corsOptions = {
   origin: (origin, callback) => {
@@ -34,7 +34,7 @@ const corsOptions = {
     // CORS é um mecanismo de browsers — somente origens de browser precisam ser validadas
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
-    callback(new Error("Origem não permitida pelo CORS"));
+    callback(null, false); // Retorna falso em vez de erro para evitar crash no preflight
   },
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
@@ -106,7 +106,8 @@ app.use("/configuracoes", settingsRouter); // GET é público; POST é protegido
 app.use("/financeiro", authenticateToken, requireRole('admin'), financialRouter);
 app.use("/revendedores", authenticateToken, requireRole('admin'), resellersRouter);
 app.use("/favoritos", authenticateToken, favoritesRouter); // Favoritos para clientes logados
-app.use("/relatorios", authenticateToken, requireRole('admin'), relatoriosRoutes);
+// Removemos os middlewares globais daqui porque relatoriosRoutes já possui proteção interna por rota
+app.use("/relatorios", relatoriosRoutes); 
 app.use("/depoimentos", testimonialsRouter); // Depoimentos podem ser públicos
 
 // Rota especial para criar tabelas na Vercel (Executar uma vez após deploy)

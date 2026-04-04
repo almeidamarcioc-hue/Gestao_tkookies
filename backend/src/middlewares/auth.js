@@ -11,6 +11,10 @@ export const authenticateToken = (req, res, next) => {
   if (!process.env.JWT_SECRET) {
     return res.status(500).json({ error: 'Configuração de segurança ausente no servidor' });
   }
+
+  // Permite que requisições OPTIONS (CORS Preflight) passem sem autenticação
+  if (req.method === 'OPTIONS') return next();
+
   const token = req.header('Authorization')?.replace('Bearer ', '');
   if (!token) return res.status(401).json({ error: 'Acesso negado' });
 
