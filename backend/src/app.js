@@ -22,6 +22,9 @@ import { authenticateToken, requireRole } from "./middlewares/auth.js";
 
 const app = express();
 
+// Executa migrations automaticamente ao iniciar (idempotente)
+initDatabase().catch(err => console.error("Erro na migração automática:", err.message));
+
 // Configuração CORS
 // Em produção defina FRONTEND_URL nas variáveis de ambiente do Vercel (ex: https://tkookies.vercel.app)
 const allowedOrigins = process.env.FRONTEND_URL
