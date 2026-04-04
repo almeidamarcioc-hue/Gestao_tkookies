@@ -11,7 +11,7 @@ const TestimonialsCarousel = () => {
     const fetchTestimonials = async () => {
       try {
         const response = await api.get('/depoimentos/public');
-        setTestimonials(response.data);
+        setTestimonials(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         console.error("Erro ao carregar depoimentos:", error);
       }
