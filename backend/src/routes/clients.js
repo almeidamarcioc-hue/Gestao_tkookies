@@ -18,8 +18,8 @@ router.get("/", authenticateToken, requireRole('admin'), async (req, res) => {
     let params = [];
     
     if (search) {
-        query += " WHERE nome LIKE $1 OR telefone LIKE $1";
-        countQuery += " WHERE nome LIKE $1 OR telefone LIKE $1";
+        query += " WHERE LOWER(nome) LIKE LOWER($1) OR telefone LIKE $1";
+        countQuery += " WHERE LOWER(nome) LIKE LOWER($1) OR telefone LIKE $1";
         params.push(`%${search}%`);
     }
 
