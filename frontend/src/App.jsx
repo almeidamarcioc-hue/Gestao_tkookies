@@ -156,10 +156,20 @@ export default function App() {
     setLoading(false);
 
     const handleSessionExpired = () => {
-      setIsLoggedIn(false);
-      setClientUser(null);
-      setClientLoginOpen(true);
-      navigate("/");
+      const wasAdmin = localStorage.getItem("cookie_erp_admin") === "true";
+      localStorage.removeItem("cookie_erp_admin");
+      localStorage.removeItem("cookie_erp_client");
+
+      if (wasAdmin) {
+        // Admin: abre modal de login admin para reconectar sem sair da tela
+        setIsLoggedIn(false);
+        setAdminLoginOpen(true);
+      } else {
+        // Cliente: volta para home e abre login de cliente
+        setClientUser(null);
+        setClientLoginOpen(true);
+        navigate("/");
+      }
     };
     window.addEventListener('session-expired', handleSessionExpired);
     return () => window.removeEventListener('session-expired', handleSessionExpired);

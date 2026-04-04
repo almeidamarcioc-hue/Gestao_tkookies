@@ -51,9 +51,8 @@ api.interceptors.response.use(
     if (status === 401) {
       const isLoginRoute = error.config?.url?.includes('/login');
       if (!isLoginRoute) {
+        // Remove apenas o token; as flags admin/client ficam para o handler identificar o tipo
         localStorage.removeItem("cookie_erp_token");
-        localStorage.removeItem("cookie_erp_admin");
-        localStorage.removeItem("cookie_erp_client");
         window.dispatchEvent(new CustomEvent('session-expired'));
       }
     }

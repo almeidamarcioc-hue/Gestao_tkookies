@@ -170,7 +170,7 @@ router.post("/admin/login", async (req, res) => {
     return res.status(500).json({ error: 'Configuração de admin ausente no servidor' });
   }
   if (login === process.env.ADMIN_LOGIN && senha === process.env.ADMIN_SENHA) {
-    const token = jwt.sign({ id: 0, role: 'admin' }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ id: 0, role: 'admin' }, process.env.JWT_SECRET, { expiresIn: '30d' });
     res.json({ token, role: 'admin' });
   } else {
     res.status(401).json({ error: "Credenciais inválidas" });
