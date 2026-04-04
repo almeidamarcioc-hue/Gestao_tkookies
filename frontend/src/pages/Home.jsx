@@ -25,13 +25,12 @@ const itemVariants = {
   }
 };
 
-// Estilos "Organic Soft Tech" (Glassmorphism)
-const glassStyle = {
-  background: "rgba(255, 255, 255, 0.7)",
-  backdropFilter: "blur(12px)",
-  border: "1px solid rgba(255, 255, 255, 0.8)",
-  boxShadow: "0 8px 32px 0 rgba(78, 52, 46, 0.08)",
-  borderRadius: "24px",
+// Estilos "Cozy Bakery"
+const cardStyle = {
+  background: "#FFFFFF",
+  borderRadius: "16px",
+  boxShadow: "0 2px 20px rgba(78, 52, 46, 0.08)",
+  border: "1px solid rgba(78, 52, 46, 0.06)",
   color: "#3E2723"
 };
 

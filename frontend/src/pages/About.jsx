@@ -34,13 +34,12 @@ export default function About() {
     }).catch(err => console.error("Erro ao carregar configurações da página Sobre", err));
   }, []);
 
-  // Estilos "Organic Soft Tech" (Versão Light/Café)
-  const glassStyle = {
-    background: "rgba(255, 255, 255, 0.7)",
-    backdropFilter: "blur(12px)",
-    border: "1px solid rgba(255, 255, 255, 0.8)",
-    boxShadow: "0 8px 32px 0 rgba(78, 52, 46, 0.08)",
-    borderRadius: "24px",
+  // Estilos "Cozy Bakery"
+  const cardStyle = {
+    background: "#FFFFFF",
+    borderRadius: "16px",
+    boxShadow: "0 2px 20px rgba(78, 52, 46, 0.08)",
+    border: "1px solid rgba(78, 52, 46, 0.06)",
     color: "#3E2723"
   };
 
@@ -63,23 +62,7 @@ export default function About() {
 
   return (
     <Box sx={{ bgcolor: '#FFFAF5', minHeight: '100vh', color: '#3E2723' }}>
-      {/* Background Wrapper Animado */}
-      <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-        <motion.div
-          animate={{
-            background: [
-              `radial-gradient(circle at 20% 30%, rgba(141, 110, 99, 0.15) 0%, transparent 50%)`,
-              `radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.2) 0%, transparent 50%)`
-            ]
-          }}
-          transition={{ duration: 10, repeat: Infinity, repeatType: "reverse" }}
-          style={{ width: '100%', height: '100%', position: 'absolute' }}
-        />
-        <Box sx={{ position: 'absolute', top: '-20%', left: '-10%', width: '50%', height: '50%', background: '#EFEBE9', filter: 'blur(150px)', opacity: 0.4, borderRadius: '50%' }} />
-        <Box sx={{ position: 'absolute', bottom: '-10%', right: '-10%', width: '60%', height: '60%', background: '#FFE0B2', filter: 'blur(180px)', opacity: 0.3, borderRadius: '50%' }} />
-      </Box>
-
-      <Container maxWidth="lg" sx={{ mt: 6, mb: 8, position: 'relative', zIndex: 1 }}>
+      <Container maxWidth="lg" sx={{ mt: 6, mb: 8 }}>
         <Box mb={4}>
           <Button startIcon={<ArrowBack />} component={Link} to="/" sx={{ fontWeight: 'bold', color: '#4E342E', borderRadius: 50, bgcolor: 'rgba(255,255,255,0.5)' }}>
             Voltar para o Início
@@ -87,7 +70,7 @@ export default function About() {
         </Box>
 
         <Box component={motion.div} variants={containerVariants} initial="hidden" animate="visible">
-          <Box sx={{ ...glassStyle, p: { xs: 4, md: 8 }, mb: 6, textAlign: 'center' }} component={motion.div} variants={itemVariants}>
+          <Box sx={{ ...cardStyle, p: { xs: 4, md: 8 }, mb: 6, textAlign: 'center' }} component={motion.div} variants={itemVariants}>
             <Typography variant="h3" fontWeight="900" gutterBottom sx={{ color: '#4E342E', mb: 2 }}>
               {/* Renderiza com formatação especial se for o título padrão ou se contiver "TKookies" */}
               {typeof config.about_title === 'string' && config.about_title.includes("TKookies") ? (
@@ -96,50 +79,50 @@ export default function About() {
                 config.about_title
               )}
             </Typography>
-            <Typography variant="h6" sx={{ color: '#5D4037', maxWidth: '800px', mx: 'auto', lineHeight: 1.6 }}>
+            <Typography variant="h6" sx={{ color: '#795548', maxWidth: '800px', mx: 'auto', lineHeight: 1.6 }}>
               {config.about_desc}
             </Typography>
           </Box>
 
           <Grid container spacing={4}>
             <Grid item xs={12} md={4}>
-              <Box sx={{ ...glassStyle, p: 4, height: '100%', textAlign: 'center' }} component={motion.div} variants={itemVariants}>
+              <Box sx={{ ...cardStyle, p: 4, height: '100%', textAlign: 'center' }} component={motion.div} variants={itemVariants}>
                 <Cookie sx={{ fontSize: 60, color: '#8D6E63', mb: 2 }} />
                 <Typography variant="h5" fontWeight="bold" gutterBottom sx={{ color: '#4E342E' }}>{config.about_card1_title}</Typography>
-                <Typography variant="body1" sx={{ color: '#5D4037' }}>
+                <Typography variant="body1" sx={{ color: '#795548' }}>
                   {config.about_card1_desc}
                 </Typography>
               </Box>
             </Grid>
             <Grid item xs={12} md={4}>
-              <Box sx={{ ...glassStyle, p: 4, height: '100%', textAlign: 'center' }} component={motion.div} variants={itemVariants}>
+              <Box sx={{ ...cardStyle, p: 4, height: '100%', textAlign: 'center' }} component={motion.div} variants={itemVariants}>
                 <EmojiEvents sx={{ fontSize: 60, color: '#FFB74D', mb: 2 }} />
                 <Typography variant="h5" fontWeight="bold" gutterBottom sx={{ color: '#4E342E' }}>{config.about_card2_title}</Typography>
-                <Typography variant="body1" sx={{ color: '#5D4037' }}>
+                <Typography variant="body1" sx={{ color: '#795548' }}>
                   {config.about_card2_desc}
                 </Typography>
               </Box>
             </Grid>
             <Grid item xs={12} md={4}>
-              <Box sx={{ ...glassStyle, p: 4, height: '100%', textAlign: 'center' }} component={motion.div} variants={itemVariants}>
+              <Box sx={{ ...cardStyle, p: 4, height: '100%', textAlign: 'center' }} component={motion.div} variants={itemVariants}>
                 <Groups sx={{ fontSize: 60, color: '#2E7D32', mb: 2 }} />
                 <Typography variant="h5" fontWeight="bold" gutterBottom sx={{ color: '#4E342E' }}>{config.about_card3_title}</Typography>
-                <Typography variant="body1" sx={{ color: '#5D4037' }}>
+                <Typography variant="body1" sx={{ color: '#795548' }}>
                   {config.about_card3_desc}
                 </Typography>
               </Box>
             </Grid>
           </Grid>
 
-          <Box sx={{ ...glassStyle, p: { xs: 4, md: 6 }, mt: 6, textAlign: 'center' }} component={motion.div} variants={itemVariants}>
+          <Box sx={{ ...cardStyle, p: { xs: 4, md: 6 }, mt: 6, textAlign: 'center' }} component={motion.div} variants={itemVariants}>
             <Typography variant="h4" fontWeight="bold" gutterBottom sx={{ color: '#4E342E' }}>
               {config.about_cta_title}
             </Typography>
-            <Typography variant="body1" sx={{ color: '#5D4037', mb: 4 }}>
+            <Typography variant="body1" sx={{ color: '#795548', mb: 4 }}>
               {config.about_cta_desc}
             </Typography>
             <Button variant="contained" size="large" component={Link} to="/" sx={{ borderRadius: 50, px: 5, py: 1.5, bgcolor: '#4E342E', '&:hover': { bgcolor: '#3E2723' } }}>
-              Ver Cardápio
+              🍪 Ver Cardápio Completo
             </Button>
           </Box>
         </Box>
