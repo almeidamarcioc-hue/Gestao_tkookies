@@ -39,6 +39,7 @@ router.get("/", async (req, res) => {
           id: row.id,
           nome: row.nome,
           preco_venda: row.preco_venda,
+          estoque: row.estoque || 0,
           imagem: row.imagem,
           ativo: !!row.ativo, // Converte 1/0 ou Buffer para boolean real
           itens: [],
