@@ -1,3 +1,12 @@
+// MySQL retorna datas sem timezone (ex: "2024-01-15 18:30:00").
+// Tratamos como UTC e exibimos no fuso de Brasília (UTC-3).
+const formatarDataPedido = (dataStr) => {
+  if (!dataStr) return '-';
+  // Substitui espaço por T e adiciona Z para forçar interpretação como UTC
+  const iso = String(dataStr).replace(' ', 'T').replace(/(\.\d+)?$/, 'Z');
+  return new Date(iso).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+};
+
 export const printOrder = (order) => {
   // Cria uma nova janela para impressão
   const printWindow = window.open('', '_blank', 'width=800,height=600');
@@ -68,7 +77,7 @@ export const printOrder = (order) => {
       <div class="header">
         <span class="brand">TKookies</span>
         <div class="meta">Pedido #${order.id}</div>
-        <div class="meta">${new Date(order.data_pedido).toLocaleString('pt-BR')}</div>
+        <div class="meta">${formatarDataPedido(order.data_pedido)}</div>
       </div>
 
       <div class="section">
