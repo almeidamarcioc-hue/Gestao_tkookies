@@ -43,29 +43,28 @@ api.interceptors.request.use(
 
 // Interceptor para tratar erros de forma global
 api.interceptors.response.use(
-  // Se a resposta for bem-sucedida, apenas a retorna
   (response) => response,
-  // Se ocorrer um erro...
   (error) => {
-    // Verifica se o erro foi um timeout do cliente (a requisição demorou mais de 10s)
-    // OU se foi um erro interno do servidor (status 500, 502, 503, etc.)
-    const isTimeout = error.code === 'ECONNABORTED';
-    const isServerError = error.response && error.response.status >= 500;
+    const status = error.response?.status;
 
-    if (isTimeout || isServerError) {
-      console.error("Erro de API detectado:", error.message);
-
-      // Log detalhado para debug na Vercel
-      if (error.response && error.response.data) {
-        console.error("🔥 Detalhes do erro no Backend:", error.response.data);
+    // Sessão expirada ou token inválido — solicita novo login
+    if (status === 401) {
+      const isLoginRoute = error.config?.url?.includes('/login');
+      if (!isLoginRoute) {
+        localStorage.removeItem("cookie_erp_token");
+        localStorage.removeItem("cookie_erp_admin");
+        localStorage.removeItem("cookie_erp_client");
+        window.dispatchEvent(new CustomEvent('session-expired'));
       }
-
-      // REMOVIDO: Não forçar logout em erro 500 (erro de servidor/banco)
-      // Isso permite que o usuário veja o erro e tente novamente sem perder a sessão
-      // window.dispatchEvent(new CustomEvent('force-logout'));
     }
 
-    // Rejeita a promise para que o erro possa ser tratado localmente se necessário
+    if (error.code === 'ECONNABORTED' || status >= 500) {
+      console.error("Erro de API detectado:", error.message);
+      if (error.response?.data) {
+        console.error("🔥 Detalhes do erro no Backend:", error.response.data);
+      }
+    }
+
     return Promise.reject(error);
   }
 );

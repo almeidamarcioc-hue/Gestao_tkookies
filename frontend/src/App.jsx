@@ -148,12 +148,21 @@ export default function App() {
     if (adminLogged === "true") {
       setIsLoggedIn(true);
     }
-    
+
     if (clientLogged) {
       setClientUser(JSON.parse(clientLogged));
     }
 
     setLoading(false);
+
+    const handleSessionExpired = () => {
+      setIsLoggedIn(false);
+      setClientUser(null);
+      setClientLoginOpen(true);
+      navigate("/");
+    };
+    window.addEventListener('session-expired', handleSessionExpired);
+    return () => window.removeEventListener('session-expired', handleSessionExpired);
   }, []);
 
   const openCad = Boolean(anchorCad);
