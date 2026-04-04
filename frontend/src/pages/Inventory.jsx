@@ -31,7 +31,8 @@ export default function Inventory() {
     try {
       await api.post("/estoque/lancar", {
         produto_id: selectedProd.id,
-        quantidade: Number(qtdLancamento)
+        quantidade: Number(qtdLancamento),
+        tipo: selectedProd.tipo
       });
       alert("Estoque atualizado!");
       setOpen(false);
@@ -57,8 +58,11 @@ export default function Inventory() {
           </TableHead>
           <TableBody>
             {produtos.map((prod) => (
-              <TableRow key={prod.id}>
-                <TableCell>{prod.nome}</TableCell>
+              <TableRow key={`${prod.tipo}-${prod.id}`}>
+                <TableCell>
+                  {prod.nome}
+                  <Chip size="small" label={prod.tipo} sx={{ ml: 1, textTransform: 'capitalize', fontSize: '0.7rem' }} />
+                </TableCell>
                 <TableCell align="right">R$ {Number(prod.preco_venda).toFixed(2)}</TableCell>
                 <TableCell align="center" sx={{ fontWeight: 'bold', color: Number(prod.estoque) < 0 ? 'error.main' : 'inherit' }}>
                   {Number(prod.estoque)}

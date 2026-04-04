@@ -25,17 +25,25 @@ const itemVariants = {
   }
 };
 
-// Estilos "Cozy Bakery"
-const cardStyle = {
-  background: "#FFFFFF",
-  borderRadius: "16px",
-  boxShadow: "0 2px 20px rgba(78, 52, 46, 0.08)",
-  border: "1px solid rgba(78, 52, 46, 0.06)",
-  color: "#3E2723"
-};
+// Estilos "Modern Gourmet Bakery"
+const terracotta = '#D4580A';
+const espresso = '#2C1810';
+const caramel = '#C4922A';
 
-const primaryColor = "#4E342E";
-const secondaryColor = "#2E7D32";
+const cardSx = {
+  borderRadius: 20,
+  overflow: 'hidden',
+  bgcolor: '#FFFFFF',
+  boxShadow: '0 4px 24px rgba(44,24,16,0.10)',
+  transition: 'all 0.3s ease',
+  '&:hover': {
+    transform: 'translateY(-8px)',
+    boxShadow: '0 16px 40px rgba(44,24,16,0.18)'
+  },
+  height: '100%',
+  display: 'flex',
+  flexDirection: 'column'
+};
 
 export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addToCart, updateCartQuantity, removeFromCart, clearCart }) {
   const navigate = useNavigate();
@@ -231,11 +239,11 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
       return;
     }
 
-    const prod = products.find(p => p.id === prodId);
-    if (!prod) return;
+    const item = products.find(p => p.id === prodId) || combos.find(c => c.id === prodId);
+    if (!item) return;
 
     const currentQty = getQty(prodId);
-    const maxStock = Number(prod.estoque) || 0;
+    const maxStock = Number(item.estoque) || 0;
     let next = currentQty + delta;
 
     if (next < 0) next = 0;
@@ -249,7 +257,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
     }
 
     if (next === 0) await removeFromCart(prodId);
-    else if (currentQty === 0 && delta > 0) await addToCart(prod, next);
+    else if (currentQty === 0 && delta > 0) await addToCart(item, next);
     else await updateCartQuantity(prodId, next);
   };
 
@@ -388,14 +396,14 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           </Typography>
         )}
         <Box display="flex" justifyContent="space-between" alignItems="center" mt={1}>
-          <Typography variant={isLarge ? "h5" : "body1"} fontWeight="bold" color={secondaryColor}>
+          <Typography variant={isLarge ? "h5" : "body1"} fontWeight="bold" sx={{ color: terracotta }}>
              R$ {Number(prod.preco_venda).toFixed(2)}
           </Typography>
           {prod.estoque > 0 ? (
             <Fab 
               size="small" 
               disabled={!isStoreOpen}
-              sx={{ bgcolor: isStoreOpen ? primaryColor : '#bdbdbd', color: 'white', '&:hover': { bgcolor: '#E65100' } }} 
+              sx={{ bgcolor: isStoreOpen ? terracotta : '#bdbdbd', color: 'white', '&:hover': { bgcolor: '#B84508' } }}
               onClick={(e) => { e.stopPropagation(); handleQtyChange(prod.id, 1); }}
             >
               <Add />
@@ -409,17 +417,17 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
   );
 
   return (
-    <Box sx={{ bgcolor: '#FAFAFA', minHeight: '100vh', color: '#212121', overflowX: 'hidden', position: 'relative' }}>
+    <Box sx={{ bgcolor: '#FFFAF5', minHeight: '100vh', color: '#2C1810', overflowX: 'hidden', position: 'relative' }}>
       
       {/* 1. HERO SECTION (Updated) */}
-      <Box sx={{ 
-        position: 'relative', 
-        height: { xs: '60vh', md: '70vh' }, 
+      <Box sx={{
+        position: 'relative',
+        height: { xs: '60vh', md: '70vh' },
         width: '100%',
         overflow: 'hidden',
         mb: 6
       }}>
-        <Box 
+        <Box
           component={motion.div}
           style={{ y: yBg, filter: filterBg }}
           initial={{ scale: 1.1 }}
@@ -427,64 +435,76 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           transition={{ duration: 10 }}
           sx={{
             position: 'absolute',
-            top: '-15%', left: 0, width: '100%', height: '130%', // Altura extra e offset para compensar o movimento do parallax
+            top: '-15%', left: 0, width: '100%', height: '130%',
             backgroundImage: `url(${config.home_bg || "https://images.unsplash.com/photo-1499636138143-bd630f5cf388?q=80&w=2070&auto=format&fit=crop"})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             willChange: 'transform, filter'
           }}
         />
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0, left: 0, width: '100%', height: '100%',
+            background: 'linear-gradient(to bottom, rgba(44,24,16,0.25) 0%, rgba(44,24,16,0.75) 100%)',
+            zIndex: 1
+          }}
+        />
         <Container maxWidth="lg" sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', position: 'relative', zIndex: 2, textAlign: 'center' }}>
           <Box component={motion.div} style={{ opacity: textOpacity }}>
-            <Typography 
-              variant="h1" 
+            <Typography
+              variant="h1"
               component={motion.h1}
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
-              sx={{ 
-                fontFamily: '"Playfair Display", serif', 
-                color: 'white', 
-                fontWeight: 900, 
-                fontSize: { xs: '3rem', md: '5rem' },
+              sx={{
+                fontFamily: '"Playfair Display", serif',
+                color: 'white',
+                fontWeight: 900,
+                fontSize: { xs: '2.8rem', md: '5rem' },
                 textShadow: '0 4px 20px rgba(0,0,0,0.5)',
                 mb: 2,
-                letterSpacing: '2px'
+                letterSpacing: '-1px'
               }}
             >
               {config.home_title.toUpperCase()}
             </Typography>
-            <Typography 
-              variant="h5" 
-              component={motion.p}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-              sx={{ color: '#FFCC80', mb: 4, fontWeight: 500, maxWidth: '600px', mx: 'auto', textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}
-            >
-              {config.home_subtitle}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 4 }}>
+              <Box sx={{ width: 32, height: 1, bgcolor: 'white', opacity: 0.7 }} />
+              <Typography
+                variant="h6"
+                component={motion.p}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                sx={{ color: 'white', fontWeight: 500, maxWidth: '600px', textShadow: '0 2px 10px rgba(0,0,0,0.5)', margin: 0 }}
+              >
+                {config.home_subtitle}
+              </Typography>
+              <Box sx={{ width: 32, height: 1, bgcolor: 'white', opacity: 0.7 }} />
+            </Box>
           </Box>
 
           {clientUser && (
             <Box component={motion.div} initial={{ opacity: 0 }} animate={{ opacity: 1 }} sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
-              <Button 
-                variant="contained" 
+              <Button
+                variant="contained"
                 startIcon={<Favorite />}
                 onClick={() => navigate("/meus-favoritos")}
-                sx={{ 
-                  bgcolor: 'rgba(255,255,255,0.9)', 
-                  color: primaryColor, 
+                sx={{
+                  bgcolor: 'white',
+                  color: terracotta,
                   fontWeight: 'bold',
                   px: 3, borderRadius: '50px',
-                  '&:hover': { bgcolor: 'white' }
+                  '&:hover': { bgcolor: '#FFF8F0' }
                 }}
               >
                 MEUS FAVORITOS ({favorites.length})
               </Button>
-              <Button 
-                variant="outlined" 
-                onClick={() => document.getElementById('cardapio').scrollIntoView({ behavior: 'smooth' })} 
+              <Button
+                variant="outlined"
+                onClick={() => document.getElementById('cardapio').scrollIntoView({ behavior: 'smooth' })}
                 sx={{ color: 'white', borderColor: 'white', borderRadius: '50px', px: 3 }}
               >
                 CARDÁPIO
@@ -494,22 +514,21 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           
           {!isLoggedIn && !clientUser && (
              <Box component={motion.div} style={{ opacity: buttonOpacity }}>
-               <Button 
-                variant="contained" 
-                size="large" 
-                onClick={() => document.getElementById('cardapio').scrollIntoView({ behavior: 'smooth' })} 
-                sx={{ 
-                  bgcolor: primaryColor, 
-                  color: 'white', 
-                  fontSize: '1.2rem', 
+               <Button
+                size="large"
+                onClick={() => document.getElementById('cardapio').scrollIntoView({ behavior: 'smooth' })}
+                sx={{
+                  bgcolor: 'white',
+                  color: terracotta,
+                  fontSize: '1.1rem',
                   fontWeight: 'bold',
-                  px: 5, 
-                  py: 1.5, 
+                  px: 5,
+                  py: 1.8,
                   borderRadius: '50px',
-                  '&:hover': { bgcolor: '#E65100' }
+                  '&:hover': { bgcolor: '#F5F5F5' }
                 }}
               >
-                PEÇA JÁ!
+                🍪 PEÇA JÁ
               </Button>
             </Box>
           )}
@@ -525,9 +544,10 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
             {/* 2. DESTAQUES (Mosaic Grid) */}
             {featuredProduct && (
               <Box sx={{ mb: 8 }}>
-                 <Typography variant="h5" fontWeight="900" gutterBottom sx={{ mb: 3, borderLeft: `4px solid #E65100`, pl: 2, textTransform: 'uppercase', letterSpacing: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                 <Typography variant="h5" fontWeight="900" gutterBottom sx={{ color: espresso, mb: 1 }}>
                     Destaques
                  </Typography>
+                 <Box sx={{ bgcolor: terracotta, height: 3, width: 48, borderRadius: 2, mb: 3 }} />
                  <Grid container spacing={2} sx={{ height: { md: 450 } }}>
                    <Grid item xs={12} md={8} sx={{ height: { xs: 300, md: '100%' } }}>
                      {renderMosaicCard(featuredProduct, true)}
@@ -543,16 +563,79 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
               </Box>
             )}
 
+            {/* SEÇÃO COMBOS ESPECIAIS */}
+            {combos.length > 0 && (
+              <Box sx={{ mb: 8 }}>
+                <Typography variant="h5" gutterBottom fontWeight="900" sx={{ color: espresso, mb: 1 }}>
+                  Combos Especiais
+                </Typography>
+                <Box sx={{ bgcolor: terracotta, height: 3, width: 48, borderRadius: 2, mb: 3 }} />
+                <Grid container spacing={3}>
+                  {combos.map(combo => {
+                    const qty = getQty(combo.id);
+                    const hasStock = Number(combo.estoque) > 0;
+                    
+                    return (
+                      <Grid item xs={12} sm={6} key={combo.id}>
+                        <Card sx={{ ...cardSx }}>
+                           <Box sx={{ position: 'relative', height: { xs: 220, md: 280 } }}>
+                              <Box 
+                                component="img" 
+                                src={combo.imagem || "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?q=80&w=1965&auto=format&fit=crop"} 
+                                sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              />
+                              {!hasStock && (
+                                <Chip label="Indisponível" color="error" size="small" sx={{ position: 'absolute', top: 8, left: 8, fontWeight: 'bold' }} />
+                              )}
+                           </Box>
+                           <CardContent sx={{ flexGrow: 1 }}>
+                              <Typography variant="subtitle1" fontWeight="bold" gutterBottom sx={{ lineHeight: 1.3 }}>{combo.nome}</Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                {combo.itens?.map(i => `${i.quantidade}x ${i.nome}`).join(' + ')}
+                              </Typography>
+                              {hasStock && (
+                                <Typography variant="caption" color="primary" sx={{ fontWeight: 'bold', mt: 1, display: 'block' }}>
+                                  Disponível: {Number(combo.estoque)} combos
+                                </Typography>
+                              )}
+                           </CardContent>
+                           <Box sx={{ p: 2, pt: 0, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                              <Typography sx={{ fontSize: '1.4rem', fontWeight: 900, color: terracotta }}>
+                                R$ {Number(combo.preco_venda).toFixed(2)}
+                              </Typography>
+                              {!hasStock ? (
+                                <Chip label="Esgotado" color="error" size="small" sx={{ fontWeight: 'bold', alignSelf: 'flex-start' }} />
+                              ) : qty === 0 ? (
+                                <Button variant="contained" fullWidth disabled={!isStoreOpen} onClick={() => handleQtyChange(combo.id, 1)} sx={{ borderRadius: 50 }}>
+                                  Adicionar
+                                </Button>
+                              ) : (
+                                <Box display="flex" alignItems="center" gap={0.5} sx={{ border: `2px solid ${terracotta}`, borderRadius: 50, p: 0.5 }}>
+                                  <IconButton size="small" onClick={() => handleQtyChange(combo.id, -1)} disabled={!isStoreOpen}><Remove fontSize="small" /></IconButton>
+                                  <Typography fontWeight="bold" sx={{ flex: 1, textAlign: 'center' }}>{qty}</Typography>
+                                  <IconButton size="small" onClick={() => handleQtyChange(combo.id, 1)} sx={{ bgcolor: terracotta, color: 'white', flex: 1 }} disabled={!isStoreOpen}><Add fontSize="small" /></IconButton>
+                                </Box>
+                              )}
+                           </Box>
+                        </Card>
+                      </Grid>
+                    );
+                  })}
+                </Grid>
+              </Box>
+            )}
+
             {/* SEÇÃO CARDÁPIO */}
             <Box id="cardapio">
-              <Typography variant="h5" gutterBottom fontWeight="900" sx={{ mb: 3, borderLeft: `4px solid #E65100`, pl: 2, textTransform: 'uppercase', letterSpacing: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="h5" gutterBottom fontWeight="900" sx={{ color: espresso, mb: 1 }}>
                 Cardápio
               </Typography>
+              <Box sx={{ bgcolor: terracotta, height: 3, width: 48, borderRadius: 2, mb: 3 }} />
 
               {/* Banner Informativo de Horários */}
               <Box sx={{ mb: 4, p: 2, borderRadius: 3, bgcolor: '#FFF8F0', border: '1px solid #FFCC80', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
                 <Box display="flex" alignItems="center" gap={2}>
-                  <AccessTime sx={{ color: primaryColor }} />
+                  <AccessTime sx={{ color: terracotta }} />
                   <Box>
                     <Typography variant="subtitle2" fontWeight="bold" color="primary">Horário de Atendimento</Typography>
                     <Typography variant="body2" color="text.secondary">
@@ -575,8 +658,8 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                   
                   return (
                     <Grid item xs={12} sm={6} key={prod.id} component={motion.div} variants={itemVariants}>
-                      <Card sx={{ borderRadius: 4, boxShadow: '0 2px 16px rgba(78,52,46,0.08)', transition: 'all 0.25s ease', '&:hover': { boxShadow: '0 8px 32px rgba(78,52,46,0.15)', transform: 'translateY(-4px)' }, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                         <Box sx={{ position: 'relative', height: 220 }}>
+                      <Card sx={{ ...cardSx }}>
+                         <Box sx={{ position: 'relative', height: { xs: 220, md: 280 } }}>
                             <Box 
                               component="img" 
                               src={coverImage} 
@@ -609,7 +692,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                           <Chip
                             label={`${Number(prod.desconto_destaque).toFixed(0)}% OFF`}
                             size="small"
-                            sx={{ position: 'absolute', top: 8, left: 8, fontWeight: 'bold', bgcolor: '#E53935', color: 'white', zIndex: 1 }}
+                            sx={{ position: 'absolute', top: 8, left: 8, fontWeight: 'bold', bgcolor: caramel, color: 'white', zIndex: 1 }}
                           />
                         )}
 
@@ -644,40 +727,40 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                               Ver Detalhes
                             </Button>
                          </CardContent>
-                         <Box sx={{ p: 2, pt: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                         <Box sx={{ p: 2, pt: 0, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                             <Box>
                               {prod.eh_destaque && Number(prod.desconto_destaque) > 0 ? (
                                 <>
                                   <Typography variant="caption" sx={{ textDecoration: 'line-through', color: '#9E9E9E', display: 'block', lineHeight: 1 }}>
                                     R$ {Number(prod.preco_venda).toFixed(2)}
                                   </Typography>
-                                  <Typography variant="h6" fontWeight="bold" color="error">
+                                  <Typography sx={{ fontSize: '1.4rem', fontWeight: 900, color: terracotta }}>
                                     R$ {(Number(prod.preco_venda) * (1 - Number(prod.desconto_destaque) / 100)).toFixed(2)}
                                   </Typography>
                                 </>
                               ) : (
-                                <Typography variant="h6" fontWeight="bold" color="primary">R$ {Number(prod.preco_venda).toFixed(2)}</Typography>
+                                <Typography sx={{ fontSize: '1.4rem', fontWeight: 900, color: terracotta }}>R$ {Number(prod.preco_venda).toFixed(2)}</Typography>
                               )}
                             </Box>
                             {prod.estoque <= 0 ? (
-                              <Chip label="Indisponível" color="error" size="small" sx={{ fontWeight: 'bold' }} />
+                              <Chip label="Indisponível" color="error" size="small" sx={{ fontWeight: 'bold', alignSelf: 'flex-start' }} />
                             ) : qty === 0 ? (
-                              <Button variant="contained" size="small" disabled={!isStoreOpen} onClick={() => handleQtyChange(prod.id, 1)} sx={{ borderRadius: 20 }}>
+                              <Button variant="contained" fullWidth disabled={!isStoreOpen} onClick={() => handleQtyChange(prod.id, 1)} sx={{ borderRadius: 50 }}>
                                 Adicionar
                               </Button>
                             ) : (
-                              <Box display="flex" alignItems="center" gap={1}>
-                                <IconButton 
-                                  size="small" 
-                                  onClick={() => handleQtyChange(prod.id, -1)} 
-                                  sx={{ border: '1px solid #ddd' }}
+                              <Box display="flex" alignItems="center" gap={0.5} sx={{ border: `2px solid ${terracotta}`, borderRadius: 50, p: 0.5 }}>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleQtyChange(prod.id, -1)}
                                   disabled={qty <= 0 || !isStoreOpen}
+                                  sx={{ flex: 1 }}
                                 ><Remove fontSize="small" /></IconButton>
-                                <Typography fontWeight="bold" sx={{ opacity: isStoreOpen ? 1 : 0.5 }}>{qty}</Typography>
-                                <IconButton 
-                                  size="small" 
-                                  onClick={() => handleQtyChange(prod.id, 1)} 
-                                  sx={{ bgcolor: isStoreOpen ? primaryColor : '#bdbdbd', color: 'white', '&:hover': { bgcolor: '#FF8F00' } }}
+                                <Typography fontWeight="bold" sx={{ flex: 1, textAlign: 'center', opacity: isStoreOpen ? 1 : 0.5 }}>{qty}</Typography>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleQtyChange(prod.id, 1)}
+                                  sx={{ bgcolor: isStoreOpen ? terracotta : '#bdbdbd', color: 'white', flex: 1, '&:hover': { bgcolor: '#B84508' } }}
                                   disabled={!isStoreOpen}
                                 ><Add fontSize="small" /></IconButton>
                               </Box>
@@ -704,7 +787,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
             }}>
               
               {/* Order Status / Bag */}
-              <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: 4, bgcolor: 'white', border: '1px solid rgba(78,52,46,0.08)', boxShadow: '0 2px 12px rgba(78,52,46,0.06)' }}>
+              <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: 20, bgcolor: 'white', boxShadow: '0 4px 24px rgba(44,24,16,0.10)' }}>
                 <Typography variant="h6" fontWeight="bold" gutterBottom display="flex" alignItems="center" gap={1}>
                   <ShoppingBag /> Sua Sacola
                 </Typography>
@@ -739,13 +822,13 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                          <Typography variant="h6" color="primary" fontWeight="bold" gutterBottom>
                            Total: R$ {totalPrice.toFixed(2)}
                          </Typography>
-                         <Button fullWidth variant="contained" color="primary" onClick={handleCheckout} sx={{ mt: 1 }}>
+                         <Button fullWidth variant="contained" onClick={handleCheckout} sx={{ mt: 1, borderRadius: 50 }}>
                            Ver Sacola
                          </Button>
-                         <Button 
-                           fullWidth 
-                           variant="text" 
-                           color="error" 
+                         <Button
+                           fullWidth
+                           variant="text"
+                           color="error"
                            size="small"
                            startIcon={<DeleteOutline />}
                            onClick={handleClearCart}
@@ -767,21 +850,6 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
         <TestimonialsCarousel />
       </Box>
 
-      {/* COMBOS - REMOVED FROM MAIN FLOW TO SIMPLIFY NEW LAYOUT, OR MOVE TO MAIN COLUMN IF NEEDED. 
-          For now, strictly following Sidebar request, assuming Combos are part of menu or separate. 
-          Let's hide specific combo section to clean up or place it in menu. 
-          I will comment it out to focus on the requested structure. 
-      */}
-      {/* 
-      {combos.length > 0 && (
-        <Box sx={{ mb: 10 }}>
-           ...
-                </Box>
-              </Grid>
-            </Grid>
-        )} 
-      */}
-
       {/* SEÇÃO REVENDEDOR (B2B) - Com zIndex para garantir visibilidade */}
       <Box id="revendedor" sx={{ position: 'relative', zIndex: 2, mt: 8 }}>
         <ResellerCTA />
@@ -798,11 +866,11 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           right: { xs: 20, md: 40 },
           zIndex: 1100,
           bgcolor: '#FFFFFF',
-          color: '#E65100',
+          color: terracotta,
           fontWeight: 'bold',
-          border: '1px solid #FFB74D',
-          boxShadow: '0 4px 15px rgba(230, 81, 0, 0.2)',
-          '&:hover': { bgcolor: '#FFE0B2' },
+          border: `1px solid ${terracotta}`,
+          boxShadow: `0 4px 15px rgba(212, 88, 10, 0.2)`,
+          '&:hover': { bgcolor: '#FFF8F0' },
           textTransform: 'none'
         }}
       >
@@ -829,7 +897,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           }}
         >
           <Box sx={{
-            bgcolor: '#FFFFFF',
+            bgcolor: espresso,
             p: { xs: 1.5, md: 2 },
             display: 'flex',
             flexDirection: { xs: 'column', sm: 'row' },
@@ -841,14 +909,14 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
             borderRadius: '16px'
           }}>
             <Box display="flex" alignItems="center" gap={1.5} sx={{ width: { xs: '100%', sm: 'auto' }, justifyContent: { xs: 'center', sm: 'flex-start' } }}>
-              <IconButton onClick={() => navigate("/carrinho")} sx={{ color: primaryColor }}>
-                <Badge badgeContent={totalItems} color="error">
+              <IconButton onClick={() => navigate("/carrinho")} sx={{ color: 'white' }}>
+                <Badge badgeContent={totalItems} sx={{ '& .MuiBadge-badge': { bgcolor: terracotta } }}>
                   <ShoppingBag />
                 </Badge>
               </IconButton>
 
               {clientUser && (
-                <IconButton onClick={() => navigate("/meus-favoritos")} sx={{ color: '#ef4444' }}>
+                <IconButton onClick={() => navigate("/meus-favoritos")} sx={{ color: '#ff6b6b' }}>
                   <Badge badgeContent={favorites.length} color="default">
                     <Favorite />
                   </Badge>
@@ -856,23 +924,20 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
               )}
 
               <Box sx={{ ml: 1 }}>
-                <Typography variant="caption" sx={{ color: '#795548', lineHeight: 1, display: 'block' }}>Total do pedido</Typography>
-                <Typography variant="h6" fontWeight="bold" color="primary.main" sx={{ lineHeight: 1.2, fontSize: { xs: '1.1rem', md: '1.25rem' } }}>R$ {totalPrice.toFixed(2)}</Typography>
+                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', lineHeight: 1, display: 'block' }}>Total do pedido</Typography>
+                <Typography variant="h6" fontWeight="bold" sx={{ color: caramel, lineHeight: 1.2, fontSize: { xs: '1.1rem', md: '1.25rem' } }}>R$ {totalPrice.toFixed(2)}</Typography>
               </Box>
             </Box>
-            <Button 
-              variant="contained" 
-              onClick={handleCheckout} 
+            <Button
+              variant="contained"
+              onClick={handleCheckout}
               endIcon={<ArrowForward />}
-              sx={{ 
+              sx={{
                 width: { xs: '100%', sm: 'auto' },
-                borderRadius: '50px', 
-                bgcolor: primaryColor, 
-                color: 'white', 
+                borderRadius: '50px',
                 fontWeight: 'bold',
                 px: { xs: 2, md: 3 },
-                fontSize: { xs: '0.85rem', md: '1rem' },
-                '&:hover': { bgcolor: '#E65100' }
+                fontSize: { xs: '0.85rem', md: '1rem' }
               }}
             >
               Finalizar
@@ -883,12 +948,12 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
       </AnimatePresence>
 
       {/* Modal Cross-Selling */}
-      <Dialog open={crossSellOpen} onClose={() => setCrossSellOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '24px', bgcolor: '#fff', color: '#3E2723' } }}>
-        <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', fontSize: '1.5rem', color: '#4E342E' }}>
+      <Dialog open={crossSellOpen} onClose={() => setCrossSellOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '24px', bgcolor: '#FFFAF5', color: '#2C1810' } }}>
+        <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', fontSize: '1.5rem', color: espresso }}>
           Ótima escolha! 🍪
         </DialogTitle>
         <DialogContent>
-          <Typography variant="body1" textAlign="center" mb={3} sx={{ color: '#5D4037' }}>
+          <Typography variant="body1" textAlign="center" mb={3} sx={{ color: '#795548' }}>
             Que tal aproveitar e levar também?
           </Typography>
           <Grid container spacing={2}>
@@ -896,16 +961,16 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
               const coverImage = prod.imagens?.find(img => img.eh_capa)?.imagem || prod.imagens?.[0]?.imagem;
               return (
                 <Grid item xs={6} key={prod.id}>
-                  <Box sx={{ bgcolor: '#EFEBE9', borderRadius: '16px', overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column', border: '1px solid #D7CCC8' }}>
+                  <Box sx={{ bgcolor: '#FFF8F0', borderRadius: '16px', overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' }}>
                      {coverImage && (
                         <Box component="img" src={coverImage} sx={{ width: '100%', height: 100, objectFit: 'cover' }} />
                       )}
                     <Box sx={{ p: 2, textAlign: 'center', flexGrow: 1 }}>
-                      <Typography variant="subtitle2" fontWeight="bold" noWrap color="primary.main">{prod.nome}</Typography>
-                      <Typography variant="body2" sx={{ color: '#2E7D32', fontWeight: 'bold' }}>R$ {Number(prod.preco_venda).toFixed(2)}</Typography>
+                      <Typography variant="subtitle2" fontWeight="bold" noWrap sx={{ color: espresso }}>{prod.nome}</Typography>
+                      <Typography variant="body2" sx={{ color: terracotta, fontWeight: 'bold' }}>R$ {Number(prod.preco_venda).toFixed(2)}</Typography>
                     </Box>
                     <Box sx={{ p: 1, display: 'flex', justifyContent: 'center' }}>
-                      <Button size="small" variant="contained" onClick={() => handleQtyChange(prod.id, 1)} sx={{ borderRadius: '20px', bgcolor: '#4E342E' }}>
+                      <Button size="small" variant="contained" onClick={() => handleQtyChange(prod.id, 1)} sx={{ borderRadius: '20px' }}>
                         Adicionar
                       </Button>
                     </Box>
@@ -916,21 +981,21 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           </Grid>
         </DialogContent>
         <DialogActions sx={{ justifyContent: 'center', pb: 3, gap: 2 }}>
-          <Button onClick={() => { setCrossSellOpen(false); handleCheckout(); }} sx={{ color: '#5D4037' }}>
+          <Button onClick={() => { setCrossSellOpen(false); handleCheckout(); }} sx={{ color: '#795548' }}>
             Continuar Comprando
           </Button>
-          <Button onClick={() => { setCrossSellOpen(false); handleCheckout(); }} variant="contained" sx={{ bgcolor: '#4E342E', color: 'white', borderRadius: '50px' }}>
+          <Button onClick={() => { setCrossSellOpen(false); handleCheckout(); }} variant="contained" sx={{ borderRadius: '50px' }}>
             Finalizar Pedido
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Modal Detalhes do Produto */}
-      <Dialog open={detailsOpen} onClose={() => setDetailsOpen(false)} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: '24px', bgcolor: '#fff', color: '#3E2723' } }}>
+      <Dialog open={detailsOpen} onClose={() => setDetailsOpen(false)} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: '24px', bgcolor: '#FFFAF5', color: '#2C1810' } }}>
         {selectedProduct && (
           <Grid container>
             {/* Coluna da Imagem */}
-            <Grid item xs={12} md={6} sx={{ bgcolor: '#f5f5f5', position: 'relative' }}>
+            <Grid item xs={12} md={6} sx={{ bgcolor: '#FFF8F0', position: 'relative' }}>
               <IconButton 
                 onClick={() => setDetailsOpen(false)}
                 sx={{ position: 'absolute', top: 10, right: 10, zIndex: 2, bgcolor: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: 'white' } }}
@@ -965,20 +1030,20 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
               </Box>
 
               {selectedProduct.imagens && selectedProduct.imagens.length > 1 && (
-                <Box sx={{ display: 'flex', gap: 1, p: 2, overflowX: 'auto', justifyContent: 'center', bgcolor: '#fafafa' }}>
+                <Box sx={{ display: 'flex', gap: 1, p: 2, overflowX: 'auto', justifyContent: 'center', bgcolor: '#FFF8F0' }}>
                   {selectedProduct.imagens.map((img, index) => (
-                    <Box 
+                    <Box
                       key={index}
                       component="img"
                       src={img.imagem}
                       onClick={() => setSelectedImageIndex(index)}
-                      sx={{ 
-                        width: 60, 
-                        height: 60, 
-                        objectFit: 'cover', 
-                        borderRadius: 2, 
+                      sx={{
+                        width: 60,
+                        height: 60,
+                        objectFit: 'cover',
+                        borderRadius: 2,
                         cursor: 'pointer',
-                        border: selectedImageIndex === index ? `2px solid #4E342E` : '2px solid transparent',
+                        border: selectedImageIndex === index ? `2px solid ${terracotta}` : '2px solid transparent',
                         opacity: selectedImageIndex === index ? 1 : 0.7,
                         transition: 'all 0.2s'
                       }}
@@ -990,16 +1055,16 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
 
             {/* Coluna de Detalhes */}
             <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
-              <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', fontSize: '1.8rem', color: '#4E342E', pt: 4 }}>
+              <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', fontSize: '1.8rem', color: espresso, pt: 4 }}>
                 {selectedProduct.nome}
               </DialogTitle>
               <DialogContent sx={{ flexGrow: 1 }}>
-                <Typography variant="body1" sx={{ color: '#5D4037', lineHeight: 1.6, whiteSpace: 'pre-line', mb: 3, fontSize: '1.1rem' }}>
+                <Typography variant="body1" sx={{ color: '#795548', lineHeight: 1.6, whiteSpace: 'pre-line', mb: 3, fontSize: '1.1rem' }}>
                   {selectedProduct.descricao || "Sem descrição disponível."}
                 </Typography>
 
                 {Number(selectedProduct.estoque) > 0 && (
-                  <Typography variant="subtitle2" sx={{ color: primaryColor, mb: 2, fontWeight: 'bold' }}>
+                  <Typography variant="subtitle2" sx={{ color: terracotta, mb: 2, fontWeight: 'bold' }}>
                     Disponibilidade: {Number(selectedProduct.estoque)} unidades
                   </Typography>
                 )}
@@ -1009,8 +1074,8 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                 )}
 
                 <Box display="flex" justifyContent="center" alignItems="center" gap={2}>
-                  <Typography variant="h4" sx={{ color: '#2E7D32', fontWeight: 'bold' }}>
-                    R$ {clientUser?.is_revendedor ? Number(selectedProduct.preco_revenda).toFixed(2) : (selectedProduct.eh_destaque && selectedProduct.desconto_destaque > 0 
+                  <Typography sx={{ fontSize: '1.8rem', color: terracotta, fontWeight: 'bold' }}>
+                    R$ {clientUser?.is_revendedor ? Number(selectedProduct.preco_revenda).toFixed(2) : (selectedProduct.eh_destaque && selectedProduct.desconto_destaque > 0
                       ? (Number(selectedProduct.preco_venda) * (1 - Number(selectedProduct.desconto_destaque) / 100)).toFixed(2)
                       : Number(selectedProduct.preco_venda).toFixed(2)
                     )}
@@ -1023,8 +1088,8 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                 </Alert>
               )}
               <DialogActions sx={{ justifyContent: 'center', p: 3, pt: 0 }}>
-                <Button 
-                  variant="contained" 
+                <Button
+                  variant="contained"
                   size="large"
                   fullWidth
                   startIcon={<Add />}
@@ -1033,7 +1098,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                     setDetailsOpen(false);
                   }}
                   disabled={selectedProduct.estoque <= 0 || !isStoreOpen}
-                  sx={{ bgcolor: '#4E342E', color: 'white', borderRadius: '50px', px: 4, py: 1.5 }}
+                  sx={{ borderRadius: '50px', px: 4, py: 1.5 }}
                 >
                   Adicionar ao Carrinho
                 </Button>
