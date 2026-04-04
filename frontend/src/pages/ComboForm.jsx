@@ -341,11 +341,32 @@ export default function ComboForm() {
             options={listaIngredientes}
             getOptionLabel={(option) => option.nome}
             value={ingredienteSelecionado}
-            onChange={(e, val) => setIngredienteSelecionado(val)}
+            onChange={(e, val) => {
+              setIngredienteSelecionado(val);
+              if (val) {
+                const custoUnit = Number(val.custo) / (Number(val.estoque) || 1);
+                setPrecoVendaIngrediente((custoUnit * Number(qtdIngrediente)).toFixed(2));
+              } else {
+                setPrecoVendaIngrediente(0);
+              }
+            }}
             renderInput={(params) => <TextField {...params} label="Adicionar Ingrediente" />}
           />
-          <TextField label="Qtd" type="number" sx={{ width: 80 }} value={qtdIngrediente} onChange={e => setQtdIngrediente(e.target.value)} />
-          <TextField label="Preço Adicional" type="number" sx={{ width: 130 }} value={precoVendaIngrediente} onChange={e => setPrecoVendaIngrediente(e.target.value)} />
+          <TextField
+            label="Qtd"
+            type="number"
+            sx={{ width: 80 }}
+            value={qtdIngrediente}
+            onChange={e => {
+              const novaQtd = e.target.value;
+              setQtdIngrediente(novaQtd);
+              if (ingredienteSelecionado) {
+                const custoUnit = Number(ingredienteSelecionado.custo) / (Number(ingredienteSelecionado.estoque) || 1);
+                setPrecoVendaIngrediente((custoUnit * Number(novaQtd)).toFixed(2));
+              }
+            }}
+          />
+          <TextField label="Preço (R$)" type="number" sx={{ width: 130 }} value={precoVendaIngrediente} onChange={e => setPrecoVendaIngrediente(e.target.value)} />
           <Button variant="contained" color="secondary" onClick={adicionarIngrediente}><Add /></Button>
         </Box>
 
