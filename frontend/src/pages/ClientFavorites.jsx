@@ -99,28 +99,51 @@ export default function ClientFavorites({ clientUser, addToCart, onLoginClick })
     }
   };
 
+  // Estilos "Organic Soft Tech" (Versão Light/Café)
+  const glassStyle = {
+    background: "rgba(255, 255, 255, 0.7)",
+    backdropFilter: "blur(12px)",
+    border: "1px solid rgba(255, 255, 255, 0.8)",
+    boxShadow: "0 8px 32px 0 rgba(78, 52, 46, 0.08)",
+    borderRadius: "24px",
+    color: "#3E2723"
+  };
+
   if (!clientUser) return null;
 
   return (
-    <Box sx={{ bgcolor: '#FFFAF5', minHeight: '100vh', color: '#2C1810', overflowX: 'hidden', position: 'relative' }}>
+    <Box sx={{ bgcolor: '#D7CCC8', minHeight: '100vh', color: '#3E2723', overflowX: 'hidden', position: 'relative' }}>
+      {/* Background Wrapper Animado */}
+      <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+        <motion.div 
+          animate={{ 
+            background: [
+              `radial-gradient(circle at 20% 30%, rgba(141, 110, 99, 0.15) 0%, transparent 50%)`,
+              `radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.2) 0%, transparent 50%)`
+            ]
+          }}
+          transition={{ duration: 10, repeat: Infinity, repeatType: "reverse" }}
+          style={{ width: '100%', height: '100%', position: 'absolute' }}
+        />
+        <Box sx={{ position: 'absolute', top: '-20%', left: '-10%', width: '50%', height: '50%', background: '#EFEBE9', filter: 'blur(150px)', opacity: 0.4, borderRadius: '50%' }} />
+        <Box sx={{ position: 'absolute', bottom: '-10%', right: '-10%', width: '60%', height: '60%', background: '#FFE0B2', filter: 'blur(180px)', opacity: 0.3, borderRadius: '50%' }} />
+      </Box>
+
     <Container maxWidth="lg" sx={{ mt: 4, mb: 8, position: 'relative', zIndex: 1 }}>
       <Box mb={4} display="flex" alignItems="center" gap={2}>
-        <Button startIcon={<ArrowBack />} component={Link} to="/" sx={{ fontWeight: 'bold', color: '#D4580A', borderRadius: 50 }}>
+        <Button startIcon={<ArrowBack />} component={Link} to="/" sx={{ fontWeight: 'bold', color: '#4E342E', borderRadius: 50, bgcolor: 'rgba(255,255,255,0.5)' }}>
           Voltar
         </Button>
-        <Typography variant="h4" fontWeight="900" sx={{ color: '#2C1810', display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Typography variant="h4" fontWeight="900" sx={{ color: '#4E342E', display: 'flex', alignItems: 'center', gap: 1 }}>
           <Favorite color="error" /> Meus Favoritos
         </Typography>
       </Box>
 
       {favorites.length === 0 ? (
-        <Box sx={{ bgcolor: '#FFFFFF', borderRadius: 20, boxShadow: '0 4px 24px rgba(44,24,16,0.10)', p: 8, textAlign: 'center' }}>
-          <Typography variant="h6" sx={{ color: "#795548", mb: 2 }}>
+        <Box sx={{ ...glassStyle, p: 8, textAlign: 'center' }}>
+          <Typography variant="h6" sx={{ color: "#5D4037" }}>
             Você ainda não tem produtos favoritos.
           </Typography>
-          <Button variant="contained" component={Link} to="/" sx={{ borderRadius: 50 }}>
-            Ver Cardápio
-          </Button>
         </Box>
       ) : (
         <Grid container spacing={3}>
@@ -129,17 +152,15 @@ export default function ClientFavorites({ clientUser, addToCart, onLoginClick })
             
             return (
               <Grid item xs={12} sm={6} md={4} key={prod.id}>
-                <Box sx={{
-                    bgcolor: '#FFFFFF',
-                    borderRadius: 20,
-                    boxShadow: '0 4px 24px rgba(44,24,16,0.10)',
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
+                <Box sx={{ 
+                    ...glassStyle, 
+                    height: '100%', 
+                    display: 'flex', 
+                    flexDirection: 'column', 
                     position: 'relative',
                     overflow: 'hidden',
-                    transition: 'all 0.3s ease',
-                    '&:hover': { transform: 'translateY(-8px)', boxShadow: '0 16px 40px rgba(44,24,16,0.18)' }
+                    transition: 'transform 0.3s ease',
+                    '&:hover': { transform: 'translateY(-5px)' }
                   }}>
                   <IconButton 
                     sx={{ position: 'absolute', top: 12, right: 12, bgcolor: 'rgba(255,255,255,0.8)', '&:hover': { bgcolor: 'white' }, zIndex: 10 }}
@@ -153,18 +174,18 @@ export default function ClientFavorites({ clientUser, addToCart, onLoginClick })
                     component="img"
                     src={coverImage || "https://via.placeholder.com/300?text=Sem+Imagem"}
                     alt={prod.nome}
-                    sx={{ width: '100%', height: 240, objectFit: 'cover' }}
+                    sx={{ width: '100%', height: 220, objectFit: 'cover' }}
                   />
-
+                  
                   <Box sx={{ p: 3, flexGrow: 1 }}>
-                    <Typography gutterBottom variant="h6" component="div" fontWeight="bold" sx={{ color: '#2C1810' }}>
+                    <Typography gutterBottom variant="h6" component="div" fontWeight="bold" sx={{ color: '#4E342E' }}>
                       {prod.nome}
                     </Typography>
-                    <Typography variant="h6" sx={{ color: '#D4580A', fontWeight: 'bold', fontSize: '1.4rem' }}>
+                    <Typography variant="h6" sx={{ color: '#2E7D32', fontWeight: 'bold' }}>
                       R$ {Number(prod.preco_venda).toFixed(2)}
                     </Typography>
                     {Number(prod.estoque) > 0 && (
-                      <Typography variant="caption" sx={{ color: '#795548', display: 'block', mt: 0.5, fontWeight: 500 }}>
+                      <Typography variant="caption" sx={{ color: '#5D4037', display: 'block', mt: 0.5, fontWeight: 500 }}>
                         Estoque: {Number(prod.estoque)} un.
                       </Typography>
                     )}
@@ -178,7 +199,7 @@ export default function ClientFavorites({ clientUser, addToCart, onLoginClick })
                     )}
                   </Box>
                   <Box sx={{ p: 2, pt: 0 }}>
-                    <Button variant="contained" fullWidth startIcon={<AddShoppingCart />} onClick={() => handleAddWithPopup(prod)} sx={{ borderRadius: 50 }} disabled={prod.estoque <= 0 || !isStoreOpen}>
+                    <Button variant="contained" fullWidth startIcon={<AddShoppingCart />} onClick={() => handleAddWithPopup(prod)} sx={{ borderRadius: 50, bgcolor: '#4E342E', '&:hover': { bgcolor: '#3E2723' } }} disabled={prod.estoque <= 0 || !isStoreOpen}>
                       Adicionar ao Carrinho
                     </Button>
                   </Box>
@@ -190,12 +211,12 @@ export default function ClientFavorites({ clientUser, addToCart, onLoginClick })
       )}
 
       {/* Modal Cross-Selling (Sugestões de Compra) */}
-      <Dialog open={crossSellOpen} onClose={() => setCrossSellOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '24px', bgcolor: '#FFFAF5', color: '#2C1810' } }}>
-        <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', fontSize: '1.5rem', color: '#2C1810' }}>
+      <Dialog open={crossSellOpen} onClose={() => setCrossSellOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '24px', bgcolor: '#fff', color: '#3E2723' } }}>
+        <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', fontSize: '1.5rem', color: '#4E342E' }}>
           Ótima escolha! 🍪
         </DialogTitle>
         <DialogContent>
-          <Typography variant="body1" textAlign="center" mb={3} sx={{ color: '#795548' }}>
+          <Typography variant="body1" textAlign="center" mb={3} sx={{ color: '#5D4037' }}>
             Que tal aproveitar e levar também?
           </Typography>
           <Grid container spacing={2}>
@@ -203,16 +224,16 @@ export default function ClientFavorites({ clientUser, addToCart, onLoginClick })
               const coverImage = prod.imagens?.find(img => img.eh_capa)?.imagem || prod.imagens?.[0]?.imagem;
               return (
                 <Grid item xs={6} key={prod.id}>
-                  <Box sx={{ bgcolor: '#FFF8F0', borderRadius: '16px', overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <Box sx={{ bgcolor: '#EFEBE9', borderRadius: '16px', overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column', border: '1px solid #D7CCC8' }}>
                      {coverImage && (
                         <Box component="img" src={coverImage} sx={{ width: '100%', height: 100, objectFit: 'cover' }} />
                       )}
                     <Box sx={{ p: 2, textAlign: 'center', flexGrow: 1 }}>
-                      <Typography variant="subtitle2" fontWeight="bold" sx={{ color: '#2C1810' }} noWrap>{prod.nome}</Typography>
-                      <Typography variant="body2" sx={{ color: '#D4580A', fontWeight: 'bold' }}>R$ {Number(prod.preco_venda).toFixed(2)}</Typography>
+                      <Typography variant="subtitle2" fontWeight="bold" color="primary.main" noWrap>{prod.nome}</Typography>
+                      <Typography variant="body2" sx={{ color: '#2E7D32', fontWeight: 'bold' }}>R$ {Number(prod.preco_venda).toFixed(2)}</Typography>
                     </Box>
                     <Box sx={{ p: 1, display: 'flex', justifyContent: 'center' }}>
-                      <Button size="small" variant="contained" onClick={() => addToCart(prod, 1)} sx={{ borderRadius: '20px' }}>
+                      <Button size="small" variant="contained" onClick={() => addToCart(prod, 1)} sx={{ borderRadius: '20px', bgcolor: '#4E342E' }}>
                         Adicionar
                       </Button>
                     </Box>
@@ -223,10 +244,10 @@ export default function ClientFavorites({ clientUser, addToCart, onLoginClick })
           </Grid>
         </DialogContent>
         <DialogActions sx={{ justifyContent: 'center', pb: 3, gap: 2 }}>
-          <Button onClick={() => setCrossSellOpen(false)} sx={{ color: '#795548' }}>
+          <Button onClick={() => setCrossSellOpen(false)} sx={{ color: '#5D4037' }}>
             Continuar vendo favoritos
           </Button>
-          <Button onClick={() => { setCrossSellOpen(false); navigate("/carrinho"); }} variant="contained" sx={{ borderRadius: '50px' }}>
+          <Button onClick={() => { setCrossSellOpen(false); navigate("/carrinho"); }} variant="contained" sx={{ bgcolor: '#4E342E', color: 'white', borderRadius: '50px' }}>
             Ver meu carrinho
           </Button>
         </DialogActions>

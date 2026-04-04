@@ -118,13 +118,12 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
   if (!user) return <Typography sx={{ p: 4, textAlign: 'center' }}>Faça login para ver seu perfil.</Typography>;
 
   return (
-    <Box sx={{ bgcolor: '#FFFAF5', minHeight: '100vh', pt: 4, pb: 12 }}>
     <Container maxWidth="md" sx={{ py: 4 }}>
-      <Paper sx={{ p: 3, mb: 4, borderRadius: 20, boxShadow: '0 4px 24px rgba(44,24,16,0.10)' }}>
+      <Paper sx={{ p: 3, mb: 4 }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h4" fontWeight="bold" sx={{ color: '#2C1810' }}>Meu Perfil</Typography>
+          <Typography variant="h4" fontWeight="bold">Meu Perfil</Typography>
           {!isEditing ? (
-            <Button variant="outlined" onClick={() => setIsEditing(true)} sx={{ borderColor: '#D4580A', color: '#D4580A' }}>Editar Dados</Button>
+            <Button variant="outlined" onClick={() => setIsEditing(true)}>Editar Dados</Button>
           ) : (
             <Box display="flex" gap={1}>
               <Button variant="outlined" onClick={() => { setIsEditing(false); setFormData(user); setSenhaAtual(""); }}>Cancelar</Button>
@@ -177,11 +176,11 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
 
       {maisComprados.length > 0 && (
         <>
-          <Typography variant="h5" fontWeight="bold" mb={2} sx={{ color: '#2C1810' }}>Comprar Novamente</Typography>
+          <Typography variant="h5" fontWeight="bold" mb={2}>Comprar Novamente</Typography>
           <Grid container spacing={2} mb={4}>
             {maisComprados.map(item => (
               <Grid item xs={6} sm={4} md={3} key={item.id}>
-                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderRadius: 16, boxShadow: '0 4px 24px rgba(44,24,16,0.10)', transition: 'all 0.3s ease', '&:hover': { transform: 'translateY(-8px)', boxShadow: '0 16px 40px rgba(44,24,16,0.18)' } }}>
+                <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderRadius: 3 }}>
                   <Box
                     component="img"
                     src={item.imagem || (item.imagens?.[0]?.imagem) || "https://via.placeholder.com/300?text=Sem+Imagem"}
@@ -189,17 +188,16 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
                     sx={{ width: '100%', height: 120, objectFit: 'cover' }}
                   />
                   <CardContent sx={{ pb: 1, flexGrow: 1 }}>
-                    <Typography variant="subtitle2" noWrap fontWeight="bold" sx={{ color: '#2C1810' }}>{item.nome}</Typography>
+                    <Typography variant="subtitle2" noWrap fontWeight="bold">{item.nome}</Typography>
                     <Typography variant="caption" color="text.secondary">Comprado {item.total_comprado}x</Typography>
                   </CardContent>
                   <CardActions>
-                    <Button
-                      size="small"
-                      fullWidth
-                      startIcon={<AddShoppingCart />}
+                    <Button 
+                      size="small" 
+                      fullWidth 
+                      startIcon={<AddShoppingCart />} 
                       onClick={() => handleBuyItem(item)}
                       disabled={!isStoreOpen}
-                      sx={{ textTransform: 'none' }}
                     >
                       Comprar
                     </Button>
@@ -211,8 +209,8 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
         </>
       )}
 
-      <Typography variant="h5" fontWeight="bold" mb={2} sx={{ color: '#2C1810' }}>Meus Pedidos</Typography>
-      <Paper sx={{ borderRadius: 20, boxShadow: '0 4px 24px rgba(44,24,16,0.10)' }}>
+      <Typography variant="h5" fontWeight="bold" mb={2}>Meus Pedidos</Typography>
+      <Paper>
         <Table>
           <TableHead>
             <TableRow>
@@ -251,6 +249,5 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
         </Table>
       </Paper>
     </Container>
-    </Box>
   );
 }
