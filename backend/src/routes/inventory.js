@@ -6,7 +6,12 @@ const router = Router();
 // LISTAR ESTOQUE DE PRODUTOS
 router.get("/", async (req, res) => {
   try {
-    const result = await pool.query("SELECT id, nome, estoque, preco_venda FROM produtos ORDER BY nome ASC");
+    const result = await pool.query(`
+      SELECT id, nome, estoque, preco_venda, 'produto' as tipo FROM produtos
+      UNION ALL
+      SELECT id, nome, estoque, preco_venda, 'combo' as tipo FROM combos
+      ORDER BY nome ASC
+    `);
     res.json(result.rows);
   } catch (error) {
     console.error(error);
@@ -16,11 +21,12 @@ router.get("/", async (req, res) => {
 
 // RESERVAR ESTOQUE (Ao adicionar ao carrinho)
 router.post("/reservar", async (req, res) => {
-  const { produto_id, quantidade } = req.body;
+  const { produto_id, quantidade, tipo } = req.body;
+  const tabela = tipo === 'combo' ? 'combos' : 'produtos';
   try {
     // Executa o update apenas se houver estoque disponível (operação atômica)
     const result = await pool.query(
-      "UPDATE produtos SET estoque = estoque - $1 WHERE id = $2 AND estoque >= $3",
+      `UPDATE ${tabela} SET estoque = estoque - $1 WHERE id = $2 AND estoque >= $3`,
       [Number(quantidade), produto_id, Number(quantidade)]
     );
     if (result.rowCount === 0) {
@@ -34,9 +40,10 @@ router.post("/reservar", async (req, res) => {
 
 // LIBERAR ESTOQUE (Ao remover do carrinho ou limpar)
 router.post("/liberar", async (req, res) => {
-  const { produto_id, quantidade } = req.body;
+  const { produto_id, quantidade, tipo } = req.body;
+  const tabela = tipo === 'combo' ? 'combos' : 'produtos';
   try {
-    await pool.query("UPDATE produtos SET estoque = estoque + $1 WHERE id = $2", [Number(quantidade), produto_id]);
+    await pool.query(`UPDATE ${tabela} SET estoque = estoque + $1 WHERE id = $2`, [Number(quantidade), produto_id]);
     res.json({ message: "Estoque liberado." });
   } catch (error) {
     res.status(500).json({ error: "Erro ao liberar estoque", details: error.message });
@@ -45,7 +52,8 @@ router.post("/liberar", async (req, res) => {
 
 // LANÇAR ESTOQUE (SOMAR AO ATUAL)
 router.post("/lancar", async (req, res) => {
-  const { produto_id, quantidade } = req.body;
+  const { produto_id, quantidade, tipo } = req.body;
+  const tabela = tipo === 'combo' ? 'combos' : 'produtos';
   
   if (!produto_id || !quantidade) {
     return res.status(400).json({ error: "Produto e quantidade são obrigatórios" });
@@ -53,7 +61,7 @@ router.post("/lancar", async (req, res) => {
 
   try {
     await pool.query(
-      "UPDATE produtos SET estoque = estoque + $1 WHERE id = $2",
+      `UPDATE ${tabela} SET estoque = estoque + $1 WHERE id = $2`,
       [Number(quantidade), produto_id]
     );
     res.json({ message: "Estoque atualizado com sucesso!" });

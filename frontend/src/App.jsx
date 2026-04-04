@@ -237,7 +237,11 @@ export default function App() {
   const addToCart = async (product, quantity = 1) => {
     const dbId = product.original_id || product.id; // Usa original_id para agregados
     try {
-      await api.post("/estoque/reservar", { produto_id: dbId, quantidade: quantity });
+      await api.post("/estoque/reservar", { 
+        produto_id: dbId, 
+        quantidade: quantity,
+        tipo: (product.itens || product.ingredientes) ? 'combo' : 'produto' 
+      });
       setCart((prev) => {
         const existing = prev.find((item) => item.id === product.id);
         if (existing) {
@@ -273,7 +277,11 @@ export default function App() {
     const item = cart.find(i => i.id === productId);
     if (item) {
       const dbId = item.original_id || item.id;
-      await api.post("/estoque/liberar", { produto_id: dbId, quantidade: item.quantidade })
+      await api.post("/estoque/liberar", { 
+        produto_id: dbId, 
+        quantidade: item.quantidade,
+        tipo: (item.itens || item.ingredientes) ? 'combo' : 'produto'
+      })
                .catch(e => console.error("Erro ao liberar estoque:", e));
     }
     setCart((prev) => prev.filter((item) => item.id !== productId));
@@ -289,9 +297,17 @@ export default function App() {
 
     try {
       if (delta > 0) {
-        await api.post("/estoque/reservar", { produto_id: dbId, quantidade: delta });
+        await api.post("/estoque/reservar", { 
+          produto_id: dbId, 
+          quantidade: delta,
+          tipo: (item.itens || item.ingredientes) ? 'combo' : 'produto'
+        });
       } else if (delta < 0) {
-        await api.post("/estoque/liberar", { produto_id: dbId, quantidade: Math.abs(delta) });
+        await api.post("/estoque/liberar", { 
+          produto_id: dbId, 
+          quantidade: Math.abs(delta),
+          tipo: (item.itens || item.ingredientes) ? 'combo' : 'produto'
+        });
       }
       setCart((prev) => prev.map((i) => i.id === productId ? { ...i, quantidade: newQty } : i));
       return true; // Sucesso
@@ -305,7 +321,11 @@ export default function App() {
     // Libera todos os itens do carrinho no banco
     for (const item of cart) {
       const dbId = item.original_id || item.id;
-      await api.post("/estoque/liberar", { produto_id: dbId, quantidade: item.quantidade })
+      await api.post("/estoque/liberar", { 
+        produto_id: dbId, 
+        quantidade: item.quantidade,
+        tipo: (item.itens || item.ingredientes) ? 'combo' : 'produto'
+      })
                .catch(e => console.error("Erro ao liberar estoque:", e));
     }
     setCart([]);
