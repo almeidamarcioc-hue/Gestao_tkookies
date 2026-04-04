@@ -100,6 +100,9 @@ app.use("/produtos", productRoutes); // Produtos podem ser públicos para a loja
 app.use("/clientes", clientsRouter); // Login é público, outros protegidos internamente
 app.use("/pedidos", authenticateToken, ordersRouter); // Pedidos precisam de auth
 app.use("/producao", authenticateToken, requireRole('admin'), productionRouter);
+// GET /combos é público (loja); demais métodos exigem admin
+app.get("/combos", combosRouter);
+app.get("/combos/:id", combosRouter);
 app.use("/combos", authenticateToken, requireRole('admin'), combosRouter);
 app.use("/estoque", authenticateToken, requireRole('admin'), inventoryRouter);
 app.use("/configuracoes", settingsRouter); // GET é público; POST é protegido internamente
