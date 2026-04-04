@@ -249,7 +249,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
     if (next < 0) next = 0;
     
     if (next > maxStock) {
-      alert(`Estoque insuficiente para ${prod.nome}. Disponível: ${maxStock} unidade(s).`);
+      alert(`Estoque insuficiente para ${item.nome}. Disponível: ${maxStock} unidade(s).`);
       // Se o usuário tentou adicionar mais do que o estoque, ajusta para o máximo disponível
       if (currentQty < maxStock) {
         next = maxStock;
