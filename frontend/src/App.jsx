@@ -2,8 +2,8 @@
 import { useState, useEffect } from "react";
 import { Routes, Route, Link, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { AppBar, Toolbar, Button, Box, Typography, Menu, MenuItem, createTheme, ThemeProvider, CssBaseline, TextField, IconButton, Drawer, List, ListItem, ListItemButton, ListItemText, Divider, Container, Grid, Badge, CircularProgress } from "@mui/material";
-import { Menu as MenuIcon, Instagram, WhatsApp, Facebook, AccountCircle, ShoppingCart, Favorite, Lock, Assessment } from "@mui/icons-material";
+import { AppBar, Toolbar, Button, Box, Typography, Menu, MenuItem, createTheme, ThemeProvider, CssBaseline, TextField, IconButton, Drawer, List, ListItem, ListItemButton, ListItemText, Divider, Container, Grid, Badge, CircularProgress, BottomNavigation, BottomNavigationAction } from "@mui/material";
+import { Menu as MenuIcon, Instagram, WhatsApp, Facebook, AccountCircle, ShoppingCart, Favorite, Lock, Assessment, Home as HomeIcon, MenuBook } from "@mui/icons-material";
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
 import Ingredients from "./pages/Ingredients";
@@ -42,17 +42,17 @@ import Analytics from "./pages/Analytics";
 
 const theme = createTheme({
   palette: {
-    primary: { main: "#4E342E" }, // Marrom Café Escuro
-    secondary: { main: "#8D6E63" }, // Marrom Claro
-    background: { default: "#EFEBE9", paper: "#ffffff" },
-    text: { primary: "#3E2723", secondary: "#5D4037" },
+    primary: { main: "#D4580A" },
+    secondary: { main: "#C4922A" },
+    background: { default: "#FFFAF5", paper: "#FFFFFF" },
+    text: { primary: "#2C1810", secondary: "#5D4037" },
     success: { main: "#2E7D32" },
     error: { main: "#C62828" },
   },
   typography: {
     fontFamily: '"Nunito", "Quicksand", "Segoe UI", sans-serif',
-    h4: { fontWeight: 800, color: "#4E342E" },
-    h5: { fontWeight: 700, color: "#4E342E" },
+    h4: { fontWeight: 800, color: "#2C1810" },
+    h5: { fontWeight: 700, color: "#2C1810" },
     h6: { fontWeight: 700 },
     button: { fontWeight: 700, textTransform: "none" },
   },
@@ -61,18 +61,19 @@ const theme = createTheme({
     MuiAppBar: {
       styleOverrides: {
         root: {
-          backgroundColor: "#ffffff",
-          color: "#4E342E",
-          boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.05)",
+          backgroundColor: "#FFFAF5",
+          color: "#2C1810",
+          boxShadow: "none",
+          borderBottom: "1px solid rgba(44,24,16,0.08)",
         },
       },
     },
     MuiButton: {
       styleOverrides: {
         root: { borderRadius: 4, padding: "8px 24px" },
-        contained: { 
-          boxShadow: "0 4px 10px rgba(78, 52, 46, 0.2)",
-          "&:hover": { backgroundColor: "#3E2723" }
+        contained: {
+          boxShadow: "0 4px 10px rgba(212,88,10,0.2)",
+          "&:hover": { backgroundColor: "#B84508" }
         },
       },
     },
@@ -80,14 +81,14 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.02)",
-          border: "1px solid #D7CCC8",
+          border: "1px solid rgba(44,24,16,0.08)",
         },
       },
     },
     MuiTableCell: {
       styleOverrides: {
-        head: { backgroundColor: "#D7CCC8", color: "#3E2723", fontWeight: "bold" },
-        root: { borderBottom: "1px solid #EFEBE9" },
+        head: { backgroundColor: "#FFF8F0", color: "#2C1810", fontWeight: "bold" },
+        root: { borderBottom: "1px solid rgba(44,24,16,0.06)" },
       },
     },
     MuiTextField: {
@@ -372,7 +373,7 @@ export default function App() {
             aria-label="open drawer"
             edge="start"
             onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { md: 'none' } }}
+            sx={{ mr: 2, display: { xs: isLoggedIn ? 'flex' : 'none', md: 'none' } }}
           >
             <MenuIcon />
           </IconButton>
@@ -446,10 +447,10 @@ export default function App() {
                   </>
                 ) : (
                   <>
-                    <Button color="inherit" onClick={() => handleOpenLogin('client')}>
+                    <Button variant="contained" onClick={() => handleOpenLogin('client')} sx={{ borderRadius: 50 }}>
                       Área do Cliente
                     </Button>
-                    <Button color="inherit" onClick={() => handleOpenLogin('reseller')} sx={{ bgcolor: 'rgba(78, 52, 46, 0.1)' }}>
+                    <Button variant="outlined" onClick={() => handleOpenLogin('reseller')} sx={{ borderRadius: 50, borderColor: '#D4580A', color: '#D4580A' }}>
                       Área do Parceiro
                     </Button>
                   </>
@@ -460,7 +461,7 @@ export default function App() {
             {/* Ícone do Carrinho (Sempre visível ou apenas para clientes) */}
             {!isLoggedIn && (
               <IconButton color="inherit" component={Link} to="/carrinho">
-                <Badge badgeContent={cart.reduce((acc, item) => acc + item.quantidade, 0)} color="error"><ShoppingCart /></Badge>
+                <Badge badgeContent={cart.reduce((acc, item) => acc + item.quantidade, 0)} sx={{ '& .MuiBadge-badge': { bgcolor: '#D4580A', color: 'white' } }}><ShoppingCart /></Badge>
               </IconButton>
             )}
           </Box>
@@ -541,7 +542,7 @@ export default function App() {
         </Box>
       </Drawer>
 
-      <Box component="main" sx={{ flexGrow: 1, py: 4 }}>
+      <Box component="main" sx={{ flexGrow: 1, py: 4, pb: { xs: 10, md: 4 } }}>
         <Routes>
           <Route path="/" element={<Home isLoggedIn={isLoggedIn} onLoginClick={() => setClientLoginOpen(true)} clientUser={clientUser} cart={cart} addToCart={addToCart} updateCartQuantity={updateCartQuantity} removeFromCart={removeFromCart} clearCart={clearCart} />} />
           <Route path="/cadastro" element={<ClientRegister />} />
@@ -597,37 +598,37 @@ export default function App() {
       </Box>
 
       {/* Rodapé */}
-      <Box component="footer" sx={{ bgcolor: 'primary.main', color: 'white', py: 6, mt: 'auto' }}>
+      <Box component="footer" sx={{ bgcolor: '#2C1810', color: 'white', py: 6, mt: 'auto', pb: { xs: 12, md: 6 } }}>
         <Container maxWidth="lg">
           <Grid container spacing={4}>
             <Grid item xs={12} md={4}>
-              <Typography variant="h6" fontWeight="bold" gutterBottom>
-                TK<Box component="span" sx={{ fontSize: '0.8em' }}>🍪🍪</Box>kies
+              <Typography variant="overline" sx={{ color: '#C4922A', fontWeight: 'bold', letterSpacing: 2 }}>TKookies</Typography>
+              <Typography variant="h6" fontWeight="900" gutterBottom sx={{ fontFamily: '"Playfair Display", serif', mt: 0.5 }}>
+                Um pedacinho de felicidade
               </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.8, mb: 2 }}>
-                Um pedacinho de felicidade em cada mordida. Feito com amor e os melhores ingredientes para você.
+              <Typography variant="body2" sx={{ opacity: 0.75, mb: 2 }}>
+                Feito com amor e os melhores ingredientes para você.
               </Typography>
-              <Button color="inherit" component={Link} to="/sobre" sx={{ p: 0, minWidth: 0, textTransform: 'none', fontWeight: 'normal', textDecoration: 'underline' }}>
+              <Button color="inherit" component={Link} to="/sobre" sx={{ p: 0, minWidth: 0, textTransform: 'none', fontWeight: 'normal', textDecoration: 'underline', opacity: 0.7 }}>
                 Sobre Nós
               </Button>
             </Grid>
             <Grid item xs={12} md={4}>
-              <Typography variant="h6" fontWeight="bold" gutterBottom>
-                Contato
-              </Typography>
-              <Typography variant="body2" display="block" sx={{ mb: 0.5 }}>📍 Três de Maio - RS</Typography>
+              <Typography variant="overline" sx={{ color: '#C4922A', fontWeight: 'bold', letterSpacing: 2 }}>Contato</Typography>
+              <Typography variant="body2" display="block" sx={{ mb: 0.5, mt: 1 }}>📍 Três de Maio - RS</Typography>
               <Typography variant="body2" display="block" sx={{ mb: 0.5 }}>📞 (55) 9 9731 2557</Typography>
             </Grid>
             <Grid item xs={12} md={4}>
-              <Typography variant="h6" fontWeight="bold" gutterBottom>
-                Redes Sociais
-              </Typography>
-              <Box display="flex" gap={1}>
+              <Typography variant="overline" sx={{ color: '#C4922A', fontWeight: 'bold', letterSpacing: 2 }}>Redes Sociais</Typography>
+              <Box display="flex" gap={1} mt={1}>
                 <IconButton color="inherit" href="https://www.instagram.com/tkookies_/" target="_blank" aria-label="Instagram">
                   <Instagram />
                 </IconButton>
                 <IconButton color="inherit" href="https://www.facebook.com/tkookiestm" target="_blank" aria-label="Facebook">
                   <Facebook />
+                </IconButton>
+                <IconButton href="https://wa.me/5555997312557" target="_blank" aria-label="WhatsApp" sx={{ bgcolor: '#25D366', color: 'white', '&:hover': { bgcolor: '#1EBE5D' } }}>
+                  <WhatsApp />
                 </IconButton>
               </Box>
             </Grid>
@@ -655,69 +656,65 @@ export default function App() {
       </Box>
 
       {/* Drawer Login Cliente */}
-      <Drawer 
-        anchor="right" 
-        open={clientLoginOpen} 
+      <Drawer
+        anchor="right"
+        open={clientLoginOpen}
         onClose={() => setClientLoginOpen(false)}
-        sx={{
-          '& .MuiDrawer-paper': { 
-            backgroundColor: "rgba(255, 255, 255, 0.85)",
-            backdropFilter: "blur(12px)",
-            borderLeft: "1px solid rgba(255, 255, 255, 0.5)",
-            boxShadow: "-4px 0 20px rgba(78, 52, 46, 0.1)"
-          },
-        }}
+        sx={{ '& .MuiDrawer-paper': { backgroundColor: "#FFFAF5", borderLeft: "1px solid rgba(44,24,16,0.08)" } }}
       >
         <Box sx={{ width: 300, p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <Typography variant="h5" fontWeight="bold" sx={{ color: '#4E342E', textAlign: 'center' }}>
+          <Typography variant="h5" fontWeight="bold" sx={{ color: '#2C1810', textAlign: 'center' }}>
             {loginMode === 'reseller' ? 'Área do Parceiro' : 'Área do Cliente'}
           </Typography>
-          <TextField 
-            label="Login" 
-            fullWidth 
-            value={clientLoginData.login} 
-            onChange={(e) => setClientLoginData({...clientLoginData, login: e.target.value})} 
-            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px', bgcolor: 'rgba(255,255,255,0.5)' } }}
+          <TextField
+            label="Login"
+            fullWidth
+            value={clientLoginData.login}
+            onChange={(e) => setClientLoginData({...clientLoginData, login: e.target.value})}
           />
-          <TextField 
-            label="Senha" 
-            type="password" 
-            fullWidth 
-            value={clientLoginData.senha} 
-            onChange={(e) => setClientLoginData({...clientLoginData, senha: e.target.value})} 
-            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px', bgcolor: 'rgba(255,255,255,0.5)' } }}
+          <TextField
+            label="Senha"
+            type="password"
+            fullWidth
+            value={clientLoginData.senha}
+            onChange={(e) => setClientLoginData({...clientLoginData, senha: e.target.value})}
           />
-          <Button variant="contained" fullWidth onClick={handleClientLogin} sx={{ borderRadius: 4, bgcolor: '#4E342E', '&:hover': { bgcolor: '#3E2723' }, py: 1.5 }}>ENTRAR</Button>
+          <Button variant="contained" fullWidth onClick={handleClientLogin} sx={{ borderRadius: 50, bgcolor: '#D4580A', '&:hover': { bgcolor: '#B84508' }, py: 1.5 }}>ENTRAR</Button>
           <Button color="primary" onClick={() => { setClientLoginOpen(false); }} sx={{ textTransform: 'none', color: '#5D4037' }}>Esqueci minha senha</Button>
           {loginMode === 'client' && (
-            <Button variant="outlined" fullWidth component={Link} to="/cadastro" onClick={() => setClientLoginOpen(false)} sx={{ borderRadius: 4, borderColor: '#4E342E', color: '#4E342E', py: 1.5 }}>CRIAR CONTA</Button>
+            <Button variant="outlined" fullWidth component={Link} to="/cadastro" onClick={() => setClientLoginOpen(false)} sx={{ borderRadius: 50, borderColor: '#D4580A', color: '#D4580A', py: 1.5 }}>CRIAR CONTA</Button>
           )}
         </Box>
       </Drawer>
 
       {/* Drawer Login Admin */}
-      <Drawer 
-        anchor="right" 
-        open={adminLoginOpen} 
+      <Drawer
+        anchor="right"
+        open={adminLoginOpen}
         onClose={() => setAdminLoginOpen(false)}
-        sx={{
-          '& .MuiDrawer-paper': { 
-            backgroundColor: "rgba(255, 255, 255, 0.9)",
-            backdropFilter: "blur(12px)",
-            borderLeft: "1px solid rgba(255, 255, 255, 0.5)",
-            boxShadow: "-4px 0 20px rgba(78, 52, 46, 0.1)"
-          },
-        }}
+        sx={{ '& .MuiDrawer-paper': { backgroundColor: "#FFFAF5", borderLeft: "1px solid rgba(44,24,16,0.08)" } }}
       >
         <Box sx={{ width: 300, p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <Typography variant="h5" fontWeight="bold" sx={{ color: '#4E342E', textAlign: 'center' }}>
+          <Typography variant="h5" fontWeight="bold" sx={{ color: '#2C1810', textAlign: 'center' }}>
             Acesso Administrativo
           </Typography>
-          <TextField label="Usuário Admin" fullWidth value={adminLoginData.login} onChange={(e) => setAdminLoginData({...adminLoginData, login: e.target.value})} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px', bgcolor: 'rgba(255,255,255,0.5)' } }} />
-          <TextField label="Senha" type="password" fullWidth value={adminLoginData.senha} onChange={(e) => setAdminLoginData({...adminLoginData, senha: e.target.value})} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px', bgcolor: 'rgba(255,255,255,0.5)' } }} />
-          <Button variant="contained" fullWidth onClick={handleAdminLogin} sx={{ borderRadius: 4, bgcolor: '#4E342E', '&:hover': { bgcolor: '#3E2723' }, py: 1.5 }}>ENTRAR</Button>
+          <TextField label="Usuário Admin" fullWidth value={adminLoginData.login} onChange={(e) => setAdminLoginData({...adminLoginData, login: e.target.value})} />
+          <TextField label="Senha" type="password" fullWidth value={adminLoginData.senha} onChange={(e) => setAdminLoginData({...adminLoginData, senha: e.target.value})} />
+          <Button variant="contained" fullWidth onClick={handleAdminLogin} sx={{ borderRadius: 50, bgcolor: '#D4580A', '&:hover': { bgcolor: '#B84508' }, py: 1.5 }}>ENTRAR</Button>
         </Box>
       </Drawer>
+
+      {/* Mobile Bottom Navigation (client/public users only) */}
+      {!isLoggedIn && (
+        <Box sx={{ display: { xs: 'block', md: 'none' }, position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 1200 }}>
+          <BottomNavigation value={pathname} sx={{ bgcolor: '#FFFAF5', borderTop: '1px solid rgba(44,24,16,0.10)' }}>
+            <BottomNavigationAction label="Início" value="/" icon={<HomeIcon />} component={Link} to="/" sx={{ color: '#8D6E63', '&.Mui-selected': { color: '#D4580A' } }} />
+            <BottomNavigationAction label="Cardápio" value="#cardapio" icon={<MenuBook />} onClick={() => { navigate('/'); setTimeout(() => { document.getElementById('cardapio')?.scrollIntoView({ behavior: 'smooth' }); }, 150); }} sx={{ color: '#8D6E63', '&.Mui-selected': { color: '#D4580A' } }} />
+            <BottomNavigationAction label="Favoritos" value="/meus-favoritos" icon={<Favorite />} component={Link} to="/meus-favoritos" sx={{ color: '#8D6E63', '&.Mui-selected': { color: '#D4580A' } }} />
+            <BottomNavigationAction label="Perfil" value="/perfil" icon={<AccountCircle />} component={Link} to="/perfil" sx={{ color: '#8D6E63', '&.Mui-selected': { color: '#D4580A' } }} />
+          </BottomNavigation>
+        </Box>
+      )}
       </>
     )}
     </ThemeProvider>

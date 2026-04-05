@@ -118,16 +118,16 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
   if (!user) return <Typography sx={{ p: 4, textAlign: 'center' }}>Faça login para ver seu perfil.</Typography>;
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Paper sx={{ p: 3, mb: 4 }}>
+    <Container maxWidth="md" sx={{ py: 4, bgcolor: '#FFFAF5', minHeight: '100vh', pb: { xs: 12, md: 4 } }}>
+      <Paper sx={{ p: 3, mb: 4, borderRadius: 5, boxShadow: '0 4px 24px rgba(44,24,16,0.10)' }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h4" fontWeight="bold">Meu Perfil</Typography>
+          <Typography variant="h4" fontWeight="bold" sx={{ color: '#2C1810' }}>Meu Perfil</Typography>
           {!isEditing ? (
-            <Button variant="outlined" onClick={() => setIsEditing(true)}>Editar Dados</Button>
+            <Button variant="outlined" onClick={() => setIsEditing(true)} sx={{ borderRadius: 50, borderColor: '#D4580A', color: '#D4580A' }}>Editar Dados</Button>
           ) : (
             <Box display="flex" gap={1}>
-              <Button variant="outlined" onClick={() => { setIsEditing(false); setFormData(user); setSenhaAtual(""); }}>Cancelar</Button>
-              <Button variant="contained" onClick={handleSave}>Salvar</Button>
+              <Button variant="outlined" onClick={() => { setIsEditing(false); setFormData(user); setSenhaAtual(""); }} sx={{ borderRadius: 50 }}>Cancelar</Button>
+              <Button variant="contained" onClick={handleSave} sx={{ borderRadius: 50, bgcolor: '#D4580A', '&:hover': { bgcolor: '#B84508' } }}>Salvar</Button>
             </Box>
           )}
         </Box>
@@ -176,11 +176,11 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
 
       {maisComprados.length > 0 && (
         <>
-          <Typography variant="h5" fontWeight="bold" mb={2}>Comprar Novamente</Typography>
+          <Typography variant="h5" fontWeight="bold" mb={2} sx={{ color: '#2C1810' }}>Comprar Novamente</Typography>
           <Grid container spacing={2} mb={4}>
             {maisComprados.map(item => (
               <Grid item xs={6} sm={4} md={3} key={item.id}>
-                <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderRadius: 3 }}>
+                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderRadius: 4, boxShadow: '0 2px 12px rgba(44,24,16,0.08)', transition: 'all 0.2s', '&:hover': { transform: 'translateY(-3px)', boxShadow: '0 6px 20px rgba(44,24,16,0.14)' } }}>
                   <Box
                     component="img"
                     src={item.imagem || (item.imagens?.[0]?.imagem) || "https://via.placeholder.com/300?text=Sem+Imagem"}
@@ -192,12 +192,14 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
                     <Typography variant="caption" color="text.secondary">Comprado {item.total_comprado}x</Typography>
                   </CardContent>
                   <CardActions>
-                    <Button 
-                      size="small" 
-                      fullWidth 
-                      startIcon={<AddShoppingCart />} 
+                    <Button
+                      size="small"
+                      fullWidth
+                      variant="contained"
+                      startIcon={<AddShoppingCart />}
                       onClick={() => handleBuyItem(item)}
                       disabled={!isStoreOpen}
+                      sx={{ borderRadius: 50, bgcolor: '#D4580A', '&:hover': { bgcolor: '#B84508' } }}
                     >
                       Comprar
                     </Button>
@@ -209,8 +211,8 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
         </>
       )}
 
-      <Typography variant="h5" fontWeight="bold" mb={2}>Meus Pedidos</Typography>
-      <Paper>
+      <Typography variant="h5" fontWeight="bold" mb={2} sx={{ color: '#2C1810' }}>Meus Pedidos</Typography>
+      <Paper sx={{ borderRadius: 4, boxShadow: '0 4px 24px rgba(44,24,16,0.08)' }}>
         <Table>
           <TableHead>
             <TableRow>
