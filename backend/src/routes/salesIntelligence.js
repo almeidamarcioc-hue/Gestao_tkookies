@@ -39,28 +39,37 @@ async function coletarDados() {
       LIMIT 15
     `),
 
-    // Top clientes
+    // Top clientes + revendedores
     pool.query(`
       SELECT
-        c.nome, c.telefone,
+        COALESCE(c.nome, r.razao_social) AS nome,
+        COALESCE(c.telefone, r.telefone) AS telefone,
+        p.tipo_cliente,
         COUNT(p.id) AS total_pedidos,
         COALESCE(SUM(p.valor_total), 0) AS total_gasto,
         MAX(p.data_pedido) AS ultimo_pedido
-      FROM clientes c
-      JOIN pedidos p ON p.cliente_id = c.id
-        AND p.data_pedido >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+      FROM pedidos p
+      LEFT JOIN clientes c ON p.cliente_id = c.id AND p.tipo_cliente = 'cliente'
+      LEFT JOIN revendedores r ON p.cliente_id = r.id AND p.tipo_cliente = 'revendedor'
+      WHERE p.data_pedido >= DATE_SUB(NOW(), INTERVAL 30 DAY)
         AND p.status != 'Cancelado'
-      GROUP BY c.id, c.nome, c.telefone
+      GROUP BY p.cliente_id, p.tipo_cliente, c.nome, r.razao_social, c.telefone, r.telefone
       ORDER BY total_gasto DESC
       LIMIT 10
     `),
 
-    // Clientes que sumiram (compraram antes, mas não nos últimos 15 dias)
+    // Clientes e revendedores que sumiram (sem pedidos nos últimos 15 dias)
     pool.query(`
-      SELECT c.nome, c.telefone, MAX(p.data_pedido) AS ultimo_pedido
-      FROM clientes c
-      JOIN pedidos p ON p.cliente_id = c.id AND p.status != 'Cancelado'
-      GROUP BY c.id, c.nome, c.telefone
+      SELECT
+        COALESCE(c.nome, r.razao_social) AS nome,
+        COALESCE(c.telefone, r.telefone) AS telefone,
+        p.tipo_cliente,
+        MAX(p.data_pedido) AS ultimo_pedido
+      FROM pedidos p
+      LEFT JOIN clientes c ON p.cliente_id = c.id AND p.tipo_cliente = 'cliente'
+      LEFT JOIN revendedores r ON p.cliente_id = r.id AND p.tipo_cliente = 'revendedor'
+      WHERE p.status != 'Cancelado'
+      GROUP BY p.cliente_id, p.tipo_cliente, c.nome, r.razao_social, c.telefone, r.telefone
       HAVING MAX(p.data_pedido) < DATE_SUB(NOW(), INTERVAL 15 DAY)
         AND MAX(p.data_pedido) >= DATE_SUB(NOW(), INTERVAL 60 DAY)
       ORDER BY ultimo_pedido DESC
@@ -120,11 +129,11 @@ Você recebe dados de um sistema de gestão de uma empresa de venda de cookies.
 
 ## SUA ANÁLISE DEVE COBRIR 6 BLOCOS:
 
-### BLOCO 1 — PODER DE COMPRA DOS CLIENTES
-Com base nos pedidos dos últimos 30 dias:
-- Classifique os clientes em 3 grupos: Alto, Médio e Baixo poder de compra
-- Destaque os TOP 3 clientes que mais compraram
-- Identifique clientes que compravam e sumiram (sem pedidos nos últimos 15 dias)
+### BLOCO 1 — PODER DE COMPRA DOS CLIENTES E REVENDEDORES
+Com base nos pedidos dos últimos 30 dias (inclui clientes diretos e revendedores):
+- Classifique em 3 grupos: Alto, Médio e Baixo volume de compra
+- Destaque os TOP 3 que mais compraram (indique se é CLIENTE ou REVENDEDOR)
+- Identifique quem sumiu há mais de 15 dias (indique o tipo e sugira ação de reativação)
 
 ### BLOCO 2 — COOKIES MAIS VENDIDOS (ÚLTIMOS 30 DIAS)
 - Liste os produtos em ordem de quantidade vendida
@@ -194,14 +203,14 @@ ${dados.topProdutos.map((p, i) =>
   `${i+1}. ${p.nome} — Qtd: ${p.total_vendido} | Receita: R$ ${Number(p.receita).toFixed(2)} | Preço: R$ ${Number(p.preco_venda).toFixed(2)} | Custo: R$ ${Number(p.custo || 0).toFixed(2)}`
 ).join('\n')}
 
-**TOP CLIENTES:**
+**TOP CLIENTES E REVENDEDORES:**
 ${dados.topClientes.length ? dados.topClientes.map((c, i) =>
-  `${i+1}. ${c.nome} — ${c.total_pedidos} pedidos | R$ ${Number(c.total_gasto).toFixed(2)} | Último: ${new Date(c.ultimo_pedido).toLocaleDateString('pt-BR')}`
-).join('\n') : 'Nenhum cliente com pedidos no período.'}
+  `${i+1}. ${c.nome} [${c.tipo_cliente === 'revendedor' ? 'REVENDEDOR' : 'CLIENTE'}] — ${c.total_pedidos} pedidos | R$ ${Number(c.total_gasto).toFixed(2)} | Último: ${new Date(c.ultimo_pedido).toLocaleDateString('pt-BR')}`
+).join('\n') : 'Nenhum cliente ou revendedor com pedidos no período.'}
 
-**CLIENTES QUE SUMIRAM (compraram mas sem pedidos há 15+ dias):**
+**CLIENTES/REVENDEDORES QUE SUMIRAM (sem pedidos há 15+ dias):**
 ${dados.clientesSumidos.length ? dados.clientesSumidos.map(c =>
-  `- ${c.nome} (tel: ${c.telefone}) — último pedido: ${new Date(c.ultimo_pedido).toLocaleDateString('pt-BR')}`
+  `- ${c.nome} [${c.tipo_cliente === 'revendedor' ? 'REVENDEDOR' : 'CLIENTE'}] (tel: ${c.telefone}) — último pedido: ${new Date(c.ultimo_pedido).toLocaleDateString('pt-BR')}`
 ).join('\n') : 'Nenhum.'}
 
 **PEDIDOS POR DIA DA SEMANA:**
