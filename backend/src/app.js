@@ -17,6 +17,7 @@ import financialRouter from "./routes/financial.js";
 import resellersRouter from "./routes/resellers.js";
 import favoritesRouter from "./routes/favorites.js";
 import relatoriosRoutes from "./routes/relatorios.js"; // Garante que aponta para backend/src/routes/
+import reportsRouter from "./routes/reports.js";
 import testimonialsRouter from "./routes/testimonials.js";
 import analyticsRouter from "./routes/analytics.js";
 import salesIntelligenceRouter from "./routes/salesIntelligence.js";
@@ -123,7 +124,8 @@ app.use("/financeiro", authenticateToken, requireRole('admin'), financialRouter)
 app.use("/revendedores", authenticateToken, requireRole('admin'), resellersRouter);
 app.use("/favoritos", authenticateToken, favoritesRouter); // Favoritos para clientes logados
 // Removemos os middlewares globais daqui porque relatoriosRoutes já possui proteção interna por rota
-app.use("/relatorios", relatoriosRoutes); 
+app.use("/relatorios", relatoriosRoutes);
+app.use("/relatorios", authenticateToken, requireRole('admin'), reportsRouter); 
 app.use("/depoimentos", testimonialsRouter);
 app.use("/analytics", authenticateToken, analyticsRouter);
 app.use("/inteligencia-vendas", authenticateToken, salesIntelligenceRouter); // Depoimentos podem ser públicos

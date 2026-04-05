@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Box, Button, Container, Typography, Paper, CircularProgress, Alert } from "@mui/material";
 import { AutoAwesome, Refresh } from "@mui/icons-material";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 const BASE_URL = (import.meta.env.VITE_API_URL || (
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
@@ -168,7 +169,7 @@ export default function InteligenciaVendas() {
             '& li': { mb: 0.5 },
             '& hr': { border: 'none', borderTop: '1px dashed #FFCC80', my: 2 },
           }}>
-            <ReactMarkdown>{texto}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{texto}</ReactMarkdown>
           </Box>
 
           {loading && texto && (
