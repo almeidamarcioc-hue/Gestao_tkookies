@@ -19,6 +19,7 @@ import favoritesRouter from "./routes/favorites.js";
 import relatoriosRoutes from "./routes/relatorios.js"; // Garante que aponta para backend/src/routes/
 import testimonialsRouter from "./routes/testimonials.js";
 import analyticsRouter from "./routes/analytics.js";
+import salesIntelligenceRouter from "./routes/salesIntelligence.js";
 import { authenticateToken, requireRole } from "./middlewares/auth.js";
 
 const app = express();
@@ -124,7 +125,8 @@ app.use("/favoritos", authenticateToken, favoritesRouter); // Favoritos para cli
 // Removemos os middlewares globais daqui porque relatoriosRoutes já possui proteção interna por rota
 app.use("/relatorios", relatoriosRoutes); 
 app.use("/depoimentos", testimonialsRouter);
-app.use("/analytics", authenticateToken, analyticsRouter); // Depoimentos podem ser públicos
+app.use("/analytics", authenticateToken, analyticsRouter);
+app.use("/inteligencia-vendas", authenticateToken, salesIntelligenceRouter); // Depoimentos podem ser públicos
 
 // Rota especial para criar tabelas na Vercel (Executar uma vez após deploy)
 app.get("/api/migrate", authenticateToken, requireRole('admin'), async (req, res) => {
