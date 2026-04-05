@@ -49,7 +49,7 @@ async function coletarDados() {
         COALESCE(SUM(p.valor_total), 0) AS total_gasto,
         MAX(p.data_pedido) AS ultimo_pedido
       FROM pedidos p
-      LEFT JOIN clientes c ON p.cliente_id = c.id AND p.tipo_cliente = 'cliente'
+      LEFT JOIN clientes c ON p.cliente_id = c.id AND (p.tipo_cliente IS NULL OR p.tipo_cliente = 'consumidor')
       LEFT JOIN revendedores r ON p.cliente_id = r.id AND p.tipo_cliente = 'revendedor'
       WHERE p.data_pedido >= DATE_SUB(NOW(), INTERVAL 30 DAY)
         AND p.status != 'Cancelado'
@@ -66,7 +66,7 @@ async function coletarDados() {
         p.tipo_cliente,
         MAX(p.data_pedido) AS ultimo_pedido
       FROM pedidos p
-      LEFT JOIN clientes c ON p.cliente_id = c.id AND p.tipo_cliente = 'cliente'
+      LEFT JOIN clientes c ON p.cliente_id = c.id AND (p.tipo_cliente IS NULL OR p.tipo_cliente = 'consumidor')
       LEFT JOIN revendedores r ON p.cliente_id = r.id AND p.tipo_cliente = 'revendedor'
       WHERE p.status != 'Cancelado'
       GROUP BY p.cliente_id, p.tipo_cliente, c.nome, r.razao_social, c.telefone, r.telefone
