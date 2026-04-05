@@ -3,11 +3,11 @@ import { Box, Button, Container, Typography, Paper, CircularProgress, Alert } fr
 import { AutoAwesome, Refresh } from "@mui/icons-material";
 import ReactMarkdown from "react-markdown";
 
-const BASE_URL = import.meta.env.VITE_API_URL || (
+const BASE_URL = (import.meta.env.VITE_API_URL || (
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://localhost:3333'
     : window.VITE_API_URL || 'https://backend-gules-chi.vercel.app'
-);
+)).replace(/\/$/, '');
 
 export default function InteligenciaVendas() {
   const [texto, setTexto] = useState("");
