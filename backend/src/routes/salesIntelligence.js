@@ -141,8 +141,14 @@ Com base nos pedidos dos últimos 30 dias:
 Considere: Segunda a Sábado.
 Com base na média dos últimos 30 dias por dia da semana:
 - Estime a quantidade a ser produzida de cada produto por dia
-- Apresente em formato de tabela: Produto | Seg | Ter | Qua | Qui | Sex | Sáb | TOTAL
-- Mensagem de encorajamento ao final
+- Apresente OBRIGATORIAMENTE em formato de tabela markdown com esta estrutura exata (use | e --- para separadores):
+
+| Produto | Seg | Ter | Qua | Qui | Sex | Sáb | TOTAL |
+|---------|-----|-----|-----|-----|-----|-----|-------|
+| Nome do produto | X | X | X | X | X | X | X |
+
+- IMPORTANTE: cada produto em uma linha separada, nunca em linha única
+- Após a tabela, adicione uma mensagem de encorajamento curta e um versículo bíblico relacionado ao trabalho, dedicação ou colheita, com referência (ex: Provérbios 14:23)
 
 ### BLOCO 5 — INTELIGÊNCIA FINANCEIRA E PROMOÇÕES
 **5.1 — Dia ideal para promoção:**
@@ -171,6 +177,8 @@ Sempre use emojis, negrito e estruture assim:
 [BLOCOS 1 a 6]
 
 > [Frase de fechamento encorajadora para a próxima semana]
+
+> 📖 *"[Versículo bíblico relacionado a propósito, bênção ou abundância]"* — **Referência (ex: Filipenses 4:13)**
 
 ---
 
