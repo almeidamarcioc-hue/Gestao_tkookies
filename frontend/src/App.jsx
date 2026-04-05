@@ -36,6 +36,7 @@ import OrdersDashboard from "./pages/OrdersDashboard";
 import TitheReport from "./pages/TitheReport";
 import BestSellersReport from "./pages/BestSellersReport";
 import RelatorioUsuarios from "./pages/RelatorioUsuarios";
+import RelatorioRanking from "./pages/RelatorioRanking";
 import Analytics from "./pages/Analytics";
 
 const theme = createTheme({
@@ -421,6 +422,7 @@ export default function App() {
                   <MenuItem component={Link} to="/relatorios/dizimo" onClick={handleClose}>Dízimo</MenuItem>
                   <MenuItem component={Link} to="/relatorios/top-produtos" onClick={handleClose}>Sabores mais Amados</MenuItem>
                   <MenuItem component={Link} to="/relatorios/usuarios" onClick={handleClose}>Usuários e Acessos</MenuItem>
+                  <MenuItem component={Link} to="/relatorios/ranking" onClick={handleClose}>Ranking Clientes e Produtos</MenuItem>
                   <MenuItem component={Link} to="/analytics" onClick={handleClose}>Google Analytics</MenuItem>
                 </Menu>
 
@@ -584,6 +586,7 @@ export default function App() {
           <Route path="/relatorios/dizimo" element={<ProtectedRoute isAllowed={isLoggedIn}><TitheReport /></ProtectedRoute>} />
           <Route path="/relatorios/top-produtos" element={<ProtectedRoute isAllowed={isLoggedIn}><BestSellersReport /></ProtectedRoute>} />
           <Route path="/relatorios/usuarios" element={<ProtectedRoute isAllowed={isLoggedIn}><RelatorioUsuarios /></ProtectedRoute>} />
+          <Route path="/relatorios/ranking" element={<ProtectedRoute isAllowed={isLoggedIn}><RelatorioRanking /></ProtectedRoute>} />
           <Route path="/analytics" element={<ProtectedRoute isAllowed={isLoggedIn}><Analytics /></ProtectedRoute>} />
 
           <Route path="*" element={<Navigate to="/" replace />} />

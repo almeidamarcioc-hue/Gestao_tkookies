@@ -138,6 +138,80 @@ router.post("/dizimo/pagar", async (req, res) => {
   }
 });
 
+// TOP 10 CLIENTES QUE MAIS COMPRAM
+router.get("/top-clientes", async (req, res) => {
+  const { startDate, endDate } = req.query;
+  if (!startDate || !endDate) return res.status(400).json({ error: "Datas obrigatórias" });
+  try {
+    const result = await pool.query(`
+      SELECT
+        c.id, c.nome, c.telefone,
+        COUNT(p.id) AS total_pedidos,
+        COALESCE(SUM(p.valor_total), 0) AS total_gasto
+      FROM clientes c
+      JOIN pedidos p ON p.cliente_id = c.id AND p.status != 'Cancelado'
+        AND DATE(p.data_pedido) BETWEEN DATE($1) AND DATE($2)
+      GROUP BY c.id, c.nome, c.telefone
+      ORDER BY total_gasto DESC
+      LIMIT 10
+    `, [startDate, endDate]);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao gerar relatório de top clientes" });
+  }
+});
+
+// CLIENTES QUE MENOS COMPRAM
+router.get("/clientes-inativos", async (req, res) => {
+  const { startDate, endDate } = req.query;
+  if (!startDate || !endDate) return res.status(400).json({ error: "Datas obrigatórias" });
+  try {
+    const result = await pool.query(`
+      SELECT
+        c.id, c.nome, c.telefone,
+        COUNT(p.id) AS total_pedidos,
+        COALESCE(SUM(p.valor_total), 0) AS total_gasto
+      FROM clientes c
+      LEFT JOIN pedidos p ON p.cliente_id = c.id AND p.status != 'Cancelado'
+        AND DATE(p.data_pedido) BETWEEN DATE($1) AND DATE($2)
+      GROUP BY c.id, c.nome, c.telefone
+      ORDER BY total_pedidos ASC, total_gasto ASC
+      LIMIT 10
+    `, [startDate, endDate]);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao gerar relatório de clientes inativos" });
+  }
+});
+
+// PRODUTOS QUE MENOS SAEM
+router.get("/produtos-parados", async (req, res) => {
+  const { startDate, endDate } = req.query;
+  if (!startDate || !endDate) return res.status(400).json({ error: "Datas obrigatórias" });
+  try {
+    const result = await pool.query(`
+      SELECT
+        p.id, p.nome,
+        COALESCE(SUM(ip.quantidade), 0) AS total_vendido,
+        p.estoque AS estoque_atual
+      FROM produtos p
+      LEFT JOIN itens_pedido ip ON p.id = ip.produto_id
+      LEFT JOIN pedidos ped ON ip.pedido_id = ped.id AND ped.status != 'Cancelado'
+        AND DATE(ped.data_pedido) BETWEEN DATE($1) AND DATE($2)
+      WHERE p.ativo = TRUE
+      GROUP BY p.id, p.nome, p.estoque
+      ORDER BY total_vendido ASC
+      LIMIT 10
+    `, [startDate, endDate]);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao gerar relatório de produtos parados" });
+  }
+});
+
 // RELATÓRIO DE PRODUTOS MAIS VENDIDOS
 router.get("/top-produtos", async (req, res) => {
   const { startDate, endDate } = req.query;
