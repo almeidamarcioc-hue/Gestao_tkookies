@@ -100,9 +100,9 @@ export default function InteligenciaVendas() {
       {erro && (
         <Alert severity="error" sx={{ mb: 3 }} onClose={() => setErro(null)}>
           {erro}
-          {erro.includes("ANTHROPIC_API_KEY") && (
+          {erro.includes("GEMINI_API_KEY") && (
             <Typography variant="body2" mt={1}>
-              Adicione a variável <strong>ANTHROPIC_API_KEY</strong> nas configurações do backend no Vercel.
+              Adicione a variável <strong>GEMINI_API_KEY</strong> nas configurações do backend no Vercel.
             </Typography>
           )}
         </Alert>

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { pool } from "../db/index.js";
 import { requireRole } from "../middlewares/auth.js";
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const router = Router();
 
@@ -209,8 +209,8 @@ ${dados.financeiro.map(f =>
 
 // Rota SSE — streaming da análise
 router.get("/", requireRole('admin'), async (req, res) => {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return res.status(500).json({ error: "ANTHROPIC_API_KEY não configurada no servidor." });
+  if (!process.env.GEMINI_API_KEY) {
+    return res.status(500).json({ error: "GEMINI_API_KEY não configurada no servidor." });
   }
 
   res.setHeader('Content-Type', 'text/event-stream');
@@ -222,17 +222,15 @@ router.get("/", requireRole('admin'), async (req, res) => {
     const dados = await coletarDados();
     const prompt = montarPrompt(dados);
 
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-    const stream = await client.messages.stream({
-      model: "claude-opus-4-6",
-      max_tokens: 4096,
-      messages: [{ role: "user", content: prompt }],
-    });
+    const result = await model.generateContentStream(prompt);
 
-    for await (const event of stream) {
-      if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-        res.write(`data: ${JSON.stringify({ text: event.delta.text })}\n\n`);
+    for await (const chunk of result.stream) {
+      const text = chunk.text();
+      if (text) {
+        res.write(`data: ${JSON.stringify({ text })}\n\n`);
       }
     }
 
