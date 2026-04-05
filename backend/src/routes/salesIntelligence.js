@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { pool } from "../db/index.js";
 import { requireRole } from "../middlewares/auth.js";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import Groq from "groq-sdk";
 
 const router = Router();
 
@@ -209,8 +209,8 @@ ${dados.financeiro.map(f =>
 
 // Rota SSE — streaming da análise
 router.get("/", requireRole('admin'), async (req, res) => {
-  if (!process.env.GEMINI_API_KEY) {
-    return res.status(500).json({ error: "GEMINI_API_KEY não configurada no servidor." });
+  if (!process.env.GROQ_API_KEY) {
+    return res.status(500).json({ error: "GROQ_API_KEY não configurada no servidor." });
   }
 
   res.setHeader('Content-Type', 'text/event-stream');
@@ -222,13 +222,17 @@ router.get("/", requireRole('admin'), async (req, res) => {
     const dados = await coletarDados();
     const prompt = montarPrompt(dados);
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-    const result = await model.generateContentStream(prompt);
+    const stream = await client.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [{ role: "user", content: prompt }],
+      stream: true,
+      max_tokens: 4096,
+    });
 
-    for await (const chunk of result.stream) {
-      const text = chunk.text();
+    for await (const chunk of stream) {
+      const text = chunk.choices[0]?.delta?.content || "";
       if (text) {
         res.write(`data: ${JSON.stringify({ text })}\n\n`);
       }
