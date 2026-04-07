@@ -128,21 +128,41 @@ router.get("/buscar", requireRole("admin"), async (req, res) => {
 );
 out body center;`;
 
-  const { signal, clear } = makeTimeoutSignal(30_000);
-  try {
-    const response = await fetch("https://overpass-api.de/api/interpreter", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: `data=${encodeURIComponent(overpassQuery)}`,
-      signal,
-    });
-    clear();
+  // Mirrors da Overpass API — tenta em sequência até um funcionar
+  const OVERPASS_MIRRORS = [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://overpass.openstreetmap.fr/api/interpreter",
+  ];
 
-    if (!response.ok) {
-      throw new Error(`Overpass API retornou ${response.status}`);
+  async function queryOverpass(query) {
+    const erros = [];
+    for (const url of OVERPASS_MIRRORS) {
+      const { signal, clear } = makeTimeoutSignal(28_000);
+      try {
+        console.log(`[Overpass] Tentando ${url}`);
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: `data=${encodeURIComponent(query)}`,
+          signal,
+        });
+        clear();
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        console.log(`[Overpass] Sucesso em ${url} — ${data.elements?.length} elementos`);
+        return data;
+      } catch (err) {
+        clear();
+        console.warn(`[Overpass] Falhou ${url}: ${err.message}`);
+        erros.push(`${url}: ${err.message}`);
+      }
     }
+    throw new Error(`Todos os servidores Overpass falharam. Detalhes: ${erros.join(" | ")}`);
+  }
 
-    const data = await response.json();
+  try {
+    const data = await queryOverpass(overpassQuery);
 
     const empresas = data.elements
       .filter((el) => el.tags?.name)
@@ -191,11 +211,10 @@ out body center;`;
         "BrasilAPI: gratuita, sem limite documentado. ReceitaWS: 3 req/min no plano gratuito. Consulte CNPJs com moderação.",
     });
   } catch (err) {
-    clear();
     console.error("Erro Overpass API:", err.message);
     res.status(500).json({
-      error: "Falha ao consultar o OpenStreetMap.",
-      detalhe: err.message,
+      error: err.message,
+      detalhe: "Falha ao consultar servidores OpenStreetMap (Overpass API).",
     });
   }
 });
