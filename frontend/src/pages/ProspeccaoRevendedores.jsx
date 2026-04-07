@@ -20,6 +20,79 @@ const BASE_URL = (
   )
 ).replace(/\/$/, "");
 
+// Coordenadas da TKookies — Três de Maio, RS
+const TKOOKIES_LAT = -27.7847;
+const TKOOKIES_LNG = -54.2394;
+const RAIO_METROS = 50_000;
+
+// Mirrors Overpass — chamados diretamente do browser (sem bloqueio de IP)
+const OVERPASS_MIRRORS = [
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+  "https://overpass.openstreetmap.fr/api/interpreter",
+];
+
+const TIPO_MAP = {
+  bakery: "Padaria", pastry: "Pastelaria / Confeitaria",
+  confectionery: "Casa de Doces", chocolate: "Chocolateria",
+  cake: "Doceria / Bolos", cafe: "Café", fast_food: "Lanchonete",
+  deli: "Delicatessen", convenience: "Mercearia / Conveniência",
+  coffee: "Cafeteria", ice_cream: "Sorveteria", supermarket: "Supermercado",
+};
+
+const SCORE_POR_TIPO = {
+  bakery: 92, pastry: 90, confectionery: 90, chocolate: 88, cake: 87,
+  cafe: 68, coffee: 65, ice_cream: 58, deli: 55, convenience: 50,
+  fast_food: 48, supermarket: 42,
+};
+
+const PALAVRAS_QUENTES = ["padaria","confeit","doce","bolo","biscoito","cookie","pão","panific","pastel","torta","chocolate","brigadeiro","doceria"];
+const PALAVRAS_MORNAS  = ["café","coffee","lanche","empório","mercado","mercearia","cafeteria"];
+
+function calcularTemperatura(tags) {
+  const tipo = (tags.shop || tags.amenity || "").toLowerCase();
+  const nome = (tags.name || "").toLowerCase();
+  let score = SCORE_POR_TIPO[tipo] ?? 30;
+  if (PALAVRAS_QUENTES.some((p) => nome.includes(p))) score = Math.min(100, score + 12);
+  else if (PALAVRAS_MORNAS.some((p) => nome.includes(p))) score = Math.min(100, score + 5);
+  if (score >= 80) return { nivel: "QUENTE",    emoji: "🔥", cor: "#C62828", label: "Quente",    score };
+  if (score >= 55) return { nivel: "MORNO",     emoji: "🟡", cor: "#E65100", label: "Morno",     score };
+  if (score >= 40) return { nivel: "AQUECENDO", emoji: "🌤️", cor: "#F9A825", label: "Aquecendo", score };
+  return             { nivel: "FRIO",       emoji: "❄️", cor: "#1565C0", label: "Frio",       score };
+}
+
+function distanciaKm(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lng2 - lng1) * Math.PI) / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)) * 10) / 10;
+}
+
+function mapearElemento(el) {
+  const tags = el.tags || {};
+  const elLat = el.lat ?? el.center?.lat;
+  const elLng = el.lon ?? el.center?.lon;
+  const tipo  = tags.shop || tags.amenity || "outro";
+  return {
+    osm_id: el.id,
+    nome: tags.name,
+    tipo_osm: tipo,
+    tipo_label: TIPO_MAP[tipo] || tipo,
+    cidade: tags["addr:city"] || tags["addr:municipality"] || null,
+    bairro: tags["addr:suburb"] || null,
+    logradouro: tags["addr:street"] ? `${tags["addr:street"]}${tags["addr:housenumber"] ? ", "+tags["addr:housenumber"] : ""}` : null,
+    telefone: tags.phone || tags["contact:phone"] || null,
+    website: tags.website || tags["contact:website"] || null,
+    email: tags.email || tags["contact:email"] || null,
+    cnpj: tags["ref:CNPJ"] || tags.cnpj || null,
+    lat: elLat, lng: elLng,
+    distancia_km: elLat && elLng ? distanciaKm(TKOOKIES_LAT, TKOOKIES_LNG, elLat, elLng) : null,
+    temperatura: calcularTemperatura(tags),
+    dados_receita: null,
+  };
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function authHeaders() {
@@ -332,20 +405,40 @@ export default function ProspeccaoRevendedores() {
     setEmpresas([]);
     setAiAnalises({});
     setResumoIA("");
-    try {
-      const res = await fetch(`${BASE_URL}/prospeccao-revendedores/buscar`, {
-        headers: authHeaders(),
-        signal: AbortSignal.timeout(40_000),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || json.detalhe || "Erro ao buscar empresas.");
-      setEmpresas(json.empresas || []);
-      setTotal(json.total);
-    } catch (e) {
-      setErro(e.message || "Falha na conexão com o servidor.");
-    } finally {
-      setLoading(false);
+
+    const query = `[out:json][timeout:25];
+(
+  node["shop"~"bakery|pastry|confectionery|chocolate|cake|deli|convenience|coffee|supermarket"](around:${RAIO_METROS},${TKOOKIES_LAT},${TKOOKIES_LNG});
+  node["amenity"~"cafe|fast_food|ice_cream"](around:${RAIO_METROS},${TKOOKIES_LAT},${TKOOKIES_LNG});
+  way["shop"~"bakery|pastry|confectionery|cafe"](around:${RAIO_METROS},${TKOOKIES_LAT},${TKOOKIES_LNG});
+  way["amenity"~"cafe|fast_food"](around:${RAIO_METROS},${TKOOKIES_LAT},${TKOOKIES_LNG});
+);
+out body center;`;
+
+    let ultimoErro = "";
+    for (const mirror of OVERPASS_MIRRORS) {
+      try {
+        const res = await fetch(mirror, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: `data=${encodeURIComponent(query)}`,
+          signal: AbortSignal.timeout(30_000),
+        });
+        if (!res.ok) { ultimoErro = `${mirror} retornou ${res.status}`; continue; }
+        const json = await res.json();
+        const empresas = (json.elements || [])
+          .filter((el) => el.tags?.name)
+          .map(mapearElemento)
+          .sort((a, b) => b.temperatura.score - a.temperatura.score || (a.distancia_km ?? 999) - (b.distancia_km ?? 999));
+        setEmpresas(empresas);
+        setLoading(false);
+        return;
+      } catch (e) {
+        ultimoErro = `${mirror}: ${e.message}`;
+      }
     }
+    setErro(`Não foi possível acessar o OpenStreetMap. ${ultimoErro}`);
+    setLoading(false);
   }
 
   async function analisarComIA() {
