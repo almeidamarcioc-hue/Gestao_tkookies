@@ -90,6 +90,14 @@ function distanciaKm(lat1, lng1, lat2, lng2) {
   return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 10) / 10;
 }
 
+// Helper: AbortSignal com timeout compatível com Node 16+
+function makeTimeoutSignal(ms) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(new Error(`Timeout após ${ms}ms`)), ms);
+  const clear = () => clearTimeout(id);
+  return { signal: controller.signal, clear };
+}
+
 // ─── GET /prospeccao-revendedores/buscar ─────────────────────────────────────
 // Busca empresas no OpenStreetMap via Overpass API dentro do raio definido
 
@@ -100,7 +108,7 @@ router.get("/buscar", requireRole("admin"), async (req, res) => {
 
   try {
     const [rows] = await pool.query(
-      "SELECT valor FROM configuracoes WHERE chave IN ('lat_tkookies', 'lng_tkookies')"
+      "SELECT chave, valor FROM configuracoes WHERE chave IN ('lat_tkookies', 'lng_tkookies')"
     );
     const configLat = rows.find((r) => r.chave === "lat_tkookies");
     const configLng = rows.find((r) => r.chave === "lng_tkookies");
@@ -110,38 +118,25 @@ router.get("/buscar", requireRole("admin"), async (req, res) => {
     // Usa coordenadas padrão se a tabela/coluna não existir
   }
 
-  // Query Overpass: busca múltiplos tipos de negócio simultaneamente
-  const overpassQuery = `[out:json][timeout:30];
+  // Query Overpass simplificada — apenas nodes para resposta mais rápida
+  const overpassQuery = `[out:json][timeout:25];
 (
-  node["shop"="bakery"](around:${RAIO_METROS},${lat},${lng});
-  node["shop"="pastry"](around:${RAIO_METROS},${lat},${lng});
-  node["shop"="confectionery"](around:${RAIO_METROS},${lat},${lng});
-  node["shop"="chocolate"](around:${RAIO_METROS},${lat},${lng});
-  node["shop"="cake"](around:${RAIO_METROS},${lat},${lng});
-  node["amenity"="cafe"](around:${RAIO_METROS},${lat},${lng});
-  node["amenity"="fast_food"](around:${RAIO_METROS},${lat},${lng});
-  node["shop"="deli"](around:${RAIO_METROS},${lat},${lng});
-  node["shop"="convenience"](around:${RAIO_METROS},${lat},${lng});
-  node["amenity"="ice_cream"](around:${RAIO_METROS},${lat},${lng});
-  node["shop"="coffee"](around:${RAIO_METROS},${lat},${lng});
-  way["shop"="bakery"](around:${RAIO_METROS},${lat},${lng});
-  way["shop"="pastry"](around:${RAIO_METROS},${lat},${lng});
-  way["shop"="confectionery"](around:${RAIO_METROS},${lat},${lng});
-  way["amenity"="cafe"](around:${RAIO_METROS},${lat},${lng});
-  way["amenity"="fast_food"](around:${RAIO_METROS},${lat},${lng});
-  way["shop"="supermarket"](around:${RAIO_METROS},${lat},${lng});
-  way["shop"="convenience"](around:${RAIO_METROS},${lat},${lng});
-  relation["shop"="bakery"](around:${RAIO_METROS},${lat},${lng});
+  node["shop"~"bakery|pastry|confectionery|chocolate|cake|deli|convenience|coffee|supermarket"](around:${RAIO_METROS},${lat},${lng});
+  node["amenity"~"cafe|fast_food|ice_cream"](around:${RAIO_METROS},${lat},${lng});
+  way["shop"~"bakery|pastry|confectionery|cafe"](around:${RAIO_METROS},${lat},${lng});
+  way["amenity"~"cafe|fast_food"](around:${RAIO_METROS},${lat},${lng});
 );
 out body center;`;
 
+  const { signal, clear } = makeTimeoutSignal(30_000);
   try {
     const response = await fetch("https://overpass-api.de/api/interpreter", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: `data=${encodeURIComponent(overpassQuery)}`,
-      signal: AbortSignal.timeout(35_000),
+      signal,
     });
+    clear();
 
     if (!response.ok) {
       throw new Error(`Overpass API retornou ${response.status}`);
@@ -196,6 +191,7 @@ out body center;`;
         "BrasilAPI: gratuita, sem limite documentado. ReceitaWS: 3 req/min no plano gratuito. Consulte CNPJs com moderação.",
     });
   } catch (err) {
+    clear();
     console.error("Erro Overpass API:", err.message);
     res.status(500).json({
       error: "Falha ao consultar o OpenStreetMap.",
@@ -217,10 +213,12 @@ router.get("/cnpj/:cnpj", requireRole("admin"), async (req, res) => {
 
   // ── BrasilAPI (primária) ──────────────────────────────────────────────────
   try {
+    const { signal: sig1, clear: clr1 } = makeTimeoutSignal(15_000);
     const resp = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`, {
       headers: { "User-Agent": "TKookies-ERP/1.0 (prospecção comercial)" },
-      signal: AbortSignal.timeout(15_000),
+      signal: sig1,
     });
+    clr1();
 
     if (resp.status === 404) {
       return res.status(404).json({ error: "CNPJ não encontrado na Receita Federal." });
@@ -245,10 +243,12 @@ router.get("/cnpj/:cnpj", requireRole("admin"), async (req, res) => {
 
 async function consultarReceitaWS(cnpj, res) {
   try {
+    const { signal: sig2, clear: clr2 } = makeTimeoutSignal(15_000);
     const resp = await fetch(`https://www.receitaws.com.br/v1/cnpj/${cnpj}`, {
       headers: { "User-Agent": "TKookies-ERP/1.0" },
-      signal: AbortSignal.timeout(15_000),
+      signal: sig2,
     });
+    clr2();
 
     if (resp.status === 429) {
       return res.status(429).json({
