@@ -25,11 +25,11 @@ const TKOOKIES_LAT = -27.7847;
 const TKOOKIES_LNG = -54.2394;
 const RAIO_METROS = 50_000;
 
-// Mirrors Overpass — chamados diretamente do browser (sem bloqueio de IP)
+// Mirrors Overpass testados e confirmados — chamados diretamente do browser
 const OVERPASS_MIRRORS = [
-  "https://overpass-api.de/api/interpreter",
-  "https://overpass.kumi.systems/api/interpreter",
-  "https://overpass.private.coffee/api/interpreter",
+  "https://lz4.overpass-api.de/api/interpreter",   // ~1.5s ✓
+  "https://z.overpass-api.de/api/interpreter",      // ~1.5s ✓
+  "https://overpass-api.de/api/interpreter",        // ~2.7s ✓ (fallback)
 ];
 
 // Bounding box de 50km ao redor de Três de Maio, RS
