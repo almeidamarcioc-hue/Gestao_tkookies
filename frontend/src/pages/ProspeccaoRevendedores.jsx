@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import {
   Search, AutoAwesome, ExpandMore, ExpandLess, Business,
-  Phone, LocationOn, OpenInNew, Info, FilterList, Refresh,
+  Phone, LocationOn, OpenInNew, Info, FilterList, Refresh, TravelExplore,
 } from "@mui/icons-material";
 
 const BASE_URL = (
@@ -178,9 +178,7 @@ function EmpresaRow({ empresa, onConsultarCNPJ, aiAnalise }) {
     emoji: { QUENTE: "🔥", MORNO: "🟡", AQUECENDO: "🌤️", FRIO: "❄️" }[aiAnalise.temperatura] || "❓",
   } : empresa.temperatura;
 
-  async function handleConsultarCNPJ() {
-    const cnpj = cnpjInput.replace(/\D/g, "");
-    if (cnpj.length !== 14) { setErro("CNPJ inválido (14 dígitos)."); return; }
+  async function consultarCNPJ(cnpj) {
     setConsultando(true);
     setErro(null);
     try {
@@ -197,6 +195,17 @@ function EmpresaRow({ empresa, onConsultarCNPJ, aiAnalise }) {
     } finally {
       setConsultando(false);
     }
+  }
+
+  async function handleConsultarCNPJ() {
+    const cnpj = cnpjInput.replace(/\D/g, "");
+    if (cnpj.length !== 14) { setErro("CNPJ inválido (14 dígitos)."); return; }
+    await consultarCNPJ(cnpj);
+  }
+
+  async function handleConsultarCNPJDireto(cnpj) {
+    if (consultando) return;
+    await consultarCNPJ(cnpj);
   }
 
   const enderecoDisplay = dados?.logradouro
@@ -241,32 +250,56 @@ function EmpresaRow({ empresa, onConsultarCNPJ, aiAnalise }) {
               {formatarCNPJ(dados.cnpj)}
             </Typography>
           ) : (
-            <Box onClick={(e) => e.stopPropagation()} display="flex" gap={0.5}>
-              <TextField
-                size="small"
-                placeholder="Digite o CNPJ"
-                value={cnpjInput}
-                onChange={(e) => setCnpjInput(e.target.value)}
-                sx={{ width: 170, "& input": { fontSize: "0.78rem", py: 0.5 } }}
-                InputProps={{
-                  startAdornment: <InputAdornment position="start"><Business fontSize="small" /></InputAdornment>,
-                }}
-              />
-              <Tooltip title="Consultar Receita Federal">
-                <span>
+            <Box onClick={(e) => e.stopPropagation()}>
+              <Box display="flex" gap={0.5} alignItems="center">
+                <TextField
+                  size="small"
+                  placeholder="Digite o CNPJ"
+                  value={cnpjInput}
+                  onChange={(e) => {
+                    // Aceita só dígitos, máximo 14
+                    const digits = e.target.value.replace(/\D/g, "").slice(0, 14);
+                    setCnpjInput(digits);
+                    // Auto-dispara consulta quando completa 14 dígitos
+                    if (digits.length === 14) {
+                      setTimeout(() => {
+                        const cnpj = digits;
+                        if (cnpj.length === 14) handleConsultarCNPJDireto(cnpj);
+                      }, 300);
+                    }
+                  }}
+                  sx={{ width: 150, "& input": { fontSize: "0.78rem", py: 0.5 } }}
+                  InputProps={{
+                    startAdornment: <InputAdornment position="start"><Business fontSize="small" /></InputAdornment>,
+                  }}
+                />
+                <Tooltip title="Consultar Receita Federal">
+                  <span>
+                    <IconButton size="small" onClick={handleConsultarCNPJ} disabled={consultando} sx={{ color: "#4E342E" }}>
+                      {consultando ? <CircularProgress size={16} /> : <Search fontSize="small" />}
+                    </IconButton>
+                  </span>
+                </Tooltip>
+                <Tooltip title="Buscar CNPJ desta empresa no Google">
                   <IconButton
                     size="small"
-                    onClick={handleConsultarCNPJ}
-                    disabled={consultando}
-                    sx={{ color: "#4E342E" }}
+                    sx={{ color: "#1976D2" }}
+                    onClick={() => {
+                      const q = encodeURIComponent(`"${empresa.nome}" ${empresa.cidade || "RS"} CNPJ`);
+                      window.open(`https://www.google.com/search?q=${q}`, "_blank");
+                    }}
                   >
-                    {consultando ? <CircularProgress size={16} /> : <Search fontSize="small" />}
+                    <TravelExplore fontSize="small" />
                   </IconButton>
-                </span>
-              </Tooltip>
+                </Tooltip>
+              </Box>
+              {cnpjInput.length > 0 && cnpjInput.length < 14 && (
+                <Typography variant="caption" color="text.secondary">{cnpjInput.length}/14 dígitos</Typography>
+              )}
+              {erro && <Typography variant="caption" color="error" display="block">{erro}</Typography>}
             </Box>
           )}
-          {erro && <Typography variant="caption" color="error">{erro}</Typography>}
+          {!dados && !erro && null}
         </TableCell>
 
         {/* Razão Social */}
