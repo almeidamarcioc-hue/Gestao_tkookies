@@ -39,6 +39,7 @@ import RelatorioUsuarios from "./pages/RelatorioUsuarios";
 import RelatorioRanking from "./pages/RelatorioRanking";
 import InteligenciaVendas from "./pages/InteligenciaVendas";
 import Analytics from "./pages/Analytics";
+import ProspeccaoRevendedores from "./pages/ProspeccaoRevendedores";
 
 const theme = createTheme({
   palette: {
@@ -426,6 +427,7 @@ export default function App() {
                   <MenuItem component={Link} to="/relatorios/usuarios" onClick={handleClose}>Usuários e Acessos</MenuItem>
                   <MenuItem component={Link} to="/relatorios/ranking" onClick={handleClose}>Ranking Clientes e Produtos</MenuItem>
                   <MenuItem component={Link} to="/inteligencia-vendas" onClick={handleClose}>🍪 Inteligência de Vendas (IA)</MenuItem>
+                  <MenuItem component={Link} to="/prospeccao-revendedores" onClick={handleClose}>🗺️ Prospecção de Revendedores</MenuItem>
                   <MenuItem component={Link} to="/analytics" onClick={handleClose}>Google Analytics</MenuItem>
                 </Menu>
 
@@ -591,6 +593,7 @@ export default function App() {
           <Route path="/relatorios/usuarios" element={<ProtectedRoute isAllowed={isLoggedIn}><RelatorioUsuarios /></ProtectedRoute>} />
           <Route path="/relatorios/ranking" element={<ProtectedRoute isAllowed={isLoggedIn}><RelatorioRanking /></ProtectedRoute>} />
           <Route path="/inteligencia-vendas" element={<ProtectedRoute isAllowed={isLoggedIn}><InteligenciaVendas /></ProtectedRoute>} />
+          <Route path="/prospeccao-revendedores" element={<ProtectedRoute isAllowed={isLoggedIn}><ProspeccaoRevendedores /></ProtectedRoute>} />
           <Route path="/analytics" element={<ProtectedRoute isAllowed={isLoggedIn}><Analytics /></ProtectedRoute>} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
