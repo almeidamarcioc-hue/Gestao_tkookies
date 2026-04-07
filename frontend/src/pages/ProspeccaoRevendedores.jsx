@@ -26,12 +26,20 @@ const TKOOKIES_LNG = -54.2394;
 const RAIO_METROS = 50_000;
 
 // Mirrors Overpass — chamados diretamente do browser (sem bloqueio de IP)
-// openstreetmap.fr removido: bloqueia CORS de browsers
 const OVERPASS_MIRRORS = [
-  "https://overpass.kumi.systems/api/interpreter",
   "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
   "https://overpass.private.coffee/api/interpreter",
 ];
+
+// Bounding box de 50km ao redor de Três de Maio, RS
+// bbox = [sul, oeste, norte, leste]  (1°lat ≈ 111km; 1°lon ≈ 99km a -27°)
+const BBOX = {
+  S: (TKOOKIES_LAT - 0.45).toFixed(4),
+  N: (TKOOKIES_LAT + 0.45).toFixed(4),
+  W: (TKOOKIES_LNG - 0.51).toFixed(4),
+  E: (TKOOKIES_LNG + 0.51).toFixed(4),
+};
 
 const TIPO_MAP = {
   bakery: "Padaria", pastry: "Pastelaria / Confeitaria",
@@ -440,19 +448,20 @@ export default function ProspeccaoRevendedores() {
     setAiAnalises({});
     setResumoIA("");
 
-    // Query enxuta: só nodes, tipos mais relevantes, timeout curto
-    const query = `[out:json][timeout:20];
+    // Bounding box é muito mais rápido que "around" no Overpass
+    const bb = `${BBOX.S},${BBOX.W},${BBOX.N},${BBOX.E}`;
+    const query = `[out:json][timeout:15][bbox:${bb}];
 (
-  node["shop"="bakery"](around:${RAIO_METROS},${TKOOKIES_LAT},${TKOOKIES_LNG});
-  node["shop"="pastry"](around:${RAIO_METROS},${TKOOKIES_LAT},${TKOOKIES_LNG});
-  node["shop"="confectionery"](around:${RAIO_METROS},${TKOOKIES_LAT},${TKOOKIES_LNG});
-  node["shop"="chocolate"](around:${RAIO_METROS},${TKOOKIES_LAT},${TKOOKIES_LNG});
-  node["shop"="cake"](around:${RAIO_METROS},${TKOOKIES_LAT},${TKOOKIES_LNG});
-  node["amenity"="cafe"](around:${RAIO_METROS},${TKOOKIES_LAT},${TKOOKIES_LNG});
-  node["amenity"="fast_food"](around:${RAIO_METROS},${TKOOKIES_LAT},${TKOOKIES_LNG});
-  node["amenity"="ice_cream"](around:${RAIO_METROS},${TKOOKIES_LAT},${TKOOKIES_LNG});
-  node["shop"="convenience"](around:${RAIO_METROS},${TKOOKIES_LAT},${TKOOKIES_LNG});
-  node["shop"="supermarket"](around:${RAIO_METROS},${TKOOKIES_LAT},${TKOOKIES_LNG});
+  node["shop"="bakery"];
+  node["shop"="pastry"];
+  node["shop"="confectionery"];
+  node["shop"="chocolate"];
+  node["shop"="cake"];
+  node["amenity"="cafe"];
+  node["amenity"="fast_food"];
+  node["amenity"="ice_cream"];
+  node["shop"="convenience"];
+  node["shop"="supermarket"];
 );
 out body;`;
 
@@ -463,7 +472,7 @@ out body;`;
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: `data=${encodeURIComponent(query)}`,
-          signal: AbortSignal.timeout(22_000),
+          signal: AbortSignal.timeout(18_000),
         });
         if (!res.ok) { ultimoErro = `${mirror} retornou ${res.status}`; continue; }
         const json = await res.json();
