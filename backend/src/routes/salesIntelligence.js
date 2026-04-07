@@ -166,24 +166,31 @@ Com base nos pedidos dos últimos 30 dias (inclui clientes diretos e revendedore
 - Identifique os dias com menor movimento
 - Apresente como um mapa de energia da semana
 
-### BLOCO 4 — ESTIMATIVA DE PRODUÇÃO PARA A PRÓXIMA SEMANA
+### BLOCO 4 — PLANO DE PRODUÇÃO PARA A PRÓXIMA SEMANA
 Considere: Segunda a Sábado.
 
-Use a seção **VENDAS POR PRODUTO POR DIA** para calcular:
-- Para cada produto e cada dia da semana: média de unidades vendidas = total_vendido_dia ÷ semanas_com_venda
-- Arredonde para cima (ex: 1.3 → 2)
-- Se um produto não teve vendas em determinado dia, coloque 0
-- Considere o **estoque atual** de cada produto (coluna ESTOQUE nos dados): se o estoque já cobre a demanda prevista, a produção pode ser reduzida
+**Regra de produção:** os cookies devem ser produzidos **1 dia antes** da venda (ex: produzir na Segunda para vender na Terça). Para vendas de Segunda, produzir no Sábado anterior.
 
-Apresente OBRIGATORIAMENTE em formato de tabela markdown com esta estrutura exata:
+**Passo 1 — Calcule a previsão de vendas por dia:**
+- Para cada produto e cada dia da semana: média de unidades = total_vendido_dia ÷ semanas_com_venda
+- Arredonde para cima (ex: 1.3 → 2). Dia sem histórico = 0.
 
-| Produto | Estoque Atual | Seg | Ter | Qua | Qui | Sex | Sáb | TOTAL a Produzir |
-|---------|--------------|-----|-----|-----|-----|-----|-----|-----------------|
+**Passo 2 — Monte a tabela de PREVISÃO DE VENDAS:**
+
+| Produto | Estoque Atual | Seg | Ter | Qua | Qui | Sex | Sáb | TOTAL Previsto |
+|---------|--------------|-----|-----|-----|-----|-----|-----|----------------|
 | Nome do produto | X | X | X | X | X | X | X | X |
 
-- IMPORTANTE: cada produto em uma linha separada, nunca em linha única
-- TOTAL a Produzir = soma dos dias menos o estoque atual (mínimo 0)
-- Após a tabela, adicione uma mensagem de encorajamento curta e um versículo bíblico relacionado ao trabalho, dedicação ou colheita, com referência (ex: Provérbios 14:23)
+**Passo 3 — Monte a tabela de PLANO DE PRODUÇÃO (quando produzir para cada dia de venda):**
+
+| Dia de Produção | Para Vender em | Produto | Qtd a Produzir |
+|-----------------|---------------|---------|----------------|
+| Segunda | Terça | Nome do produto | X |
+| Terça | Quarta | Nome do produto | X |
+
+- Inclua apenas dias com quantidade > 0
+- Desconte o estoque atual apenas no primeiro lote de produção da semana
+- Após as tabelas, adicione uma mensagem de encorajamento curta e um versículo bíblico sobre trabalho ou colheita com referência (ex: Provérbios 14:23)
 
 ### BLOCO 5 — INTELIGÊNCIA FINANCEIRA E PROMOÇÕES
 **5.1 — Dia ideal para promoção:**
