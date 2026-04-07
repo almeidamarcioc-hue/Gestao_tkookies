@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import {
   Search, AutoAwesome, ExpandMore, ExpandLess, Business,
-  Phone, LocationOn, OpenInNew, Info, FilterList, Refresh, TravelExplore,
+  Phone, LocationOn, OpenInNew, Info, FilterList, Refresh, TravelExplore, AddBusiness,
 } from "@mui/icons-material";
 
 const BASE_URL = (
@@ -443,6 +443,11 @@ export default function ProspeccaoRevendedores() {
   const [ordenacao, setOrdenacao] = useState("temperatura"); // "temperatura" | "distancia"
   const [buscaText, setBuscaText] = useState("");
   const [infoDialogOpen, setInfoDialogOpen] = useState(false);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [addNome, setAddNome] = useState("");
+  const [addCNPJ, setAddCNPJ] = useState("");
+  const [addLoading, setAddLoading] = useState(false);
+  const [addErro, setAddErro] = useState("");
 
   async function buscarEmpresas() {
     setLoading(true);
@@ -495,6 +500,76 @@ out body;`;
     }
     setErro(`Não foi possível acessar o OpenStreetMap. ${ultimoErro}`);
     setLoading(false);
+  }
+
+  // Adiciona empresa manualmente — busca CNPJ por nome ou usa CNPJ informado
+  async function adicionarManual() {
+    if (!addNome.trim() && !addCNPJ.trim()) {
+      setAddErro("Informe o nome da empresa ou o CNPJ."); return;
+    }
+    setAddLoading(true);
+    setAddErro("");
+
+    try {
+      let cnpj = addCNPJ.replace(/\D/g, "");
+      let dados = null;
+
+      // Se tem CNPJ → consulta direto na Receita Federal
+      if (cnpj.length === 14) {
+        const res = await fetch(`${BASE_URL}/prospeccao-revendedores/cnpj/${cnpj}`, { headers: authHeaders() });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || "CNPJ não encontrado.");
+        dados = json;
+      } else if (addNome.trim()) {
+        // Sem CNPJ → busca por nome
+        const params = new URLSearchParams({ nome: addNome.trim(), uf: "RS" });
+        const res = await fetch(`${BASE_URL}/prospeccao-revendedores/buscar-cnpj?${params}`, { headers: authHeaders() });
+        const json = await res.json();
+        if (json.cnpj) {
+          cnpj = json.cnpj;
+          dados = json.dados;
+        } else {
+          throw new Error(json.erro || "Empresa não encontrada. Tente informar o CNPJ diretamente.");
+        }
+      } else {
+        throw new Error("CNPJ deve ter 14 dígitos.");
+      }
+
+      // Monta entrada manual com osm_id único negativo para não conflitar
+      const novaEmpresa = {
+        osm_id: -(Date.now()),
+        nome: dados?.razao_social || addNome.trim(),
+        tipo_osm: "manual",
+        tipo_label: dados?.atividade_principal ? dados.atividade_principal.slice(0, 40) : "Adicionado manualmente",
+        cidade: dados?.municipio || null,
+        bairro: dados?.bairro || null,
+        logradouro: dados?.logradouro || null,
+        telefone: dados?.telefone || null,
+        cnpj,
+        lat: TKOOKIES_LAT, lng: TKOOKIES_LNG, distancia_km: 0,
+        temperatura: calcularTemperatura({ name: dados?.razao_social || addNome, shop: "bakery" }),
+        dados_receita: dados,
+      };
+
+      // Recalcula temperatura por CNAE se disponível
+      if (dados?.atividade_principal) {
+        const cnaeDesc = dados.atividade_principal.toLowerCase();
+        if (cnaeDesc.includes("panif") || cnaeDesc.includes("padaria") || cnaeDesc.includes("confeit") || cnaeDesc.includes("biscoito") || cnaeDesc.includes("doce")) {
+          novaEmpresa.temperatura = { nivel: "QUENTE", emoji: "🔥", cor: "#C62828", label: "Quente", score: 95 };
+        } else if (cnaeDesc.includes("café") || cnaeDesc.includes("lanche") || cnaeDesc.includes("restaurante")) {
+          novaEmpresa.temperatura = { nivel: "MORNO", emoji: "🟡", cor: "#E65100", label: "Morno", score: 65 };
+        }
+      }
+
+      setEmpresas(prev => [novaEmpresa, ...prev]);
+      setAddDialogOpen(false);
+      setAddNome("");
+      setAddCNPJ("");
+    } catch (e) {
+      setAddErro(e.message);
+    } finally {
+      setAddLoading(false);
+    }
   }
 
   // Busca CNPJ automaticamente para as top empresas (rate: 1/15s)
@@ -626,6 +701,14 @@ out body;`;
             sx={{ borderColor: "#E65100", color: "#E65100" }}
           >
             {loadingIA ? "Analisando com IA..." : "Analisar com IA"}
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<AddBusiness />}
+            onClick={() => { setAddDialogOpen(true); setAddErro(""); }}
+            sx={{ borderColor: "#4E342E", color: "#4E342E" }}
+          >
+            Adicionar Empresa
           </Button>
           <Button
             variant="contained"
@@ -800,6 +883,52 @@ out body;`;
           </Table>
         </TableContainer>
       )}
+
+      {/* Dialog — Adicionar empresa manualmente */}
+      <Dialog open={addDialogOpen} onClose={() => !addLoading && setAddDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ bgcolor: "#4E342E", color: "white" }}>
+          <AddBusiness sx={{ mr: 1, verticalAlign: "middle" }} />
+          Adicionar Empresa à Prospecção
+        </DialogTitle>
+        <DialogContent sx={{ pt: 3 }}>
+          <Stack spacing={2}>
+            <Alert severity="info" sx={{ fontSize: "0.82rem" }}>
+              Informe o <b>nome</b> da empresa e/ou o <b>CNPJ</b>. O sistema busca os dados automaticamente na Receita Federal.
+            </Alert>
+            <TextField
+              label="Nome da empresa"
+              placeholder="Ex: Padaria São Francisco"
+              value={addNome}
+              onChange={e => setAddNome(e.target.value)}
+              fullWidth
+              onKeyDown={e => e.key === "Enter" && adicionarManual()}
+            />
+            <TextField
+              label="CNPJ (opcional — preencher agiliza a busca)"
+              placeholder="00.000.000/0001-00"
+              value={addCNPJ}
+              onChange={e => setAddCNPJ(e.target.value.replace(/\D/g, "").slice(0, 14))}
+              fullWidth
+              inputProps={{ maxLength: 14 }}
+              helperText={addCNPJ.length > 0 ? `${addCNPJ.length}/14 dígitos` : ""}
+              onKeyDown={e => e.key === "Enter" && adicionarManual()}
+            />
+            {addErro && <Alert severity="error">{addErro}</Alert>}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setAddDialogOpen(false)} disabled={addLoading} sx={{ color: "#8D6E63" }}>Cancelar</Button>
+          <Button
+            variant="contained"
+            onClick={adicionarManual}
+            disabled={addLoading || (!addNome.trim() && !addCNPJ.trim())}
+            startIcon={addLoading ? <CircularProgress size={16} sx={{ color: "white" }} /> : <Search />}
+            sx={{ bgcolor: "#4E342E", "&:hover": { bgcolor: "#3E2723" } }}
+          >
+            {addLoading ? "Buscando..." : "Buscar e Adicionar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Dialog informativo */}
       <Dialog open={infoDialogOpen} onClose={() => setInfoDialogOpen(false)} maxWidth="sm" fullWidth>
