@@ -26,10 +26,11 @@ const TKOOKIES_LNG = -54.2394;
 const RAIO_METROS = 50_000;
 
 // Mirrors Overpass — chamados diretamente do browser (sem bloqueio de IP)
+// openstreetmap.fr removido: bloqueia CORS de browsers
 const OVERPASS_MIRRORS = [
-  "https://overpass-api.de/api/interpreter",
   "https://overpass.kumi.systems/api/interpreter",
-  "https://overpass.openstreetmap.fr/api/interpreter",
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.private.coffee/api/interpreter",
 ];
 
 const TIPO_MAP = {
@@ -406,14 +407,21 @@ export default function ProspeccaoRevendedores() {
     setAiAnalises({});
     setResumoIA("");
 
-    const query = `[out:json][timeout:25];
+    // Query enxuta: só nodes, tipos mais relevantes, timeout curto
+    const query = `[out:json][timeout:20];
 (
-  node["shop"~"bakery|pastry|confectionery|chocolate|cake|deli|convenience|coffee|supermarket"](around:${RAIO_METROS},${TKOOKIES_LAT},${TKOOKIES_LNG});
-  node["amenity"~"cafe|fast_food|ice_cream"](around:${RAIO_METROS},${TKOOKIES_LAT},${TKOOKIES_LNG});
-  way["shop"~"bakery|pastry|confectionery|cafe"](around:${RAIO_METROS},${TKOOKIES_LAT},${TKOOKIES_LNG});
-  way["amenity"~"cafe|fast_food"](around:${RAIO_METROS},${TKOOKIES_LAT},${TKOOKIES_LNG});
+  node["shop"="bakery"](around:${RAIO_METROS},${TKOOKIES_LAT},${TKOOKIES_LNG});
+  node["shop"="pastry"](around:${RAIO_METROS},${TKOOKIES_LAT},${TKOOKIES_LNG});
+  node["shop"="confectionery"](around:${RAIO_METROS},${TKOOKIES_LAT},${TKOOKIES_LNG});
+  node["shop"="chocolate"](around:${RAIO_METROS},${TKOOKIES_LAT},${TKOOKIES_LNG});
+  node["shop"="cake"](around:${RAIO_METROS},${TKOOKIES_LAT},${TKOOKIES_LNG});
+  node["amenity"="cafe"](around:${RAIO_METROS},${TKOOKIES_LAT},${TKOOKIES_LNG});
+  node["amenity"="fast_food"](around:${RAIO_METROS},${TKOOKIES_LAT},${TKOOKIES_LNG});
+  node["amenity"="ice_cream"](around:${RAIO_METROS},${TKOOKIES_LAT},${TKOOKIES_LNG});
+  node["shop"="convenience"](around:${RAIO_METROS},${TKOOKIES_LAT},${TKOOKIES_LNG});
+  node["shop"="supermarket"](around:${RAIO_METROS},${TKOOKIES_LAT},${TKOOKIES_LNG});
 );
-out body center;`;
+out body;`;
 
     let ultimoErro = "";
     for (const mirror of OVERPASS_MIRRORS) {
@@ -422,7 +430,7 @@ out body center;`;
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: `data=${encodeURIComponent(query)}`,
-          signal: AbortSignal.timeout(30_000),
+          signal: AbortSignal.timeout(22_000),
         });
         if (!res.ok) { ultimoErro = `${mirror} retornou ${res.status}`; continue; }
         const json = await res.json();
