@@ -244,7 +244,7 @@ function EmpresaRow({ empresa, onConsultarCNPJ, aiAnalise }) {
             <Box onClick={(e) => e.stopPropagation()} display="flex" gap={0.5}>
               <TextField
                 size="small"
-                placeholder="00.000.000/0001-00"
+                placeholder="Digite o CNPJ"
                 value={cnpjInput}
                 onChange={(e) => setCnpjInput(e.target.value)}
                 sx={{ width: 170, "& input": { fontSize: "0.78rem", py: 0.5 } }}
