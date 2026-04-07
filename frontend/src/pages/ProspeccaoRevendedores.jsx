@@ -430,14 +430,17 @@ function EmpresaRow({ empresa, onConsultarCNPJ, aiAnalise }) {
 
 export default function ProspeccaoRevendedores() {
   const [empresas, setEmpresas] = useState([]);
-  const [aiAnalises, setAiAnalises] = useState({}); // { osm_id: analise }
+  const [aiAnalises, setAiAnalises] = useState({});
   const [resumoIA, setResumoIA] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingIA, setLoadingIA] = useState(false);
+  const [loadingCNPJ, setLoadingCNPJ] = useState(false);
+  const [cnpjProgresso, setCnpjProgresso] = useState({ atual: 0, total: 0 });
   const [erro, setErro] = useState(null);
   const [erroIA, setErroIA] = useState(null);
-  const [total, setTotal] = useState(null);
   const [filtroTemp, setFiltroTemp] = useState("TODOS");
+  const [apenasComCNPJ, setApenasComCNPJ] = useState(false);
+  const [ordenacao, setOrdenacao] = useState("temperatura"); // "temperatura" | "distancia"
   const [buscaText, setBuscaText] = useState("");
   const [infoDialogOpen, setInfoDialogOpen] = useState(false);
 
@@ -460,6 +463,7 @@ export default function ProspeccaoRevendedores() {
   node["amenity"="cafe"];
   node["amenity"="fast_food"];
   node["amenity"="ice_cream"];
+  node["amenity"="restaurant"];
   node["shop"="convenience"];
   node["shop"="supermarket"];
 );
@@ -482,6 +486,8 @@ out body;`;
           .sort((a, b) => b.temperatura.score - a.temperatura.score || (a.distancia_km ?? 999) - (b.distancia_km ?? 999));
         setEmpresas(empresas);
         setLoading(false);
+        // Inicia busca automática de CNPJs após carregar
+        buscarCNPJsAutomatico(empresas);
         return;
       } catch (e) {
         ultimoErro = `${mirror}: ${e.message}`;
@@ -489,6 +495,41 @@ out body;`;
     }
     setErro(`Não foi possível acessar o OpenStreetMap. ${ultimoErro}`);
     setLoading(false);
+  }
+
+  // Busca CNPJ automaticamente para as top empresas (rate: 1/15s)
+  async function buscarCNPJsAutomatico(lista) {
+    const alvo = lista.slice(0, 20); // máximo 20 para não estourar rate limit
+    setLoadingCNPJ(true);
+    setCnpjProgresso({ atual: 0, total: alvo.length });
+
+    for (let i = 0; i < alvo.length; i++) {
+      const empresa = alvo[i];
+      // Pula se já tem CNPJ consultado
+      if (empresa.dados_receita) { setCnpjProgresso(p => ({ ...p, atual: i + 1 })); continue; }
+
+      try {
+        const params = new URLSearchParams({ nome: empresa.nome, uf: "RS" });
+        const res = await fetch(`${BASE_URL}/prospeccao-revendedores/buscar-cnpj?${params}`, {
+          headers: authHeaders(),
+        });
+        const json = await res.json();
+
+        if (json.cnpj) {
+          setEmpresas(prev => prev.map(e =>
+            e.osm_id === empresa.osm_id
+              ? { ...e, cnpj: json.cnpj, dados_receita: json.dados || null }
+              : e
+          ));
+        }
+      } catch { /* ignora erros individuais */ }
+
+      setCnpjProgresso({ atual: i + 1, total: alvo.length });
+
+      // Aguarda 15s entre requisições para respeitar rate limit
+      if (i < alvo.length - 1) await new Promise(r => setTimeout(r, 15_000));
+    }
+    setLoadingCNPJ(false);
   }
 
   async function analisarComIA() {
@@ -534,18 +575,23 @@ out body;`;
     );
   }
 
-  // Filtragem
-  const empresasFiltradas = empresas.filter((e) => {
-    const tempMatch =
-      filtroTemp === "TODOS" ||
-      (aiAnalises[e.osm_id]?.temperatura || e.temperatura.nivel) === filtroTemp;
-    const textMatch =
-      buscaText === "" ||
-      e.nome.toLowerCase().includes(buscaText.toLowerCase()) ||
-      (e.cidade || "").toLowerCase().includes(buscaText.toLowerCase()) ||
-      (e.tipo_label || "").toLowerCase().includes(buscaText.toLowerCase());
-    return tempMatch && textMatch;
-  });
+  // Filtragem e ordenação
+  const empresasFiltradas = empresas
+    .filter((e) => {
+      const tempMatch = filtroTemp === "TODOS" || (aiAnalises[e.osm_id]?.temperatura || e.temperatura.nivel) === filtroTemp;
+      const textMatch = buscaText === "" ||
+        e.nome.toLowerCase().includes(buscaText.toLowerCase()) ||
+        (e.cidade || e.dados_receita?.municipio || "").toLowerCase().includes(buscaText.toLowerCase()) ||
+        (e.tipo_label || "").toLowerCase().includes(buscaText.toLowerCase());
+      const cnpjMatch = !apenasComCNPJ || e.cnpj || e.dados_receita;
+      return tempMatch && textMatch && cnpjMatch;
+    })
+    .sort((a, b) => {
+      if (ordenacao === "distancia") return (a.distancia_km ?? 999) - (b.distancia_km ?? 999);
+      const sa = aiAnalises[a.osm_id]?.score ?? a.temperatura.score;
+      const sb = aiAnalises[b.osm_id]?.score ?? b.temperatura.score;
+      return sb - sa || (a.distancia_km ?? 999) - (b.distancia_km ?? 999);
+    });
 
   const contagem = {
     QUENTE: empresas.filter((e) => (aiAnalises[e.osm_id]?.temperatura || e.temperatura.nivel) === "QUENTE").length,
@@ -644,21 +690,65 @@ out body;`;
         </Box>
       )}
 
-      {/* Filtro por texto */}
+      {/* Progresso busca CNPJ */}
+      {loadingCNPJ && (
+        <Paper sx={{ p: 1.5, mb: 2, bgcolor: "#E8F5E9", border: "1px solid #A5D6A7", borderRadius: 2 }}>
+          <Box display="flex" alignItems="center" gap={2}>
+            <CircularProgress size={16} sx={{ color: "#2E7D32" }} />
+            <Typography variant="body2" color="#2E7D32" fontWeight={700}>
+              Buscando CNPJs automaticamente... {cnpjProgresso.atual}/{cnpjProgresso.total}
+            </Typography>
+            <LinearProgress
+              variant="determinate"
+              value={(cnpjProgresso.atual / cnpjProgresso.total) * 100}
+              sx={{ flex: 1, borderRadius: 1, bgcolor: "#C8E6C9", "& .MuiLinearProgress-bar": { bgcolor: "#2E7D32" } }}
+            />
+          </Box>
+          <Typography variant="caption" color="text.secondary" mt={0.5} display="block">
+            ⏱ Respeitando limite da API gratuita (1 consulta/15s) — aguarde até {Math.ceil((cnpjProgresso.total - cnpjProgresso.atual) * 15 / 60)} min
+          </Typography>
+        </Paper>
+      )}
+
+      {/* Filtros e ordenação */}
       {empresas.length > 0 && (
-        <Box mb={2} display="flex" gap={1} alignItems="center">
+        <Box mb={2} display="flex" gap={1} alignItems="center" flexWrap="wrap">
           <TextField
             size="small"
             placeholder="Filtrar por nome, cidade ou tipo..."
             value={buscaText}
             onChange={(e) => setBuscaText(e.target.value)}
-            sx={{ minWidth: 300 }}
+            sx={{ minWidth: 260 }}
             InputProps={{
               startAdornment: <InputAdornment position="start"><FilterList fontSize="small" /></InputAdornment>,
             }}
           />
+          <Button
+            size="small"
+            variant={ordenacao === "temperatura" ? "contained" : "outlined"}
+            onClick={() => setOrdenacao("temperatura")}
+            sx={{ bgcolor: ordenacao === "temperatura" ? "#4E342E" : undefined, color: ordenacao === "temperatura" ? "white" : "#4E342E", borderColor: "#4E342E" }}
+          >
+            🔥 Por Temperatura
+          </Button>
+          <Button
+            size="small"
+            variant={ordenacao === "distancia" ? "contained" : "outlined"}
+            onClick={() => setOrdenacao("distancia")}
+            sx={{ bgcolor: ordenacao === "distancia" ? "#4E342E" : undefined, color: ordenacao === "distancia" ? "white" : "#4E342E", borderColor: "#4E342E" }}
+          >
+            📍 Por Distância
+          </Button>
+          <Button
+            size="small"
+            variant={apenasComCNPJ ? "contained" : "outlined"}
+            onClick={() => setApenasComCNPJ(v => !v)}
+            sx={{ bgcolor: apenasComCNPJ ? "#1565C0" : undefined, color: apenasComCNPJ ? "white" : "#1565C0", borderColor: "#1565C0" }}
+          >
+            🏢 Apenas com CNPJ
+          </Button>
           <Typography variant="caption" color="text.secondary">
-            Exibindo {empresasFiltradas.length} de {empresas.length} empresas
+            {empresasFiltradas.length} de {empresas.length} empresas
           </Typography>
         </Box>
       )}

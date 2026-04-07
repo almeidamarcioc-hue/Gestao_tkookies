@@ -219,6 +219,96 @@ out body center;`;
   }
 });
 
+// ─── GET /prospeccao-revendedores/buscar-cnpj ────────────────────────────────
+// Busca CNPJ pelo nome da empresa via open.cnpja.com (gratuita, rate limited)
+// Quando encontrado, já enriquece com BrasilAPI / minhareceita.org
+
+router.get("/buscar-cnpj", requireRole("admin"), async (req, res) => {
+  const { nome, uf = "RS" } = req.query;
+  if (!nome) return res.status(400).json({ cnpj: null, erro: "Informe o nome da empresa." });
+
+  try {
+    const url = `https://open.cnpja.com/office/search?name=${encodeURIComponent(nome)}&state=${uf}&limit=5`;
+    const { signal, clear } = makeTimeoutSignal(12_000);
+    const resp = await fetch(url, {
+      signal,
+      headers: { "User-Agent": "TKookies-ERP/1.0", "Accept": "application/json" },
+    });
+    clear();
+
+    if (resp.status === 429) {
+      return res.status(429).json({ cnpj: null, erro: "Limite atingido. Aguarde e tente novamente." });
+    }
+    if (!resp.ok) {
+      return res.json({ cnpj: null });
+    }
+
+    const data = await resp.json();
+    const offices = data.offices || data.results || data.data || [];
+    if (offices.length === 0) return res.json({ cnpj: null });
+
+    // Pega o resultado mais relevante
+    const match = offices[0];
+    const cnpjRaw = (match.taxId || match.cnpj || "").replace(/\D/g, "");
+    if (cnpjRaw.length !== 14) return res.json({ cnpj: null });
+
+    // Enriquece imediatamente com BrasilAPI
+    try {
+      const brasilResp = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpjRaw}`, {
+        headers: { "User-Agent": "TKookies-ERP/1.0" },
+        signal: AbortSignal ? (() => { const c = new AbortController(); setTimeout(() => c.abort(), 10000); return c.signal; })() : undefined,
+      });
+      if (brasilResp.ok) {
+        const bd = await brasilResp.json();
+        return res.json({ cnpj: cnpjRaw, dados: formatarBrasilAPI(bd) });
+      }
+    } catch { /* fallback abaixo */ }
+
+    // Fallback: minhareceita.org
+    try {
+      const mrResp = await fetch(`https://minhareceita.org/${cnpjRaw}`);
+      if (mrResp.ok) {
+        const mr = await mrResp.json();
+        return res.json({ cnpj: cnpjRaw, dados: formatarMinhareceita(mr) });
+      }
+    } catch { /* retorna só o CNPJ */ }
+
+    return res.json({ cnpj: cnpjRaw, dados: null });
+  } catch (err) {
+    console.error("Erro busca CNPJ:", err.message);
+    return res.json({ cnpj: null, erro: err.message });
+  }
+});
+
+function formatarMinhareceita(d) {
+  return {
+    cnpj: d.cnpj,
+    razao_social: d.razao_social,
+    nome_fantasia: d.nome_fantasia || null,
+    situacao: d.situacao_cadastral,
+    tipo: d.descricao_tipo_de_empresa,
+    natureza_juridica: d.natureza_juridica,
+    data_abertura: d.data_inicio_atividade,
+    atividade_principal: d.cnae_fiscal_descricao,
+    cnae_codigo: d.cnae_fiscal,
+    capital_social: d.capital_social ? Number(d.capital_social) : null,
+    email: d.email || null,
+    telefone: d.ddd_telefone_1 ? `(${d.ddd_telefone_1}) ${d.telefone_1 || ""}`.trim() : null,
+    logradouro: [d.logradouro, d.numero, d.complemento].filter(Boolean).join(", "),
+    bairro: d.bairro,
+    municipio: d.municipio,
+    uf: d.uf,
+    cep: d.cep,
+    qsa: (d.qsa || []).map((s) => ({
+      nome: s.nome_socio,
+      qualificacao: s.qualificacao_socio,
+      percentual_capital: s.percentual_capital_social ?? null,
+      data_entrada: s.data_entrada_sociedade ?? null,
+    })),
+    fonte: "Minha Receita (dados Receita Federal)",
+  };
+}
+
 // ─── GET /prospeccao-revendedores/cnpj/:cnpj ─────────────────────────────────
 // Consulta dados completos de um CNPJ (BrasilAPI → fallback ReceitaWS)
 // APIs gratuitas: BrasilAPI sem limite documentado; ReceitaWS: 3 req/min
