@@ -341,16 +341,18 @@ export default function App() {
     }
   };
 
-  const clearCart = async () => {
-    // Libera todos os itens do carrinho no banco
-    for (const item of cart) {
-      const dbId = item.original_id || item.id;
-      await api.post("/estoque/liberar", { 
-        produto_id: dbId, 
-        quantidade: item.quantidade,
-        tipo: (item.itens || item.ingredientes) ? 'combo' : 'produto'
-      })
-               .catch(e => console.error("Erro ao liberar estoque:", e));
+  const clearCart = async ({ skipLiberar = false } = {}) => {
+    // skipLiberar=true quando o carrinho é limpo após pedido finalizado
+    // (estoque já foi deduzido pela reserva, não deve ser devolvido)
+    if (!skipLiberar) {
+      for (const item of cart) {
+        const dbId = item.original_id || item.id;
+        await api.post("/estoque/liberar", {
+          produto_id: dbId,
+          quantidade: item.quantidade,
+          tipo: (item.itens || item.ingredientes) ? 'combo' : 'produto'
+        }).catch(e => console.error("Erro ao liberar estoque:", e));
+      }
     }
     setCart([]);
   };

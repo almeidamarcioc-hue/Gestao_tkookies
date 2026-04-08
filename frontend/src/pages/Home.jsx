@@ -862,8 +862,8 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
         onClick={() => document.getElementById('revendedor')?.scrollIntoView({ behavior: 'smooth' })}
         sx={{
           position: 'fixed',
-          bottom: { xs: 20, md: 40 },
-          right: { xs: 20, md: 40 },
+          bottom: { xs: 76, md: 40 },
+          right: { xs: 16, md: 40 },
           zIndex: 1100,
           bgcolor: '#FFFFFF',
           color: terracotta,

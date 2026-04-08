@@ -142,7 +142,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
       return;
     }
 
-    if (!checkIfOpen(config.open_time, config.close_time, config.open_days)) {
+    if (!checkIfOpen(config)) {
       setIsStoreOpen(false);
       alert("Infelizmente acabamos de fechar. Não é possível finalizar pedidos agora.");
       return;
@@ -187,7 +187,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
 
     try {
       const res = await api.post("/pedidos", payload);
-      clearCart();
+      clearCart({ skipLiberar: true }); // estoque já foi deduzido pela reserva, não devolver
       navigate("/pedido-confirmado", { state: { orderId: res.data.id } });
     } catch (error) {
       console.error(error);
