@@ -407,8 +407,7 @@ export default function OrderForm({ clientUser, isAdmin }) {
                   textoPreco = `R$ ${precoDesc.toFixed(2)} (Promo)`;
                 }
               }
-              const tipo = option._isCombo ? '[Kit] ' : '';
-              return `${tipo}${option.nome} | Est: ${option.estoque} | ${textoPreco}`;
+              return `${option.nome} | Est: ${option.estoque} | ${textoPreco}`;
             }}
             value={produtoSelecionado}
             onChange={(e, val) => setProdutoSelecionado(val)}
