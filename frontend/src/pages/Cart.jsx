@@ -81,11 +81,19 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
   };
 
   useEffect(() => {
-    // Busca configurações para validar horário
-    api.get("/configuracoes").then(res => {
-      setConfig(res.data);
-      setIsStoreOpen(checkIfOpen(res.data));
-    });
+    // Busca configurações para validar horário (usa cache de sessão se disponível)
+    const cachedCfg = sessionStorage.getItem('_cfg');
+    if (cachedCfg) {
+      const parsed = JSON.parse(cachedCfg);
+      setConfig(parsed);
+      setIsStoreOpen(checkIfOpen(parsed));
+    } else {
+      api.get("/configuracoes").then(res => {
+        sessionStorage.setItem('_cfg', JSON.stringify(res.data));
+        setConfig(res.data);
+        setIsStoreOpen(checkIfOpen(res.data));
+      });
+    }
 
     // Busca o valor do frete configurado no sistema
     api.get("/pedidos/config/frete")

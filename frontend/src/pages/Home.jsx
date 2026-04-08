@@ -147,12 +147,20 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
 
   useEffect(() => {
     // Removido o parseamento de res.data.opening_hours aqui, pois já é feito em checkIfOpen e getTodayScheduleLabel
-    api.get("/configuracoes").then(res => {
-      if (res.data && Object.keys(res.data).length > 0) {
-        setConfig(prev => ({ ...prev, ...res.data }));
-        setIsStoreOpen(checkIfOpen(res.data));
-      }
-    }).catch(err => console.log("Usando configurações padrão"));
+    const cachedCfg = sessionStorage.getItem('_cfg');
+    if (cachedCfg) {
+      const parsed = JSON.parse(cachedCfg);
+      setConfig(prev => ({ ...prev, ...parsed }));
+      setIsStoreOpen(checkIfOpen(parsed));
+    } else {
+      api.get("/configuracoes").then(res => {
+        if (res.data && Object.keys(res.data).length > 0) {
+          sessionStorage.setItem('_cfg', JSON.stringify(res.data));
+          setConfig(prev => ({ ...prev, ...res.data }));
+          setIsStoreOpen(checkIfOpen(res.data));
+        }
+      }).catch(err => console.log("Usando configurações padrão"));
+    }
 
     // Carregar produtos para o cardápio
     api.get("/produtos").then(res => {
