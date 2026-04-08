@@ -55,25 +55,36 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
     addToCart(itemToAdd, 1);
   };
 
-  const checkIfOpen = (openTime, closeTime, openDaysStr) => {
+  const checkIfOpen = (cfg) => {
     const now = new Date();
+    const day = now.getDay();
+    const current = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
 
-    // Verifica dia da semana
-    if (openDaysStr) {
-      const allowedDays = openDaysStr.split(',').map(Number);
-      if (!allowedDays.includes(now.getDay())) return false;
+    if (cfg.opening_hours) {
+      try {
+        const schedule = JSON.parse(cfg.opening_hours);
+        const today = schedule.find(s => s.day === day);
+        if (!today || !today.open) return false;
+        return current >= today.open_time && current <= today.close_time;
+      } catch (e) {
+        console.error("Erro no parsing do horário", e);
+      }
     }
 
-    if (!openTime || !closeTime) return true;
-    const current = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
-    return current >= openTime && current <= closeTime;
+    if (cfg.open_days) {
+      const allowedDays = cfg.open_days.split(',').map(Number);
+      if (!allowedDays.includes(day)) return false;
+    }
+
+    if (!cfg.open_time || !cfg.close_time) return true;
+    return current >= cfg.open_time && current <= cfg.close_time;
   };
 
   useEffect(() => {
     // Busca configurações para validar horário
     api.get("/configuracoes").then(res => {
       setConfig(res.data);
-      setIsStoreOpen(checkIfOpen(res.data.open_time, res.data.close_time, res.data.open_days));
+      setIsStoreOpen(checkIfOpen(res.data));
     });
 
     // Busca o valor do frete configurado no sistema
