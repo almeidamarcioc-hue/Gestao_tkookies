@@ -707,8 +707,8 @@ export default function App() {
         </Box>
       </Drawer>
 
-      {/* Mobile Bottom Navigation (client/public users only) */}
-      {!isLoggedIn && (
+      {/* Mobile Bottom Navigation (client/public users only, hidden on cart page) */}
+      {!isLoggedIn && pathname !== '/carrinho' && (
         <Box sx={{ display: { xs: 'block', md: 'none' }, position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 1200 }}>
           <BottomNavigation value={pathname} sx={{ bgcolor: '#FFFAF5', borderTop: '1px solid rgba(44,24,16,0.10)' }}>
             <BottomNavigationAction label="Início" value="/" icon={<HomeIcon />} component={Link} to="/" sx={{ color: '#8D6E63', '&.Mui-selected': { color: '#D4580A' } }} />
