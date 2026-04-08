@@ -889,7 +889,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           exit={{ y: 100, x: "-50%" }}
           sx={{ 
             position: 'fixed', 
-            bottom: { xs: 'max(16px, env(safe-area-inset-bottom))', md: 24 },
+            bottom: { xs: 'max(72px, calc(56px + env(safe-area-inset-bottom)))', md: 24 },
             left: '50%', 
             width: { xs: '95%', md: '90%' },
             maxWidth: '600px',
