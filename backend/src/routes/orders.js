@@ -58,12 +58,18 @@ router.get("/:id", async (req, res) => {
       return res.status(403).json({ error: "Permissão negada" });
     }
 
-    // Buscar Itens
+    // Buscar Itens (produtos e combos)
     const queryItens = `
-      SELECT pi.*, p.nome as produto_nome, p.preco_revenda, p.eh_destaque, p.desconto_destaque,
-             (SELECT imagem FROM produto_imagens WHERE produto_id = p.id ORDER BY eh_capa DESC LIMIT 1) as imagem, p.estoque
+      SELECT pi.*,
+             COALESCE(p.nome, c.nome) as produto_nome,
+             p.preco_revenda, p.eh_destaque, p.desconto_destaque,
+             CASE WHEN pi.tipo = 'combo' THEN NULL
+                  ELSE (SELECT imagem FROM produto_imagens WHERE produto_id = p.id ORDER BY eh_capa DESC LIMIT 1)
+             END as imagem,
+             COALESCE(p.estoque, c.estoque) as estoque
       FROM itens_pedido pi
-      JOIN produtos p ON pi.produto_id = p.id
+      LEFT JOIN produtos p ON pi.produto_id = p.id AND pi.tipo != 'combo'
+      LEFT JOIN combos c ON pi.combo_id = c.id AND pi.tipo = 'combo'
       WHERE pi.pedido_id = $1
     `;
     const itensRes = await pool.query(queryItens, [id]);
@@ -138,10 +144,14 @@ router.put("/:id", requireRole('admin'), async (req, res) => {
   try {
     await client.query("BEGIN");
 
-    // 1. Restaurar estoque dos itens antigos
-    const oldItens = await client.query("SELECT produto_id, quantidade FROM itens_pedido WHERE pedido_id = $1", [id]);
+    // 1. Restaurar estoque dos itens antigos (apenas produtos, não combos)
+    const oldItens = await client.query("SELECT produto_id, combo_id, tipo, quantidade FROM itens_pedido WHERE pedido_id = $1", [id]);
     for (const item of oldItens.rows) {
-      await client.query("UPDATE produtos SET estoque = estoque + $1 WHERE id = $2", [item.quantidade, item.produto_id]);
+      if (item.tipo === 'combo') {
+        await client.query("UPDATE combos SET estoque = estoque + $1 WHERE id = $2", [item.quantidade, item.combo_id]);
+      } else {
+        await client.query("UPDATE produtos SET estoque = estoque + $1 WHERE id = $2", [item.quantidade, item.produto_id]);
+      }
     }
 
     // 2. Limpar itens antigos
@@ -162,11 +172,20 @@ router.put("/:id", requireRole('admin'), async (req, res) => {
 
     // 5. Inserir novos itens e baixar estoque
     for (const item of itens) {
-      await client.query(
-        "INSERT INTO itens_pedido (pedido_id, produto_id, quantidade, valor_unitario, valor_total) VALUES ($1, $2, $3, $4, $5)",
-        [id, item.produto_id, item.quantidade, item.valor_unitario, Number(item.quantidade) * Number(item.valor_unitario)]
-      );
-      await client.query("UPDATE produtos SET estoque = estoque - $1 WHERE id = $2", [item.quantidade, item.produto_id]);
+      const isCombo = item.tipo === 'combo';
+      if (isCombo) {
+        await client.query(
+          "INSERT INTO itens_pedido (pedido_id, produto_id, combo_id, tipo, quantidade, valor_unitario, valor_total) VALUES ($1, NULL, $2, 'combo', $3, $4, $5)",
+          [id, item.produto_id, item.quantidade, item.valor_unitario, Number(item.quantidade) * Number(item.valor_unitario)]
+        );
+        await client.query("UPDATE combos SET estoque = estoque - $1 WHERE id = $2", [item.quantidade, item.produto_id]);
+      } else {
+        await client.query(
+          "INSERT INTO itens_pedido (pedido_id, produto_id, tipo, quantidade, valor_unitario, valor_total) VALUES ($1, $2, 'produto', $3, $4, $5)",
+          [id, item.produto_id, item.quantidade, item.valor_unitario, Number(item.quantidade) * Number(item.valor_unitario)]
+        );
+        await client.query("UPDATE produtos SET estoque = estoque - $1 WHERE id = $2", [item.quantidade, item.produto_id]);
+      }
     }
 
     await client.query("COMMIT");

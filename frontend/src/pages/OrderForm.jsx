@@ -66,6 +66,12 @@ export default function OrderForm({ clientUser, isAdmin }) {
     staleTime: 5 * 60 * 1000, // 5 minutos
   });
 
+  const { data: combosData } = useQuery({
+    queryKey: ['combos'],
+    queryFn: () => api.get("/combos?apenas_ativos=true").then(res => res.data),
+    staleTime: 5 * 60 * 1000,
+  });
+
   const { data: clientesData } = useQuery({
     queryKey: ['clientes'],
     queryFn: () => api.get("/clientes?limit=1000").then(res => res.data.data || res.data),
@@ -81,11 +87,13 @@ export default function OrderForm({ clientUser, isAdmin }) {
   });
 
   useEffect(() => {
-    if (produtosData) setListaProdutos(Array.isArray(produtosData) ? produtosData : []);
+    const produtos = Array.isArray(produtosData) ? produtosData : [];
+    const combos = Array.isArray(combosData) ? combosData.map(c => ({ ...c, _isCombo: true })) : [];
+    setListaProdutos([...produtos, ...combos]);
     if (clientesData) setListaClientes(clientesData);
     if (revendedoresData) setListaRevendedores(Array.isArray(revendedoresData) ? revendedoresData : []);
     if (!isAdmin && clientUser) setListaClientes([clientUser]);
-  }, [produtosData, clientesData, revendedoresData, isAdmin, clientUser]);
+  }, [produtosData, combosData, clientesData, revendedoresData, isAdmin, clientUser]);
 
   async function carregarDados() {
     // Removido, agora usa useQuery
@@ -136,12 +144,14 @@ export default function OrderForm({ clientUser, isAdmin }) {
       valorUnitario = valorUnitario * (1 - Number(produtoSelecionado.desconto_destaque) / 100);
     }
 
+    const isCombo = !!produtoSelecionado._isCombo;
     const novoItem = {
       produto_id: produtoSelecionado.id,
       nome: produtoSelecionado.nome,
       quantidade: Number(qtdProduto),
       valor_unitario: valorUnitario,
       valor_total: Number(qtdProduto) * valorUnitario,
+      tipo: isCombo ? 'combo' : 'produto',
       _tempId: Math.random()
     };
 
@@ -389,13 +399,16 @@ export default function OrderForm({ clientUser, isAdmin }) {
             getOptionLabel={(option) => {
               let preco = Number(option.preco_venda);
               let textoPreco = `R$ ${preco.toFixed(2)}`;
-              if (cliente && cliente.is_revendedor) {
-                textoPreco = `R$ ${Number(option.preco_revenda).toFixed(2)} (Revenda)`;
-              } else if (option.eh_destaque && Number(option.desconto_destaque) > 0) {
-                const precoDesc = preco * (1 - Number(option.desconto_destaque) / 100);
-                textoPreco = `R$ ${precoDesc.toFixed(2)} (Promo)`;
+              if (!option._isCombo) {
+                if (cliente && cliente.is_revendedor) {
+                  textoPreco = `R$ ${Number(option.preco_revenda).toFixed(2)} (Revenda)`;
+                } else if (option.eh_destaque && Number(option.desconto_destaque) > 0) {
+                  const precoDesc = preco * (1 - Number(option.desconto_destaque) / 100);
+                  textoPreco = `R$ ${precoDesc.toFixed(2)} (Promo)`;
+                }
               }
-              return `${option.nome} | Est: ${option.estoque} | ${textoPreco}`;
+              const tipo = option._isCombo ? '[Kit] ' : '';
+              return `${tipo}${option.nome} | Est: ${option.estoque} | ${textoPreco}`;
             }}
             value={produtoSelecionado}
             onChange={(e, val) => setProdutoSelecionado(val)}
