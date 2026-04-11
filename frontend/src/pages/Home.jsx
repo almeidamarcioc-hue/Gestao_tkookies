@@ -1165,8 +1165,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           Faça parte da nossa história
         </Typography>
         <Typography variant="body1" sx={{ color: '#795548', mb: 3, maxWidth: 500, mx: 'auto' }}>
-          Compartilhe sua experiência e apareça no feed da TKookies!
-          Use a hashtag <strong>{config.instagram_hashtag || '#tkookies_'}</strong> nas suas fotos.
+          Compartilhe sua experiência com a gente! Marque <strong>{config.instagram_handle ? `@${config.instagram_handle.replace('@','')}` : '@tkookies_'}</strong> nas suas fotos!
         </Typography>
         <Box display="flex" gap={2} justifyContent="center" flexWrap="wrap">
           <Button variant="contained" href={config.instagram_url || 'https://www.instagram.com/tkookies_/'} target="_blank"

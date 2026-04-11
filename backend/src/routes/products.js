@@ -202,6 +202,7 @@ router.get("/:id", async (req, res) => {
       eh_destaque: row.eh_destaque === 1 || row.eh_destaque === true,
       desconto_destaque: row.desconto_destaque,
       validade_promocao: row.validade_promocao ? new Date(row.validade_promocao).toISOString().split('T')[0] : null,
+      ocasiao: row.ocasiao || null,
       created_at: row.created_at,
       ingredientes: [],
       imagens: [],
