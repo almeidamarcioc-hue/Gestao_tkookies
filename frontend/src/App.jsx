@@ -316,11 +316,15 @@ export default function App() {
   const addToCart = async (product, quantity = 1) => {
     const dbId = product.original_id || product.id; // Usa original_id para agregados
     try {
-      await api.post("/estoque/reservar", { 
-        produto_id: dbId, 
+      await api.post("/estoque/reservar", {
+        produto_id: dbId,
         quantidade: quantity,
         tipo: (product.itens?.length > 0) ? 'combo' : 'produto'
       });
+
+      // Captura se o carrinho estava vazio ANTES de adicionar (para iniciar o timer)
+      const wasEmpty = cart.length === 0;
+
       setCart((prev) => {
         const existing = prev.find((item) => item.id === product.id);
         if (existing) {
@@ -328,32 +332,29 @@ export default function App() {
           item.id === product.id ? { ...item, quantidade: item.quantidade + quantity } : item
           );
         }
-      return [...prev, { ...product, quantidade: quantity }];
+        return [...prev, { ...product, quantidade: quantity }];
       });
 
-    // Google Analytics: Rastrear adição ao carrinho (Movido para fora do updater para evitar bugs)
-    if (window.gtag) {
-      window.gtag('event', 'add_to_cart', {
-        currency: 'BRL',
-        value: Number(product.preco_venda || product.valor_unitario) * quantity,
-        items: [{
-          item_id: String(dbId),
-          item_name: product.nome || product.produto_nome,
-          price: Number(product.preco_venda || product.valor_unitario),
-          quantity: quantity
-        }]
-      });
-    }
+      // Inicia o temporizador ao adicionar o primeiro item
+      if (wasEmpty && !cartExpiry) {
+        const expiry = Date.now() + CART_TIMEOUT_MS;
+        setCartExpiry(expiry);
+        localStorage.setItem('cart_expiry', String(expiry));
+      }
 
-      // Inicia o temporizador na primeira adição ao carrinho
-      setCart(prev => {
-        if (prev.length === 0 && !cartExpiry) {
-          const expiry = Date.now() + CART_TIMEOUT_MS;
-          setCartExpiry(expiry);
-          localStorage.setItem('cart_expiry', String(expiry));
-        }
-        return prev;
-      });
+      // Google Analytics
+      if (window.gtag) {
+        window.gtag('event', 'add_to_cart', {
+          currency: 'BRL',
+          value: Number(product.preco_venda || product.valor_unitario) * quantity,
+          items: [{
+            item_id: String(dbId),
+            item_name: product.nome || product.produto_nome,
+            price: Number(product.preco_venda || product.valor_unitario),
+            quantity: quantity
+          }]
+        });
+      }
 
       return true; // Sucesso
     } catch (err) {
