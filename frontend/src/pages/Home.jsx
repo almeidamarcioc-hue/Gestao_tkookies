@@ -100,8 +100,12 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
 
     if (cfg.opening_hours) {
       try {
-        const schedule = JSON.parse(cfg.opening_hours);
-        const today = schedule.find(s => s.day === day);
+        // opening_hours pode chegar como string (do banco) ou já como array (do estado)
+        const schedule = typeof cfg.opening_hours === 'string'
+          ? JSON.parse(cfg.opening_hours)
+          : cfg.opening_hours;
+        // Usa == (não ===) para tolerar day como string ou número no JSON
+        const today = schedule.find(s => Number(s.day) === day);
         if (!today || !today.open) return false;
         return current >= today.open_time && current <= today.close_time;
       } catch (e) {
@@ -109,7 +113,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
       }
     }
 
-    // Verifica dia da semana
+    // Fallback: formato antigo (open_days / open_time / close_time)
     if (cfg.open_days) {
       const allowedDays = cfg.open_days.split(',').map(Number);
       if (!allowedDays.includes(day)) return false;
@@ -140,10 +144,12 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
       return `${getReadableDays(cfg.open_days)} • ${cfg.open_time} às ${cfg.close_time}`;
     }
     try {
-      const schedule = JSON.parse(cfg.opening_hours);
+      const schedule = typeof cfg.opening_hours === 'string'
+        ? JSON.parse(cfg.opening_hours)
+        : cfg.opening_hours;
       const now = new Date();
-      const day = now.getDay(); // 0 for Sunday, 1 for Monday, etc.
-      const todaySchedule = schedule.find(s => s.day === day);
+      const day = now.getDay();
+      const todaySchedule = schedule.find(s => Number(s.day) === day);
 
       if (!todaySchedule || !todaySchedule.open) {
         return "Fechado hoje";

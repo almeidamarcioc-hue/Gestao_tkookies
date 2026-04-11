@@ -73,8 +73,11 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
 
     if (cfg.opening_hours) {
       try {
-        const schedule = JSON.parse(cfg.opening_hours);
-        const today = schedule.find(s => s.day === day);
+        // opening_hours pode chegar como string (do banco) ou já como array (do estado)
+        const schedule = typeof cfg.opening_hours === 'string'
+          ? JSON.parse(cfg.opening_hours)
+          : cfg.opening_hours;
+        const today = schedule.find(s => Number(s.day) === day);
         if (!today || !today.open) return false;
         return current >= today.open_time && current <= today.close_time;
       } catch (e) {
