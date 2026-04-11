@@ -768,7 +768,6 @@ export default function Dashboard() {
                   ))}
                 </TableBody>
               </Table>
-            </Box>
 
               {/* OCASIÃO */}
               <Box mt={3}>
@@ -797,6 +796,7 @@ export default function Dashboard() {
                   Marque para exibir este produto na seção "Presenteie com Amor" da loja
                 </Typography>
               </Box>
+            </Box>
           )}
         </DialogContent>
         <DialogActions>
