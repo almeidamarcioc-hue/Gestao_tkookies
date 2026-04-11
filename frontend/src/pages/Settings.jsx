@@ -98,11 +98,33 @@ export default function Settings() {
           try { setKitDescontos(prev => ({ ...prev, ...JSON.parse(cfg.kit_descontos) })); } catch (e) {}
         }
 
+        const DEFAULT_HOURS = [
+          { day: 0, label: "Domingo", open: false, open_time: "08:00", close_time: "18:00" },
+          { day: 1, label: "Segunda", open: true,  open_time: "08:00", close_time: "18:00" },
+          { day: 2, label: "Terça",   open: true,  open_time: "08:00", close_time: "18:00" },
+          { day: 3, label: "Quarta",  open: true,  open_time: "08:00", close_time: "18:00" },
+          { day: 4, label: "Quinta",  open: true,  open_time: "08:00", close_time: "18:00" },
+          { day: 5, label: "Sexta",   open: true,  open_time: "08:00", close_time: "18:00" },
+          { day: 6, label: "Sábado",  open: true,  open_time: "08:00", close_time: "18:00" },
+        ];
         if (cfg.opening_hours) {
-          setOpeningHours(JSON.parse(cfg.opening_hours));
+          try {
+            const loaded = typeof cfg.opening_hours === 'string'
+              ? JSON.parse(cfg.opening_hours)
+              : cfg.opening_hours;
+            // Garante todos os 7 dias: mescla dados salvos com os defaults
+            const merged = DEFAULT_HOURS.map(def => {
+              const saved = loaded.find(s => Number(s.day) === def.day);
+              return saved ? { ...def, ...saved } : def;
+            });
+            setOpeningHours(merged);
+          } catch (e) {
+            console.error("Erro ao parsear opening_hours:", e);
+            setOpeningHours(DEFAULT_HOURS);
+          }
         } else if (cfg.open_days) {
           const days = cfg.open_days.split(',').map(Number);
-          setOpeningHours(prev => prev.map(h => ({
+          setOpeningHours(DEFAULT_HOURS.map(h => ({
             ...h,
             open: days.includes(h.day),
             open_time: cfg.open_time || "08:00",
@@ -134,15 +156,15 @@ export default function Settings() {
   };
 
   const handleScheduleToggle = (idx) => {
-    const newHours = [...openingHours];
-    newHours[idx].open = !newHours[idx].open;
-    setOpeningHours(newHours);
+    setOpeningHours(prev => prev.map((h, i) =>
+      i === idx ? { ...h, open: !h.open } : h
+    ));
   };
 
   const handleScheduleTimeChange = (idx, field, val) => {
-    const newHours = [...openingHours];
-    newHours[idx][field] = val;
-    setOpeningHours(newHours);
+    setOpeningHours(prev => prev.map((h, i) =>
+      i === idx ? { ...h, [field]: val } : h
+    ));
   };
 
   const handleSave = async () => {
