@@ -221,7 +221,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
       origem: 'carrinho',
       itens: cart.map(item => ({
         produto_id: item.original_id || item.id,
-        tipo: (item.itens || item.ingredientes) ? 'combo' : 'produto',
+        tipo: (item.itens?.length > 0) ? 'combo' : 'produto',
         quantidade: item.quantidade,
         valor_unitario: getItemPrice(item),
       }))

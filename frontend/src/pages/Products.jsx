@@ -710,9 +710,10 @@ export default function Products() {
                 <TableCell>{prod.nome}</TableCell>
                 <TableCell>
                   {prod.ocasiao
-                    ? prod.ocasiao.split(",").filter(Boolean).map(o => (
-                        <Chip key={o} label={o} size="small" sx={{ mr: 0.5, fontSize: '0.65rem' }} />
-                      ))
+                    ? prod.ocasiao.split(",").filter(Boolean).map(o => {
+                        const found = OCASIOES.find(op => op.value === o);
+                        return <Chip key={o} label={found ? found.label : o} size="small" sx={{ mr: 0.5, fontSize: '0.65rem' }} />;
+                      })
                     : <Typography variant="caption" color="text.disabled">—</Typography>
                   }
                 </TableCell>
