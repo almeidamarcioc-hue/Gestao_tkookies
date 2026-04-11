@@ -7,7 +7,14 @@ import api from "../services/api";
 import { QrCodePix } from "qrcode-pix";
 import { QRCodeSVG } from "qrcode.react";
 
-export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, clientUser, addToCart }) {
+function formatTimeLeft(seconds) {
+  if (seconds === null || seconds === undefined) return null;
+  const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+  const s = (seconds % 60).toString().padStart(2, '0');
+  return `${m}:${s}`;
+}
+
+export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, clientUser, addToCart, cartTimeLeft }) {
   const [deliveryType, setDeliveryType] = useState("retira");
   const [paymentMethod, setPaymentMethod] = useState("Dinheiro");
   const [upsellOpen, setUpsellOpen] = useState(false);
@@ -252,10 +259,37 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
     );
   }
 
+  // Cores e severidade do temporizador
+  const timerSeverity = cartTimeLeft === null ? null
+    : cartTimeLeft > 600 ? 'info'
+    : cartTimeLeft > 300 ? 'warning'
+    : 'error';
+
+  const timerFormatted = formatTimeLeft(cartTimeLeft);
+
   return (
     <Box sx={{ bgcolor: '#FFFAF5', minHeight: '100vh', color: '#2C1810', pb: { xs: 14, md: 0 } }}>
     <Container maxWidth="lg" sx={{ mt: 6, mb: 8 }}>
       <Typography variant="h3" fontWeight="900" gutterBottom sx={{ mb: 4, color: '#2C1810', textAlign: 'center' }}>Meu Carrinho</Typography>
+
+      {/* Banner do temporizador */}
+      {timerFormatted !== null && (
+        <Alert
+          severity={timerSeverity}
+          sx={{ mb: 3, fontWeight: 600, fontSize: '0.95rem', borderRadius: 2, alignItems: 'center' }}
+          icon={<Typography fontSize="1.3rem" lineHeight={1}>⏱️</Typography>}
+        >
+          {cartTimeLeft > 600 && (
+            <>Você tem <strong>{timerFormatted}</strong> para finalizar seu pedido. Após esse tempo, os itens serão devolvidos ao estoque automaticamente.</>
+          )}
+          {cartTimeLeft > 300 && cartTimeLeft <= 600 && (
+            <>⚠️ Atenção! Seu carrinho expira em <strong>{timerFormatted}</strong>. Finalize seu pedido antes que os itens voltem ao estoque.</>
+          )}
+          {cartTimeLeft <= 300 && (
+            <>🚨 <strong>Menos de {Math.ceil(cartTimeLeft / 60)} min!</strong> Seu carrinho expira em <strong>{timerFormatted}</strong>. Conclua agora para não perder os itens reservados.</>
+          )}
+        </Alert>
+      )}
 
       <Grid container spacing={5}>
         {/* Coluna da Esquerda: Tabela de Itens */}

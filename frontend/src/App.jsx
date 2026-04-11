@@ -135,6 +135,50 @@ export default function App() {
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // ── Temporizador do carrinho (30 min) ──────────────────────────────────────
+  const CART_TIMEOUT_MS = 30 * 60 * 1000;
+  const [cartExpiry, setCartExpiry] = useState(() => {
+    const stored = localStorage.getItem('cart_expiry');
+    return stored ? Number(stored) : null;
+  });
+  const [cartTimeLeft, setCartTimeLeft] = useState(null); // segundos restantes
+  const [cartExpiredAlert, setCartExpiredAlert] = useState(false);
+
+  // Efeito do temporizador do carrinho
+  useEffect(() => {
+    if (!cartExpiry) { setCartTimeLeft(null); return; }
+
+    const tick = () => {
+      const remaining = Math.max(0, Math.floor((cartExpiry - Date.now()) / 1000));
+      setCartTimeLeft(remaining);
+
+      if (remaining === 0) {
+        // Tempo esgotado — libera estoque e limpa carrinho
+        setCart(prev => {
+          prev.forEach(item => {
+            const dbId = item.original_id || item.id;
+            import('./services/api').then(({ default: api }) => {
+              api.post('/estoque/liberar', {
+                produto_id: dbId,
+                quantidade: item.quantidade,
+                tipo: (item.itens?.length > 0) ? 'combo' : 'produto'
+              }).catch(() => {});
+            });
+          });
+          return [];
+        });
+        setCartExpiry(null);
+        setCartTimeLeft(null);
+        localStorage.removeItem('cart_expiry');
+        setCartExpiredAlert(true);
+      }
+    };
+
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [cartExpiry]);
+
   // Efeito para resetar o scroll para o topo sempre que a rota (página) mudar
   useEffect(() => {
     const forceScrollTop = () => {
@@ -301,6 +345,16 @@ export default function App() {
       });
     }
 
+      // Inicia o temporizador na primeira adição ao carrinho
+      setCart(prev => {
+        if (prev.length === 0 && !cartExpiry) {
+          const expiry = Date.now() + CART_TIMEOUT_MS;
+          setCartExpiry(expiry);
+          localStorage.setItem('cart_expiry', String(expiry));
+        }
+        return prev;
+      });
+
       return true; // Sucesso
     } catch (err) {
       alert(err.response?.data?.error || "Estoque insuficiente.");
@@ -366,6 +420,10 @@ export default function App() {
       }
     }
     setCart([]);
+    // Cancela o temporizador
+    setCartExpiry(null);
+    setCartTimeLeft(null);
+    localStorage.removeItem('cart_expiry');
   };
 
   return (
@@ -577,7 +635,7 @@ export default function App() {
           <Route path="/" element={<Home isLoggedIn={isLoggedIn} onLoginClick={() => setClientLoginOpen(true)} clientUser={clientUser} cart={cart} addToCart={addToCart} updateCartQuantity={updateCartQuantity} removeFromCart={removeFromCart} clearCart={clearCart} />} />
           <Route path="/cadastro" element={<ClientRegister />} />
           <Route path="/perfil" element={<ClientProfile user={clientUser} onUserUpdate={setClientUser} addToCart={addToCart} />} />
-          <Route path="/carrinho" element={<Cart cart={cart} updateQuantity={updateCartQuantity} removeFromCart={removeFromCart} clearCart={clearCart} clientUser={clientUser} addToCart={addToCart} />} />
+          <Route path="/carrinho" element={<Cart cart={cart} updateQuantity={updateCartQuantity} removeFromCart={removeFromCart} clearCart={clearCart} clientUser={clientUser} addToCart={addToCart} cartTimeLeft={cartTimeLeft} />} />
           <Route path="/pedido-confirmado" element={<OrderConfirmation clearCart={clearCart} />} />
           <Route path="/meus-pedidos" element={<ProtectedRoute isAllowed={!!clientUser}><ClientOrders clientUser={clientUser} /></ProtectedRoute>} />
           <Route path="/meus-pedidos/:id" element={<ProtectedRoute isAllowed={!!clientUser}><ClientOrderDetails /></ProtectedRoute>} />
@@ -748,6 +806,33 @@ export default function App() {
       )}
       </>
     )}
+
+    {/* Alerta de carrinho expirado */}
+    {cartExpiredAlert && (
+      <Box sx={{
+        position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+        zIndex: 9999, maxWidth: 480, width: '90%',
+      }}>
+        <Box sx={{
+          bgcolor: '#B71C1C', color: '#fff', borderRadius: 2, p: 2,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+          display: 'flex', alignItems: 'flex-start', gap: 1.5,
+        }}>
+          <Typography fontSize="1.4rem" lineHeight={1}>⏰</Typography>
+          <Box flex={1}>
+            <Typography fontWeight={800} fontSize="0.95rem">Tempo esgotado!</Typography>
+            <Typography fontSize="0.85rem" mt={0.3}>
+              Seu carrinho ficou inativo por 30 minutos e os itens foram devolvidos ao estoque. Adicione-os novamente para continuar.
+            </Typography>
+          </Box>
+          <Box component="button" onClick={() => setCartExpiredAlert(false)}
+            sx={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '1.1rem', p: 0, lineHeight: 1 }}>
+            ✕
+          </Box>
+        </Box>
+      </Box>
+    )}
+
     </ThemeProvider>
     </QueryClientProvider>
   );
