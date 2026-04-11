@@ -32,9 +32,14 @@ initDatabase().catch(err => console.error("Erro na migração automática:", err
 
 // Configuração CORS
 // Em produção defina FRONTEND_URL nas variáveis de ambiente do Vercel (ex: https://tkookies.vercel.app)
-const allowedOrigins = process.env.FRONTEND_URL
-  ? [process.env.FRONTEND_URL, "https://tkookies.vercel.app"]
-  : ["https://tkookies.vercel.app", "http://localhost:5173", "http://localhost:3000", "http://localhost:5174"];
+const allowedOrigins = [
+  "https://tkookies.vercel.app",
+  "https://tkookies-homologacao.vercel.app",
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "http://localhost:5174",
+  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+];
 
 const corsOptions = {
   origin: (origin, callback) => {
