@@ -1049,7 +1049,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
         </Typography>
         <Typography variant="body1" sx={{ color: '#795548', mb: 3, maxWidth: 500, mx: 'auto' }}>
           Compartilhe sua experiência e apareça no feed da TKookies!
-          Use a hashtag <strong>{config.instagram_hashtag || '#tkookies'}</strong> nas suas fotos.
+          Use a hashtag <strong>{config.instagram_hashtag || '#tkookies_'}</strong> nas suas fotos.
         </Typography>
         <Box display="flex" gap={2} justifyContent="center" flexWrap="wrap">
           <Button variant="contained" href={config.instagram_url || 'https://www.instagram.com/tkookies_/'} target="_blank"
