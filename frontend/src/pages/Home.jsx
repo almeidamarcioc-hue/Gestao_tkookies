@@ -6,6 +6,7 @@ import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion"
 import api from "../services/api";
 import ResellerCTA from "../components/ResellerCTA";
 import TestimonialsCarousel from "../components/TestimonialsCarousel";
+import BoxBuilder from "../components/BoxBuilder";
 
 // Variantes de Animação (Framer Motion)
 const containerVariants = {
@@ -741,6 +742,17 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
               </Box>
             )}
 
+            {/* SEÇÃO MONTE SEU KIT */}
+            {products.length > 0 && (
+              <Box sx={{ mb: 8, mx: { xs: -2, sm: -3 }, px: { xs: 2, sm: 3 }, py: 5, bgcolor: '#FDF3E7', borderRadius: 5, border: '1px solid rgba(196,146,42,0.15)' }}>
+                <BoxBuilder
+                  products={products.filter(p => !combos.some(c => c.produto_vinculado_id === p.id))}
+                  addToCart={addToCart}
+                  isStoreOpen={isStoreOpen}
+                />
+              </Box>
+            )}
+
             {/* SEÇÃO COMBOS ESPECIAIS */}
             {combos.length > 0 && (
               <Box sx={{ mb: 8, mx: -3, px: 3, py: 5, bgcolor: '#FDF3E7', borderRadius: 5, border: '1px solid rgba(212,88,10,0.08)' }}>
@@ -804,14 +816,14 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
             )}
 
             {/* SEÇÃO PRESENTEIE */}
-            {products.some(p => p.ocasiao) && (
+            {products.length > 0 && (
               <Box sx={{ mb: 8 }}>
                 <Typography variant="h5" gutterBottom fontWeight="900" sx={{ color: espresso, mb: 1 }}>
                   Presenteie com Amor
                 </Typography>
                 <Box sx={{ bgcolor: caramel, height: 3, width: 48, borderRadius: 2, mb: 3 }} />
                 <Box display="flex" gap={1} flexWrap="wrap" mb={3}>
-                  {["Todos", "Aniversário", "Dia das Mães", "Natal", "Empresas"].map(o => (
+                  {["Todos", "Aniversário", "Casamento", "Presente Romântico", "Natal", "Páscoa", "Dia das Mães"].map(o => (
                     <Chip key={o} label={o} onClick={() => setOcasiaoFiltro(o)}
                       sx={{ fontWeight: 'bold', cursor: 'pointer',
                         bgcolor: ocasiaoFiltro === o ? terracotta : 'rgba(212,88,10,0.1)',
@@ -820,20 +832,31 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                   ))}
                 </Box>
                 <Grid container spacing={2}>
-                  {products.filter(p => p.ocasiao && (ocasiaoFiltro === "Todos" || p.ocasiao.includes(ocasiaoFiltro))).map(prod => {
-                    const img = prod.imagens?.find(i => i.eh_capa)?.imagem || prod.imagens?.[0]?.imagem;
-                    return (
-                      <Grid item xs={6} sm={4} key={prod.id}>
-                        <Card sx={{ ...cardSx, cursor: 'pointer' }} onClick={() => handleOpenDetails(prod)}>
-                          {img && <Box component="img" src={img} sx={{ width: '100%', height: 140, objectFit: 'cover' }} />}
-                          <CardContent sx={{ p: 1.5 }}>
-                            <Typography variant="subtitle2" fontWeight="bold" noWrap>{prod.nome}</Typography>
-                            <Typography variant="body2" sx={{ color: terracotta, fontWeight: 'bold' }}>R$ {Number(prod.preco_venda).toFixed(2)}</Typography>
-                          </CardContent>
-                        </Card>
-                      </Grid>
-                    );
-                  })}
+                  {(() => {
+                    const hasTagged = products.some(p => p.ocasiao);
+                    const ocasiaoMap = {
+                      "Aniversário": "aniversario", "Casamento": "casamento",
+                      "Presente Romântico": "namoro", "Natal": "natal",
+                      "Páscoa": "pascoa", "Dia das Mães": "dia_das_maes"
+                    };
+                    const filtered = hasTagged
+                      ? products.filter(p => p.ocasiao && (ocasiaoFiltro === "Todos" || p.ocasiao.includes(ocasiaoMap[ocasiaoFiltro] || ocasiaoFiltro)))
+                      : products.filter(p => p.estoque > 0).slice(0, 6);
+                    return filtered.map(prod => {
+                      const img = prod.imagens?.find(i => i.eh_capa)?.imagem || prod.imagens?.[0]?.imagem;
+                      return (
+                        <Grid item xs={6} sm={4} key={prod.id}>
+                          <Card sx={{ ...cardSx, cursor: 'pointer' }} onClick={() => handleOpenDetails(prod)}>
+                            {img && <Box component="img" src={img} sx={{ width: '100%', height: 140, objectFit: 'cover' }} />}
+                            <CardContent sx={{ p: 1.5 }}>
+                              <Typography variant="subtitle2" fontWeight="bold" noWrap>{prod.nome}</Typography>
+                              <Typography variant="body2" sx={{ color: terracotta, fontWeight: 'bold' }}>R$ {Number(prod.preco_venda).toFixed(2)}</Typography>
+                            </CardContent>
+                          </Card>
+                        </Grid>
+                      );
+                    });
+                  })()}
                 </Grid>
               </Box>
             )}
