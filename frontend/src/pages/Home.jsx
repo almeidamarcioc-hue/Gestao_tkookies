@@ -743,6 +743,76 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
             )}
 
 
+            {/* SEÇÃO PRESENTEIE COM AMOR */}
+            {(() => {
+              const prodsComOcasiao = products.filter(p => p.ocasiao);
+              if (prodsComOcasiao.length === 0) return null;
+
+              // Ocasiões configuradas no admin, com fallback nas padrões
+              const defaultOcasioes = [
+                { value: "aniversario", label: "Aniversário" },
+                { value: "casamento", label: "Casamento" },
+                { value: "namoro", label: "Presente Romântico" },
+                { value: "natal", label: "Natal" },
+                { value: "pascoa", label: "Páscoa" },
+                { value: "dia_das_maes", label: "Dia das Mães" },
+              ];
+              let ocasioesCfg = [];
+              try { ocasioesCfg = JSON.parse(config.ocasioes || '[]'); } catch {}
+              if (ocasioesCfg.length === 0) ocasioesCfg = defaultOcasioes;
+
+              // Só exibe chips que tenham ao menos 1 produto
+              const ocasioesComProduto = ocasioesCfg.filter(o =>
+                prodsComOcasiao.some(p => p.ocasiao.split(",").includes(o.value))
+              );
+              if (ocasioesComProduto.length === 0) return null;
+
+              const filtrados = ocasiaoFiltro === "Todos"
+                ? prodsComOcasiao
+                : prodsComOcasiao.filter(p => p.ocasiao.split(",").includes(ocasiaoFiltro));
+
+              return (
+                <Box sx={{ mb: 8 }}>
+                  <Typography variant="h5" fontWeight="900" sx={{ color: espresso, mb: 1 }}>
+                    Presenteie com Amor
+                  </Typography>
+                  <Box sx={{ bgcolor: caramel, height: 3, width: 48, borderRadius: 2, mb: 3 }} />
+                  <Box display="flex" gap={1} flexWrap="wrap" mb={3}>
+                    <Chip label="Todos" onClick={() => setOcasiaoFiltro("Todos")}
+                      sx={{ fontWeight: 'bold', cursor: 'pointer',
+                        bgcolor: ocasiaoFiltro === "Todos" ? terracotta : 'rgba(212,88,10,0.1)',
+                        color: ocasiaoFiltro === "Todos" ? 'white' : terracotta,
+                        '&:hover': { bgcolor: terracotta, color: 'white' } }} />
+                    {ocasioesComProduto.map(o => (
+                      <Chip key={o.value} label={o.label} onClick={() => setOcasiaoFiltro(o.value)}
+                        sx={{ fontWeight: 'bold', cursor: 'pointer',
+                          bgcolor: ocasiaoFiltro === o.value ? terracotta : 'rgba(212,88,10,0.1)',
+                          color: ocasiaoFiltro === o.value ? 'white' : terracotta,
+                          '&:hover': { bgcolor: terracotta, color: 'white' } }} />
+                    ))}
+                  </Box>
+                  <Grid container spacing={2}>
+                    {filtrados.map(prod => {
+                      const img = prod.imagens?.find(i => i.eh_capa)?.imagem || prod.imagens?.[0]?.imagem;
+                      return (
+                        <Grid item xs={6} sm={4} key={prod.id}>
+                          <Card sx={{ ...cardSx, cursor: 'pointer' }} onClick={() => handleOpenDetails(prod)}>
+                            {img && <Box component="img" src={img} sx={{ width: '100%', height: 150, objectFit: 'cover' }} />}
+                            <CardContent sx={{ p: 1.5 }}>
+                              <Typography variant="subtitle2" fontWeight="bold" noWrap>{prod.nome}</Typography>
+                              <Typography variant="body2" sx={{ color: terracotta, fontWeight: 'bold' }}>
+                                R$ {Number(prod.preco_venda).toFixed(2)}
+                              </Typography>
+                            </CardContent>
+                          </Card>
+                        </Grid>
+                      );
+                    })}
+                  </Grid>
+                </Box>
+              );
+            })()}
+
             {/* SEÇÃO COMBOS ESPECIAIS */}
             {combos.length > 0 && (
               <Box sx={{ mb: 8, mx: -3, px: 3, py: 5, bgcolor: '#FDF3E7', borderRadius: 5, border: '1px solid rgba(212,88,10,0.08)' }}>
@@ -1033,58 +1103,6 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
         </Box>
       )}
 
-      {/* PRESENTEIE COM AMOR — full width, só aparece quando há produtos com ocasião */}
-      {(() => {
-        const ocasioesCfg = (() => { try { return JSON.parse(config.ocasioes || '[]'); } catch { return []; } })();
-        // só mostra ocasiões que têm pelo menos 1 produto tagueado
-        const ocasioesComProduto = ocasioesCfg.filter(o =>
-          products.some(p => p.ocasiao && p.ocasiao.split(",").includes(o.value))
-        );
-        if (ocasioesComProduto.length === 0) return null;
-        const filtrados = ocasiaoFiltro === "Todos"
-          ? products.filter(p => p.ocasiao)
-          : products.filter(p => p.ocasiao && p.ocasiao.split(",").includes(ocasiaoFiltro));
-        return (
-          <Box sx={{ mt: 8 }}>
-            <Typography variant="h5" fontWeight="900" sx={{ color: espresso, mb: 1 }}>
-              Presenteie com Amor
-            </Typography>
-            <Box sx={{ bgcolor: caramel, height: 3, width: 48, borderRadius: 2, mb: 3 }} />
-            <Box display="flex" gap={1} flexWrap="wrap" mb={3}>
-              <Chip label="Todos" onClick={() => setOcasiaoFiltro("Todos")}
-                sx={{ fontWeight: 'bold', cursor: 'pointer',
-                  bgcolor: ocasiaoFiltro === "Todos" ? terracotta : 'rgba(212,88,10,0.1)',
-                  color: ocasiaoFiltro === "Todos" ? 'white' : terracotta,
-                  '&:hover': { bgcolor: terracotta, color: 'white' } }} />
-              {ocasioesComProduto.map(o => (
-                <Chip key={o.value} label={o.label} onClick={() => setOcasiaoFiltro(o.value)}
-                  sx={{ fontWeight: 'bold', cursor: 'pointer',
-                    bgcolor: ocasiaoFiltro === o.value ? terracotta : 'rgba(212,88,10,0.1)',
-                    color: ocasiaoFiltro === o.value ? 'white' : terracotta,
-                    '&:hover': { bgcolor: terracotta, color: 'white' } }} />
-              ))}
-            </Box>
-            <Grid container spacing={2}>
-              {filtrados.map(prod => {
-                const img = prod.imagens?.find(i => i.eh_capa)?.imagem || prod.imagens?.[0]?.imagem;
-                return (
-                  <Grid item xs={6} sm={4} md={3} key={prod.id}>
-                    <Card sx={{ ...cardSx, cursor: 'pointer' }} onClick={() => handleOpenDetails(prod)}>
-                      {img && <Box component="img" src={img} sx={{ width: '100%', height: 160, objectFit: 'cover' }} />}
-                      <CardContent sx={{ p: 1.5 }}>
-                        <Typography variant="subtitle2" fontWeight="bold" noWrap>{prod.nome}</Typography>
-                        <Typography variant="body2" sx={{ color: terracotta, fontWeight: 'bold' }}>
-                          R$ {Number(prod.preco_venda).toFixed(2)}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                );
-              })}
-            </Grid>
-          </Box>
-        );
-      })()}
 
       {/* CARROSSEL DE DEPOIMENTOS */}
       <Box sx={{ mt: 8, mx: { xs: -2, lg: 0 }, bgcolor: espresso, borderRadius: { xs: 0, md: 5 }, py: 6, px: { xs: 2, md: 6 } }}>
