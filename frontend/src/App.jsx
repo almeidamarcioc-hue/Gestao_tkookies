@@ -51,9 +51,12 @@ const theme = createTheme({
     error: { main: "#C62828" },
   },
   typography: {
-    fontFamily: '"Nunito", "Quicksand", "Segoe UI", sans-serif',
-    h4: { fontWeight: 800, color: "#2C1810" },
-    h5: { fontWeight: 700, color: "#2C1810" },
+    fontFamily: '"Nunito", "Segoe UI", sans-serif',
+    h1: { fontFamily: '"Playfair Display", Georgia, serif', fontWeight: 900 },
+    h2: { fontFamily: '"Playfair Display", Georgia, serif', fontWeight: 900 },
+    h3: { fontFamily: '"Playfair Display", Georgia, serif', fontWeight: 700 },
+    h4: { fontFamily: '"Playfair Display", Georgia, serif', fontWeight: 700, color: "#2C1810" },
+    h5: { fontFamily: '"Playfair Display", Georgia, serif', fontWeight: 700, color: "#2C1810" },
     h6: { fontWeight: 700 },
     button: { fontWeight: 700, textTransform: "none" },
   },
@@ -71,10 +74,13 @@ const theme = createTheme({
     },
     MuiButton: {
       styleOverrides: {
-        root: { borderRadius: 4, padding: "8px 24px" },
+        root: { borderRadius: 50, padding: "8px 24px" },
         contained: {
-          boxShadow: "0 4px 10px rgba(212,88,10,0.2)",
-          "&:hover": { backgroundColor: "#B84508" }
+          boxShadow: "0 4px 14px rgba(212,88,10,0.25)",
+          "&:hover": { backgroundColor: "#B84508", boxShadow: "0 6px 20px rgba(212,88,10,0.35)" }
+        },
+        outlined: {
+          "&:hover": { backgroundColor: "rgba(212,88,10,0.06)" }
         },
       },
     },
@@ -95,6 +101,11 @@ const theme = createTheme({
     MuiTextField: {
       styleOverrides: {
         root: { "& .MuiOutlinedInput-root": { borderRadius: 4 } },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: { borderRadius: 50 },
       },
     },
   },

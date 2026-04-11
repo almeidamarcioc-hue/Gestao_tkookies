@@ -31,14 +31,16 @@ const espresso = '#2C1810';
 const caramel = '#C4922A';
 
 const cardSx = {
-  borderRadius: 4,
+  borderRadius: 5,
   overflow: 'hidden',
-  bgcolor: '#FFFFFF',
-  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+  bgcolor: '#FDFAF6',
+  border: '1px solid rgba(212,88,10,0.10)',
+  boxShadow: '0 2px 12px rgba(44,24,16,0.07)',
   transition: 'all 0.3s ease',
   '&:hover': {
-    transform: 'translateY(-4px)',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+    transform: 'translateY(-5px)',
+    boxShadow: '0 8px 28px rgba(44,24,16,0.13)',
+    borderColor: 'rgba(212,88,10,0.25)',
   },
   height: '100%',
   display: 'flex',
@@ -577,8 +579,10 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                   fontWeight: 'bold',
                   px: 5,
                   py: 1.8,
-                  borderRadius: '4px',
-                  '&:hover': { bgcolor: '#F5F5F5' }
+                  borderRadius: 50,
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+                  '&:hover': { bgcolor: '#FFF8F0', transform: 'scale(1.03)' },
+                  transition: 'all 0.2s ease',
                 }}
               >
                 🍪 PEÇA JÁ
@@ -586,6 +590,57 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
             </Box>
           )}
         </Container>
+      </Box>
+
+      {/* FAIXA DE CONFIANÇA — Marquee estilo Levain Bakery */}
+      <Box sx={{
+        bgcolor: espresso,
+        py: 1.2,
+        overflow: 'hidden',
+        position: 'relative',
+        '&::before, &::after': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          width: 60,
+          height: '100%',
+          zIndex: 2,
+        },
+        '&::before': { left: 0, background: `linear-gradient(to right, ${espresso}, transparent)` },
+        '&::after': { right: 0, background: `linear-gradient(to left, ${espresso}, transparent)` },
+      }}>
+        <Box sx={{
+          display: 'flex',
+          gap: 0,
+          animation: 'marquee 28s linear infinite',
+          width: 'max-content',
+          '@keyframes marquee': {
+            '0%': { transform: 'translateX(0)' },
+            '100%': { transform: 'translateX(-50%)' },
+          },
+        }}>
+          {[...Array(2)].map((_, rep) => (
+            <Box key={rep} sx={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+              {[
+                { icon: '🍪', text: 'Feito à mão' },
+                { icon: '🥚', text: 'Ingredientes selecionados' },
+                { icon: '📦', text: 'Entrega no mesmo dia' },
+                { icon: '❤️', text: 'Com muito carinho' },
+                { icon: '⭐', text: 'Receitas artesanais' },
+                { icon: '🌾', text: 'Sem conservantes' },
+                { icon: '🎁', text: 'Perfeito para presentear' },
+                { icon: '✨', text: 'Qualidade premium' },
+              ].map((item, i) => (
+                <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 3, borderRight: '1px solid rgba(255,255,255,0.12)', flexShrink: 0 }}>
+                  <Typography sx={{ fontSize: '0.95rem' }}>{item.icon}</Typography>
+                  <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.85)', fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', fontSize: '0.7rem', whiteSpace: 'nowrap' }}>
+                    {item.text}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          ))}
+        </Box>
       </Box>
 
       <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, pb: 20 }}>
@@ -688,11 +743,11 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
 
             {/* SEÇÃO COMBOS ESPECIAIS */}
             {combos.length > 0 && (
-              <Box sx={{ mb: 8 }}>
+              <Box sx={{ mb: 8, mx: -3, px: 3, py: 5, bgcolor: '#FDF3E7', borderRadius: 5, border: '1px solid rgba(212,88,10,0.08)' }}>
                 <Typography variant="h5" gutterBottom fontWeight="900" sx={{ color: espresso, mb: 1 }}>
                   Combos Especiais
                 </Typography>
-                <Box sx={{ bgcolor: terracotta, height: 3, width: 48, borderRadius: 2, mb: 3 }} />
+                <Box sx={{ bgcolor: caramel, height: 3, width: 48, borderRadius: 2, mb: 3 }} />
                 <Grid container spacing={3}>
                   {combos.map(combo => {
                     const qty = getQty(combo.id);
@@ -1000,7 +1055,10 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
         </Grid>
 
       {/* CARROSSEL DE DEPOIMENTOS */}
-      <Box sx={{ mt: 8 }}>
+      <Box sx={{ mt: 8, mx: { xs: -2, lg: 0 }, bgcolor: espresso, borderRadius: { xs: 0, md: 5 }, py: 6, px: { xs: 2, md: 6 } }}>
+        <Typography variant="h5" fontWeight="900" textAlign="center" sx={{ color: 'white', mb: 4 }}>
+          O que nossos clientes dizem
+        </Typography>
         <TestimonialsCarousel />
       </Box>
 
