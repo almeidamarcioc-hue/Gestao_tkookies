@@ -17,6 +17,14 @@ export default function Settings() {
   const [pixName, setPixName] = useState("");
   const [pixCity, setPixCity] = useState("");
   const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [instagramHandle, setInstagramHandle] = useState("");
+  const [instagramUrl, setInstagramUrl] = useState("");
+  const [instagramHashtag, setInstagramHashtag] = useState("");
+  const [saborSemanaProdutoId, setSaborSemanaProdutoId] = useState("");
+  const [saborSemanaFim, setSaborSemanaFim] = useState("");
+  const [pontosPorReal, setPontosPorReal] = useState("1");
+  const [pontosParaDesconto, setPontosParaDesconto] = useState("100");
+  const [listaProdutos, setListaProdutos] = useState([]);
   const [openingHours, setOpeningHours] = useState([
     { day: 0, label: "Domingo", open: false, open_time: "08:00", close_time: "18:00" },
     { day: 1, label: "Segunda", open: true, open_time: "08:00", close_time: "18:00" },
@@ -40,6 +48,7 @@ export default function Settings() {
   const [aboutCtaDesc, setAboutCtaDesc] = useState("");
 
   useEffect(() => {
+    api.get("/produtos").then(res => setListaProdutos(res.data || []));
     api.get("/configuracoes").then(res => {
       const cfg = res.data;
       if (cfg) {
@@ -52,6 +61,13 @@ export default function Settings() {
         setPixName(cfg.pix_name || "");
         setPixCity(cfg.pix_city || "");
         setWhatsappNumber(cfg.whatsapp_number || "");
+        setInstagramHandle(cfg.instagram_handle || "");
+        setInstagramUrl(cfg.instagram_url || "");
+        setInstagramHashtag(cfg.instagram_hashtag || "");
+        setSaborSemanaProdutoId(cfg.sabor_semana_produto_id || "");
+        setSaborSemanaFim(cfg.sabor_semana_fim || "");
+        setPontosPorReal(cfg.pontos_por_real || "1");
+        setPontosParaDesconto(cfg.pontos_para_desconto || "100");
 
         if (cfg.opening_hours) {
           setOpeningHours(JSON.parse(cfg.opening_hours));
@@ -127,7 +143,14 @@ export default function Settings() {
         pix_key: pixKey,
         pix_name: pixName,
         pix_city: pixCity,
-        whatsapp_number: whatsappNumber
+        whatsapp_number: whatsappNumber,
+        instagram_handle: instagramHandle,
+        instagram_url: instagramUrl,
+        instagram_hashtag: instagramHashtag,
+        sabor_semana_produto_id: saborSemanaProdutoId,
+        sabor_semana_fim: saborSemanaFim,
+        pontos_por_real: pontosPorReal,
+        pontos_para_desconto: pontosParaDesconto
       });
       alert("Configurações salvas!");
     } catch (err) {
@@ -339,6 +362,109 @@ export default function Settings() {
             <Button variant="contained" size="large" onClick={handleSave}>
               Salvar Configurações
             </Button>
+          </Grid>
+        </Grid>
+      </Paper>
+
+      {/* Instagram / Redes Sociais */}
+      <Paper sx={{ p: 3, mt: 3 }}>
+        <Typography variant="h6" mb={2}>Redes Sociais (Instagram)</Typography>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={4}>
+            <TextField
+              label="Handle (@usuario)"
+              fullWidth
+              value={instagramHandle}
+              onChange={e => setInstagramHandle(e.target.value)}
+              placeholder="Ex: tkookies"
+              helperText="Sem o @"
+            />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <TextField
+              label="URL do Perfil"
+              fullWidth
+              value={instagramUrl}
+              onChange={e => setInstagramUrl(e.target.value)}
+              placeholder="Ex: https://instagram.com/tkookies"
+            />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <TextField
+              label="Hashtag da Marca"
+              fullWidth
+              value={instagramHashtag}
+              onChange={e => setInstagramHashtag(e.target.value)}
+              placeholder="Ex: #tkookies"
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <Button variant="contained" onClick={handleSave}>Salvar</Button>
+          </Grid>
+        </Grid>
+      </Paper>
+
+      {/* Sabor da Semana */}
+      <Paper sx={{ p: 3, mt: 3 }}>
+        <Typography variant="h6" mb={2}>Sabor da Semana</Typography>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={8}>
+            <TextField
+              select
+              label="Produto em Destaque"
+              fullWidth
+              value={saborSemanaProdutoId}
+              onChange={e => setSaborSemanaProdutoId(e.target.value)}
+              SelectProps={{ native: true }}
+            >
+              <option value="">-- Nenhum --</option>
+              {listaProdutos.map(p => (
+                <option key={p.id} value={p.id}>{p.nome}</option>
+              ))}
+            </TextField>
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <TextField
+              label="Data de Encerramento"
+              type="date"
+              fullWidth
+              value={saborSemanaFim}
+              onChange={e => setSaborSemanaFim(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <Button variant="contained" onClick={handleSave}>Salvar</Button>
+          </Grid>
+        </Grid>
+      </Paper>
+
+      {/* Programa de Fidelidade */}
+      <Paper sx={{ p: 3, mt: 3 }}>
+        <Typography variant="h6" mb={2}>Programa de Fidelidade</Typography>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Pontos por R$ gasto"
+              fullWidth
+              type="number"
+              value={pontosPorReal}
+              onChange={e => setPontosPorReal(e.target.value)}
+              helperText="Ex: 1 = 1 ponto a cada R$1,00"
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Pontos para R$1,00 de desconto"
+              fullWidth
+              type="number"
+              value={pontosParaDesconto}
+              onChange={e => setPontosParaDesconto(e.target.value)}
+              helperText="Ex: 100 = 100 pontos valem R$1,00"
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <Button variant="contained" onClick={handleSave}>Salvar</Button>
           </Grid>
         </Grid>
       </Paper>

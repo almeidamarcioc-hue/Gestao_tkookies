@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { Box, Typography, Button, Container, Grid, IconButton, Badge, Dialog, DialogTitle, DialogContent, DialogActions, Chip, Paper, Fab, Snackbar, Alert, Card, CardContent, CardMedia, CardActionArea } from "@mui/material";
+import { Box, Typography, Button, Container, Grid, IconButton, Badge, Dialog, DialogTitle, DialogContent, DialogActions, Chip, Paper, Fab, Snackbar, Alert, Card, CardContent, CardMedia, CardActionArea, LinearProgress } from "@mui/material";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Add, Remove, ShoppingBag, Favorite, FavoriteBorder, Star, ArrowForward, AddCircleOutline, ListAlt, RestaurantMenu, PointOfSale, Inventory2, People, LocalOffer, Info, Close, Storefront, Map, Loyalty, DeleteOutline, CardGiftcard, AccessTime } from "@mui/icons-material";
+import { Add, Remove, ShoppingBag, Favorite, FavoriteBorder, Star, ArrowForward, AddCircleOutline, ListAlt, RestaurantMenu, PointOfSale, Inventory2, People, LocalOffer, Info, Close, Storefront, Map, Loyalty, DeleteOutline, CardGiftcard, AccessTime, WhatsApp, Instagram, CardGiftcardOutlined, Timer } from "@mui/icons-material";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import api from "../services/api";
 import ResellerCTA from "../components/ResellerCTA";
@@ -60,8 +60,15 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
     home_bg: "",
     open_days: "",
     opening_hours: "",
-    whatsapp_number: "5555997312557"
+    whatsapp_number: "5555997312557",
+    instagram_handle: "@tkookies_",
+    instagram_url: "https://www.instagram.com/tkookies_/",
+    instagram_hashtag: "#tkookies"
   });
+  const [saborSemana, setSaborSemana] = useState(null);
+  const [countdown, setCountdown] = useState({ dias: 0, horas: 0, minutos: 0, segundos: 0 });
+  const [ocasiaoFiltro, setOcasiaoFiltro] = useState("Todos");
+  const [hoveredCard, setHoveredCard] = useState(null);
   const [isStoreOpen, setIsStoreOpen] = useState(true);
 
   const [products, setProducts] = useState([]);
@@ -196,6 +203,35 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
       setCombos(Array.isArray(res.data) ? res.data : []);
     }).catch(err => console.error("Erro ao carregar combos", err));
   }, []);
+
+  // Sabor da Semana: encontra o produto configurado
+  useEffect(() => {
+    if (config.sabor_semana_produto_id && products.length > 0) {
+      const prod = products.find(p => String(p.id) === String(config.sabor_semana_produto_id));
+      if (prod && config.sabor_semana_fim) {
+        const fim = new Date(config.sabor_semana_fim);
+        if (fim > new Date()) setSaborSemana(prod);
+      }
+    }
+  }, [config, products]);
+
+  // Countdown regressivo para o Sabor da Semana
+  useEffect(() => {
+    if (!saborSemana || !config.sabor_semana_fim) return;
+    const calc = () => {
+      const diff = new Date(config.sabor_semana_fim) - new Date();
+      if (diff <= 0) { setSaborSemana(null); return; }
+      setCountdown({
+        dias: Math.floor(diff / 86400000),
+        horas: Math.floor((diff % 86400000) / 3600000),
+        minutos: Math.floor((diff % 3600000) / 60000),
+        segundos: Math.floor((diff % 60000) / 1000)
+      });
+    };
+    calc();
+    const timer = setInterval(calc, 1000);
+    return () => clearInterval(timer);
+  }, [saborSemana, config.sabor_semana_fim]);
 
   useEffect(() => {
     if (clientUser) {
@@ -590,6 +626,44 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
               </Box>
             </Box>
 
+            {/* SABOR DA SEMANA */}
+            {saborSemana && (
+              <Box
+                component={motion.div}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                sx={{ mb: 6, borderRadius: 4, overflow: 'hidden', background: `linear-gradient(135deg, ${espresso} 0%, #4a2218 100%)`, color: 'white', p: { xs: 3, md: 4 }, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3, alignItems: 'center' }}
+              >
+                {saborSemana.imagens?.[0] && (
+                  <Box component="img" src={saborSemana.imagens.find(i => i.eh_capa)?.imagem || saborSemana.imagens[0]?.imagem}
+                    sx={{ width: { xs: '100%', md: 180 }, height: { xs: 200, md: 180 }, objectFit: 'cover', borderRadius: 3, flexShrink: 0 }} />
+                )}
+                <Box flex={1}>
+                  <Chip label="⭐ Sabor da Semana" sx={{ bgcolor: caramel, color: 'white', fontWeight: 'bold', mb: 1 }} size="small" />
+                  <Typography variant="h5" fontWeight="900" gutterBottom>{saborSemana.nome}</Typography>
+                  <Typography variant="body2" sx={{ opacity: 0.8, mb: 2 }}>{saborSemana.descricao}</Typography>
+                  <Typography variant="h6" sx={{ color: caramel, fontWeight: 'bold' }}>
+                    R$ {Number(saborSemana.preco_venda).toFixed(2)}
+                  </Typography>
+                </Box>
+                <Box sx={{ textAlign: 'center', flexShrink: 0 }}>
+                  <Typography variant="caption" sx={{ opacity: 0.7, display: 'block', mb: 1 }}>Termina em</Typography>
+                  <Box display="flex" gap={1} justifyContent="center">
+                    {[{ v: countdown.dias, l: 'd' }, { v: countdown.horas, l: 'h' }, { v: countdown.minutos, l: 'm' }, { v: countdown.segundos, l: 's' }].map(({ v, l }) => (
+                      <Box key={l} sx={{ bgcolor: 'rgba(255,255,255,0.15)', borderRadius: 2, px: 1.5, py: 1, minWidth: 44, textAlign: 'center' }}>
+                        <Typography variant="h6" fontWeight="bold">{String(v).padStart(2, '0')}</Typography>
+                        <Typography variant="caption" sx={{ opacity: 0.7 }}>{l}</Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                  <Button variant="contained" onClick={() => handleQtyChange(saborSemana.id, 1)} disabled={!isStoreOpen || saborSemana.estoque <= 0}
+                    sx={{ mt: 2, borderRadius: 50, bgcolor: caramel, '&:hover': { bgcolor: '#b07e20' }, fontWeight: 'bold' }}>
+                    Quero esse!
+                  </Button>
+                </Box>
+              </Box>
+            )}
+
             {/* 2. DESTAQUES (Mosaic Grid) */}
             {featuredProduct && (
               <Box sx={{ mb: 8 }}>
@@ -674,6 +748,41 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
               </Box>
             )}
 
+            {/* SEÇÃO PRESENTEIE */}
+            {products.some(p => p.ocasiao) && (
+              <Box sx={{ mb: 8 }}>
+                <Typography variant="h5" gutterBottom fontWeight="900" sx={{ color: espresso, mb: 1 }}>
+                  Presenteie com Amor
+                </Typography>
+                <Box sx={{ bgcolor: caramel, height: 3, width: 48, borderRadius: 2, mb: 3 }} />
+                <Box display="flex" gap={1} flexWrap="wrap" mb={3}>
+                  {["Todos", "Aniversário", "Dia das Mães", "Natal", "Empresas"].map(o => (
+                    <Chip key={o} label={o} onClick={() => setOcasiaoFiltro(o)}
+                      sx={{ fontWeight: 'bold', cursor: 'pointer',
+                        bgcolor: ocasiaoFiltro === o ? terracotta : 'rgba(212,88,10,0.1)',
+                        color: ocasiaoFiltro === o ? 'white' : terracotta,
+                        '&:hover': { bgcolor: terracotta, color: 'white' } }} />
+                  ))}
+                </Box>
+                <Grid container spacing={2}>
+                  {products.filter(p => p.ocasiao && (ocasiaoFiltro === "Todos" || p.ocasiao.includes(ocasiaoFiltro))).map(prod => {
+                    const img = prod.imagens?.find(i => i.eh_capa)?.imagem || prod.imagens?.[0]?.imagem;
+                    return (
+                      <Grid item xs={6} sm={4} key={prod.id}>
+                        <Card sx={{ ...cardSx, cursor: 'pointer' }} onClick={() => handleOpenDetails(prod)}>
+                          {img && <Box component="img" src={img} sx={{ width: '100%', height: 140, objectFit: 'cover' }} />}
+                          <CardContent sx={{ p: 1.5 }}>
+                            <Typography variant="subtitle2" fontWeight="bold" noWrap>{prod.nome}</Typography>
+                            <Typography variant="body2" sx={{ color: terracotta, fontWeight: 'bold' }}>R$ {Number(prod.preco_venda).toFixed(2)}</Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    );
+                  })}
+                </Grid>
+              </Box>
+            )}
+
             {/* SEÇÃO CARDÁPIO */}
             <Box id="cardapio">
               <Typography variant="h5" gutterBottom fontWeight="900" sx={{ color: espresso, mb: 1 }}>
@@ -688,14 +797,29 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                   
                   return (
                     <Grid item xs={12} sm={6} key={prod.id} component={motion.div} variants={itemVariants}>
-                      <Card sx={{ ...cardSx }}>
-                         <Box sx={{ position: 'relative', height: { xs: 220, md: 280 } }}>
-                            <Box 
-                              component="img" 
-                              src={coverImage} 
-                              sx={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
+                      <Card sx={{ ...cardSx }}
+                        onMouseEnter={() => setHoveredCard(prod.id)}
+                        onMouseLeave={() => setHoveredCard(null)}>
+                         <Box sx={{ position: 'relative', height: { xs: 220, md: 280 }, overflow: 'hidden' }}>
+                            <Box
+                              component="img"
+                              src={coverImage}
+                              sx={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer',
+                                position: 'absolute', inset: 0,
+                                opacity: hoveredCard === prod.id && prod.imagens?.length > 1 ? 0 : 1,
+                                transition: 'opacity 0.4s ease' }}
                               onClick={() => handleOpenDetails(prod)}
                             />
+                            {prod.imagens?.length > 1 && (
+                              <Box component="img"
+                                src={prod.imagens.find(i => !i.eh_capa)?.imagem || prod.imagens[1]?.imagem}
+                                sx={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer',
+                                  position: 'absolute', inset: 0,
+                                  opacity: hoveredCard === prod.id ? 1 : 0,
+                                  transition: 'opacity 0.4s ease' }}
+                                onClick={() => handleOpenDetails(prod)}
+                              />
+                            )}
                             
                             {/* Marcador de Agregado Disponível */}
                             {prod.agregados && prod.agregados.length > 0 && (
@@ -878,6 +1002,67 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
       {/* CARROSSEL DE DEPOIMENTOS */}
       <Box sx={{ mt: 8 }}>
         <TestimonialsCarousel />
+      </Box>
+
+      {/* NOSSA HISTÓRIA */}
+      {config.about_title && (
+        <Box sx={{ mt: 8, bgcolor: espresso, borderRadius: 4, p: { xs: 3, md: 6 }, color: 'white' }}>
+          <Grid container spacing={4} alignItems="center">
+            <Grid item xs={12} md={7}>
+              <Typography variant="overline" sx={{ color: caramel, fontWeight: 'bold', letterSpacing: 2 }}>Nossa História</Typography>
+              <Typography variant="h4" fontWeight="900" gutterBottom sx={{ fontFamily: '"Playfair Display", serif', mt: 1 }}>
+                {config.about_title}
+              </Typography>
+              <Typography variant="body1" sx={{ opacity: 0.85, lineHeight: 1.8, mb: 3 }}>
+                {config.about_desc}
+              </Typography>
+              <Button component={Link} to="/sobre" variant="outlined"
+                sx={{ color: caramel, borderColor: caramel, borderRadius: 50, '&:hover': { bgcolor: caramel, color: 'white' } }}>
+                Conheça nossa história
+              </Button>
+            </Grid>
+            <Grid item xs={12} md={5}>
+              <Grid container spacing={2}>
+                {[
+                  { title: config.about_card1_title, desc: config.about_card1_desc },
+                  { title: config.about_card2_title, desc: config.about_card2_desc },
+                  { title: config.about_card3_title, desc: config.about_card3_desc },
+                ].filter(c => c.title).map((card, i) => (
+                  <Grid item xs={12} key={i}>
+                    <Box sx={{ bgcolor: 'rgba(255,255,255,0.08)', borderRadius: 3, p: 2, borderLeft: `3px solid ${caramel}` }}>
+                      <Typography variant="subtitle1" fontWeight="bold" sx={{ color: caramel }}>{card.title}</Typography>
+                      <Typography variant="body2" sx={{ opacity: 0.8 }}>{card.desc}</Typography>
+                    </Box>
+                  </Grid>
+                ))}
+              </Grid>
+            </Grid>
+          </Grid>
+        </Box>
+      )}
+
+      {/* INSTAGRAM / UGC */}
+      <Box sx={{ mt: 8, textAlign: 'center', p: { xs: 3, md: 4 }, bgcolor: '#FFF8F0', borderRadius: 4 }}>
+        <Instagram sx={{ fontSize: 40, color: terracotta, mb: 1 }} />
+        <Typography variant="h5" fontWeight="900" sx={{ color: espresso, mb: 1 }}>
+          Faça parte da nossa história
+        </Typography>
+        <Typography variant="body1" sx={{ color: '#795548', mb: 3, maxWidth: 500, mx: 'auto' }}>
+          Compartilhe sua experiência e apareça no feed da TKookies!
+          Use a hashtag <strong>{config.instagram_hashtag || '#tkookies'}</strong> nas suas fotos.
+        </Typography>
+        <Box display="flex" gap={2} justifyContent="center" flexWrap="wrap">
+          <Button variant="contained" href={config.instagram_url || 'https://www.instagram.com/tkookies_/'} target="_blank"
+            startIcon={<Instagram />}
+            sx={{ borderRadius: 50, bgcolor: '#E1306C', '&:hover': { bgcolor: '#c12457' }, fontWeight: 'bold' }}>
+            {config.instagram_handle || '@tkookies_'}
+          </Button>
+          <Button variant="outlined" href={`https://wa.me/${config.whatsapp_number || '5555997312557'}?text=${encodeURIComponent('Olá! Gostaria de ver o cardápio da TKookies')}`}
+            target="_blank" startIcon={<WhatsApp />}
+            sx={{ borderRadius: 50, color: '#25D366', borderColor: '#25D366', '&:hover': { bgcolor: '#25D366', color: 'white' }, fontWeight: 'bold' }}>
+            Ver no WhatsApp
+          </Button>
+        </Box>
       </Box>
 
       {/* SEÇÃO REVENDEDOR (B2B) - Com zIndex para garantir visibilidade */}

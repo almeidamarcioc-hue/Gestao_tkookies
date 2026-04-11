@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
-import { Box, Typography, Paper, Container, Table, TableHead, TableBody, TableRow, TableCell, Chip, Button, TextField, Grid, IconButton, Tooltip, Card, CardContent, CardActions, CardMedia } from "@mui/material";
-import { Replay, AddShoppingCart } from "@mui/icons-material";
+import { Box, Typography, Paper, Container, Table, TableHead, TableBody, TableRow, TableCell, Chip, Button, TextField, Grid, IconButton, Tooltip, Card, CardContent, CardActions, Divider } from "@mui/material";
+import { Replay, AddShoppingCart, Star } from "@mui/icons-material";
 
 export default function ClientProfile({ user, onUserUpdate, addToCart }) {
   const navigate = useNavigate();
@@ -12,20 +12,30 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
   const [formData, setFormData] = useState({});
   const [senhaAtual, setSenhaAtual] = useState("");
   const [isStoreOpen, setIsStoreOpen] = useState(true);
-  const [config, setConfig] = useState({ open_time: "", close_time: "", open_days: "" });
+  const [config, setConfig] = useState({});
+  const [pontosSaldo, setPontosSaldo] = useState(0);
+  const [pontosHistorico, setPontosHistorico] = useState([]);
 
-  const checkIfOpen = (openTime, closeTime, openDaysStr) => {
+  const checkIfOpen = (cfg) => {
     const now = new Date();
+    const today = now.getDay();
+    const current = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
 
-    // Verifica dia da semana
-    if (openDaysStr) {
-      const allowedDays = openDaysStr.split(',').map(Number);
-      if (!allowedDays.includes(now.getDay())) return false;
+    if (cfg.opening_hours) {
+      try {
+        const hours = JSON.parse(cfg.opening_hours);
+        const todaySchedule = hours.find(h => h.day === today);
+        if (!todaySchedule || !todaySchedule.open) return false;
+        return current >= todaySchedule.open_time && current <= todaySchedule.close_time;
+      } catch (e) { /* fallback */ }
     }
 
-    if (!openTime || !closeTime) return true;
-    const current = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
-    return current >= openTime && current <= closeTime;
+    if (cfg.open_days) {
+      const allowedDays = cfg.open_days.split(',').map(Number);
+      if (!allowedDays.includes(today)) return false;
+    }
+    if (!cfg.open_time || !cfg.close_time) return true;
+    return current >= cfg.open_time && current <= cfg.close_time;
   };
 
   useEffect(() => {
@@ -38,9 +48,18 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
     api.get("/configuracoes").then(res => {
       if (res.data) {
         setConfig(res.data);
-        setIsStoreOpen(checkIfOpen(res.data.open_time, res.data.close_time, res.data.open_days));
+        setIsStoreOpen(checkIfOpen(res.data));
       }
     });
+
+    if (user) {
+      api.get(`/fidelidade/${user.id}`).then(res => {
+        if (res.data) {
+          setPontosSaldo(res.data.saldo || 0);
+          setPontosHistorico(res.data.historico || []);
+        }
+      }).catch(() => {});
+    }
   }, [user]);
 
   const handleChange = (e) => {
@@ -65,7 +84,7 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
   };
 
   const handleRepeatOrder = async (orderId) => {
-    if (!checkIfOpen(config.open_time, config.close_time, config.open_days)) {
+    if (!checkIfOpen(config)) {
       setIsStoreOpen(false);
       alert("No momento estamos fechados. Volte dentro do horário de atendimento!");
       return;
@@ -94,7 +113,7 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
   };
 
   const handleBuyItem = async (item) => {
-    if (!checkIfOpen(config.open_time, config.close_time, config.open_days)) {
+    if (!checkIfOpen(config)) {
       setIsStoreOpen(false);
       alert("No momento estamos fechados. Volte dentro do horário de atendimento!");
       return;
@@ -171,6 +190,39 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
               </Grid>
             )}
           </Grid>
+        )}
+      </Paper>
+
+      {/* Meus Pontos */}
+      <Paper sx={{ p: 3, mb: 4, borderRadius: 5, background: 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)', boxShadow: '0 4px 24px rgba(212,88,10,0.15)' }}>
+        <Box display="flex" alignItems="center" gap={1} mb={1}>
+          <Star sx={{ color: '#D4580A' }} />
+          <Typography variant="h6" fontWeight="bold" sx={{ color: '#2C1810' }}>Meus Pontos de Fidelidade</Typography>
+        </Box>
+        <Typography variant="h3" fontWeight="bold" sx={{ color: '#D4580A', mb: 1 }}>{pontosSaldo}</Typography>
+        <Typography variant="body2" color="text.secondary" mb={2}>
+          Acumule pontos a cada compra e troque por descontos!
+        </Typography>
+        {pontosHistorico.length > 0 && (
+          <>
+            <Divider sx={{ mb: 2 }} />
+            <Typography variant="subtitle2" fontWeight="bold" mb={1}>Histórico</Typography>
+            <Table size="small">
+              <TableBody>
+                {pontosHistorico.slice(0, 5).map(h => (
+                  <TableRow key={h.id}>
+                    <TableCell sx={{ py: 0.5 }}>{h.descricao}</TableCell>
+                    <TableCell align="right" sx={{ py: 0.5, color: h.tipo === 'credito' ? 'green' : 'red', fontWeight: 'bold' }}>
+                      {h.tipo === 'credito' ? '+' : '-'}{h.pontos} pts
+                    </TableCell>
+                    <TableCell align="right" sx={{ py: 0.5, color: 'text.secondary', fontSize: 12 }}>
+                      {new Date(h.created_at).toLocaleDateString()}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </>
         )}
       </Paper>
 

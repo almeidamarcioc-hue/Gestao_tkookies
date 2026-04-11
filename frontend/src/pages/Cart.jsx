@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Container, Typography, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, RadioGroup, FormControlLabel, Radio, Divider, IconButton, TextField, Grid, Alert } from "@mui/material";
-import { Delete, ArrowBack, RemoveShoppingCart, LocalShipping, AttachMoney, QrCode, Storefront, Add, Remove, ContentCopy, CardGiftcard } from "@mui/icons-material";
+import { Container, Typography, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, RadioGroup, FormControlLabel, Radio, Divider, IconButton, TextField, Grid, Alert, Dialog, DialogTitle, DialogContent, DialogActions, Switch } from "@mui/material";
+import { Delete, ArrowBack, RemoveShoppingCart, LocalShipping, AttachMoney, QrCode, Storefront, Add, Remove, ContentCopy, CardGiftcard, EmojiEvents } from "@mui/icons-material";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import api from "../services/api";
@@ -8,8 +8,12 @@ import { QrCodePix } from "qrcode-pix";
 import { QRCodeSVG } from "qrcode.react";
 
 export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, clientUser, addToCart }) {
-  const [deliveryType, setDeliveryType] = useState("retira"); // 'retira' ou 'entrega'
+  const [deliveryType, setDeliveryType] = useState("retira");
   const [paymentMethod, setPaymentMethod] = useState("Dinheiro");
+  const [upsellOpen, setUpsellOpen] = useState(false);
+  const [pontosSaldo, setPontosSaldo] = useState(0);
+  const [usarPontos, setUsarPontos] = useState(false);
+  const [descontoPontos, setDescontoPontos] = useState(0);
   const [addressOption, setAddressOption] = useState("cadastrado");
   const [customAddress, setCustomAddress] = useState({ endereco: "", numero: "", bairro: "", cidade: "" });
   const [pixPayload, setPixPayload] = useState('');
@@ -81,6 +85,13 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
   };
 
   useEffect(() => {
+    // Buscar saldo de pontos do cliente
+    if (clientUser) {
+      api.get(`/fidelidade/${clientUser.id}`).then(res => {
+        setPontosSaldo(res.data.saldo || 0);
+      }).catch(() => {});
+    }
+
     // Busca configurações para validar horário (usa cache de sessão se disponível)
     const cachedCfg = sessionStorage.getItem('_cfg');
     if (cachedCfg) {
@@ -117,7 +128,20 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
 
   const totalItems = cart.reduce((acc, item) => acc + (getItemPrice(item) * item.quantidade), 0);
   const finalFreight = deliveryType === "entrega" ? freightValue : 0;
-  const totalOrder = totalItems + finalFreight;
+  const totalOrder = Math.max(0, totalItems + finalFreight - (usarPontos ? descontoPontos : 0));
+
+  const handleTogglePontos = async (checked) => {
+    setUsarPontos(checked);
+    if (checked && pontosSaldo > 0) {
+      try {
+        // 100 pontos = R$1 (padrão, pode vir de config)
+        const desc = pontosSaldo / 100;
+        setDescontoPontos(parseFloat(Math.min(desc, totalItems + finalFreight).toFixed(2)));
+      } catch { setDescontoPontos(0); }
+    } else {
+      setDescontoPontos(0);
+    }
+  };
 
   useEffect(() => {
     if (paymentMethod === 'Pix' && totalOrder > 0) {
@@ -144,7 +168,16 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
     }
   };
 
+  const handleOpenUpsell = () => {
+    if (suggestions.length > 0) {
+      setUpsellOpen(true);
+    } else {
+      handleCheckout();
+    }
+  };
+
   const handleCheckout = async () => {
+    setUpsellOpen(false);
     if (!clientUser) {
       alert("Por favor, faça login para finalizar o pedido.");
       return;
@@ -183,6 +216,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
       forma_pagamento: paymentMethod,
       observacao: obsFinal,
       frete: finalFreight,
+      desconto: usarPontos ? descontoPontos : 0,
       status: "Novo",
       origem: 'carrinho',
       itens: cart.map(item => ({
@@ -477,6 +511,23 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
 
             <Divider sx={{ my: 3, borderColor: 'rgba(78, 52, 46, 0.1)' }} />
 
+            {/* PONTOS DE FIDELIDADE */}
+            {clientUser && pontosSaldo > 0 && (
+              <Box sx={{ mb: 2, p: 2, bgcolor: '#FFF8E1', borderRadius: 3, border: '1px solid #FFB74D' }}>
+                <Box display="flex" alignItems="center" gap={1} mb={1}>
+                  <EmojiEvents sx={{ color: '#F57C00' }} />
+                  <Typography variant="subtitle2" fontWeight="bold" color="#E65100">
+                    Você tem {pontosSaldo} pontos (≈ R$ {(pontosSaldo / 100).toFixed(2)} de desconto)
+                  </Typography>
+                </Box>
+                <FormControlLabel
+                  control={<Switch checked={usarPontos} onChange={e => handleTogglePontos(e.target.checked)} color="warning" />}
+                  label={<Typography variant="body2">Usar meus pontos neste pedido</Typography>}
+                />
+                {usarPontos && <Typography variant="caption" color="#2E7D32" fontWeight="bold">- R$ {descontoPontos.toFixed(2)} de desconto aplicado</Typography>}
+              </Box>
+            )}
+
             <Box display="flex" justifyContent="space-between" mb={3}>
               <Typography variant="h6" fontWeight="bold" color="#4E342E">Total</Typography>
               <Typography variant="h6" fontWeight="bold" color="#2E7D32">R$ {totalOrder.toFixed(2)}</Typography>
@@ -486,7 +537,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
               variant="contained"
               fullWidth
               size="large"
-              onClick={handleCheckout}
+              onClick={handleOpenUpsell}
               disabled={cart.length === 0 || !isStoreOpen || cart.some(item => (Number(item.estoque) || 0) <= 0 || item.quantidade > (Number(item.estoque) || 0))}
               sx={{
                 py: 1.5,
@@ -538,6 +589,40 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
         FINALIZAR
       </Button>
     </Paper>
+
+    {/* MODAL UPSELL — Turbine seu pedido */}
+    <Dialog open={upsellOpen} onClose={() => setUpsellOpen(false)} maxWidth="sm" fullWidth
+      PaperProps={{ sx: { borderRadius: 4, bgcolor: '#FFFAF5' } }}>
+      <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', color: '#2C1810' }}>
+        Turbine seu pedido! 🎁
+      </DialogTitle>
+      <DialogContent>
+        <Typography variant="body2" color="text.secondary" textAlign="center" mb={2}>
+          Que tal adicionar um extra antes de finalizar?
+        </Typography>
+        <Box display="flex" flexDirection="column" gap={2}>
+          {suggestions.map(agg => (
+            <Box key={agg.id} sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 2, bgcolor: 'white', borderRadius: 3, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+              {agg.imagem && <Box component="img" src={agg.imagem} sx={{ width: 60, height: 60, borderRadius: 2, objectFit: 'cover', flexShrink: 0 }} />}
+              <Box flex={1}>
+                <Typography variant="subtitle2" fontWeight="bold">{agg.nome}</Typography>
+                <Typography variant="body2" color="text.secondary">+ R$ {Number(agg.preco || 0).toFixed(2)}</Typography>
+              </Box>
+              <Button size="small" variant="contained" onClick={() => handleAddAggregate(agg)}
+                sx={{ borderRadius: 20, flexShrink: 0 }}>
+                Adicionar
+              </Button>
+            </Box>
+          ))}
+        </Box>
+      </DialogContent>
+      <DialogActions sx={{ justifyContent: 'center', gap: 2, pb: 3 }}>
+        <Button onClick={handleCheckout} sx={{ color: '#795548' }}>Finalizar sem adicionar</Button>
+        <Button onClick={handleCheckout} variant="contained" sx={{ borderRadius: 50, px: 4 }}>
+          Confirmar e Finalizar
+        </Button>
+      </DialogActions>
+    </Dialog>
     </Box>
   );
 }

@@ -284,6 +284,23 @@ export async function initDatabase() {
     logs.push(await addColumnSafe("ingredientes", "estoque_atual DECIMAL(10, 2) DEFAULT 0"));
     logs.push(await addColumnSafe("itens_pedido", "combo_id INT NULL"));
     logs.push(await addColumnSafe("itens_pedido", "tipo VARCHAR(20) DEFAULT 'produto'"));
+    logs.push(await addColumnSafe("produtos", "ocasiao VARCHAR(200) DEFAULT NULL"));
+
+    // Tabela de Fidelidade
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS pontos_fidelidade (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        cliente_id INT NOT NULL,
+        pedido_id INT,
+        pontos INT NOT NULL,
+        tipo VARCHAR(20) NOT NULL,
+        descricao VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (cliente_id) REFERENCES clientes(id),
+        FOREIGN KEY (pedido_id) REFERENCES pedidos(id) ON DELETE SET NULL
+      )
+    `);
+    logs.push("[pontos_fidelidade] Tabela verificada/criada");
 
     // Sincroniza estoque_atual com estoque para ingredientes que nunca tiveram movimentação
     try {

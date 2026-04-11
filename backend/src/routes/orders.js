@@ -125,6 +125,24 @@ router.post("/", async (req, res) => {
     }
 
     await client.query("COMMIT");
+
+    // Creditar pontos de fidelidade (não bloqueia o pedido se falhar)
+    if (cliente_id) {
+      try {
+        const cfgRes = await pool.query("SELECT valor FROM configuracoes WHERE chave = 'pontos_por_real'");
+        const pontosPorReal = cfgRes.rows[0] ? Number(cfgRes.rows[0].valor) : 1;
+        const pontos = Math.floor(valor_total * pontosPorReal);
+        if (pontos > 0) {
+          await pool.query(
+            "INSERT INTO pontos_fidelidade (cliente_id, pedido_id, pontos, tipo, descricao) VALUES ($1, $2, $3, 'credito', $4)",
+            [cliente_id, pedidoId, pontos, `Pedido #${pedidoId}`]
+          );
+        }
+      } catch (e) {
+        console.error("Erro ao creditar pontos (não bloqueante):", e.message);
+      }
+    }
+
     res.status(201).json({ id: pedidoId, message: "Pedido criado com sucesso" });
   } catch (error) {
     await client.query("ROLLBACK");

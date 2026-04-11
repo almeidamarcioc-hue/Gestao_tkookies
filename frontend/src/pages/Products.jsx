@@ -54,6 +54,16 @@ export default function Products() {
   const [agregados, setAgregados] = useState([]); // Produtos sugeridos/agregados
   const [agregadoSelecionado, setAgregadoSelecionado] = useState(null);
   const [agregadoPreco, setAgregadoPreco] = useState("");
+  const [ocasiao, setOcasiao] = useState([]);
+
+  const OCASIOES = [
+    { value: "aniversario", label: "Aniversário" },
+    { value: "casamento", label: "Casamento" },
+    { value: "namoro", label: "Presente Romântico" },
+    { value: "natal", label: "Natal" },
+    { value: "pascoa", label: "Páscoa" },
+    { value: "dia_das_maes", label: "Dia das Mães" },
+  ];
 
   // Efeito para preencher o formulário ao duplicar um produto
   useEffect(() => {
@@ -353,6 +363,7 @@ export default function Products() {
       ativo: ativo,
       agregados: agregados.map(a => ({ id: a.id, preco: Number(a.preco) })),
       eh_agregado: ehAgregado,
+      ocasiao: ocasiao.join(","),
       ...(ehAgregado && {
         estoque: Number(estoqueManual),
         custo: Number(custoManual)
@@ -381,6 +392,7 @@ export default function Products() {
       setEhAgregado(false);
       setEstoqueManual("");
       setCustoManual("");
+      setOcasiao([]);
       
       // Recarrega a lista
       const resProd = await api.get("/produtos");
@@ -571,6 +583,30 @@ export default function Products() {
             </Table>
             </>
         )}
+        <Box mb={3}>
+          <Typography variant="subtitle2" gutterBottom>Ocasião / Filtro de Presentear</Typography>
+          <Box display="flex" flexWrap="wrap" gap={1}>
+            {OCASIOES.map(op => (
+              <FormControlLabel
+                key={op.value}
+                control={
+                  <Checkbox
+                    checked={ocasiao.includes(op.value)}
+                    onChange={(e) => {
+                      if (e.target.checked) setOcasiao([...ocasiao, op.value]);
+                      else setOcasiao(ocasiao.filter(v => v !== op.value));
+                    }}
+                    size="small"
+                  />
+                }
+                label={op.label}
+              />
+            ))}
+          </Box>
+          <Typography variant="caption" color="text.secondary">
+            Marque as ocasiões para que este produto apareça nos filtros da loja (ex: "Presenteie com Amor")
+          </Typography>
+        </Box>
         <Button variant="contained" fullWidth size="large" onClick={salvarProduto}>CADASTRAR PRODUTO</Button>
       </Paper>
 

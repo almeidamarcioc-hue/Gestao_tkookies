@@ -22,6 +22,7 @@ import testimonialsRouter from "./routes/testimonials.js";
 import analyticsRouter from "./routes/analytics.js";
 import salesIntelligenceRouter from "./routes/salesIntelligence.js";
 import prospeccaoRevendedoresRouter from "./routes/prospeccaoRevendedores.js";
+import fidelidadeRouter from "./routes/fidelidade.js";
 import { authenticateToken, requireRole } from "./middlewares/auth.js";
 
 const app = express();
@@ -134,7 +135,8 @@ app.use("/estoque", (req, res, next) => {
 app.use("/configuracoes", settingsRouter); // GET é público; POST é protegido internamente
 app.use("/financeiro", authenticateToken, requireRole('admin'), financialRouter);
 app.use("/revendedores", authenticateToken, requireRole('admin'), resellersRouter);
-app.use("/favoritos", authenticateToken, favoritesRouter); // Favoritos para clientes logados
+app.use("/favoritos", authenticateToken, favoritesRouter);
+app.use("/fidelidade", fidelidadeRouter);
 // Removemos os middlewares globais daqui porque relatoriosRoutes já possui proteção interna por rota
 app.use("/relatorios", relatoriosRoutes);
 app.use("/relatorios", authenticateToken, requireRole('admin'), reportsRouter); 
