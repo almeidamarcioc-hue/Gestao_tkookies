@@ -745,9 +745,6 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
 
             {/* SEÇÃO PRESENTEIE COM AMOR */}
             {(() => {
-              const prodsComOcasiao = products.filter(p => p.ocasiao);
-              if (prodsComOcasiao.length === 0) return null;
-
               // Ocasiões configuradas no admin, com fallback nas padrões
               const defaultOcasioes = [
                 { value: "aniversario", label: "Aniversário" },
@@ -760,6 +757,15 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
               let ocasioesCfg = [];
               try { ocasioesCfg = JSON.parse(config.ocasioes || '[]'); } catch {}
               if (ocasioesCfg.length === 0) ocasioesCfg = defaultOcasioes;
+
+              const ocasioesCfgValues = ocasioesCfg.map(o => o.value);
+
+              // Apenas produtos com ao menos uma ocasião que ainda existe no config
+              const prodsComOcasiao = products.filter(p => {
+                if (!p.ocasiao) return false;
+                return p.ocasiao.split(",").filter(Boolean).some(v => ocasioesCfgValues.includes(v));
+              });
+              if (prodsComOcasiao.length === 0) return null;
 
               // Só exibe chips que tenham ao menos 1 produto
               const ocasioesComProduto = ocasioesCfg.filter(o =>
