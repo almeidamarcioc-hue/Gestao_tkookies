@@ -63,7 +63,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
     whatsapp_number: "5555997312557",
     instagram_handle: "@tkookies_",
     instagram_url: "https://www.instagram.com/tkookies_/",
-    instagram_hashtag: "#tkookies"
+    instagram_hashtag: "#tkookies_"
   });
   const [saborSemana, setSaborSemana] = useState(null);
   const [countdown, setCountdown] = useState({ dias: 0, horas: 0, minutos: 0, segundos: 0 });
