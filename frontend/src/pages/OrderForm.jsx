@@ -17,7 +17,9 @@ export default function OrderForm({ clientUser, isAdmin }) {
 
   // Dados do Pedido
   const [cliente, setCliente] = useState(null);
-  const [dataPedido, setDataPedido] = useState(new Date().toISOString().split('T')[0]);
+  const nowBrasilia = new Date().toLocaleString('sv-SE', { timeZone: 'America/Sao_Paulo' });
+  const [dataPedido, setDataPedido] = useState(nowBrasilia.split(' ')[0]);
+  const [horaPedido, setHoraPedido] = useState(nowBrasilia.split(' ')[1].slice(0, 5));
   const [formaPagamento, setFormaPagamento] = useState("Pix");
   const [observacao, setObservacao] = useState("");
   const [frete, setFrete] = useState(0);
@@ -113,7 +115,9 @@ export default function OrderForm({ clientUser, isAdmin }) {
         cidade: p.cidade,
         is_revendedor: p.is_revendedor
       });
-      setDataPedido(p.data_pedido.split('T')[0]);
+      const brasiliaStr = new Date(p.data_pedido).toLocaleString('sv-SE', { timeZone: 'America/Sao_Paulo' });
+      setDataPedido(brasiliaStr.split(' ')[0]);
+      setHoraPedido(brasiliaStr.split(' ')[1].slice(0, 5));
       setFormaPagamento(p.forma_pagamento);
       setObservacao(p.observacao);
       setFrete(p.frete);
@@ -192,7 +196,7 @@ export default function OrderForm({ clientUser, isAdmin }) {
 
     const payload = {
       cliente_id: cliente.id,
-      data_pedido: dataPedido,
+      data_pedido: new Date(`${dataPedido}T${horaPedido}:00-03:00`).toISOString(),
       forma_pagamento: formaPagamento,
       observacao,
       frete: Number(frete) || 0,
@@ -374,8 +378,11 @@ export default function OrderForm({ clientUser, isAdmin }) {
               </Typography>
             )}
           </Grid>
-          <Grid item xs={6} md={2}>
+          <Grid item xs={4} md={2}>
             <TextField type="date" label="Data" fullWidth InputLabelProps={{ shrink: true }} value={dataPedido} onChange={e => setDataPedido(e.target.value)} disabled={isCancelled} />
+          </Grid>
+          <Grid item xs={2} md={1}>
+            <TextField type="time" label="Hora" fullWidth InputLabelProps={{ shrink: true }} value={horaPedido} onChange={e => setHoraPedido(e.target.value)} disabled={isCancelled} />
           </Grid>
           <Grid item xs={6} md={2}>
             <TextField select label="Status" fullWidth value={status} onChange={e => setStatus(e.target.value)} disabled={isCancelled}>
