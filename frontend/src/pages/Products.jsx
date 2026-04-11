@@ -57,15 +57,7 @@ export default function Products() {
   const [agregadoPreco, setAgregadoPreco] = useState("");
   const [ocasiao, setOcasiao] = useState([]);
   const [editingId, setEditingId] = useState(null);
-
-  const OCASIOES = [
-    { value: "aniversario", label: "Aniversário" },
-    { value: "casamento", label: "Casamento" },
-    { value: "namoro", label: "Presente Romântico" },
-    { value: "natal", label: "Natal" },
-    { value: "pascoa", label: "Páscoa" },
-    { value: "dia_das_maes", label: "Dia das Mães" },
-  ];
+  const [OCASIOES, setOCASOES] = useState([]);
 
   // Efeito para preencher o formulário ao duplicar um produto
   useEffect(() => {
@@ -137,6 +129,13 @@ export default function Products() {
       } catch (err) {
         console.error("Erro ao carregar produtos:", err);
       }
+
+      try {
+        const resCfg = await api.get("/configuracoes");
+        if (resCfg.data?.ocasioes) {
+          setOCASOES(JSON.parse(resCfg.data.ocasioes));
+        }
+      } catch (err) {}
     }
     carregar();
   }, []);

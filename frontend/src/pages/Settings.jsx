@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import api from "../services/api";
-import { 
-  Box, Button, TextField, Typography, Paper, Container, IconButton, InputAdornment, Grid, Checkbox, FormControlLabel, FormGroup, Switch, Divider 
+import {
+  Box, Button, TextField, Typography, Paper, Container, IconButton, InputAdornment, Grid, Checkbox, FormControlLabel, FormGroup, Switch, Divider, Chip
 } from "@mui/material";
-import { CloudUpload, Delete } from "@mui/icons-material";
+import { CloudUpload, Delete, Add } from "@mui/icons-material";
 import DebugLogs from "../components/DebugLogs";
 import TestimonialsManager from "../components/TestimonialsManager";
 
@@ -25,6 +25,15 @@ export default function Settings() {
   const [pontosPorReal, setPontosPorReal] = useState("1");
   const [pontosParaDesconto, setPontosParaDesconto] = useState("100");
   const [listaProdutos, setListaProdutos] = useState([]);
+  const [ocasioes, setOcasioes] = useState([
+    { value: "aniversario", label: "Aniversário" },
+    { value: "casamento", label: "Casamento" },
+    { value: "namoro", label: "Presente Romântico" },
+    { value: "natal", label: "Natal" },
+    { value: "pascoa", label: "Páscoa" },
+    { value: "dia_das_maes", label: "Dia das Mães" },
+  ]);
+  const [novaOcasiao, setNovaOcasiao] = useState("");
   const [openingHours, setOpeningHours] = useState([
     { day: 0, label: "Domingo", open: false, open_time: "08:00", close_time: "18:00" },
     { day: 1, label: "Segunda", open: true, open_time: "08:00", close_time: "18:00" },
@@ -68,6 +77,9 @@ export default function Settings() {
         setSaborSemanaFim(cfg.sabor_semana_fim || "");
         setPontosPorReal(cfg.pontos_por_real || "1");
         setPontosParaDesconto(cfg.pontos_para_desconto || "100");
+        if (cfg.ocasioes) {
+          try { setOcasioes(JSON.parse(cfg.ocasioes)); } catch (e) {}
+        }
 
         if (cfg.opening_hours) {
           setOpeningHours(JSON.parse(cfg.opening_hours));
@@ -150,7 +162,8 @@ export default function Settings() {
         sabor_semana_produto_id: saborSemanaProdutoId,
         sabor_semana_fim: saborSemanaFim,
         pontos_por_real: pontosPorReal,
-        pontos_para_desconto: pontosParaDesconto
+        pontos_para_desconto: pontosParaDesconto,
+        ocasioes: JSON.stringify(ocasioes)
       });
       sessionStorage.removeItem('_cfg');
       alert("Configurações salvas!");
@@ -438,6 +451,65 @@ export default function Settings() {
             <Button variant="contained" onClick={handleSave}>Salvar</Button>
           </Grid>
         </Grid>
+      </Paper>
+
+      {/* Ocasiões — Presenteie com Amor */}
+      <Paper sx={{ p: 3, mt: 3 }}>
+        <Typography variant="h6" mb={1}>Ocasiões — "Presenteie com Amor"</Typography>
+        <Typography variant="body2" color="text.secondary" mb={2}>
+          Defina as categorias de ocasião que aparecerão como filtros na loja.
+          Vincule os produtos a estas ocasiões na edição de cada produto.
+        </Typography>
+        <Box display="flex" flexWrap="wrap" gap={1} mb={2}>
+          {ocasioes.map((o, i) => (
+            <Chip
+              key={o.value}
+              label={o.label}
+              onDelete={() => setOcasioes(ocasioes.filter((_, idx) => idx !== i))}
+              sx={{ fontWeight: 'bold' }}
+            />
+          ))}
+          {ocasioes.length === 0 && (
+            <Typography variant="caption" color="text.disabled">Nenhuma ocasião cadastrada.</Typography>
+          )}
+        </Box>
+        <Box display="flex" gap={1} alignItems="center">
+          <TextField
+            label="Nova Ocasião"
+            size="small"
+            value={novaOcasiao}
+            onChange={e => setNovaOcasiao(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter' && novaOcasiao.trim()) {
+                const label = novaOcasiao.trim();
+                const value = label.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_");
+                if (!ocasioes.some(o => o.value === value)) {
+                  setOcasioes([...ocasioes, { value, label }]);
+                }
+                setNovaOcasiao("");
+              }
+            }}
+            placeholder="Ex: Dia dos Pais"
+          />
+          <Button
+            variant="outlined"
+            startIcon={<Add />}
+            onClick={() => {
+              const label = novaOcasiao.trim();
+              if (!label) return;
+              const value = label.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_");
+              if (!ocasioes.some(o => o.value === value)) {
+                setOcasioes([...ocasioes, { value, label }]);
+              }
+              setNovaOcasiao("");
+            }}
+          >
+            Adicionar
+          </Button>
+        </Box>
+        <Box mt={2}>
+          <Button variant="contained" onClick={handleSave}>Salvar</Button>
+        </Box>
       </Paper>
 
       {/* Programa de Fidelidade */}

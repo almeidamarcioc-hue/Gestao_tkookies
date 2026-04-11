@@ -48,14 +48,7 @@ export default function Dashboard() {
   const [editEstoqueManual, setEditEstoqueManual] = useState("");
   const [editOcasiao, setEditOcasiao] = useState([]);
 
-  const OCASIOES = [
-    { value: "aniversario", label: "Aniversário" },
-    { value: "casamento", label: "Casamento" },
-    { value: "namoro", label: "Presente Romântico" },
-    { value: "natal", label: "Natal" },
-    { value: "pascoa", label: "Páscoa" },
-    { value: "dia_das_maes", label: "Dia das Mães" },
-  ];
+  const [OCASIOES, setOCASOES] = useState([]);
 
   const [isRecalculating, setIsRecalculating] = useState(false);
 
@@ -70,6 +63,11 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadData();
+    api.get("/configuracoes").then(res => {
+      if (res.data?.ocasioes) {
+        try { setOCASOES(JSON.parse(res.data.ocasioes)); } catch (e) {}
+      }
+    });
   }, []);
 
   // Atualiza lista de produtos para o select de agregados sempre que produtos muda
