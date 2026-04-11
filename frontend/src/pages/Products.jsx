@@ -19,10 +19,11 @@ import {
   FormControlLabel,
   Checkbox,
   Grid,
-  Alert
+  Alert,
+  Chip
 } from "@mui/material";
 
-import { Delete, CloudUpload, Star, StarBorder } from "@mui/icons-material";
+import { Delete, CloudUpload, Star, StarBorder, Edit } from "@mui/icons-material";
 
 export default function Products() {
   const location = useLocation();
@@ -55,6 +56,7 @@ export default function Products() {
   const [agregadoSelecionado, setAgregadoSelecionado] = useState(null);
   const [agregadoPreco, setAgregadoPreco] = useState("");
   const [ocasiao, setOcasiao] = useState([]);
+  const [editingId, setEditingId] = useState(null);
 
   const OCASIOES = [
     { value: "aniversario", label: "Aniversário" },
@@ -336,6 +338,42 @@ export default function Products() {
     setAgregadoPreco("");
   }
 
+  async function handleEdit(prod) {
+    try {
+      const res = await api.get(`/produtos/${prod.id}`);
+      const p = res.data;
+      setEditingId(p.id);
+      setNome(p.nome || "");
+      setDescricao(p.descricao || "");
+      setRendimento(p.rendimento || 1);
+      setPercentual(p.margem_venda?.toFixed(2) || 0);
+      setMargemRevenda(p.margem_revenda || 0);
+      setPrecoVenda(Number(p.preco_venda) || 0);
+      setPrecoRevenda(Number(p.preco_revenda) || 0);
+      setEhDestaque(p.eh_destaque || false);
+      setDescontoDestaque(p.desconto_destaque || 0);
+      setAtivo(p.ativo !== false);
+      setEhAgregado(p.eh_agregado || false);
+      setEstoqueManual(p.estoque || "");
+      setCustoManual(p.custo || "");
+      setImagens(p.imagens?.map(img => ({ imagem: img.imagem, eh_capa: img.eh_capa, _tempId: Math.random() })) || []);
+      setAgregados(p.agregados || []);
+      setItens(p.ingredientes?.map(ing => ({ ...ing, _tempId: Math.random() })) || []);
+      setOcasiao(p.ocasiao ? p.ocasiao.split(",").filter(Boolean) : []);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+      alert("Erro ao carregar produto para edição.");
+    }
+  }
+
+  function resetForm() {
+    setEditingId(null);
+    setNome(""); setDescricao(""); setRendimento(1); setPercentual(0); setMargemRevenda(0);
+    setItens([]); setCustoTotal(0); setPrecoVenda(0); setPrecoRevenda(0);
+    setImagens([]); setEhDestaque(false); setAgregados([]); setDescontoDestaque(0);
+    setAtivo(true); setEhAgregado(false); setEstoqueManual(""); setCustoManual(""); setOcasiao([]);
+  }
+
   async function salvarProduto() {
     if (!nome || (itens.length === 0 && !ehAgregado)) {
       alert("Nome e ingredientes são necessários.");
@@ -371,28 +409,14 @@ export default function Products() {
     };
 
     try {
-      const response = await api.post("/produtos", payload);
-      console.log("Sucesso:", response.data);
-      alert("Produto cadastrado com sucesso!");
-      
-      setNome("");
-      setDescricao("");
-      setRendimento(1);
-      setPercentual(0);
-      setMargemRevenda(0);
-      setItens([]);
-      setCustoTotal(0);
-      setPrecoVenda(0);
-      setPrecoRevenda(0);
-      setImagens([]);
-      setEhDestaque(false);
-      setAgregados([]);
-      setDescontoDestaque(0);
-      setAtivo(true);
-      setEhAgregado(false);
-      setEstoqueManual("");
-      setCustoManual("");
-      setOcasiao([]);
+      if (editingId) {
+        await api.put(`/produtos/${editingId}`, payload);
+        alert("Produto atualizado com sucesso!");
+      } else {
+        await api.post("/produtos", payload);
+        alert("Produto cadastrado com sucesso!");
+      }
+      resetForm();
       
       // Recarrega a lista
       const resProd = await api.get("/produtos");
@@ -409,8 +433,17 @@ export default function Products() {
 
   return (
     <Container maxWidth="md">
-      <Typography variant="h4" mb={3} fontWeight="bold">Novo Produto</Typography>
-      <Paper sx={{ p: 3, mb: 4 }}>
+      <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
+        <Typography variant="h4" fontWeight="bold">
+          {editingId ? "Editando Produto" : "Novo Produto"}
+        </Typography>
+        {editingId && (
+          <Button variant="outlined" color="inherit" onClick={resetForm}>
+            Cancelar Edição
+          </Button>
+        )}
+      </Box>
+      <Paper sx={{ p: 3, mb: 4, border: editingId ? '2px solid #D4580A' : undefined }}>
         <Box display="flex" gap={2} mb={3}>
           <TextField label="Nome do Produto" fullWidth value={nome} onChange={(e) => setNome(e.target.value)} />
           <TextField label="Rendimento (Qtd Cookies)" type="number" sx={{ width: 200 }} value={rendimento} onChange={(e) => setRendimento(e.target.value)} />
@@ -607,7 +640,9 @@ export default function Products() {
             Marque as ocasiões para que este produto apareça nos filtros da loja (ex: "Presenteie com Amor")
           </Typography>
         </Box>
-        <Button variant="contained" fullWidth size="large" onClick={salvarProduto}>CADASTRAR PRODUTO</Button>
+        <Button variant="contained" fullWidth size="large" onClick={salvarProduto}>
+          {editingId ? "SALVAR ALTERAÇÕES" : "CADASTRAR PRODUTO"}
+        </Button>
       </Paper>
 
       {/* Seção de Produtos Agregados */}
@@ -659,19 +694,34 @@ export default function Products() {
           <TableHead>
             <TableRow>
               <TableCell>Nome</TableCell>
+              <TableCell>Ocasião</TableCell>
               <TableCell align="right">Preço Venda</TableCell>
+              <TableCell align="center">Ações</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {listaProdutos.map((prod) => (
-              <TableRow key={prod.id}>
+              <TableRow key={prod.id} sx={{ bgcolor: editingId === prod.id ? 'rgba(212,88,10,0.05)' : undefined }}>
                 <TableCell>{prod.nome}</TableCell>
+                <TableCell>
+                  {prod.ocasiao
+                    ? prod.ocasiao.split(",").filter(Boolean).map(o => (
+                        <Chip key={o} label={o} size="small" sx={{ mr: 0.5, fontSize: '0.65rem' }} />
+                      ))
+                    : <Typography variant="caption" color="text.disabled">—</Typography>
+                  }
+                </TableCell>
                 <TableCell align="right">R$ {Number(prod.preco_venda).toFixed(2)}</TableCell>
+                <TableCell align="center">
+                  <IconButton size="small" color="primary" onClick={() => handleEdit(prod)} title="Editar produto">
+                    <Edit fontSize="small" />
+                  </IconButton>
+                </TableCell>
               </TableRow>
             ))}
             {listaProdutos.length === 0 && (
               <TableRow>
-                <TableCell colSpan={2} align="center">Nenhum produto encontrado.</TableCell>
+                <TableCell colSpan={4} align="center">Nenhum produto encontrado.</TableCell>
               </TableRow>
             )}
           </TableBody>
