@@ -275,7 +275,7 @@ export default function App() {
       await api.post("/estoque/reservar", { 
         produto_id: dbId, 
         quantidade: quantity,
-        tipo: (product.itens || product.ingredientes) ? 'combo' : 'produto' 
+        tipo: (product.itens?.length > 0) ? 'combo' : 'produto'
       });
       setCart((prev) => {
         const existing = prev.find((item) => item.id === product.id);
@@ -315,7 +315,7 @@ export default function App() {
       await api.post("/estoque/liberar", { 
         produto_id: dbId, 
         quantidade: item.quantidade,
-        tipo: (item.itens || item.ingredientes) ? 'combo' : 'produto'
+        tipo: (item.itens?.length > 0) ? 'combo' : 'produto'
       })
                .catch(e => console.error("Erro ao liberar estoque:", e));
     }
@@ -335,13 +335,13 @@ export default function App() {
         await api.post("/estoque/reservar", { 
           produto_id: dbId, 
           quantidade: delta,
-          tipo: (item.itens || item.ingredientes) ? 'combo' : 'produto'
+          tipo: (item.itens?.length > 0) ? 'combo' : 'produto'
         });
       } else if (delta < 0) {
-        await api.post("/estoque/liberar", { 
-          produto_id: dbId, 
+        await api.post("/estoque/liberar", {
+          produto_id: dbId,
           quantidade: Math.abs(delta),
-          tipo: (item.itens || item.ingredientes) ? 'combo' : 'produto'
+          tipo: (item.itens?.length > 0) ? 'combo' : 'produto'
         });
       }
       setCart((prev) => prev.map((i) => i.id === productId ? { ...i, quantidade: newQty } : i));
@@ -361,7 +361,7 @@ export default function App() {
         await api.post("/estoque/liberar", {
           produto_id: dbId,
           quantidade: item.quantidade,
-          tipo: (item.itens || item.ingredientes) ? 'combo' : 'produto'
+          tipo: (item.itens?.length > 0) ? 'combo' : 'produto'
         }).catch(e => console.error("Erro ao liberar estoque:", e));
       }
     }
