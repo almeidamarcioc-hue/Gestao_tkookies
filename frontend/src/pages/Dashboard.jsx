@@ -46,6 +46,16 @@ export default function Dashboard() {
   const [editEhAgregado, setEditEhAgregado] = useState(false);
   const [editCustoManual, setEditCustoManual] = useState("");
   const [editEstoqueManual, setEditEstoqueManual] = useState("");
+  const [editOcasiao, setEditOcasiao] = useState([]);
+
+  const OCASIOES = [
+    { value: "aniversario", label: "Aniversário" },
+    { value: "casamento", label: "Casamento" },
+    { value: "namoro", label: "Presente Romântico" },
+    { value: "natal", label: "Natal" },
+    { value: "pascoa", label: "Páscoa" },
+    { value: "dia_das_maes", label: "Dia das Mães" },
+  ];
 
   const [isRecalculating, setIsRecalculating] = useState(false);
 
@@ -131,6 +141,7 @@ export default function Dashboard() {
     setEditEhAgregado(prodCopy.eh_agregado || false);
     setEditCustoManual(prodCopy.custo || "");
     setEditEstoqueManual(prodCopy.estoque || "");
+    setEditOcasiao(prodCopy.ocasiao ? prodCopy.ocasiao.split(",").filter(Boolean) : []);
     // Garante que agregados seja um array (caso venha undefined do backend antigo)
     prodCopy.agregados = prodCopy.agregados || [];
     setEditProduct(prodCopy);
@@ -147,6 +158,7 @@ export default function Dashboard() {
     setEditRendimento(1);
     setNewIngApenasRevenda(false);
     setNewAgregado(null);
+    setEditOcasiao([]);
     setNewAgregadoPreco("");
     setEditEhAgregado(false);
     setEditCustoManual("");
@@ -338,6 +350,7 @@ export default function Dashboard() {
         desconto_destaque: Number(editProduct.desconto_destaque),
         agregados: editProduct.agregados?.map(a => ({ id: a.id, preco: Number(a.preco) })) || [],
         eh_agregado: editEhAgregado,
+        ocasiao: editOcasiao.join(","),
         ...(editEhAgregado && {
           custo: Number(editCustoManual),
           estoque: Number(editEstoqueManual)
@@ -758,6 +771,34 @@ export default function Dashboard() {
                 </TableBody>
               </Table>
             </Box>
+
+              {/* OCASIÃO */}
+              <Box mt={3}>
+                <Typography variant="subtitle1" fontWeight="bold" mb={1} color="secondary">
+                  Ocasião / Presentear
+                </Typography>
+                <Box display="flex" flexWrap="wrap" gap={1}>
+                  {OCASIOES.map(op => (
+                    <FormControlLabel
+                      key={op.value}
+                      control={
+                        <Checkbox
+                          checked={editOcasiao.includes(op.value)}
+                          onChange={(e) => {
+                            if (e.target.checked) setEditOcasiao([...editOcasiao, op.value]);
+                            else setEditOcasiao(editOcasiao.filter(v => v !== op.value));
+                          }}
+                          size="small"
+                        />
+                      }
+                      label={op.label}
+                    />
+                  ))}
+                </Box>
+                <Typography variant="caption" color="text.secondary">
+                  Marque para exibir este produto na seção "Presenteie com Amor" da loja
+                </Typography>
+              </Box>
           )}
         </DialogContent>
         <DialogActions>
