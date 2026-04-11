@@ -381,6 +381,21 @@ export default function App() {
         <>
       <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <AppBar position="sticky" sx={{ top: 0, zIndex: 1100 }}>
+        {import.meta.env.VITE_ENVIRONMENT === 'homologacao' && (
+          <Box sx={{
+            bgcolor: '#B71C1C',
+            color: '#fff',
+            textAlign: 'center',
+            py: 0.75,
+            fontSize: '0.82rem',
+            fontWeight: 800,
+            letterSpacing: 1.5,
+            borderBottom: '2px solid #7f0000',
+            userSelect: 'none',
+          }}>
+            ⚠️&nbsp; AMBIENTE DE HOMOLOGAÇÃO &nbsp;—&nbsp; Não utilizar dados reais &nbsp;⚠️
+          </Box>
+        )}
         <Toolbar>
           <IconButton
             color="inherit"
