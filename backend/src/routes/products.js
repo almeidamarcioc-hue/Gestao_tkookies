@@ -78,6 +78,7 @@ async function fetchProducts() {
         eh_destaque: isDestaque,
         desconto_destaque: row.desconto_destaque,
         validade_promocao: row.validade_promocao ? new Date(row.validade_promocao).toISOString().split('T')[0] : null,
+        ocasiao: row.ocasiao || null,
         created_at: row.created_at,
         ingredientes: [],
         imagens: [],
