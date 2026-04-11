@@ -1098,7 +1098,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
         try { kitDesc = JSON.parse(config.kit_descontos || '{}'); } catch {}
         const BOX_QTYS = [4, 6, 8, 12];
         const hasConfig = Object.keys(kitDesc).length > 0;
-        const hasActiveSize = BOX_QTYS.some(q => !hasConfig || kitDesc[q]?.ativo !== false);
+        const hasActiveSize = BOX_QTYS.some(q => !hasConfig || kitDesc[String(q)]?.ativo !== false);
         if (!products.length || !hasActiveSize) return null;
         return (
           <Box sx={{ mt: 8, p: { xs: 3, md: 5 }, bgcolor: '#FDF3E7', borderRadius: 5, border: '1px solid rgba(196,146,42,0.15)' }}>

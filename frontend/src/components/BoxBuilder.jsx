@@ -25,7 +25,7 @@ export default function BoxBuilder({ products = [], addToCart, isStoreOpen, kitD
   const hasConfig = Object.keys(kitDescontos).length > 0;
   const activeSizes = BOX_SIZES.filter(s => {
     if (!hasConfig) return true;
-    const kd = kitDescontos[s.qty];
+    const kd = kitDescontos[String(s.qty)];
     return !kd || kd.ativo !== false;
   });
 
@@ -50,7 +50,7 @@ export default function BoxBuilder({ products = [], addToCart, isStoreOpen, kitD
 
   const discountedPrice = useMemo(() => {
     if (!boxSize) return totalPrice;
-    const kd = kitDescontos[boxSize];
+    const kd = kitDescontos[String(boxSize)];
     if (!kd || !kd.valor || Number(kd.valor) === 0) return totalPrice;
     if (kd.tipo === 'percentual') return totalPrice * (1 - Number(kd.valor) / 100);
     return Math.max(0, totalPrice - Number(kd.valor));
@@ -127,7 +127,7 @@ export default function BoxBuilder({ products = [], addToCart, isStoreOpen, kitD
         </Typography>
         <Box display="flex" gap={2} justifyContent="center" flexWrap="wrap">
           {activeSizes.map(s => {
-            const kd = kitDescontos[s.qty];
+            const kd = kitDescontos[String(s.qty)];
             const discountLabel = kd && Number(kd.valor) > 0
               ? kd.tipo === 'percentual' ? `-${kd.valor}%` : `-R$${Number(kd.valor).toFixed(2)}`
               : null;
