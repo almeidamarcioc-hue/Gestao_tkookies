@@ -152,6 +152,7 @@ export default function Settings() {
         pontos_por_real: pontosPorReal,
         pontos_para_desconto: pontosParaDesconto
       });
+      sessionStorage.removeItem('_cfg');
       alert("Configurações salvas!");
     } catch (err) {
       alert("Erro ao salvar.");
