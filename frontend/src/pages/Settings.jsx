@@ -34,6 +34,18 @@ export default function Settings() {
     { value: "dia_das_maes", label: "Dia das Mães" },
   ]);
   const [novaOcasiao, setNovaOcasiao] = useState("");
+  const KIT_SIZES = [
+    { qty: 4,  label: "Mini",   desc: "4 cookies" },
+    { qty: 6,  label: "Média",  desc: "6 cookies" },
+    { qty: 8,  label: "Grande", desc: "8 cookies" },
+    { qty: 12, label: "Festa",  desc: "12 cookies" },
+  ];
+  const [kitDescontos, setKitDescontos] = useState({
+    4:  { ativo: true,  tipo: 'percentual', valor: '' },
+    6:  { ativo: true,  tipo: 'percentual', valor: '' },
+    8:  { ativo: true,  tipo: 'percentual', valor: '' },
+    12: { ativo: true,  tipo: 'percentual', valor: '' },
+  });
   const [openingHours, setOpeningHours] = useState([
     { day: 0, label: "Domingo", open: false, open_time: "08:00", close_time: "18:00" },
     { day: 1, label: "Segunda", open: true, open_time: "08:00", close_time: "18:00" },
@@ -79,6 +91,9 @@ export default function Settings() {
         setPontosParaDesconto(cfg.pontos_para_desconto || "100");
         if (cfg.ocasioes) {
           try { setOcasioes(JSON.parse(cfg.ocasioes)); } catch (e) {}
+        }
+        if (cfg.kit_descontos) {
+          try { setKitDescontos(prev => ({ ...prev, ...JSON.parse(cfg.kit_descontos) })); } catch (e) {}
         }
 
         if (cfg.opening_hours) {
@@ -163,7 +178,8 @@ export default function Settings() {
         sabor_semana_fim: saborSemanaFim,
         pontos_por_real: pontosPorReal,
         pontos_para_desconto: pontosParaDesconto,
-        ocasioes: JSON.stringify(ocasioes)
+        ocasioes: JSON.stringify(ocasioes),
+        kit_descontos: JSON.stringify(kitDescontos)
       });
       sessionStorage.removeItem('_cfg');
       alert("Configurações salvas!");
@@ -506,6 +522,80 @@ export default function Settings() {
           >
             Adicionar
           </Button>
+        </Box>
+        <Box mt={2}>
+          <Button variant="contained" onClick={handleSave}>Salvar</Button>
+        </Box>
+      </Paper>
+
+      {/* Desconto por Tamanho de Kit */}
+      <Paper sx={{ p: 3, mt: 3 }}>
+        <Typography variant="h6" mb={1}>Configuração dos Kits — "Monte seu Kit"</Typography>
+        <Typography variant="body2" color="text.secondary" mb={2}>
+          Ative os tamanhos de caixinha disponíveis e defina um desconto opcional para cada um.
+          Apenas os tamanhos <strong>ativos</strong> aparecerão para o cliente.
+        </Typography>
+        <Box display="flex" flexDirection="column" gap={2}>
+          {KIT_SIZES.map(s => {
+            const kd = kitDescontos[s.qty] || { ativo: true, tipo: 'percentual', valor: '' };
+            return (
+              <Box key={s.qty} sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap',
+                p: 2, borderRadius: 2, border: '1px solid rgba(44,24,16,0.10)',
+                bgcolor: kd.ativo ? 'rgba(212,88,10,0.03)' : 'rgba(0,0,0,0.02)' }}>
+                <Box sx={{ minWidth: 100 }}>
+                  <Typography fontWeight="bold">{s.label}</Typography>
+                  <Typography variant="caption" color="text.secondary">{s.desc}</Typography>
+                </Box>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={!!kd.ativo}
+                      onChange={e => setKitDescontos(prev => ({
+                        ...prev,
+                        [s.qty]: { ...kd, ativo: e.target.checked }
+                      }))}
+                      color="primary"
+                    />
+                  }
+                  label={kd.ativo ? "Ativo" : "Inativo"}
+                  sx={{ width: 100 }}
+                />
+                <TextField
+                  select
+                  label="Tipo"
+                  size="small"
+                  disabled={!kd.ativo}
+                  value={kd.tipo || 'percentual'}
+                  onChange={e => setKitDescontos(prev => ({
+                    ...prev,
+                    [s.qty]: { ...kd, tipo: e.target.value }
+                  }))}
+                  SelectProps={{ native: true }}
+                  sx={{ width: 130 }}
+                >
+                  <option value="percentual">Percentual (%)</option>
+                  <option value="fixo">Valor fixo (R$)</option>
+                </TextField>
+                <TextField
+                  label={kd.tipo === 'fixo' ? "Desconto (R$)" : "Desconto (%)"}
+                  size="small"
+                  type="number"
+                  disabled={!kd.ativo}
+                  value={kd.valor}
+                  onChange={e => setKitDescontos(prev => ({
+                    ...prev,
+                    [s.qty]: { ...kd, valor: e.target.value }
+                  }))}
+                  inputProps={{ min: 0, step: kd.tipo === 'fixo' ? 0.5 : 1 }}
+                  sx={{ width: 150 }}
+                  InputProps={kd.tipo === 'fixo'
+                    ? { startAdornment: <InputAdornment position="start">R$</InputAdornment> }
+                    : { endAdornment: <InputAdornment position="end">%</InputAdornment> }}
+                  helperText="0 = sem desconto"
+                />
+              </Box>
+            );
+          })}
         </Box>
         <Box mt={2}>
           <Button variant="contained" onClick={handleSave}>Salvar</Button>

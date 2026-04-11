@@ -1099,6 +1099,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
             products={products.filter(p => !combos.some(c => c.produto_vinculado_id === p.id))}
             addToCart={addToCart}
             isStoreOpen={isStoreOpen}
+            kitDescontos={(() => { try { return JSON.parse(config.kit_descontos || '{}'); } catch { return {}; } })()}
           />
         </Box>
       )}

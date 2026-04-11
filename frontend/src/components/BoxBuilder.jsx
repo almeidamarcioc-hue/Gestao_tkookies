@@ -17,9 +17,17 @@ const BOX_SIZES = [
   { qty: 12, label: "Festa",   desc: "12 cookies", icon: "🍪🍪🍪🍪" },
 ];
 
-export default function BoxBuilder({ products = [], addToCart, isStoreOpen }) {
+export default function BoxBuilder({ products = [], addToCart, isStoreOpen, kitDescontos = {} }) {
   const [boxSize, setBoxSize] = useState(null);
   const [selections, setSelections] = useState({}); // { productId: quantity }
+
+  // Only show sizes that are marked active (or all if no config was set)
+  const hasConfig = Object.keys(kitDescontos).length > 0;
+  const activeSizes = BOX_SIZES.filter(s => {
+    if (!hasConfig) return true;
+    const kd = kitDescontos[s.qty];
+    return !kd || kd.ativo !== false;
+  });
 
   const availableProducts = products.filter(p => p.estoque > 0 && p.ativo !== false);
 
@@ -37,6 +45,16 @@ export default function BoxBuilder({ products = [], addToCart, isStoreOpen }) {
       return acc + (prod ? Number(prod.preco_venda) * qty : 0);
     }, 0);
   }, [selections, products]);
+
+  const discountedPrice = useMemo(() => {
+    if (!boxSize) return totalPrice;
+    const kd = kitDescontos[boxSize];
+    if (!kd || !kd.valor || Number(kd.valor) === 0) return totalPrice;
+    if (kd.tipo === 'percentual') return totalPrice * (1 - Number(kd.valor) / 100);
+    return Math.max(0, totalPrice - Number(kd.valor));
+  }, [totalPrice, boxSize, kitDescontos]);
+
+  const hasDiscount = discountedPrice < totalPrice;
 
   const handleAdd = (product) => {
     if (totalSelected >= boxSize) return;
@@ -106,29 +124,44 @@ export default function BoxBuilder({ products = [], addToCart, isStoreOpen }) {
           1. Escolha o tamanho
         </Typography>
         <Box display="flex" gap={2} justifyContent="center" flexWrap="wrap">
-          {BOX_SIZES.map(s => (
-            <Box
-              key={s.qty}
-              component={motion.div}
-              whileHover={{ y: -3 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => handleChangeSize(s.qty)}
-              sx={{
-                cursor: 'pointer',
-                border: boxSize === s.qty ? `2px solid ${terracotta}` : '2px solid rgba(44,24,16,0.12)',
-                borderRadius: 4,
-                px: 3, py: 2,
-                textAlign: 'center',
-                bgcolor: boxSize === s.qty ? 'rgba(212,88,10,0.06)' : 'white',
-                minWidth: 90,
-                transition: 'all 0.2s',
-              }}
-            >
-              <Typography sx={{ fontSize: '1.4rem', mb: 0.5 }}>{s.icon}</Typography>
-              <Typography fontWeight="bold" sx={{ color: boxSize === s.qty ? terracotta : espresso }}>{s.label}</Typography>
-              <Typography variant="caption" color="text.secondary">{s.desc}</Typography>
-            </Box>
-          ))}
+          {activeSizes.map(s => {
+            const kd = kitDescontos[s.qty];
+            const discountLabel = kd && Number(kd.valor) > 0
+              ? kd.tipo === 'percentual' ? `-${kd.valor}%` : `-R$${Number(kd.valor).toFixed(2)}`
+              : null;
+            return (
+              <Box
+                key={s.qty}
+                component={motion.div}
+                whileHover={{ y: -3 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => handleChangeSize(s.qty)}
+                sx={{
+                  cursor: 'pointer',
+                  border: boxSize === s.qty ? `2px solid ${terracotta}` : '2px solid rgba(44,24,16,0.12)',
+                  borderRadius: 4,
+                  px: 3, py: 2,
+                  textAlign: 'center',
+                  bgcolor: boxSize === s.qty ? 'rgba(212,88,10,0.06)' : 'white',
+                  minWidth: 90,
+                  transition: 'all 0.2s',
+                  position: 'relative',
+                }}
+              >
+                {discountLabel && (
+                  <Box sx={{
+                    position: 'absolute', top: -10, right: -10,
+                    bgcolor: '#2E7D32', color: 'white', borderRadius: 50,
+                    px: 1, py: 0.2, fontSize: '0.65rem', fontWeight: 'bold',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+                  }}>{discountLabel}</Box>
+                )}
+                <Typography sx={{ fontSize: '1.4rem', mb: 0.5 }}>{s.icon}</Typography>
+                <Typography fontWeight="bold" sx={{ color: boxSize === s.qty ? terracotta : espresso }}>{s.label}</Typography>
+                <Typography variant="caption" color="text.secondary">{s.desc}</Typography>
+              </Box>
+            );
+          })}
         </Box>
       </Box>
 
@@ -270,9 +303,16 @@ export default function BoxBuilder({ products = [], addToCart, isStoreOpen }) {
                     <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
                       {isFull ? '✓ Kit pronto para o carrinho!' : `${slotsRemaining} cookie${slotsRemaining > 1 ? 's' : ''} ainda falta${slotsRemaining > 1 ? 'm' : ''}`}
                     </Typography>
-                    <Typography variant="h6" fontWeight="bold" sx={{ color: caramel }}>
-                      Total: R$ {totalPrice.toFixed(2)}
-                    </Typography>
+                    <Box display="flex" alignItems="baseline" gap={1} flexWrap="wrap">
+                      {hasDiscount && (
+                        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.45)', textDecoration: 'line-through' }}>
+                          R$ {totalPrice.toFixed(2)}
+                        </Typography>
+                      )}
+                      <Typography variant="h6" fontWeight="bold" sx={{ color: hasDiscount ? '#81C784' : caramel }}>
+                        Total: R$ {discountedPrice.toFixed(2)}
+                      </Typography>
+                    </Box>
                   </Box>
                   <Button
                     variant="contained"
