@@ -269,6 +269,42 @@ export async function initDatabase() {
     } catch (e) {
       logs.push(`[produto_ingredientes] Index produto_id erro: ${e.message}`);
     }
+    try {
+      await pool.query("CREATE INDEX IF NOT EXISTS idx_produto_imagens_produto_id ON produto_imagens(produto_id)");
+      logs.push("[produto_imagens] Index produto_id criado");
+    } catch (e) {
+      logs.push(`[produto_imagens] Index produto_id erro: ${e.message}`);
+    }
+    try {
+      await pool.query("CREATE INDEX IF NOT EXISTS idx_favoritos_cliente_id ON favoritos(cliente_id)");
+      logs.push("[favoritos] Index cliente_id criado");
+    } catch (e) {
+      logs.push(`[favoritos] Index cliente_id erro: ${e.message}`);
+    }
+    try {
+      await pool.query("CREATE INDEX IF NOT EXISTS idx_combo_itens_combo_id ON combo_itens(combo_id)");
+      logs.push("[combo_itens] Index combo_id criado");
+    } catch (e) {
+      logs.push(`[combo_itens] Index combo_id erro: ${e.message}`);
+    }
+    try {
+      await pool.query("CREATE INDEX IF NOT EXISTS idx_lancamentos_data_vencimento ON lancamentos_financeiros(data_vencimento)");
+      logs.push("[lancamentos_financeiros] Index data_vencimento criado");
+    } catch (e) {
+      logs.push(`[lancamentos_financeiros] Index data_vencimento erro: ${e.message}`);
+    }
+    try {
+      await pool.query("CREATE INDEX IF NOT EXISTS idx_pedidos_data_pedido ON pedidos(data_pedido)");
+      logs.push("[pedidos] Index data_pedido criado");
+    } catch (e) {
+      logs.push(`[pedidos] Index data_pedido erro: ${e.message}`);
+    }
+    try {
+      await pool.query("CREATE INDEX IF NOT EXISTS idx_pedidos_status ON pedidos(status)");
+      logs.push("[pedidos] Index status criado");
+    } catch (e) {
+      logs.push(`[pedidos] Index status erro: ${e.message}`);
+    }
     logs.push(await addColumnSafe("combos", "imagem TEXT"));
     logs.push(await addColumnSafe("produtos", "descricao VARCHAR(1000)"));
     logs.push(await addColumnSafe("clientes", "is_revendedor BOOLEAN DEFAULT FALSE"));

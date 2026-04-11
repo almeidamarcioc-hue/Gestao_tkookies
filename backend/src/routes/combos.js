@@ -3,12 +3,27 @@ import { pool } from "../db/index.js";
 
 const router = Router();
 
+// Cache em memória para listagem de combos
+let combosCache = null;
+let combosCacheAt = 0;
+const COMBOS_CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+
+function invalidateCombosCache() {
+  combosCache = null;
+  combosCacheAt = 0;
+}
+
 // LISTAR
 router.get("/", async (req, res) => {
   const { apenas_ativos } = req.query;
   try {
+    // Serve do cache se ainda válido (apenas sem filtros)
+    if (!apenas_ativos && combosCache && (Date.now() - combosCacheAt) < COMBOS_CACHE_TTL) {
+      return res.json(combosCache);
+    }
+
     let query = `
-      SELECT c.*, 
+      SELECT c.*,
              ci.id as item_id, ci.quantidade as item_quantidade,
              p.id as produto_id, p.nome as produto_nome, p.preco_venda as produto_preco,
              cing.id as cing_id, cing.ingrediente_id, cing.quantidade as cing_quantidade, cing.preco_venda as cing_preco,
@@ -70,7 +85,12 @@ router.get("/", async (req, res) => {
       }
     });
     
-    res.json(Array.from(combosMap.values()));
+    const result_list = Array.from(combosMap.values());
+    if (!apenas_ativos) {
+      combosCache = result_list;
+      combosCacheAt = Date.now();
+    }
+    res.json(result_list);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Erro ao listar combos" });
@@ -138,25 +158,34 @@ router.post("/", async (req, res) => {
 
     // Insere os itens
     if (itens && itens.length > 0) {
-      for (const item of itens) {
-        await client.query(
-          "INSERT INTO combo_itens (combo_id, produto_id, quantidade) VALUES ($1, $2, $3)",
-          [comboId, item.produto_id, item.quantidade]
-        );
-      }
+      const vals = [];
+      const ph = itens.map((item, i) => {
+        const b = i * 3;
+        vals.push(comboId, item.produto_id, item.quantidade);
+        return `($${b+1}, $${b+2}, $${b+3})`;
+      });
+      await client.query(
+        `INSERT INTO combo_itens (combo_id, produto_id, quantidade) VALUES ${ph.join(', ')}`,
+        vals
+      );
     }
-    
+
     // Insere os ingredientes extras
     if (ingredientes && ingredientes.length > 0) {
-      for (const ing of ingredientes) {
-        await client.query(
-          "INSERT INTO combo_ingredientes (combo_id, ingrediente_id, quantidade, preco_venda) VALUES ($1, $2, $3, $4)",
-          [comboId, ing.ingrediente_id, ing.quantidade, ing.preco_venda]
-        );
-      }
+      const vals = [];
+      const ph = ingredientes.map((ing, i) => {
+        const b = i * 4;
+        vals.push(comboId, ing.ingrediente_id, ing.quantidade, ing.preco_venda);
+        return `($${b+1}, $${b+2}, $${b+3}, $${b+4})`;
+      });
+      await client.query(
+        `INSERT INTO combo_ingredientes (combo_id, ingrediente_id, quantidade, preco_venda) VALUES ${ph.join(', ')}`,
+        vals
+      );
     }
 
     await client.query("COMMIT");
+    invalidateCombosCache();
     res.status(201).json({ message: "Combo criado!", id: comboId });
   } catch (error) {
     await client.query("ROLLBACK");
@@ -185,26 +214,35 @@ router.put("/:id", async (req, res) => {
     await client.query("DELETE FROM combo_itens WHERE combo_id = $1", [id]);
     
     if (Array.isArray(itens) && itens.length > 0) {
-      for (const item of itens) {
-        await client.query(
-          "INSERT INTO combo_itens (combo_id, produto_id, quantidade) VALUES ($1, $2, $3)",
-          [id, item.produto_id, item.quantidade]
-        );
-      }
+      const vals = [];
+      const ph = itens.map((item, i) => {
+        const b = i * 3;
+        vals.push(id, item.produto_id, item.quantidade);
+        return `($${b+1}, $${b+2}, $${b+3})`;
+      });
+      await client.query(
+        `INSERT INTO combo_itens (combo_id, produto_id, quantidade) VALUES ${ph.join(', ')}`,
+        vals
+      );
     }
-    
+
     // Atualiza ingredientes extras
     await client.query("DELETE FROM combo_ingredientes WHERE combo_id = $1", [id]);
     if (Array.isArray(ingredientes) && ingredientes.length > 0) {
-      for (const ing of ingredientes) {
-        await client.query(
-          "INSERT INTO combo_ingredientes (combo_id, ingrediente_id, quantidade, preco_venda) VALUES ($1, $2, $3, $4)",
-          [id, ing.ingrediente_id, ing.quantidade, ing.preco_venda]
-        );
-      }
+      const vals = [];
+      const ph = ingredientes.map((ing, i) => {
+        const b = i * 4;
+        vals.push(id, ing.ingrediente_id, ing.quantidade, ing.preco_venda);
+        return `($${b+1}, $${b+2}, $${b+3}, $${b+4})`;
+      });
+      await client.query(
+        `INSERT INTO combo_ingredientes (combo_id, ingrediente_id, quantidade, preco_venda) VALUES ${ph.join(', ')}`,
+        vals
+      );
     }
 
     await client.query("COMMIT");
+    invalidateCombosCache();
     res.json({ message: "Combo atualizado!" });
   } catch (error) {
     await client.query("ROLLBACK");
@@ -230,6 +268,7 @@ router.delete("/:id", async (req, res) => {
     await client.query("DELETE FROM combos WHERE id = $1", [id]);
     
     await client.query("COMMIT");
+    invalidateCombosCache();
     res.json({ message: "Combo removido!" });
   } catch (error) {
     await client.query("ROLLBACK");

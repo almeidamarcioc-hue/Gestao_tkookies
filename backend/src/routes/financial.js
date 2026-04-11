@@ -164,43 +164,87 @@ router.get("/dashboard", async (req, res) => {
       endStr = sundayDate.toISOString().split('T')[0];
     }
 
-    // 1. Meta Total da Semana (Contas Pendentes + Contas Pagas na semana)
-    const metaRes = await pool.query(
-      `SELECT SUM(valor) as total FROM lancamentos_financeiros 
-       WHERE tipo = 'Saída' 
-       AND (
-         (status = 'Pendente' AND DATE(data_vencimento) <= DATE(?))
-         OR
-         (status = 'Pago' AND DATE(data_vencimento) BETWEEN DATE(?) AND DATE(?))
-       )`,
-      [endStr, startStr, endStr]
-    );
-    const totalMeta = Number(metaRes.rows[0].total) || 0;
-
-    // 2. Vendas Realizadas (Entradas Pagas na semana)
-    const vendasRes = await pool.query(
-      `SELECT SUM(valor) as total FROM lancamentos_financeiros 
-       WHERE tipo = 'Entrada' AND status = 'Pago' 
-       AND DATE(data_vencimento) BETWEEN DATE(?) AND DATE(?)`,
-      [startStr, endStr]
-    );
-    const totalVendas = Number(vendasRes.rows[0].total) || 0;
-
-    // 3. Provisão de Recebimento: Entradas Pendentes
-    const provisaoRes = await pool.query(
-      "SELECT SUM(valor) as total FROM lancamentos_financeiros WHERE tipo = 'Entrada' AND status = 'Pendente'"
-    );
-    const totalProvisao = Number(provisaoRes.rows[0].total) || 0;
-
-    // Falta para Meta (Total Meta - Total Vendas)
-    const faltaParaMeta = Math.max(0, totalMeta - totalVendas);
-
-    // Cálculo do Desafio Diário (Acumulando dias passados no dia atual)
+    // Cálculos de datas auxiliares
     const todayDate = new Date();
     const todayStr = todayDate.toISOString().split('T')[0];
     const today = new Date(todayStr);
     const end = new Date(endStr);
     const start = new Date(startStr);
+
+    const [y, m] = startStr.split('-').map(Number);
+    const startMonth = `${y}-${String(m).padStart(2, '0')}-01`;
+    const endMonth = new Date(Date.UTC(y, m, 0)).toISOString().split('T')[0];
+    const effectiveEndMonth = endStr > endMonth ? endStr : endMonth;
+
+    // 1 query no lugar de 8 — usa agregação condicional (CASE WHEN)
+    const dashRes = await pool.query(
+      `SELECT
+        SUM(CASE WHEN tipo = 'Saída' AND (
+          (status = 'Pendente' AND DATE(data_vencimento) <= DATE(?))
+          OR (status = 'Pago' AND DATE(data_vencimento) BETWEEN DATE(?) AND DATE(?))
+        ) THEN valor ELSE 0 END) as meta_semana,
+
+        SUM(CASE WHEN tipo = 'Entrada' AND status = 'Pago'
+          AND DATE(data_vencimento) BETWEEN DATE(?) AND DATE(?)
+        THEN valor ELSE 0 END) as vendas_semana,
+
+        SUM(CASE WHEN tipo = 'Entrada' AND status = 'Pendente'
+        THEN valor ELSE 0 END) as provisao_total,
+
+        SUM(CASE WHEN tipo = 'Entrada' AND status = 'Pago'
+          AND DATE(data_vencimento) = DATE(?)
+          AND DATE(data_vencimento) BETWEEN DATE(?) AND DATE(?)
+        THEN valor ELSE 0 END) as vendas_hoje,
+
+        SUM(CASE WHEN tipo = 'Entrada' AND status = 'Pendente'
+          AND DATE(data_vencimento) = DATE(?)
+          AND DATE(data_vencimento) BETWEEN DATE(?) AND DATE(?)
+        THEN valor ELSE 0 END) as provisao_hoje,
+
+        SUM(CASE WHEN tipo = 'Saída' AND (
+          (status = 'Pendente' AND DATE(data_vencimento) <= DATE(?))
+          OR (status = 'Pago' AND DATE(data_vencimento) BETWEEN DATE(?) AND DATE(?))
+        ) THEN valor ELSE 0 END) as meta_mensal,
+
+        SUM(CASE WHEN tipo = 'Entrada' AND status = 'Pago'
+          AND DATE(data_vencimento) BETWEEN DATE(?) AND DATE(?)
+        THEN valor ELSE 0 END) as vendas_mensal,
+
+        SUM(CASE WHEN tipo = 'Entrada' AND status = 'Pendente'
+          AND DATE(data_vencimento) BETWEEN DATE(?) AND DATE(?)
+        THEN valor ELSE 0 END) as provisao_mensal
+
+      FROM lancamentos_financeiros`,
+      [
+        // meta_semana
+        endStr, startStr, endStr,
+        // vendas_semana
+        startStr, endStr,
+        // provisao_total — sem params
+        // vendas_hoje
+        todayStr, startStr, endStr,
+        // provisao_hoje
+        todayStr, startStr, endStr,
+        // meta_mensal
+        effectiveEndMonth, startMonth, effectiveEndMonth,
+        // vendas_mensal
+        startMonth, effectiveEndMonth,
+        // provisao_mensal
+        startMonth, effectiveEndMonth
+      ]
+    );
+
+    const row = dashRes.rows[0];
+    const totalMeta = Number(row.meta_semana) || 0;
+    const totalVendas = Number(row.vendas_semana) || 0;
+    const totalProvisao = Number(row.provisao_total) || 0;
+    const vendasHoje = Number(row.vendas_hoje) || 0;
+    const provisaoHoje = Number(row.provisao_hoje) || 0;
+    const totalMetaMensal = Number(row.meta_mensal) || 0;
+    const totalVendasMensal = Number(row.vendas_mensal) || 0;
+    const totalProvisaoMensal = Number(row.provisao_mensal) || 0;
+
+    const faltaParaMeta = Math.max(0, totalMeta - totalVendas);
 
     // Dias Restantes (incluindo hoje)
     let remainingDays = 1;
@@ -215,62 +259,7 @@ router.get("/dashboard", async (req, res) => {
     }
     if (remainingDays < 1) remainingDays = 1;
 
-    // Cálculo do Desafio Diário: Valor restante dividido pelos dias restantes
-    let desafioDiario = faltaParaMeta / remainingDays;
-
-    // Vendas Hoje (Realmente hoje)
-    const vendasHojeRes = await pool.query(
-      "SELECT SUM(valor) as total FROM lancamentos_financeiros WHERE tipo = 'Entrada' AND status = 'Pago' AND DATE(data_vencimento) = DATE(?) AND DATE(data_vencimento) BETWEEN DATE(?) AND DATE(?)",
-      [todayStr, startStr, endStr]
-    );
-    const vendasHoje = Number(vendasHojeRes.rows[0].total) || 0;
-
-    // Provisão Hoje (Vence hoje)
-    const provisaoHojeRes = await pool.query(
-      "SELECT SUM(valor) as total FROM lancamentos_financeiros WHERE tipo = 'Entrada' AND status = 'Pendente' AND DATE(data_vencimento) = DATE(?) AND DATE(data_vencimento) BETWEEN DATE(?) AND DATE(?)",
-      [todayStr, startStr, endStr]
-    );
-    const provisaoHoje = Number(provisaoHojeRes.rows[0].total) || 0;
-
-    // --- CÁLCULOS MENSAIS (Baseado no filtro) ---
-    // Usamos startStr para definir o mês de referência (evita pegar o próximo mês na última semana)
-    const [y, m, d] = startStr.split('-').map(Number);
-    const startMonth = `${y}-${String(m).padStart(2, '0')}-01`;
-    const endMonth = new Date(Date.UTC(y, m, 0)).toISOString().split('T')[0];
-
-    // Para garantir que a Meta Mensal cubra toda a semana (caso a semana invada o próximo mês),
-    // estendemos o fim do período mensal para o fim da semana, se necessário.
-    const effectiveEndMonth = endStr > endMonth ? endStr : endMonth;
-
-    // 1. Meta Mensal
-    const metaMensalRes = await pool.query(
-      `SELECT SUM(valor) as total FROM lancamentos_financeiros 
-       WHERE tipo = 'Saída' 
-       AND (
-         (status = 'Pendente' AND DATE(data_vencimento) <= DATE(?))
-         OR
-         (status = 'Pago' AND DATE(data_vencimento) BETWEEN DATE(?) AND DATE(?))
-       )`,
-      [effectiveEndMonth, startMonth, effectiveEndMonth]
-    );
-    const totalMetaMensal = Number(metaMensalRes.rows[0].total) || 0;
-
-    // 2. Vendas Mensais
-    const vendasMensalRes = await pool.query(
-      `SELECT SUM(valor) as total FROM lancamentos_financeiros 
-       WHERE tipo = 'Entrada' AND status = 'Pago' 
-       AND DATE(data_vencimento) BETWEEN DATE(?) AND DATE(?)`,
-      [startMonth, effectiveEndMonth]
-    );
-    const totalVendasMensal = Number(vendasMensalRes.rows[0].total) || 0;
-
-    // 3. Provisão Mensal
-    const provisaoMensalRes = await pool.query(
-      "SELECT SUM(valor) as total FROM lancamentos_financeiros WHERE tipo = 'Entrada' AND status = 'Pendente' AND DATE(data_vencimento) BETWEEN DATE(?) AND DATE(?)",
-      [startMonth, effectiveEndMonth]
-    );
-    const totalProvisaoMensal = Number(provisaoMensalRes.rows[0].total) || 0;
-
+    const desafioDiario = faltaParaMeta / remainingDays;
     const faltaMetaMensal = Math.max(0, totalMetaMensal - totalVendasMensal);
 
     res.json({

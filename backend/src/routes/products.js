@@ -5,6 +5,16 @@ import { authenticateToken, requireRole } from "../middlewares/auth.js";
 
 const router = Router();
 
+// Cache em memória para listagem de produtos
+let productsCache = null;
+let productsCacheAt = 0;
+const PRODUCTS_CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+
+function invalidateProductsCache() {
+  productsCache = null;
+  productsCacheAt = 0;
+}
+
 // Função auxiliar para buscar produtos (evita duplicação de código)
 async function fetchProducts() {
   const result = await pool.query(`
@@ -113,7 +123,13 @@ async function fetchProducts() {
 // LISTAR PRODUTOS (Com ingredientes e custos base)
 router.get("/", async (req, res) => {
   try {
+    // Serve do cache se ainda válido
+    if (productsCache && (Date.now() - productsCacheAt) < PRODUCTS_CACHE_TTL) {
+      return res.json(productsCache);
+    }
     const produtos = await fetchProducts();
+    productsCache = produtos;
+    productsCacheAt = Date.now();
     res.json(produtos);
   } catch (error) {
     // Se o erro for de coluna desconhecida, tenta rodar a migração e tenta de novo
@@ -282,33 +298,46 @@ router.post("/", authenticateToken, requireRole('admin'), async (req, res) => {
     const produtoId = resProd.rows[0].id;
 
     if (ingredientes && ingredientes.length > 0) {
-      for (const ing of ingredientes) {
-        await client.query(
-          "INSERT INTO produto_ingredientes (produto_id, ingrediente_id, quantidade, apenas_revenda) VALUES ($1, $2, $3, $4)",
-          [produtoId, ing.ingrediente_id, ing.quantidade, ing.apenas_revenda || false]
-        );
-      }
+      const vals = [];
+      const placeholders = ingredientes.map((ing, i) => {
+        const b = i * 4;
+        vals.push(produtoId, ing.ingrediente_id, ing.quantidade, ing.apenas_revenda || false);
+        return `($${b+1}, $${b+2}, $${b+3}, $${b+4})`;
+      });
+      await client.query(
+        `INSERT INTO produto_ingredientes (produto_id, ingrediente_id, quantidade, apenas_revenda) VALUES ${placeholders.join(', ')}`,
+        vals
+      );
     }
 
     if (imagens && imagens.length > 0) {
-      for (const img of imagens) {
-        await client.query(
-          "INSERT INTO produto_imagens (produto_id, imagem, eh_capa) VALUES ($1, $2, $3)",
-          [produtoId, img.imagem, img.eh_capa || false]
-        );
-      }
+      const vals = [];
+      const placeholders = imagens.map((img, i) => {
+        const b = i * 3;
+        vals.push(produtoId, img.imagem, img.eh_capa || false);
+        return `($${b+1}, $${b+2}, $${b+3})`;
+      });
+      await client.query(
+        `INSERT INTO produto_imagens (produto_id, imagem, eh_capa) VALUES ${placeholders.join(', ')}`,
+        vals
+      );
     }
 
     if (agregados && agregados.length > 0) {
-      for (const agg of agregados) {
-        await client.query(
-          "INSERT INTO produto_agregados (produto_id, agregado_id, preco) VALUES ($1, $2, $3)",
-          [produtoId, agg.id, agg.preco]
-        );
-      }
+      const vals = [];
+      const placeholders = agregados.map((agg, i) => {
+        const b = i * 3;
+        vals.push(produtoId, agg.id, agg.preco);
+        return `($${b+1}, $${b+2}, $${b+3})`;
+      });
+      await client.query(
+        `INSERT INTO produto_agregados (produto_id, agregado_id, preco) VALUES ${placeholders.join(', ')}`,
+        vals
+      );
     }
 
     await client.query("COMMIT");
+    invalidateProductsCache();
     res.status(201).json({ message: "Produto criado com sucesso!", id: produtoId });
   } catch (error) {
     try {
@@ -391,40 +420,52 @@ router.put("/:id", authenticateToken, requireRole('admin'), async (req, res) => 
     await client.query("DELETE FROM produto_ingredientes WHERE produto_id = $1", [id]);
 
     if (ingredientes && ingredientes.length > 0) {
-      for (const ing of ingredientes) {
-        await client.query(
-          "INSERT INTO produto_ingredientes (produto_id, ingrediente_id, quantidade, apenas_revenda) VALUES ($1, $2, $3, $4)",
-          [id, ing.ingrediente_id, ing.quantidade, ing.apenas_revenda || false]
-        );
-      }
+      const vals = [];
+      const placeholders = ingredientes.map((ing, i) => {
+        const b = i * 4;
+        vals.push(id, ing.ingrediente_id, ing.quantidade, ing.apenas_revenda || false);
+        return `($${b+1}, $${b+2}, $${b+3}, $${b+4})`;
+      });
+      await client.query(
+        `INSERT INTO produto_ingredientes (produto_id, ingrediente_id, quantidade, apenas_revenda) VALUES ${placeholders.join(', ')}`,
+        vals
+      );
     }
 
     // Atualiza imagens (remove antigas e insere novas para simplificar)
     await client.query("DELETE FROM produto_imagens WHERE produto_id = $1", [id]);
-    
-    if (imagens && imagens.length > 0) {
-      for (const img of imagens) {
-        if (img.imagem) {
-          await client.query(
-            "INSERT INTO produto_imagens (produto_id, imagem, eh_capa) VALUES ($1, $2, $3)",
-            [id, img.imagem, img.eh_capa || false]
-          );
-        }
-      }
+
+    const imagensValidas = (imagens || []).filter(img => img.imagem);
+    if (imagensValidas.length > 0) {
+      const vals = [];
+      const placeholders = imagensValidas.map((img, i) => {
+        const b = i * 3;
+        vals.push(id, img.imagem, img.eh_capa || false);
+        return `($${b+1}, $${b+2}, $${b+3})`;
+      });
+      await client.query(
+        `INSERT INTO produto_imagens (produto_id, imagem, eh_capa) VALUES ${placeholders.join(', ')}`,
+        vals
+      );
     }
 
     // Atualiza agregados (remove antigos e insere novos)
     await client.query("DELETE FROM produto_agregados WHERE produto_id = $1", [id]);
     if (agregados && agregados.length > 0) {
-      for (const agg of agregados) {
-        await client.query(
-          "INSERT INTO produto_agregados (produto_id, agregado_id, preco) VALUES ($1, $2, $3)",
-          [id, agg.id, agg.preco]
-        );
-      }
+      const vals = [];
+      const placeholders = agregados.map((agg, i) => {
+        const b = i * 3;
+        vals.push(id, agg.id, agg.preco);
+        return `($${b+1}, $${b+2}, $${b+3})`;
+      });
+      await client.query(
+        `INSERT INTO produto_agregados (produto_id, agregado_id, preco) VALUES ${placeholders.join(', ')}`,
+        vals
+      );
     }
 
     await client.query("COMMIT");
+    invalidateProductsCache();
     res.json({ message: "Produto atualizado com sucesso!" });
   } catch (error) {
     try {
@@ -458,6 +499,7 @@ router.patch("/:id/destaque", authenticateToken, requireRole('admin'), async (re
     await client.query("UPDATE produtos SET eh_destaque = $1 WHERE id = $2", [eh_destaque, id]);
 
     await client.query("COMMIT");
+    invalidateProductsCache();
     res.json({ message: "Destaque atualizado!" });
   } catch (error) {
     await client.query("ROLLBACK");
@@ -482,6 +524,7 @@ router.patch("/:id/ativo", authenticateToken, requireRole('admin'), async (req, 
     await client.query("UPDATE produtos SET ativo = $1 WHERE id = $2", [ativoStatus, id]);
 
     await client.query("COMMIT");
+    invalidateProductsCache();
     res.json({ message: "Status do produto atualizado!" });
   } catch (error) {
     await client.query("ROLLBACK");
@@ -525,6 +568,7 @@ router.delete("/:id", authenticateToken, requireRole('admin'), async (req, res) 
     await client.query("DELETE FROM produtos WHERE id = $1", [id]);
     
     await client.query("COMMIT");
+    invalidateProductsCache();
     res.json({ message: "Produto removido com sucesso!" });
   } catch (error) {
     await client.query("ROLLBACK");

@@ -8,7 +8,23 @@ const router = Router();
 // LISTAR PEDIDOS (apenas admin)
 router.get("/", requireRole('admin'), async (req, res) => {
   try {
-    // Busca nome do cliente ou razão social do revendedor baseado no tipo_cliente
+    const { ativos, page, limit } = req.query;
+    const params = [];
+    let whereClause = '';
+
+    if (ativos === 'true') {
+      whereClause = "WHERE p.status NOT IN ('Finalizado', 'Cancelado')";
+    }
+
+    let paginationClause = '';
+    if (page && limit) {
+      const pageNum = Math.max(1, parseInt(page) || 1);
+      const limitNum = Math.min(200, Math.max(1, parseInt(limit) || 50));
+      const offset = (pageNum - 1) * limitNum;
+      params.push(limitNum, offset);
+      paginationClause = `LIMIT $${params.length - 1} OFFSET $${params.length}`;
+    }
+
     const query = `
       SELECT p.*,
              COALESCE(c.nome, r.razao_social, 'Cliente Balcão') as cliente_nome,
@@ -16,9 +32,11 @@ router.get("/", requireRole('admin'), async (req, res) => {
       FROM pedidos p
       LEFT JOIN clientes c ON p.cliente_id = c.id AND (p.tipo_cliente IS NULL OR p.tipo_cliente = 'consumidor')
       LEFT JOIN revendedores r ON p.cliente_id = r.id AND p.tipo_cliente = 'revendedor'
+      ${whereClause}
       ORDER BY p.id DESC
+      ${paginationClause}
     `;
-    const result = await pool.query(query);
+    const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error) {
     console.error(error);
@@ -102,25 +120,44 @@ router.post("/", async (req, res) => {
     );
     const pedidoId = resPedido.rows[0].id;
 
-    for (const item of itens) {
-      const isCombo = item.tipo === 'combo';
-      const itemOrigem = item.origem || origem; // suporta origem por item ou no root
+    const comboItens = itens.filter(i => i.tipo === 'combo');
+    const produtoItens = itens.filter(i => i.tipo !== 'combo');
 
-      if (isCombo) {
+    if (comboItens.length > 0) {
+      const vals = [];
+      const ph = comboItens.map((item, i) => {
+        const b = i * 5;
+        vals.push(pedidoId, item.produto_id, item.quantidade, item.valor_unitario, Number(item.quantidade) * Number(item.valor_unitario));
+        return `($${b+1}, NULL, $${b+2}, 'combo', $${b+3}, $${b+4}, $${b+5})`;
+      });
+      await client.query(
+        `INSERT INTO itens_pedido (pedido_id, produto_id, combo_id, tipo, quantidade, valor_unitario, valor_total) VALUES ${ph.join(', ')}`,
+        vals
+      );
+    }
+
+    if (produtoItens.length > 0) {
+      const vals = [];
+      const ph = produtoItens.map((item, i) => {
+        const b = i * 5;
+        vals.push(pedidoId, item.produto_id, item.quantidade, item.valor_unitario, Number(item.quantidade) * Number(item.valor_unitario));
+        return `($${b+1}, $${b+2}, 'produto', $${b+3}, $${b+4}, $${b+5})`;
+      });
+      await client.query(
+        `INSERT INTO itens_pedido (pedido_id, produto_id, tipo, quantidade, valor_unitario, valor_total) VALUES ${ph.join(', ')}`,
+        vals
+      );
+
+      // Baixar estoque apenas dos itens que não vieram do carrinho
+      const stockItems = produtoItens.filter(item => (item.origem || origem) !== 'carrinho');
+      if (stockItems.length > 0) {
+        const caseClause = stockItems.map((_, i) => `WHEN $${i*2+1} THEN estoque - $${i*2+2}`).join(' ');
+        const ids = stockItems.map((_, i) => `$${i*2+1}`).join(', ');
+        const vals = stockItems.flatMap(item => [item.produto_id, item.quantidade]);
         await client.query(
-          "INSERT INTO itens_pedido (pedido_id, produto_id, combo_id, tipo, quantidade, valor_unitario, valor_total) VALUES ($1, NULL, $2, 'combo', $3, $4, $5)",
-          [pedidoId, item.produto_id, item.quantidade, item.valor_unitario, Number(item.quantidade) * Number(item.valor_unitario)]
+          `UPDATE produtos SET estoque = CASE id ${caseClause} END WHERE id IN (${ids})`,
+          vals
         );
-        // Estoque do combo já foi reservado ao adicionar no carrinho
-      } else {
-        await client.query(
-          "INSERT INTO itens_pedido (pedido_id, produto_id, tipo, quantidade, valor_unitario, valor_total) VALUES ($1, $2, 'produto', $3, $4, $5)",
-          [pedidoId, item.produto_id, item.quantidade, item.valor_unitario, Number(item.quantidade) * Number(item.valor_unitario)]
-        );
-        // Baixar estoque do produto apenas se não veio do carrinho (onde já foi baixado na reserva)
-        if (itemOrigem !== 'carrinho') {
-          await client.query("UPDATE produtos SET estoque = estoque - $1 WHERE id = $2", [item.quantidade, item.produto_id]);
-        }
       }
     }
 
@@ -164,12 +201,26 @@ router.put("/:id", requireRole('admin'), async (req, res) => {
 
     // 1. Restaurar estoque dos itens antigos (apenas produtos, não combos)
     const oldItens = await client.query("SELECT produto_id, combo_id, tipo, quantidade FROM itens_pedido WHERE pedido_id = $1", [id]);
-    for (const item of oldItens.rows) {
-      if (item.tipo === 'combo') {
-        await client.query("UPDATE combos SET estoque = estoque + $1 WHERE id = $2", [item.quantidade, item.combo_id]);
-      } else {
-        await client.query("UPDATE produtos SET estoque = estoque + $1 WHERE id = $2", [item.quantidade, item.produto_id]);
-      }
+    const oldProdutos = oldItens.rows.filter(i => i.tipo !== 'combo');
+    const oldCombos = oldItens.rows.filter(i => i.tipo === 'combo');
+
+    if (oldProdutos.length > 0) {
+      const caseClause = oldProdutos.map((_, i) => `WHEN $${i*2+1} THEN estoque + $${i*2+2}`).join(' ');
+      const ids = oldProdutos.map((_, i) => `$${i*2+1}`).join(', ');
+      const vals = oldProdutos.flatMap(item => [item.produto_id, item.quantidade]);
+      await client.query(
+        `UPDATE produtos SET estoque = CASE id ${caseClause} END WHERE id IN (${ids})`,
+        vals
+      );
+    }
+    if (oldCombos.length > 0) {
+      const caseClause = oldCombos.map((_, i) => `WHEN $${i*2+1} THEN estoque + $${i*2+2}`).join(' ');
+      const ids = oldCombos.map((_, i) => `$${i*2+1}`).join(', ');
+      const vals = oldCombos.flatMap(item => [item.combo_id, item.quantidade]);
+      await client.query(
+        `UPDATE combos SET estoque = CASE id ${caseClause} END WHERE id IN (${ids})`,
+        vals
+      );
     }
 
     // 2. Limpar itens antigos
@@ -189,21 +240,41 @@ router.put("/:id", requireRole('admin'), async (req, res) => {
     );
 
     // 5. Inserir novos itens e baixar estoque
-    for (const item of itens) {
-      const isCombo = item.tipo === 'combo';
-      if (isCombo) {
-        await client.query(
-          "INSERT INTO itens_pedido (pedido_id, produto_id, combo_id, tipo, quantidade, valor_unitario, valor_total) VALUES ($1, NULL, $2, 'combo', $3, $4, $5)",
-          [id, item.produto_id, item.quantidade, item.valor_unitario, Number(item.quantidade) * Number(item.valor_unitario)]
-        );
-        await client.query("UPDATE combos SET estoque = estoque - $1 WHERE id = $2", [item.quantidade, item.produto_id]);
-      } else {
-        await client.query(
-          "INSERT INTO itens_pedido (pedido_id, produto_id, tipo, quantidade, valor_unitario, valor_total) VALUES ($1, $2, 'produto', $3, $4, $5)",
-          [id, item.produto_id, item.quantidade, item.valor_unitario, Number(item.quantidade) * Number(item.valor_unitario)]
-        );
-        await client.query("UPDATE produtos SET estoque = estoque - $1 WHERE id = $2", [item.quantidade, item.produto_id]);
-      }
+    const novosCombos = itens.filter(i => i.tipo === 'combo');
+    const novosProdutos = itens.filter(i => i.tipo !== 'combo');
+
+    if (novosCombos.length > 0) {
+      const vals = [];
+      const ph = novosCombos.map((item, i) => {
+        const b = i * 5;
+        vals.push(id, item.produto_id, item.quantidade, item.valor_unitario, Number(item.quantidade) * Number(item.valor_unitario));
+        return `($${b+1}, NULL, $${b+2}, 'combo', $${b+3}, $${b+4}, $${b+5})`;
+      });
+      await client.query(
+        `INSERT INTO itens_pedido (pedido_id, produto_id, combo_id, tipo, quantidade, valor_unitario, valor_total) VALUES ${ph.join(', ')}`,
+        vals
+      );
+      const caseClause = novosCombos.map((_, i) => `WHEN $${i*2+1} THEN estoque - $${i*2+2}`).join(' ');
+      const ids = novosCombos.map((_, i) => `$${i*2+1}`).join(', ');
+      const stockVals = novosCombos.flatMap(item => [item.produto_id, item.quantidade]);
+      await client.query(`UPDATE combos SET estoque = CASE id ${caseClause} END WHERE id IN (${ids})`, stockVals);
+    }
+
+    if (novosProdutos.length > 0) {
+      const vals = [];
+      const ph = novosProdutos.map((item, i) => {
+        const b = i * 5;
+        vals.push(id, item.produto_id, item.quantidade, item.valor_unitario, Number(item.quantidade) * Number(item.valor_unitario));
+        return `($${b+1}, $${b+2}, 'produto', $${b+3}, $${b+4}, $${b+5})`;
+      });
+      await client.query(
+        `INSERT INTO itens_pedido (pedido_id, produto_id, tipo, quantidade, valor_unitario, valor_total) VALUES ${ph.join(', ')}`,
+        vals
+      );
+      const caseClause = novosProdutos.map((_, i) => `WHEN $${i*2+1} THEN estoque - $${i*2+2}`).join(' ');
+      const ids = novosProdutos.map((_, i) => `$${i*2+1}`).join(', ');
+      const stockVals = novosProdutos.flatMap(item => [item.produto_id, item.quantidade]);
+      await client.query(`UPDATE produtos SET estoque = CASE id ${caseClause} END WHERE id IN (${ids})`, stockVals);
     }
 
     await client.query("COMMIT");

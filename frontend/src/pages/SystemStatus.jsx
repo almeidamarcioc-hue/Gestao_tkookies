@@ -9,8 +9,6 @@ export default function SystemStatus() {
 
   useEffect(() => {
     checkStatus();
-    const interval = setInterval(checkStatus, 30000); // Atualiza a cada 30s
-    return () => clearInterval(interval);
   }, []);
 
   const checkStatus = async () => {

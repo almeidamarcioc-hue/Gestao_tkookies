@@ -67,10 +67,9 @@ export default function OrdersDashboard() {
 
   const loadOrders = async (isPolling = false) => {
     try {
-      const res = await api.get("/pedidos");
+      const res = await api.get("/pedidos?ativos=true");
       const data = Array.isArray(res.data) ? res.data : [];
-      const activeOrders = data.filter(o => o.status !== 'Finalizado' && o.status !== 'Cancelado');
-      activeOrders.sort((a, b) => b.id - a.id);
+      const activeOrders = [...data].sort((a, b) => b.id - a.id);
 
       if (isPolling) {
         if (activeOrders.length > 0) {
@@ -104,10 +103,24 @@ export default function OrdersDashboard() {
 
   useEffect(() => {
     loadOrders(false);
+
     const interval = setInterval(() => {
-      loadOrders(true);
-    }, 15000);
-    return () => clearInterval(interval);
+      // Não faz polling se a aba estiver oculta (economiza requisições)
+      if (!document.hidden) {
+        loadOrders(true);
+      }
+    }, 45000);
+
+    // Quando a aba volta ao foco, recarrega imediatamente
+    const handleVisibilityChange = () => {
+      if (!document.hidden) loadOrders(true);
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, []);
 
  const handleSoundToggle = (event) => {
