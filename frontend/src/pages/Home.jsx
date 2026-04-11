@@ -505,24 +505,24 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
         />
         <Container maxWidth="lg" sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', position: 'relative', zIndex: 2, textAlign: 'center' }}>
           <Box component={motion.div} style={{ opacity: textOpacity }}>
-            <Typography
-              variant="h1"
-              component={motion.h1}
+            <Box
+              component={motion.div}
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
-              sx={{
-                fontFamily: '"Playfair Display", serif',
-                color: 'white',
-                fontWeight: 900,
-                fontSize: { xs: '2.8rem', md: '5rem' },
-                textShadow: '0 4px 20px rgba(0,0,0,0.5)',
-                mb: 2,
-                letterSpacing: '-1px'
-              }}
+              sx={{ mb: 3, display: 'flex', justifyContent: 'center' }}
             >
-              {config.home_title.toUpperCase()}
-            </Typography>
+              <Box
+                component="img"
+                src="/logo-tkcookies-escuro.svg"
+                alt="TKookies"
+                sx={{
+                  width: { xs: 220, sm: 300, md: 360 },
+                  height: 'auto',
+                  filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.45))'
+                }}
+              />
+            </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 4 }}>
               <Box sx={{ width: 32, height: 1, bgcolor: 'white', opacity: 0.7 }} />
               <Typography
