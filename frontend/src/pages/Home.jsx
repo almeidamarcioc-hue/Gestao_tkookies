@@ -579,7 +579,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                 {!isStoreOpen && (
                   <Button
                     size="small"
-                    href={`https://wa.me/${config.whatsapp_number || '5555997312557'}?text=${encodeURIComponent('Olá! Gostaria de fazer um pedido na TKookies 🍪')}`}
+                    href={`https://wa.me/${config.whatsapp_number || '5555997312557'}?text=${encodeURIComponent('Olá! Gostaria de fazer um pedido na TKookies')}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     sx={{ color: '#25D366', fontWeight: 'bold', fontSize: '0.75rem', p: 0, textTransform: 'none', lineHeight: 1.2 }}
