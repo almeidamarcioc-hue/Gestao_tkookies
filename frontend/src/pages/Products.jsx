@@ -618,7 +618,13 @@ export default function Products() {
         <Box mb={3}>
           <Typography variant="subtitle2" gutterBottom>Ocasião / Filtro de Presentear</Typography>
           <Box display="flex" flexWrap="wrap" gap={1}>
-            {OCASIOES.map(op => (
+            {[
+              ...OCASIOES,
+              // Mostra também ocasiões já marcadas no produto que foram removidas do config
+              ...ocasiao
+                .filter(v => !OCASIOES.some(o => o.value === v))
+                .map(v => ({ value: v, label: `${v} (removida)` }))
+            ].map(op => (
               <FormControlLabel
                 key={op.value}
                 control={

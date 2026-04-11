@@ -775,7 +775,12 @@ export default function Dashboard() {
                   Ocasião / Presentear
                 </Typography>
                 <Box display="flex" flexWrap="wrap" gap={1}>
-                  {OCASIOES.map(op => (
+                  {[
+                    ...OCASIOES,
+                    ...editOcasiao
+                      .filter(v => !OCASIOES.some(o => o.value === v))
+                      .map(v => ({ value: v, label: `${v} (removida)` }))
+                  ].map(op => (
                     <FormControlLabel
                       key={op.value}
                       control={
