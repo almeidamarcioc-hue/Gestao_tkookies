@@ -517,7 +517,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                 src="/logo-tkcookies-escuro.svg"
                 alt="TKookies"
                 sx={{
-                  width: { xs: 220, sm: 300, md: 360 },
+                  width: { xs: 300, sm: 420, md: 520 },
                   height: 'auto',
                   filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.45))'
                 }}
