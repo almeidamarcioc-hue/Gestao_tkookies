@@ -1,9 +1,11 @@
-// MySQL retorna datas sem timezone (ex: "2024-01-15 18:30:00").
-// Tratamos como UTC e exibimos no fuso de Brasília (UTC-3).
+// PostgreSQL retorna timestamps como ISO string (ex: "2024-01-15T18:30:00.000Z").
+// Caso venha sem timezone (ex: "2024-01-15 18:30:00"), trata como UTC.
+// Exibe no fuso de Brasília (UTC-3).
 const formatarDataPedido = (dataStr) => {
   if (!dataStr) return '-';
-  // Substitui espaço por T e adiciona Z para forçar interpretação como UTC
-  const iso = String(dataStr).replace(' ', 'T').replace(/(\.\d+)?$/, 'Z');
+  const str = String(dataStr).replace(' ', 'T');
+  // Adiciona Z apenas se não houver informação de timezone
+  const iso = /[Z+]/.test(str) ? str : str + 'Z';
   return new Date(iso).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
 };
 
