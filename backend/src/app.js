@@ -55,13 +55,24 @@ app.options('*', cors(corsOptions));
 // Compressão de respostas
 app.use(compression());
 
-// Rate limiting
+// Rate limiting geral
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // limite de 100 requests por windowMs
+  max: 100,
   message: "Muitas requisições, tente novamente mais tarde."
 });
 app.use(limiter);
+
+// Rate limiting estrito para endpoints de login (anti força bruta)
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 10, // máx 10 tentativas de login por IP por janela
+  message: { error: "Muitas tentativas de login. Aguarde 15 minutos e tente novamente." },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+app.use("/clientes/login", loginLimiter);
+app.use("/clientes/admin/login", loginLimiter);
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));

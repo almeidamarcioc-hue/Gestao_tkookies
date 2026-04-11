@@ -16,6 +16,7 @@ export default function Settings() {
   const [pixKey, setPixKey] = useState("");
   const [pixName, setPixName] = useState("");
   const [pixCity, setPixCity] = useState("");
+  const [whatsappNumber, setWhatsappNumber] = useState("");
   const [openingHours, setOpeningHours] = useState([
     { day: 0, label: "Domingo", open: false, open_time: "08:00", close_time: "18:00" },
     { day: 1, label: "Segunda", open: true, open_time: "08:00", close_time: "18:00" },
@@ -50,6 +51,7 @@ export default function Settings() {
         setPixKey(cfg.pix_key || "");
         setPixName(cfg.pix_name || "");
         setPixCity(cfg.pix_city || "");
+        setWhatsappNumber(cfg.whatsapp_number || "");
 
         if (cfg.opening_hours) {
           setOpeningHours(JSON.parse(cfg.opening_hours));
@@ -124,7 +126,8 @@ export default function Settings() {
         about_cta_desc: aboutCtaDesc,
         pix_key: pixKey,
         pix_name: pixName,
-        pix_city: pixCity
+        pix_city: pixCity,
+        whatsapp_number: whatsappNumber
       });
       alert("Configurações salvas!");
     } catch (err) {
@@ -220,6 +223,19 @@ export default function Settings() {
             />
           </Grid>
           
+          <Grid item xs={12}>
+            <Divider sx={{ my: 1 }} />
+            <Typography variant="h6" sx={{ mb: 2 }}>Contato</Typography>
+            <TextField
+              label="Número do WhatsApp"
+              fullWidth
+              value={whatsappNumber}
+              onChange={e => setWhatsappNumber(e.target.value)}
+              placeholder="Ex: 5555997312557 (DDI+DDD+número, sem espaços)"
+              helperText="Usado no link de contato quando a loja está fechada"
+            />
+          </Grid>
+
           <Grid item xs={12}>
             <Divider sx={{ my: 1 }} />
             <Typography variant="h6" sx={{ mb: 2 }}>Configurações de PIX</Typography>

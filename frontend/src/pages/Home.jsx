@@ -59,7 +59,8 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
     home_location: "📍 Apenas delivery / Três de Maio - RS",
     home_bg: "",
     open_days: "",
-    opening_hours: ""
+    opening_hours: "",
+    whatsapp_number: "5555997312557"
   });
   const [isStoreOpen, setIsStoreOpen] = useState(true);
 
@@ -166,7 +167,15 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
     api.get("/produtos").then(res => {
       const allProductsData = Array.isArray(res.data) ? res.data : [];
       // Filtra produtos ativos e não agregados, mas mantém os com estoque 0 para exibir "Indisponível"
-      const displayableProducts = allProductsData.filter(p => p.ativo !== false && !p.eh_agregado);
+      const displayableProducts = allProductsData
+        .filter(p => p.ativo !== false && !p.eh_agregado)
+        .sort((a, b) => {
+          // Disponíveis primeiro, depois indisponíveis; dentro de cada grupo, ordem alfabética
+          const aAvail = Number(a.estoque) > 0 ? 0 : 1;
+          const bAvail = Number(b.estoque) > 0 ? 0 : 1;
+          if (aAvail !== bAvail) return aAvail - bAvail;
+          return a.nome.localeCompare(b.nome, 'pt-BR');
+        });
       setProducts(displayableProducts);
       
       // Encontra produtos destaque com estoque e seleciona um aleatório
@@ -560,12 +569,25 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                   </Typography>
                 </Box>
               </Box>
-              <Chip 
-                label={isStoreOpen ? "ABERTO AGORA" : "FECHADO NO MOMENTO"} 
-                color={isStoreOpen ? "success" : "error"} 
-                size="small" 
-                sx={{ fontWeight: 'bold' }} 
-              />
+              <Box display="flex" flexDirection="column" alignItems="flex-end" gap={0.5}>
+                <Chip
+                  label={isStoreOpen ? "ABERTO AGORA" : "FECHADO NO MOMENTO"}
+                  color={isStoreOpen ? "success" : "error"}
+                  size="small"
+                  sx={{ fontWeight: 'bold' }}
+                />
+                {!isStoreOpen && (
+                  <Button
+                    size="small"
+                    href={`https://wa.me/${config.whatsapp_number || '5555997312557'}?text=${encodeURIComponent('Olá! Gostaria de fazer um pedido na TKookies 🍪')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={{ color: '#25D366', fontWeight: 'bold', fontSize: '0.75rem', p: 0, textTransform: 'none', lineHeight: 1.2 }}
+                  >
+                    💬 Deixe seu pedido pelo WhatsApp
+                  </Button>
+                )}
+              </Box>
             </Box>
 
             {/* 2. DESTAQUES (Mosaic Grid) */}
@@ -659,7 +681,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
               </Typography>
               <Box sx={{ bgcolor: terracotta, height: 3, width: 48, borderRadius: 2, mb: 3 }} />
 
-              <Grid container spacing={3} component={motion.div} variants={containerVariants} initial="hidden" animate="visible">
+              <Grid container spacing={3} component={motion.div} variants={containerVariants} initial="hidden" animate={products.length > 0 ? "visible" : "hidden"}>
                 {products.filter(p => !combos.some(c => c.produto_vinculado_id === p.id)).map(prod => {
                   const coverImage = prod.imagens?.find(img => img.eh_capa)?.imagem || prod.imagens?.[0]?.imagem;
                   const qty = getQty(prod.id);
