@@ -14,7 +14,7 @@ if [ "$(git branch --show-current)" != "homologacao" ]; then
 fi
 
 echo "🔧 Deployando backend de HOMOLOGAÇÃO..."
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/backend"
 VERCEL_ORG_ID=team_31qTCpSCknu7NW8rhSwhjHUX \
 VERCEL_PROJECT_ID=prj_MSAzyiSyIFEmMH69wD9WTk0VfzXr \
 npx vercel@latest deploy --prod
