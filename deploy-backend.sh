@@ -14,7 +14,7 @@ if [ "$(git branch --show-current)" != "main" ]; then
 fi
 
 echo "🚀 Deployando backend de PRODUÇÃO..."
-cd "$(dirname "$0")/backend"
+cd "$(dirname "$0")"
 VERCEL_ORG_ID=team_31qTCpSCknu7NW8rhSwhjHUX \
 VERCEL_PROJECT_ID=prj_O3UC5RZH1iZXb54A5LhMs69xom59 \
 npx vercel@latest deploy --prod
