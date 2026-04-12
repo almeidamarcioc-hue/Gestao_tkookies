@@ -532,7 +532,7 @@ export default function Products() {
           </Box>
         </Box>
         
-        <Box display="flex" gap={2} mb={3} alignItems="center" sx={{ bgcolor: '#f5f5f5', p: 2, borderRadius: 2 }}>
+        <Box display="flex" flexWrap="wrap" gap={2} mb={3} alignItems="center" sx={{ bgcolor: '#f5f5f5', p: 2, borderRadius: 2 }}>
           <FormControlLabel 
             control={<Checkbox checked={ehDestaque} onChange={(e) => setEhDestaque(e.target.checked)} />} 
             label="Produto Destaque (Promoção)" 

@@ -588,7 +588,7 @@ export default function Dashboard() {
                 </Box>
               </Box>
 
-              <Box display="flex" gap={2} mb={3} alignItems="center" sx={{ bgcolor: '#f5f5f5', p: 2, borderRadius: 2 }}>
+              <Box display="flex" flexWrap="wrap" gap={2} mb={3} alignItems="center" sx={{ bgcolor: '#f5f5f5', p: 2, borderRadius: 2 }}>
                 <FormControlLabel 
                   control={<Checkbox checked={editProduct.eh_destaque || false} onChange={(e) => setEditProduct({...editProduct, eh_destaque: e.target.checked})} />} 
                   label="Destaque" 
