@@ -70,6 +70,8 @@ export default function Settings() {
 
   useEffect(() => {
     api.get("/produtos").then(res => setListaProdutos(res.data || []));
+    // Sempre busca direto do banco (não usa cache de sessão) para garantir dados atuais
+    sessionStorage.removeItem('_cfg');
     api.get("/configuracoes").then(res => {
       const cfg = res.data;
       if (cfg) {
@@ -96,11 +98,33 @@ export default function Settings() {
           try { setKitDescontos(prev => ({ ...prev, ...JSON.parse(cfg.kit_descontos) })); } catch (e) {}
         }
 
+        const DEFAULT_HOURS = [
+          { day: 0, label: "Domingo", open: false, open_time: "08:00", close_time: "18:00" },
+          { day: 1, label: "Segunda", open: true,  open_time: "08:00", close_time: "18:00" },
+          { day: 2, label: "Terça",   open: true,  open_time: "08:00", close_time: "18:00" },
+          { day: 3, label: "Quarta",  open: true,  open_time: "08:00", close_time: "18:00" },
+          { day: 4, label: "Quinta",  open: true,  open_time: "08:00", close_time: "18:00" },
+          { day: 5, label: "Sexta",   open: true,  open_time: "08:00", close_time: "18:00" },
+          { day: 6, label: "Sábado",  open: true,  open_time: "08:00", close_time: "18:00" },
+        ];
         if (cfg.opening_hours) {
-          setOpeningHours(JSON.parse(cfg.opening_hours));
+          try {
+            const loaded = typeof cfg.opening_hours === 'string'
+              ? JSON.parse(cfg.opening_hours)
+              : cfg.opening_hours;
+            // Garante todos os 7 dias: mescla dados salvos com os defaults
+            const merged = DEFAULT_HOURS.map(def => {
+              const saved = loaded.find(s => Number(s.day) === def.day);
+              return saved ? { ...def, ...saved } : def;
+            });
+            setOpeningHours(merged);
+          } catch (e) {
+            console.error("Erro ao parsear opening_hours:", e);
+            setOpeningHours(DEFAULT_HOURS);
+          }
         } else if (cfg.open_days) {
           const days = cfg.open_days.split(',').map(Number);
-          setOpeningHours(prev => prev.map(h => ({
+          setOpeningHours(DEFAULT_HOURS.map(h => ({
             ...h,
             open: days.includes(h.day),
             open_time: cfg.open_time || "08:00",
@@ -132,15 +156,15 @@ export default function Settings() {
   };
 
   const handleScheduleToggle = (idx) => {
-    const newHours = [...openingHours];
-    newHours[idx].open = !newHours[idx].open;
-    setOpeningHours(newHours);
+    setOpeningHours(prev => prev.map((h, i) =>
+      i === idx ? { ...h, open: !h.open } : h
+    ));
   };
 
   const handleScheduleTimeChange = (idx, field, val) => {
-    const newHours = [...openingHours];
-    newHours[idx][field] = val;
-    setOpeningHours(newHours);
+    setOpeningHours(prev => prev.map((h, i) =>
+      i === idx ? { ...h, [field]: val } : h
+    ));
   };
 
   const handleSave = async () => {
@@ -156,7 +180,7 @@ export default function Settings() {
         open_time: openingHours.find(h => h.open)?.open_time || "08:00",
         close_time: openingHours.find(h => h.open)?.close_time || "18:00",
         open_days: openingHours.filter(h => h.open).map(h => h.day).join(','),
-        
+
         about_title: aboutTitle,
         about_desc: aboutDesc,
         about_card1_title: aboutCard1Title,
@@ -181,10 +205,19 @@ export default function Settings() {
         ocasioes: JSON.stringify(ocasioes),
         kit_descontos: JSON.stringify(kitDescontos)
       });
+      // Limpa caches para que todas as páginas recarreguem do banco na próxima visita
       sessionStorage.removeItem('_cfg');
-      alert("Configurações salvas!");
+      // Confirma leitura do banco para verificar que o dado foi salvo
+      const verify = await api.get("/configuracoes");
+      const savedHours = verify.data.opening_hours;
+      if (savedHours) {
+        const parsed = JSON.parse(savedHours);
+        setOpeningHours(parsed);
+      }
+      alert("Configurações salvas com sucesso!");
     } catch (err) {
-      alert("Erro ao salvar.");
+      console.error("Erro ao salvar configurações:", err);
+      alert("Erro ao salvar: " + (err.response?.data?.error || err.message));
     }
   };
 

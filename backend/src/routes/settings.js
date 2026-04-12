@@ -5,15 +5,10 @@ import { authenticateToken, requireRole } from "../middlewares/auth.js";
 
 const router = Router();
 
-// Cache em memória para /configuracoes — evita bater no banco a cada request
-let configCache = null;
-let configCacheAt = 0;
-const CONFIG_CACHE_TTL = 5 * 60 * 1000; // 5 minutos
-
-function invalidateConfigCache() {
-  configCache = null;
-  configCacheAt = 0;
-}
+// NOTA: Cache em memória removido — Vercel serverless usa múltiplas instâncias,
+// então um cache por processo não é compartilhado entre instâncias e causa dados
+// desatualizados mesmo após salvar. A query de configurações é leve o suficiente
+// para ir direto ao banco a cada requisição.
 
 // Função auxiliar para garantir que a tabela exista (Auto-migração)
 async function ensureTableExists() {
@@ -47,18 +42,12 @@ router.get("/migrate", authenticateToken, requireRole('admin'), async (req, res)
 
 // OBTER CONFIGURAÇÕES
 router.get("/", async (req, res) => {
-  // Serve do cache se ainda válido
-  if (configCache && (Date.now() - configCacheAt) < CONFIG_CACHE_TTL) {
-    return res.json(configCache);
-  }
   try {
     const result = await pool.query("SELECT chave, valor FROM configuracoes");
     const config = {};
     (result.rows || []).forEach(row => {
       config[row.chave] = row.valor;
     });
-    configCache = config;
-    configCacheAt = Date.now();
     res.json(config);
   } catch (error) {
     // Se a tabela não existir (ER_NO_SUCH_TABLE ou mensagem de erro), tenta criar
@@ -89,7 +78,6 @@ router.post("/", authenticateToken, requireRole('admin'), async (req, res) => {
     }
 
     await client.query("COMMIT");
-    invalidateConfigCache(); // força recarregar do banco na próxima leitura
     res.json({ message: "Configurações salvas!" });
   } catch (error) {
     // Tenta criar tabela se o erro for de falta de tabela

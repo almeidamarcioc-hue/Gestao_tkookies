@@ -87,7 +87,7 @@ router.get("/top-pages", requireRole('admin'), async (req, res) => {
     const [response] = await client.runReport({
       property: `properties/${propertyId}`,
       dateRanges: [{ startDate: `${days}daysAgo`, endDate: "today" }],
-      dimensions: [{ name: "pagePath" }],
+      dimensions: [{ name: "pagePath" }, { name: "pageTitle" }],
       metrics: [{ name: "screenPageViews" }, { name: "activeUsers" }],
       orderBys: [{ metric: { metricName: "screenPageViews" }, desc: true }],
       limit: 10,
@@ -95,6 +95,7 @@ router.get("/top-pages", requireRole('admin'), async (req, res) => {
 
     const data = (response.rows || []).map(row => ({
       page: row.dimensionValues[0].value,
+      title: row.dimensionValues[1].value,
       views: parseInt(row.metricValues[0].value),
       users: parseInt(row.metricValues[1].value),
     }));
