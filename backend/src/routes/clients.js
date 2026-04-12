@@ -54,6 +54,9 @@ router.get("/:id/mais-comprados", authenticateToken, async (req, res) => {
       JOIN pedidos ped ON ip.pedido_id = ped.id
       JOIN produtos p ON ip.produto_id = p.id
       WHERE ped.cliente_id = $1
+        AND ip.eh_brinde = false
+        AND p.eh_brinde = false
+        AND p.ativo = true
       GROUP BY p.id, p.nome, p.preco_venda, p.preco_revenda, p.eh_destaque, p.desconto_destaque, p.estoque
       ORDER BY total_comprado DESC
       LIMIT 5
