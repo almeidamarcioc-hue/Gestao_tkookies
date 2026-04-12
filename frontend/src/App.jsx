@@ -192,9 +192,12 @@ export default function App() {
     const timer = setTimeout(forceScrollTop, 10);
 
     // Rastreamento de visualização de página no Google Analytics (gtag.js)
+    // Usando page_location virtual para que o GA4 registre o path correto em SPAs com hash routing
     if (window.gtag) {
-      window.gtag('config', 'G-B4WSKWXZBY', {
+      window.gtag('event', 'page_view', {
+        page_location: window.location.origin + pathname,
         page_path: pathname,
+        page_title: document.title,
       });
     }
 

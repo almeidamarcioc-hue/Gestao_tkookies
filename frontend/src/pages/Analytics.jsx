@@ -31,6 +31,42 @@ const StatCard = ({ icon, label, value, unit }) => (
 const formatDate = (d) => `${d.slice(6,8)}/${d.slice(4,6)}`;
 const formatDuration = (s) => `${Math.floor(s / 60)}m ${s % 60}s`;
 
+const PAGE_LABELS = {
+  '/': 'Cardápio (Home)',
+  '/cadastro': 'Cadastro de Cliente',
+  '/perfil': 'Perfil do Cliente',
+  '/carrinho': 'Carrinho',
+  '/pedido-confirmado': 'Pedido Confirmado',
+  '/meus-pedidos': 'Meus Pedidos',
+  '/meus-favoritos': 'Meus Favoritos',
+  '/sobre': 'Sobre',
+  '/produtos': 'Produtos (Admin)',
+  '/produtos/novo': 'Novo Produto',
+  '/ingredientes': 'Ingredientes',
+  '/clientes': 'Clientes (Admin)',
+  '/pedidos': 'Pedidos (Admin)',
+  '/painel-cozinha': 'Painel Cozinha',
+  '/combos': 'Combos',
+  '/estoque': 'Estoque',
+  '/configuracoes': 'Configurações',
+  '/revendedores': 'Revendedores',
+  '/financeiro': 'Financeiro',
+  '/production': 'Produção',
+  '/relatorios/dizimo': 'Relatório Dízimo',
+  '/relatorios/top-produtos': 'Rel. Top Produtos',
+  '/relatorios/usuarios': 'Rel. Usuários',
+  '/relatorios/ranking': 'Rel. Ranking',
+  '/inteligencia-vendas': 'Inteligência de Vendas',
+  '/prospeccao-revendedores': 'Prospecção Revendedores',
+  '/analytics': 'Analytics (Admin)',
+};
+
+const formatPageName = (path, title) => {
+  if (!path || path === '(not set)') return title || '(não definido)';
+  const cleanPath = path.split('?')[0];
+  return PAGE_LABELS[cleanPath] || title || cleanPath;
+};
+
 export default function Analytics() {
   const [days, setDays] = useState(30);
   const [overview, setOverview] = useState(null);
@@ -191,7 +227,12 @@ export default function Analytics() {
                 {topPages.map((p, i) => (
                   <TableRow key={i} hover>
                     <TableCell sx={{ color: '#BDBDBD', fontWeight: 'bold' }}>{i + 1}</TableCell>
-                    <TableCell sx={{ fontFamily: 'monospace', fontSize: 13 }}>{p.page}</TableCell>
+                    <TableCell>
+                      <Box>
+                        <Typography variant="body2" fontWeight="500">{formatPageName(p.page, p.title)}</Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace' }}>{p.page}</Typography>
+                      </Box>
+                    </TableCell>
                     <TableCell align="right">{p.views.toLocaleString()}</TableCell>
                     <TableCell align="right">{p.users.toLocaleString()}</TableCell>
                   </TableRow>
