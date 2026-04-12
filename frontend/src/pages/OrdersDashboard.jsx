@@ -1,13 +1,15 @@
 import { useState, useEffect, useRef } from "react";
-import { 
-  Box, Container, Typography, Grid, Card, CardContent, CardActions, 
-  Button, Chip, IconButton, Switch, FormControlLabel, Paper, CircularProgress 
+import {
+  Box, Container, Typography, Grid, Card, CardContent, CardActions,
+  Button, Chip, IconButton, Switch, FormControlLabel, Paper, CircularProgress,
+  Dialog, DialogTitle, DialogContent, DialogActions, Divider
 } from "@mui/material";
-import { 
-  AccessTime, CheckCircle, LocalDining, NotificationsActive, 
-  NotificationsOff, VolumeUp 
+import {
+  AccessTime, CheckCircle, LocalDining, NotificationsActive,
+  NotificationsOff, VolumeUp, Visibility, Print
 } from "@mui/icons-material";
 import api from "../services/api";
+import { printOrder } from "../utils/printOrder";
 
 // Componente para o cronômetro do pedido
 function OrderTimer({ startTime }) {
@@ -61,9 +63,11 @@ export default function OrdersDashboard() {
   const [unacknowledgedOrders, setUnacknowledgedOrders] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(false);
-  
-  const audioRef = useRef(new Audio("/notification.mp3")); 
-  const lastOrderIdRef = useRef(0); 
+  const [viewOrder, setViewOrder] = useState(null);
+  const [viewLoading, setViewLoading] = useState(false);
+
+  const audioRef = useRef(new Audio("/notification.mp3"));
+  const lastOrderIdRef = useRef(0);
 
   const loadOrders = async (isPolling = false) => {
     try {
@@ -164,6 +168,19 @@ export default function OrdersDashboard() {
     }
   };
 
+  const handleViewOrder = async (id) => {
+    setViewLoading(true);
+    setViewOrder(null);
+    try {
+      const res = await api.get(`/pedidos/${id}`);
+      setViewOrder(res.data);
+    } catch (e) {
+      alert("Erro ao carregar pedido.");
+    } finally {
+      setViewLoading(false);
+    }
+  };
+
   const handleStatusChange = async (id, newStatus) => {
     setUnacknowledgedOrders(prevSet => {
         const newSet = new Set(prevSet);
@@ -195,7 +212,8 @@ export default function OrdersDashboard() {
   }
 
   return (
-    <Container maxWidth="xl" sx={{ 
+    <>
+    <Container maxWidth="xl" sx={{
       py: 4,
       '@keyframes pulse': {
         '0%': { boxShadow: '0 0 0 0 rgba(211, 47, 47, 0.5)' },
@@ -291,40 +309,48 @@ export default function OrdersDashboard() {
               <CardActions sx={{ p: 2, pt: 0, flexDirection: 'column', gap: 1 }}>
                 <Box display="flex" gap={1} width="100%">
                   {order.status === 'Novo' && (
-                    <Button 
-                      variant="contained" 
-                      color="warning" 
-                      fullWidth 
+                    <Button
+                      variant="contained"
+                      color="warning"
+                      fullWidth
                       startIcon={<LocalDining />}
                       onClick={() => handleStatusChange(order.id, 'Em Produção')}
                     >
                       Produzir
                     </Button>
                   )}
-                  
                   {order.status === 'Em Produção' && (
-                    <Button 
-                      variant="contained" 
-                      color="success" 
-                      fullWidth 
+                    <Button
+                      variant="contained"
+                      color="success"
+                      fullWidth
                       startIcon={<CheckCircle />}
                       onClick={() => handleStatusChange(order.id, 'Pronto')}
                     >
                       Pronto
                     </Button>
                   )}
-
                   {order.status === 'Pronto' && (
-                    <Button 
-                      variant="outlined" 
-                      color="primary" 
-                      fullWidth 
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      fullWidth
                       onClick={() => handleStatusChange(order.id, 'Finalizado')}
                     >
                       Entregar
                     </Button>
                   )}
                 </Box>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  startIcon={<Visibility />}
+                  onClick={() => handleViewOrder(order.id)}
+                  sx={{ borderColor: '#bbb', color: '#555' }}
+                >
+                  Ver / Imprimir
+                </Button>
               </CardActions>
             </Card>
           </Grid>
@@ -346,5 +372,62 @@ export default function OrdersDashboard() {
         )}
       </Grid>
     </Container>
+
+    {/* Modal Visualizar Pedido */}
+    <Dialog open={!!viewOrder || viewLoading} onClose={() => setViewOrder(null)} maxWidth="sm" fullWidth>
+      <DialogTitle sx={{ fontWeight: 'bold' }}>
+        {viewLoading ? 'Carregando...' : `Pedido #${viewOrder?.id}`}
+      </DialogTitle>
+      <DialogContent>
+        {viewLoading && <Box display="flex" justifyContent="center" py={3}><CircularProgress /></Box>}
+        {viewOrder && (
+          <Box>
+            <Typography variant="body2" color="text.secondary" mb={1}>
+              {new Date(viewOrder.data_pedido).toLocaleString('pt-BR')} · {viewOrder.forma_pagamento}
+            </Typography>
+            <Typography variant="subtitle2" fontWeight="bold">{viewOrder.cliente_nome || 'Cliente Balcão'}</Typography>
+            {viewOrder.telefone && <Typography variant="body2">{viewOrder.telefone}</Typography>}
+            <Divider sx={{ my: 2 }} />
+            {(viewOrder.itens || []).map((item, i) => (
+              <Box key={i} display="flex" justifyContent="space-between" mb={0.5}>
+                <Typography variant="body2">{Number(item.quantidade)}x {item.produto_nome || item.nome}</Typography>
+                <Typography variant="body2" fontWeight="bold">R$ {Number(item.valor_total).toFixed(2)}</Typography>
+              </Box>
+            ))}
+            <Divider sx={{ my: 2 }} />
+            {Number(viewOrder.frete) > 0 && (
+              <Box display="flex" justifyContent="space-between">
+                <Typography variant="body2">Frete</Typography>
+                <Typography variant="body2">R$ {Number(viewOrder.frete).toFixed(2)}</Typography>
+              </Box>
+            )}
+            {Number(viewOrder.desconto) > 0 && (
+              <Box display="flex" justifyContent="space-between">
+                <Typography variant="body2" color="success.main">Desc. Fidelidade</Typography>
+                <Typography variant="body2" color="success.main">- R$ {Number(viewOrder.desconto).toFixed(2)}</Typography>
+              </Box>
+            )}
+            <Box display="flex" justifyContent="space-between" mt={1}>
+              <Typography variant="subtitle1" fontWeight="bold">TOTAL</Typography>
+              <Typography variant="subtitle1" fontWeight="bold">R$ {Number(viewOrder.valor_total).toFixed(2)}</Typography>
+            </Box>
+            {viewOrder.observacao && (
+              <Box sx={{ mt: 2, bgcolor: '#ffebee', p: 1.5, borderRadius: 2 }}>
+                <Typography variant="body2" color="error" fontWeight="bold">⚠️ {viewOrder.observacao}</Typography>
+              </Box>
+            )}
+          </Box>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setViewOrder(null)}>Fechar</Button>
+        {viewOrder && (
+          <Button variant="contained" startIcon={<Print />} onClick={() => printOrder(viewOrder)}>
+            Imprimir
+          </Button>
+        )}
+      </DialogActions>
+    </Dialog>
+    </>
   );
 }

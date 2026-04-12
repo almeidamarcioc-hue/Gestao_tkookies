@@ -30,7 +30,8 @@ export const printOrder = (order) => {
   // Calcula subtotal se não vier pronto
   const total = Number(order.valor_total) || 0;
   const frete = Number(order.frete) || 0;
-  const subtotal = total - frete;
+  const desconto = Number(order.desconto) || 0;
+  const subtotal = total - frete + desconto;
 
   const labelCliente = (order.is_revendedor || order.tipo_cliente === 'revendedor') ? 'Revendedor' : 'Cliente';
 
@@ -99,6 +100,7 @@ export const printOrder = (order) => {
       <div class="totals">
         <div class="total-row"><span>Subtotal:</span><span>R$ ${subtotal.toFixed(2)}</span></div>
         ${frete > 0 ? `<div class="total-row"><span>Frete:</span><span>R$ ${frete.toFixed(2)}</span></div>` : ''}
+        ${desconto > 0 ? `<div class="total-row" style="color:#2e7d32"><span>Desc. Fidelidade:</span><span>- R$ ${desconto.toFixed(2)}</span></div>` : ''}
         <div class="total-row final-total"><span>TOTAL:</span><span>R$ ${total.toFixed(2)}</span></div>
       </div>
 
