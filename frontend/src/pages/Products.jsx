@@ -399,7 +399,7 @@ export default function Products() {
   }
 
   async function salvarProduto() {
-    if (!nome || (itens.length === 0 && !ehAgregado)) {
+    if (!nome || (itens.length === 0 && !ehAgregado && !ehBrinde)) {
       alert("Nome e ingredientes são necessários.");
       return;
     }
