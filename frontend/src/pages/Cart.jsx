@@ -575,7 +575,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
               fullWidth
               size="large"
               onClick={handleOpenUpsell}
-              disabled={cart.length === 0 || !isStoreOpen || cart.some(item => (Number(item.estoque) || 0) <= 0 || item.quantidade > (Number(item.estoque) || 0))}
+              disabled={cart.length === 0 || !isStoreOpen || cart.some(item => !item.eh_brinde && ((Number(item.estoque) || 0) <= 0 || item.quantidade > (Number(item.estoque) || 0)))}
               sx={{
                 py: 1.5,
                 fontWeight: 'bold',
@@ -620,7 +620,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
       <Button
         variant="contained"
         onClick={handleCheckout}
-        disabled={cart.length === 0 || !isStoreOpen || cart.some(item => (Number(item.estoque) || 0) <= 0 || item.quantidade > (Number(item.estoque) || 0))}
+        disabled={cart.length === 0 || !isStoreOpen || cart.some(item => !item.eh_brinde && ((Number(item.estoque) || 0) <= 0 || item.quantidade > (Number(item.estoque) || 0)))}
         sx={{ borderRadius: 50, px: 4, py: 1.2, fontWeight: 'bold' }}
       >
         FINALIZAR

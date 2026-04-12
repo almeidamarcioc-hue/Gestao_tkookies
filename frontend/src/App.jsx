@@ -40,6 +40,7 @@ import RelatorioRanking from "./pages/RelatorioRanking";
 import InteligenciaVendas from "./pages/InteligenciaVendas";
 import Analytics from "./pages/Analytics";
 import ProspeccaoRevendedores from "./pages/ProspeccaoRevendedores";
+import { APP_VERSION } from "./version";
 
 const theme = createTheme({
   palette: {
@@ -730,6 +731,9 @@ export default function App() {
           <Box sx={{ textAlign: 'center' }}>
             <Typography variant="body2" sx={{ opacity: 0.6, mb: 1 }}>
               Todos o direitos reservados - TK<Box component="span" sx={{ fontSize: '0.8em' }}>🍪🍪</Box>kies © {new Date().getFullYear()}
+            </Typography>
+            <Typography variant="caption" sx={{ opacity: 0.35, display: 'block', mb: 1, letterSpacing: 1 }}>
+              v{APP_VERSION}
             </Typography>
             <IconButton 
               onClick={() => isLoggedIn ? navigate('/produtos') : setAdminLoginOpen(true)} 

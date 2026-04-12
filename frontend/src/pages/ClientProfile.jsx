@@ -93,20 +93,28 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
     try {
       const res = await api.get(`/pedidos/${orderId}`);
       const pedido = res.data;
-      
-      for (const item of pedido.itens) {
+
+      const itensPrincipais = pedido.itens.filter(item => !item.eh_brinde);
+      const semEstoque = itensPrincipais.filter(item => Number(item.estoque) <= 0);
+      const comEstoque = itensPrincipais.filter(item => Number(item.estoque) > 0);
+
+      for (const item of comEstoque) {
         await addToCart({
-          ...item, 
-          id: item.produto_id, 
-          nome: item.produto_nome, 
+          ...item,
+          id: item.produto_id,
+          nome: item.produto_nome,
           preco_venda: item.valor_unitario,
-          // Converte o campo 'imagem' simples para o formato de array esperado pelo carrinho
           imagens: item.imagem ? [{ imagem: item.imagem, eh_capa: true }] : (item.imagens || []),
-          estoque: item.estoque // Inclui o estoque do produto
+          estoque: item.estoque
         }, Number(item.quantidade));
       }
-      
-      navigate("/carrinho");
+
+      if (semEstoque.length > 0) {
+        const nomes = semEstoque.map(i => i.produto_nome).join(', ');
+        alert(`Alguns itens não puderam ser adicionados por falta de estoque: ${nomes}`);
+      }
+
+      if (comEstoque.length > 0) navigate("/carrinho");
     } catch (err) {
       alert("Erro ao carregar pedido para repetição.");
     }
@@ -232,16 +240,26 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
           <Grid container spacing={2} mb={4}>
             {maisComprados.map(item => (
               <Grid item xs={6} sm={4} md={3} key={item.id}>
-                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderRadius: 4, boxShadow: '0 2px 12px rgba(44,24,16,0.08)', transition: 'all 0.2s', '&:hover': { transform: 'translateY(-3px)', boxShadow: '0 6px 20px rgba(44,24,16,0.14)' } }}>
-                  <Box
-                    component="img"
-                    src={item.imagem || (item.imagens?.[0]?.imagem) || "https://via.placeholder.com/300?text=Sem+Imagem"}
-                    alt={item.nome}
-                    sx={{ width: '100%', height: 120, objectFit: 'cover' }}
-                  />
+                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderRadius: 4, boxShadow: '0 2px 12px rgba(44,24,16,0.08)', transition: 'all 0.2s', '&:hover': { transform: 'translateY(-3px)', boxShadow: '0 6px 20px rgba(44,24,16,0.14)' }, opacity: Number(item.estoque) <= 0 ? 0.6 : 1 }}>
+                  <Box sx={{ position: 'relative' }}>
+                    <Box
+                      component="img"
+                      src={item.imagem || (item.imagens?.[0]?.imagem) || "https://via.placeholder.com/300?text=Sem+Imagem"}
+                      alt={item.nome}
+                      sx={{ width: '100%', height: 120, objectFit: 'cover' }}
+                    />
+                    {Number(item.estoque) <= 0 && (
+                      <Box sx={{ position: 'absolute', bottom: 0, left: 0, right: 0, bgcolor: 'rgba(0,0,0,0.55)', color: '#fff', textAlign: 'center', fontSize: 11, py: 0.4, fontWeight: 'bold' }}>
+                        Indisponível
+                      </Box>
+                    )}
+                  </Box>
                   <CardContent sx={{ pb: 1, flexGrow: 1 }}>
                     <Typography variant="subtitle2" noWrap fontWeight="bold">{item.nome}</Typography>
                     <Typography variant="caption" color="text.secondary">Comprado {item.total_comprado}x</Typography>
+                    {Number(item.estoque) > 0 && (
+                      <Typography variant="caption" display="block" color="text.secondary">{Number(item.estoque)} em estoque</Typography>
+                    )}
                   </CardContent>
                   <CardActions>
                     <Button
@@ -250,10 +268,10 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
                       variant="contained"
                       startIcon={<AddShoppingCart />}
                       onClick={() => handleBuyItem(item)}
-                      disabled={!isStoreOpen}
+                      disabled={!isStoreOpen || Number(item.estoque) <= 0}
                       sx={{ borderRadius: 50, bgcolor: '#D4580A', '&:hover': { bgcolor: '#B84508' } }}
                     >
-                      Comprar
+                      {Number(item.estoque) <= 0 ? 'Indisponível' : 'Comprar'}
                     </Button>
                   </CardActions>
                 </Card>

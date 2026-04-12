@@ -4,6 +4,7 @@ import {
   Box, Button, TextField, Typography, Paper, Container, IconButton, InputAdornment, Grid, Checkbox, FormControlLabel, FormGroup, Switch, Divider, Chip
 } from "@mui/material";
 import { CloudUpload, Delete, Add } from "@mui/icons-material";
+import { APP_VERSION, CHANGELOG } from "../version";
 import DebugLogs from "../components/DebugLogs";
 import TestimonialsManager from "../components/TestimonialsManager";
 
@@ -673,6 +674,30 @@ export default function Settings() {
       <Box mt={4}>
         <DebugLogs />
       </Box>
+
+      {/* Controle de Versão */}
+      <Paper sx={{ p: 3, mt: 3 }}>
+        <Box display="flex" alignItems="center" gap={2} mb={2}>
+          <Typography variant="h6">Versão do Sistema</Typography>
+          <Chip label={`v${APP_VERSION}`} color="primary" size="small" sx={{ fontWeight: 'bold', fontFamily: 'monospace' }} />
+        </Box>
+        <Divider sx={{ mb: 2 }} />
+        {CHANGELOG.map((release, i) => (
+          <Box key={release.version} mb={i < CHANGELOG.length - 1 ? 3 : 0}>
+            <Box display="flex" alignItems="center" gap={1} mb={0.5}>
+              <Chip label={`v${release.version}`} size="small" variant={i === 0 ? 'filled' : 'outlined'} color={i === 0 ? 'success' : 'default'} sx={{ fontFamily: 'monospace', fontWeight: 'bold' }} />
+              <Typography variant="caption" color="text.secondary">{release.data}</Typography>
+              {i === 0 && <Chip label="atual" size="small" color="success" variant="outlined" />}
+            </Box>
+            <Typography variant="body2" fontWeight="bold" mb={0.5}>{release.descricao}</Typography>
+            <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
+              {release.itens.map((item, j) => (
+                <Typography key={j} component="li" variant="body2" color="text.secondary">{item}</Typography>
+              ))}
+            </Box>
+          </Box>
+        ))}
+      </Paper>
     </Container>
   );
 }

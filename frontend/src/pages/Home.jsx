@@ -808,13 +808,32 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                       const img = prod.imagens?.find(i => i.eh_capa)?.imagem || prod.imagens?.[0]?.imagem;
                       return (
                         <Grid item xs={6} sm={4} key={prod.id}>
-                          <Card sx={{ ...cardSx, cursor: 'pointer' }} onClick={() => handleOpenDetails(prod)}>
-                            {img && <Box component="img" src={img} sx={{ width: '100%', height: 150, objectFit: 'cover' }} />}
+                          <Card sx={{ ...cardSx, cursor: 'pointer', opacity: Number(prod.estoque) <= 0 ? 0.6 : 1 }} onClick={() => handleOpenDetails(prod)}>
+                            <Box sx={{ position: 'relative' }}>
+                              {img && <Box component="img" src={img} sx={{ width: '100%', height: 150, objectFit: 'cover' }} />}
+                              {prod.brindes && prod.brindes.length > 0 && (
+                                <Box sx={{ position: 'absolute', top: 6, left: 6, bgcolor: 'rgba(255,255,255,0.92)', borderRadius: 10, px: 0.8, py: 0.2, fontSize: 12, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 0.3 }}>
+                                  🎁 Brinde
+                                </Box>
+                              )}
+                              {Number(prod.estoque) <= 0 && (
+                                <Box sx={{ position: 'absolute', bottom: 0, left: 0, right: 0, bgcolor: 'rgba(0,0,0,0.55)', color: '#fff', textAlign: 'center', fontSize: 11, py: 0.4, fontWeight: 'bold' }}>
+                                  Indisponível
+                                </Box>
+                              )}
+                            </Box>
                             <CardContent sx={{ p: 1.5 }}>
                               <Typography variant="subtitle2" fontWeight="bold" noWrap>{prod.nome}</Typography>
-                              <Typography variant="body2" sx={{ color: terracotta, fontWeight: 'bold' }}>
-                                R$ {Number(prod.preco_venda).toFixed(2)}
-                              </Typography>
+                              <Box display="flex" justifyContent="space-between" alignItems="center">
+                                <Typography variant="body2" sx={{ color: terracotta, fontWeight: 'bold' }}>
+                                  R$ {Number(prod.preco_venda).toFixed(2)}
+                                </Typography>
+                                {Number(prod.estoque) > 0 && (
+                                  <Typography variant="caption" sx={{ color: '#555' }}>
+                                    {Number(prod.estoque)} un.
+                                  </Typography>
+                                )}
+                              </Box>
                             </CardContent>
                           </Card>
                         </Grid>

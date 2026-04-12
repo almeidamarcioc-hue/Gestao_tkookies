@@ -41,13 +41,16 @@ const allowedOrigins = [
   ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
 ];
 
+const isHomologacao = process.env.ENVIRONMENT === 'homologacao';
+
 const corsOptions = {
   origin: (origin, callback) => {
     // Requisições sem Origin (mobile, apps, Postman, server-to-server) sempre permitidas
-    // CORS é um mecanismo de browsers — somente origens de browser precisam ser validadas
     if (!origin) return callback(null, true);
+    // Em homologação aceita qualquer origem *.vercel.app para facilitar testes com preview URLs
+    if (isHomologacao && origin.endsWith('.vercel.app')) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
-    callback(null, false); // Retorna falso em vez de erro para evitar crash no preflight
+    callback(new Error(`CORS bloqueado para origem: ${origin}`));
   },
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],

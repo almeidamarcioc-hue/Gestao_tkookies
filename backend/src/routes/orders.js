@@ -163,11 +163,23 @@ router.post("/", async (req, res) => {
 
     await client.query("COMMIT");
 
-    // Creditar pontos de fidelidade (não bloqueia o pedido se falhar)
+    // Pontos de fidelidade (não bloqueia o pedido se falhar)
     if (cliente_id) {
       try {
         const cfgRes = await pool.query("SELECT valor FROM configuracoes WHERE chave = 'pontos_por_real'");
         const pontosPorReal = cfgRes.rows[0] ? Number(cfgRes.rows[0].valor) : 1;
+
+        // Débito: subtrair pontos usados como desconto (100 pontos = R$1)
+        const descontoUsado = Number(desconto || 0);
+        if (descontoUsado > 0) {
+          const pontosUsados = Math.round(descontoUsado * 100);
+          await pool.query(
+            "INSERT INTO pontos_fidelidade (cliente_id, pedido_id, pontos, tipo, descricao) VALUES ($1, $2, $3, 'debito', $4)",
+            [cliente_id, pedidoId, pontosUsados, `Desconto usado no Pedido #${pedidoId}`]
+          );
+        }
+
+        // Crédito: pontuar sobre o valor efetivamente pago (já com desconto aplicado)
         const pontos = Math.floor(valor_total * pontosPorReal);
         if (pontos > 0) {
           await pool.query(
@@ -176,7 +188,7 @@ router.post("/", async (req, res) => {
           );
         }
       } catch (e) {
-        console.error("Erro ao creditar pontos (não bloqueante):", e.message);
+        console.error("Erro ao processar pontos de fidelidade (não bloqueante):", e.message);
       }
     }
 
