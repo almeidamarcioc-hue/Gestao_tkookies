@@ -321,21 +321,6 @@ export async function initDatabase() {
     logs.push(await addColumnSafe("itens_pedido", "combo_id INT NULL"));
     logs.push(await addColumnSafe("itens_pedido", "tipo VARCHAR(20) DEFAULT 'produto'"));
     logs.push(await addColumnSafe("produtos", "ocasiao VARCHAR(200) DEFAULT NULL"));
-    logs.push(await addColumnSafe("produtos", "eh_brinde BOOLEAN DEFAULT FALSE"));
-    logs.push(await addColumnSafe("itens_pedido", "eh_brinde BOOLEAN DEFAULT FALSE"));
-
-    // Tabela de Brindes por Quantidade
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS produto_brindes (
-        produto_id INT NOT NULL,
-        brinde_produto_id INT NOT NULL,
-        tipo_quantidade VARCHAR(20) NOT NULL DEFAULT 'unidade',
-        PRIMARY KEY (produto_id, brinde_produto_id),
-        FOREIGN KEY (produto_id) REFERENCES produtos(id) ON DELETE CASCADE,
-        FOREIGN KEY (brinde_produto_id) REFERENCES produtos(id) ON DELETE CASCADE
-      )
-    `);
-    logs.push("[produto_brindes] Tabela verificada/criada");
 
     // Tabela de Fidelidade
     await pool.query(`

@@ -53,44 +53,6 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
     return acc;
   }, []);
 
-  // Lógica de Brindes: coleta brindes disponíveis baseado na quantidade comprada
-  const brindesDisponiveis = cart.reduce((acc, item) => {
-    if (item.brindes && Array.isArray(item.brindes)) {
-      item.brindes.forEach(brinde => {
-        // Quantidade de brindes que o cliente ganhou
-        const qtdDisponivel = brinde.tipo_quantidade === 'pedido' ? 1 : item.quantidade;
-        const itemNoCarrinho = cart.find(c => c.id === `brinde-${brinde.id}`);
-        const qtdJaAdicionada = itemNoCarrinho ? itemNoCarrinho.quantidade : 0;
-        const qtdRestante = qtdDisponivel - qtdJaAdicionada;
-
-        if (!acc.some(b => b.id === brinde.id)) {
-          acc.push({
-            ...brinde,
-            qtd_disponivel: qtdDisponivel,
-            qtd_ja_adicionada: qtdJaAdicionada,
-            qtd_restante: qtdRestante,
-            from_produto: item.nome,
-          });
-        }
-      });
-    }
-    return acc;
-  }, []);
-
-  const handleAddBrinde = (brinde) => {
-    if (brinde.qtd_restante <= 0) return;
-    const itemToAdd = {
-      id: `brinde-${brinde.id}`,
-      original_id: brinde.id,
-      nome: `${brinde.nome} (Brinde)`,
-      preco_venda: 0,
-      quantidade: brinde.qtd_restante,
-      eh_brinde: true,
-      imagens: brinde.imagem ? [{ imagem: brinde.imagem, eh_capa: true }] : []
-    };
-    addToCart(itemToAdd, brinde.qtd_restante);
-  };
-
   const handleAddAggregate = (agg) => {
     const itemToAdd = {
         id: `extra-${agg.id}`,
@@ -161,8 +123,6 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
   }, []);
 
   const getItemPrice = (item) => {
-    // Brindes são gratuitos
-    if (item.eh_brinde) return 0;
     // Agregados sempre usam o preço de venda definido no vínculo (extras)
     if (item.eh_agregado) {
       return Number(item.preco_venda);
@@ -274,7 +234,6 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
         tipo: (item.itens?.length > 0) ? 'combo' : 'produto',
         quantidade: item.quantidade,
         valor_unitario: getItemPrice(item),
-        eh_brinde: item.eh_brinde || false,
       }))
     };
 
@@ -371,9 +330,6 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
                           )}
                           <Box>
                             <Typography variant="subtitle1" fontWeight="bold" color="#4E342E">{item.nome}</Typography>
-                            {item.eh_brinde && (
-                              <Typography variant="caption" sx={{ color: '#e91e8c', fontWeight: 'bold' }}>🎁 Brinde Grátis</Typography>
-                            )}
                             {item.eh_destaque && item.desconto_destaque > 0 && (
                               <Typography variant="caption" color="error">Oferta Especial</Typography>
                             )}
@@ -446,67 +402,6 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
             }}
           />
           </Box>
-
-          {/* Seção de Brindes Disponíveis */}
-          {brindesDisponiveis.length > 0 && (
-            <Box sx={{ mt: 4, mb: 2 }}>
-              <Typography variant="h6" fontWeight="bold" sx={{ color: '#c2185b', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <EmojiEvents sx={{ color: '#e91e8c' }} /> Você ganhou brindes!
-              </Typography>
-              <Grid container spacing={2}>
-                {brindesDisponiveis.map((brinde) => (
-                  <Grid item xs={12} sm={6} key={brinde.id}>
-                    <Paper sx={{
-                      p: 2,
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      background: 'linear-gradient(135deg, #fce4ec 0%, #fff8e1 100%)',
-                      borderRadius: 3,
-                      border: '2px solid #f48fb1',
-                      gap: 2
-                    }}>
-                      {brinde.imagem ? (
-                        <Box component="img" src={brinde.imagem} sx={{ width: 56, height: 56, borderRadius: 2, objectFit: 'cover', flexShrink: 0 }} />
-                      ) : (
-                        <Box sx={{ width: 56, height: 56, borderRadius: 2, bgcolor: '#fce4ec', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #f48fb1', flexShrink: 0 }}>
-                          <EmojiEvents sx={{ color: '#e91e8c', fontSize: 32 }} />
-                        </Box>
-                      )}
-                      <Box sx={{ flexGrow: 1 }}>
-                        <Typography variant="subtitle2" fontWeight="bold" color="#c2185b">{brinde.nome}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {brinde.tipo_quantidade === 'pedido'
-                            ? `Brinde pela compra de ${brinde.from_produto}`
-                            : `${brinde.qtd_disponivel} un. pela compra de ${brinde.from_produto}`}
-                        </Typography>
-                        {brinde.qtd_ja_adicionada > 0 && (
-                          <Typography variant="caption" sx={{ display: 'block', color: '#43a047', fontWeight: 'bold' }}>
-                            ✓ {brinde.qtd_ja_adicionada} já adicionado(s)
-                            {brinde.qtd_restante > 0 && ` · ${brinde.qtd_restante} restante(s)`}
-                          </Typography>
-                        )}
-                      </Box>
-                      {brinde.qtd_restante > 0 ? (
-                        <Button
-                          size="small"
-                          variant="contained"
-                          onClick={() => handleAddBrinde(brinde)}
-                          sx={{ borderRadius: 20, textTransform: 'none', bgcolor: '#e91e8c', '&:hover': { bgcolor: '#c2185b' }, boxShadow: 'none', whiteSpace: 'nowrap' }}
-                        >
-                          + Adicionar{brinde.qtd_restante > 1 ? ` (${brinde.qtd_restante})` : ''}
-                        </Button>
-                      ) : (
-                        <Typography variant="caption" sx={{ color: '#43a047', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
-                          ✓ Adicionado
-                        </Typography>
-                      )}
-                    </Paper>
-                  </Grid>
-                ))}
-              </Grid>
-            </Box>
-          )}
 
           {/* Seção de Sugestões / Propaganda de Agregados */}
           {suggestions.length > 0 && (

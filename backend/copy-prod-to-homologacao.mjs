@@ -47,11 +47,9 @@ const TABLES = [
   'produto_ingredientes',
   'produto_imagens',
   'produto_agregados',
-  'produto_brindes',
   'pedidos',
   'itens_pedido',
   'combo_itens',
-  'combo_ingredientes',
   'lancamentos_financeiros',
   'favoritos',
   'pontos_fidelidade',
@@ -101,7 +99,7 @@ async function initSchema(homo) {
       desconto_destaque DECIMAL(10,2) DEFAULT 0, validade_promocao DATE,
       descricao VARCHAR(1000), ativo BOOLEAN DEFAULT TRUE,
       eh_agregado BOOLEAN DEFAULT FALSE, custo DECIMAL(10,2) DEFAULT 0,
-      ocasiao VARCHAR(200) DEFAULT NULL, eh_brinde BOOLEAN DEFAULT FALSE,
+      ocasiao VARCHAR(200) DEFAULT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`,
     `CREATE TABLE IF NOT EXISTS produto_ingredientes (
       id INT AUTO_INCREMENT PRIMARY KEY, produto_id INT, ingrediente_id INT,
@@ -136,7 +134,7 @@ async function initSchema(homo) {
       id INT AUTO_INCREMENT PRIMARY KEY, pedido_id INT, produto_id INT,
       quantidade DECIMAL(10,2) NOT NULL, valor_unitario DECIMAL(10,2) NOT NULL,
       valor_total DECIMAL(10,2) NOT NULL, combo_id INT NULL,
-      tipo VARCHAR(20) DEFAULT 'produto', eh_brinde BOOLEAN DEFAULT FALSE,
+      tipo VARCHAR(20) DEFAULT 'produto',
       FOREIGN KEY (pedido_id) REFERENCES pedidos(id) ON DELETE CASCADE,
       FOREIGN KEY (produto_id) REFERENCES produtos(id))`,
     `CREATE TABLE IF NOT EXISTS combos (
@@ -155,12 +153,6 @@ async function initSchema(homo) {
       PRIMARY KEY (produto_id, agregado_id),
       FOREIGN KEY (produto_id) REFERENCES produtos(id) ON DELETE CASCADE,
       FOREIGN KEY (agregado_id) REFERENCES produtos(id) ON DELETE CASCADE)`,
-    `CREATE TABLE IF NOT EXISTS produto_brindes (
-      produto_id INT NOT NULL, brinde_produto_id INT NOT NULL,
-      tipo_quantidade VARCHAR(20) NOT NULL DEFAULT 'unidade',
-      PRIMARY KEY (produto_id, brinde_produto_id),
-      FOREIGN KEY (produto_id) REFERENCES produtos(id) ON DELETE CASCADE,
-      FOREIGN KEY (brinde_produto_id) REFERENCES produtos(id) ON DELETE CASCADE)`,
     `CREATE TABLE IF NOT EXISTS configuracoes (
       id INT AUTO_INCREMENT PRIMARY KEY,
       chave VARCHAR(50) NOT NULL UNIQUE, valor MEDIUMTEXT)`,
