@@ -23,7 +23,11 @@ import {
   FormControlLabel,
   Checkbox,
   Grid,
-  Alert
+  Alert,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel
 } from "@mui/material";
 import { Edit, Delete, Add, CloudUpload, Star, StarBorder, Calculate, Refresh, ContentCopy, Visibility, VisibilityOff } from "@mui/icons-material";
 
@@ -55,6 +59,11 @@ export default function Dashboard() {
   // Estados para Agregados no Modal
   const [newAgregado, setNewAgregado] = useState(null);
   const [newAgregadoPreco, setNewAgregadoPreco] = useState("");
+
+  // Estados para Brindes no Modal
+  const [editEhBrinde, setEditEhBrinde] = useState(false);
+  const [newBrinde, setNewBrinde] = useState(null);
+  const [newBrindeTipoQtd, setNewBrindeTipoQtd] = useState("unidade");
 
   const loadData = async () => {
     await api.get("/produtos").then((res) => setProdutos(Array.isArray(res.data) ? res.data : []));
@@ -137,11 +146,12 @@ export default function Dashboard() {
     
     setEditRendimento(rendimento);
     setEditEhAgregado(prodCopy.eh_agregado || false);
+    setEditEhBrinde(prodCopy.eh_brinde || false);
     setEditCustoManual(prodCopy.custo || "");
     setEditEstoqueManual(prodCopy.estoque || "");
     setEditOcasiao(prodCopy.ocasiao ? prodCopy.ocasiao.split(",").filter(Boolean) : []);
-    // Garante que agregados seja um array (caso venha undefined do backend antigo)
     prodCopy.agregados = prodCopy.agregados || [];
+    prodCopy.brindes = prodCopy.brindes || [];
     setEditProduct(prodCopy);
     setOpen(true);
   };
@@ -159,8 +169,11 @@ export default function Dashboard() {
     setEditOcasiao([]);
     setNewAgregadoPreco("");
     setEditEhAgregado(false);
+    setEditEhBrinde(false);
     setEditCustoManual("");
     setEditEstoqueManual("");
+    setNewBrinde(null);
+    setNewBrindeTipoQtd("unidade");
   };
 
   // Recalcula o preço de venda no modal quando ingredientes ou margem mudam
@@ -329,6 +342,18 @@ export default function Dashboard() {
     setEditProduct(prev => ({ ...prev, agregados: prev.agregados.filter((_, i) => i !== index) }));
   };
 
+  const handleAddBrindeEdit = () => {
+    if (!newBrinde) return;
+    if (editProduct.brindes.some(b => b.id === newBrinde.id)) return alert("Já vinculado.");
+    setEditProduct(prev => ({ ...prev, brindes: [...prev.brindes, { ...newBrinde, tipo_quantidade: newBrindeTipoQtd }] }));
+    setNewBrinde(null);
+    setNewBrindeTipoQtd("unidade");
+  };
+
+  const handleRemoveBrindeEdit = (index) => {
+    setEditProduct(prev => ({ ...prev, brindes: prev.brindes.filter((_, i) => i !== index) }));
+  };
+
   const handleSaveEdit = async () => {
     try {
       const payload = {
@@ -348,6 +373,8 @@ export default function Dashboard() {
         desconto_destaque: Number(editProduct.desconto_destaque),
         agregados: editProduct.agregados?.map(a => ({ id: a.id, preco: Number(a.preco) })) || [],
         eh_agregado: editEhAgregado,
+        eh_brinde: editEhBrinde,
+        brindes: editProduct.brindes?.map(b => ({ id: b.id, tipo_quantidade: b.tipo_quantidade })) || [],
         ocasiao: editOcasiao.join(","),
         ...(editEhAgregado && {
           custo: Number(editCustoManual),
@@ -561,8 +588,8 @@ export default function Dashboard() {
                 </Box>
               </Box>
 
-              <Box display="flex" gap={2} mb={3} alignItems="center" sx={{ bgcolor: '#f5f5f5', p: 2, borderRadius: 2 }}>
-                <FormControlLabel 
+              <Box display="flex" flexWrap="wrap" gap={2} mb={3} alignItems="center" sx={{ bgcolor: '#f5f5f5', p: 2, borderRadius: 2 }}>
+                <FormControlLabel
                   control={<Checkbox checked={editProduct.eh_destaque || false} onChange={(e) => setEditProduct({...editProduct, eh_destaque: e.target.checked})} />} 
                   label="Destaque" 
                 />
@@ -570,9 +597,13 @@ export default function Dashboard() {
                   control={<Checkbox checked={editProduct.ativo !== false} onChange={(e) => setEditProduct({...editProduct, ativo: e.target.checked})} />} 
                   label="Ativo no Cardápio" 
                 />
-                <FormControlLabel 
-                  control={<Checkbox checked={editEhAgregado} onChange={(e) => setEditEhAgregado(e.target.checked)} />} 
-                  label="É Produto Agregado / Extra" 
+                <FormControlLabel
+                  control={<Checkbox checked={editEhAgregado} onChange={(e) => setEditEhAgregado(e.target.checked)} />}
+                  label="É Produto Agregado / Extra"
+                />
+                <FormControlLabel
+                  control={<Checkbox checked={editEhBrinde} onChange={(e) => setEditEhBrinde(e.target.checked)} />}
+                  label="É Produto Brinde"
                 />
                 {editProduct.eh_destaque && (
                   <TextField label="% Desconto" type="number" size="small" sx={{ width: 150 }} value={editProduct.desconto_destaque || 0} onChange={(e) => setEditProduct({...editProduct, desconto_destaque: e.target.value})} />
@@ -768,6 +799,69 @@ export default function Dashboard() {
                   ))}
                 </TableBody>
               </Table>
+
+              {/* Seção de Brindes no Modal */}
+              {!editEhAgregado && !editEhBrinde && (
+                <Box mt={3}>
+                  <Typography variant="subtitle1" fontWeight="bold" mb={1} sx={{ color: '#c2185b' }}>
+                    🎁 Brindes por Quantidade
+                  </Typography>
+                  <Alert severity="info" sx={{ mb: 2 }}>
+                    Vincule um produto brinde. O cliente ganha o brinde ao comprar este produto.
+                    <br/><strong>Por unidade:</strong> 1 cookie = 1 brinde &nbsp;|&nbsp; <strong>Por pedido:</strong> 1 brinde por compra
+                  </Alert>
+                  <Box display="flex" gap={1} mb={2} alignItems="center">
+                    <Autocomplete
+                      fullWidth
+                      size="small"
+                      options={allProductsList.filter(p => p.eh_brinde && p.id !== editProduct.id)}
+                      getOptionLabel={(option) => option.nome}
+                      value={newBrinde}
+                      onChange={(event, newValue) => setNewBrinde(newValue)}
+                      renderInput={(params) => <TextField {...params} label="Selecionar Brinde" />}
+                    />
+                    <FormControl size="small" sx={{ minWidth: 180 }}>
+                      <InputLabel>Tipo de Quantidade</InputLabel>
+                      <Select value={newBrindeTipoQtd} label="Tipo de Quantidade" onChange={(e) => setNewBrindeTipoQtd(e.target.value)}>
+                        <MenuItem value="unidade">Por Unidade (1:1)</MenuItem>
+                        <MenuItem value="pedido">Por Pedido (1 brinde total)</MenuItem>
+                      </Select>
+                    </FormControl>
+                    <Button variant="outlined" onClick={handleAddBrindeEdit} sx={{ whiteSpace: 'nowrap' }}><Add /></Button>
+                  </Box>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Brinde</TableCell>
+                        <TableCell align="center">Modo</TableCell>
+                        <TableCell align="right">Ação</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {editProduct.brindes?.map((b, idx) => (
+                        <TableRow key={b.id}>
+                          <TableCell>{b.nome}</TableCell>
+                          <TableCell align="center">
+                            <Chip size="small" label={b.tipo_quantidade === 'unidade' ? 'Por Unidade (1:1)' : 'Por Pedido'} color={b.tipo_quantidade === 'unidade' ? 'primary' : 'secondary'} />
+                          </TableCell>
+                          <TableCell align="right">
+                            <IconButton size="small" color="error" onClick={() => handleRemoveBrindeEdit(idx)}>
+                              <Delete fontSize="small" />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {(!editProduct.brindes || editProduct.brindes.length === 0) && (
+                        <TableRow>
+                          <TableCell colSpan={3} align="center">
+                            <Typography variant="caption" color="text.secondary">Nenhum brinde vinculado</Typography>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </Box>
+              )}
 
               {/* OCASIÃO */}
               <Box mt={3}>
