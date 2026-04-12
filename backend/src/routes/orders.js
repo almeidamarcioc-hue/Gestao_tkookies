@@ -139,12 +139,12 @@ router.post("/", async (req, res) => {
     if (produtoItens.length > 0) {
       const vals = [];
       const ph = produtoItens.map((item, i) => {
-        const b = i * 5;
-        vals.push(pedidoId, item.produto_id, item.quantidade, item.valor_unitario, Number(item.quantidade) * Number(item.valor_unitario));
-        return `($${b+1}, $${b+2}, 'produto', $${b+3}, $${b+4}, $${b+5})`;
+        const b = i * 6;
+        vals.push(pedidoId, item.produto_id, item.quantidade, item.valor_unitario, Number(item.quantidade) * Number(item.valor_unitario), item.eh_brinde || false);
+        return `($${b+1}, $${b+2}, 'produto', $${b+3}, $${b+4}, $${b+5}, $${b+6})`;
       });
       await client.query(
-        `INSERT INTO itens_pedido (pedido_id, produto_id, tipo, quantidade, valor_unitario, valor_total) VALUES ${ph.join(', ')}`,
+        `INSERT INTO itens_pedido (pedido_id, produto_id, tipo, quantidade, valor_unitario, valor_total, eh_brinde) VALUES ${ph.join(', ')}`,
         vals
       );
 
