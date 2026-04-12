@@ -20,7 +20,11 @@ import {
   Checkbox,
   Grid,
   Alert,
-  Chip
+  Chip,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel
 } from "@mui/material";
 
 import { Delete, CloudUpload, Star, StarBorder, Edit } from "@mui/icons-material";
@@ -59,6 +63,11 @@ export default function Products() {
   const [editingId, setEditingId] = useState(null);
   const [OCASIOES, setOCASOES] = useState([]);
 
+  const [ehBrinde, setEhBrinde] = useState(false);
+  const [brindes, setBrindes] = useState([]);
+  const [brindeSelecionado, setBrindeSelecionado] = useState(null);
+  const [brindeTipoQtd, setBrindeTipoQtd] = useState("unidade");
+
   // Efeito para preencher o formulário ao duplicar um produto
   useEffect(() => {
     const productToDuplicate = location.state?.productToDuplicate;
@@ -90,6 +99,8 @@ export default function Products() {
 
       // Preenche agregados
       setAgregados(productToDuplicate.agregados || []);
+      setEhBrinde(productToDuplicate.eh_brinde || false);
+      setBrindes(productToDuplicate.brindes || []);
 
       // Preenche ingredientes (itens)
       const duplicatedItens = productToDuplicate.ingredientes?.map(ing => ({
@@ -325,7 +336,7 @@ export default function Products() {
 
   function adicionarAgregado() {
     if (!agregadoSelecionado || !agregadoPreco) return;
-    
+
     // Evita duplicatas
     if (agregados.some(a => a.id === agregadoSelecionado.id)) {
       alert("Este produto já foi adicionado como agregado.");
@@ -335,6 +346,17 @@ export default function Products() {
     setAgregados([...agregados, { ...agregadoSelecionado, original_id: agregadoSelecionado.id, preco: Number(agregadoPreco) }]);
     setAgregadoSelecionado(null);
     setAgregadoPreco("");
+  }
+
+  function adicionarBrinde() {
+    if (!brindeSelecionado) return;
+    if (brindes.some(b => b.id === brindeSelecionado.id)) {
+      alert("Este brinde já foi vinculado a este produto.");
+      return;
+    }
+    setBrindes([...brindes, { ...brindeSelecionado, tipo_quantidade: brindeTipoQtd }]);
+    setBrindeSelecionado(null);
+    setBrindeTipoQtd("unidade");
   }
 
   async function handleEdit(prod) {
@@ -357,6 +379,8 @@ export default function Products() {
       setCustoManual(p.custo || "");
       setImagens(p.imagens?.map(img => ({ imagem: img.imagem, eh_capa: img.eh_capa, _tempId: Math.random() })) || []);
       setAgregados(p.agregados || []);
+      setBrindes(p.brindes || []);
+      setEhBrinde(p.eh_brinde || false);
       setItens(p.ingredientes?.map(ing => ({ ...ing, _tempId: Math.random() })) || []);
       setOcasiao(p.ocasiao ? p.ocasiao.split(",").filter(Boolean) : []);
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -371,6 +395,7 @@ export default function Products() {
     setItens([]); setCustoTotal(0); setPrecoVenda(0); setPrecoRevenda(0);
     setImagens([]); setEhDestaque(false); setAgregados([]); setDescontoDestaque(0);
     setAtivo(true); setEhAgregado(false); setEstoqueManual(""); setCustoManual(""); setOcasiao([]);
+    setEhBrinde(false); setBrindes([]); setBrindeSelecionado(null); setBrindeTipoQtd("unidade");
   }
 
   async function salvarProduto() {
@@ -401,6 +426,8 @@ export default function Products() {
       agregados: agregados.map(a => ({ id: a.id, preco: Number(a.preco) })),
       eh_agregado: ehAgregado,
       ocasiao: ocasiao.join(","),
+      eh_brinde: ehBrinde,
+      brindes: brindes.map(b => ({ id: b.id, tipo_quantidade: b.tipo_quantidade })),
       ...(ehAgregado && {
         estoque: Number(estoqueManual),
         custo: Number(custoManual)
@@ -505,7 +532,7 @@ export default function Products() {
           </Box>
         </Box>
         
-        <Box display="flex" gap={2} mb={3} alignItems="center" sx={{ bgcolor: '#f5f5f5', p: 2, borderRadius: 2 }}>
+        <Box display="flex" flexWrap="wrap" gap={2} mb={3} alignItems="center" sx={{ bgcolor: '#f5f5f5', p: 2, borderRadius: 2 }}>
           <FormControlLabel 
             control={<Checkbox checked={ehDestaque} onChange={(e) => setEhDestaque(e.target.checked)} />} 
             label="Produto Destaque (Promoção)" 
@@ -514,9 +541,13 @@ export default function Products() {
             control={<Checkbox checked={ativo} onChange={(e) => setAtivo(e.target.checked)} />} 
             label="Ativo no Cardápio" 
           />
-          <FormControlLabel 
-            control={<Checkbox checked={ehAgregado} onChange={(e) => setEhAgregado(e.target.checked)} />} 
-            label="É Produto Agregado / Extra" 
+          <FormControlLabel
+            control={<Checkbox checked={ehAgregado} onChange={(e) => setEhAgregado(e.target.checked)} />}
+            label="É Produto Agregado / Extra"
+          />
+          <FormControlLabel
+            control={<Checkbox checked={ehBrinde} onChange={(e) => setEhBrinde(e.target.checked)} />}
+            label="É Produto Brinde"
           />
           {ehDestaque && (
             <TextField label="% Desconto" type="number" size="small" sx={{ width: 150 }} value={descontoDestaque} onChange={(e) => setDescontoDestaque(e.target.value)} />
@@ -692,6 +723,83 @@ export default function Products() {
           </TableBody>
         </Table>
       </Paper>
+
+      {/* Seção de Brindes por Quantidade */}
+      {!ehAgregado && !ehBrinde && (
+        <Paper sx={{ p: 3, mb: 4 }}>
+          <Typography variant="h6" mb={2} sx={{ color: '#e91e8c' }}>
+            🎁 Brindes por Quantidade
+          </Typography>
+
+          <Alert severity="info" sx={{ mb: 3 }}>
+            <strong>Como funciona:</strong> Cadastre o produto brinde marcando-o como "É Produto Brinde".
+            Depois vincule-o aqui e escolha como a quantidade do brinde é calculada:<br/>
+            • <strong>Por unidade:</strong> 1 cookie comprado = 1 brinde (12 cookies = 12 brindes)<br/>
+            • <strong>Por pedido:</strong> Independente da quantidade, ganha 1 brinde na compra
+          </Alert>
+
+          <Box display="flex" gap={2} mb={3} alignItems="center">
+            <Autocomplete
+              fullWidth
+              options={listaProdutos.filter(p => p.eh_brinde && p.nome !== nome)}
+              getOptionLabel={(option) => option.nome}
+              value={brindeSelecionado}
+              onChange={(event, newValue) => setBrindeSelecionado(newValue)}
+              renderInput={(params) => <TextField {...params} label="Selecionar Produto Brinde" />}
+            />
+            <FormControl sx={{ minWidth: 200 }}>
+              <InputLabel>Tipo de Quantidade</InputLabel>
+              <Select
+                value={brindeTipoQtd}
+                label="Tipo de Quantidade"
+                onChange={(e) => setBrindeTipoQtd(e.target.value)}
+              >
+                <MenuItem value="unidade">Por Unidade (1:1)</MenuItem>
+                <MenuItem value="pedido">Por Pedido (1 brinde total)</MenuItem>
+              </Select>
+            </FormControl>
+            <Button variant="outlined" onClick={adicionarBrinde} sx={{ whiteSpace: 'nowrap' }}>
+              Adicionar
+            </Button>
+          </Box>
+
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Produto Brinde</TableCell>
+                <TableCell align="center">Modo</TableCell>
+                <TableCell align="center">Ação</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {brindes.map((item, index) => (
+                <TableRow key={item.id}>
+                  <TableCell>{item.nome}</TableCell>
+                  <TableCell align="center">
+                    <Chip
+                      size="small"
+                      label={item.tipo_quantidade === 'unidade' ? 'Por Unidade (1:1)' : 'Por Pedido'}
+                      color={item.tipo_quantidade === 'unidade' ? 'primary' : 'secondary'}
+                    />
+                  </TableCell>
+                  <TableCell align="center">
+                    <IconButton color="error" size="small" onClick={() => setBrindes(brindes.filter((_, i) => i !== index))}>
+                      <Delete fontSize="small" />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {brindes.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={3} align="center">
+                    <Typography variant="caption" color="text.secondary">Nenhum brinde vinculado</Typography>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </Paper>
+      )}
 
       <Typography variant="h5" mb={2} fontWeight="bold">Produtos Já Cadastrados</Typography>
       <Paper>

@@ -18,13 +18,13 @@ function invalidateProductsCache() {
 // Função auxiliar para buscar produtos (evita duplicação de código)
 async function fetchProducts() {
   const result = await pool.query(`
-      SELECT p.*, 
-             i.id as ing_id, 
-             i.nome as ing_nome, 
-             pi.quantidade as ing_quantidade, 
+      SELECT p.*,
+             i.id as ing_id,
+             i.nome as ing_nome,
+             pi.quantidade as ing_quantidade,
              i.unidade as ing_unidade,
-             i.custo as ing_custo, 
-             i.estoque as ing_estoque, 
+             i.custo as ing_custo,
+             i.estoque as ing_estoque,
              i.usado_para_revenda as ing_usado_para_revenda,
              pi.apenas_revenda as ing_apenas_revenda,
              pim.id as img_id,
@@ -34,7 +34,12 @@ async function fetchProducts() {
              pagg.nome as agg_nome,
              pa.preco as agg_preco,
              pagg.estoque as agg_estoque,
-             pagg_img.imagem as agg_imagem
+             pagg_img.imagem as agg_imagem,
+             pb.brinde_produto_id as brinde_id,
+             pbp.nome as brinde_nome,
+             pb.tipo_quantidade as brinde_tipo_quantidade,
+             pbp.estoque as brinde_estoque,
+             pbp_img.imagem as brinde_imagem
       FROM produtos p
       LEFT JOIN produto_ingredientes pi ON p.id = pi.produto_id
       LEFT JOIN ingredientes i ON pi.ingrediente_id = i.id
@@ -42,6 +47,9 @@ async function fetchProducts() {
       LEFT JOIN produto_agregados pa ON p.id = pa.produto_id
       LEFT JOIN produtos pagg ON pa.agregado_id = pagg.id
       LEFT JOIN produto_imagens pagg_img ON pagg.id = pagg_img.produto_id AND pagg_img.eh_capa = TRUE
+      LEFT JOIN produto_brindes pb ON p.id = pb.produto_id
+      LEFT JOIN produtos pbp ON pb.brinde_produto_id = pbp.id
+      LEFT JOIN produto_imagens pbp_img ON pbp.id = pbp_img.produto_id AND pbp_img.eh_capa = TRUE
       ORDER BY p.nome ASC
     `);
 
@@ -79,10 +87,12 @@ async function fetchProducts() {
         desconto_destaque: row.desconto_destaque,
         validade_promocao: row.validade_promocao ? new Date(row.validade_promocao).toISOString().split('T')[0] : null,
         ocasiao: row.ocasiao || null,
+        eh_brinde: row.eh_brinde === 1 || row.eh_brinde === true,
         created_at: row.created_at,
         ingredientes: [],
         imagens: [],
-        agregados: []
+        agregados: [],
+        brindes: []
       });
     }
 
@@ -114,6 +124,16 @@ async function fetchProducts() {
         preco: row.agg_preco,
         estoque: row.agg_estoque,
         imagem: row.agg_imagem
+      });
+    }
+
+    if (row.brinde_id && !productsMap.get(row.id).brindes.some(b => b.id === row.brinde_id)) {
+      productsMap.get(row.id).brindes.push({
+        id: row.brinde_id,
+        nome: row.brinde_nome,
+        tipo_quantidade: row.brinde_tipo_quantidade || 'unidade',
+        estoque: row.brinde_estoque,
+        imagem: row.brinde_imagem
       });
     }
   });
@@ -157,13 +177,13 @@ router.get("/:id", async (req, res) => {
   const { id } = req.params;
   try {
     const result = await pool.query(`
-      SELECT p.*, 
-             i.id as ing_id, 
-             i.nome as ing_nome, 
-             pi.quantidade as ing_quantidade, 
+      SELECT p.*,
+             i.id as ing_id,
+             i.nome as ing_nome,
+             pi.quantidade as ing_quantidade,
              i.unidade as ing_unidade,
-             i.custo as ing_custo, 
-             i.estoque as ing_estoque, 
+             i.custo as ing_custo,
+             i.estoque as ing_estoque,
              i.usado_para_revenda as ing_usado_para_revenda,
              pi.apenas_revenda as ing_apenas_revenda,
              pim.id as img_id,
@@ -173,7 +193,12 @@ router.get("/:id", async (req, res) => {
              pagg.nome as agg_nome,
              pa.preco as agg_preco,
              pagg.estoque as agg_estoque,
-             pagg_img.imagem as agg_imagem
+             pagg_img.imagem as agg_imagem,
+             pb.brinde_produto_id as brinde_id,
+             pbp.nome as brinde_nome,
+             pb.tipo_quantidade as brinde_tipo_quantidade,
+             pbp.estoque as brinde_estoque,
+             pbp_img.imagem as brinde_imagem
       FROM produtos p
       LEFT JOIN produto_ingredientes pi ON p.id = pi.produto_id
       LEFT JOIN ingredientes i ON pi.ingrediente_id = i.id
@@ -181,6 +206,9 @@ router.get("/:id", async (req, res) => {
       LEFT JOIN produto_agregados pa ON p.id = pa.produto_id
       LEFT JOIN produtos pagg ON pa.agregado_id = pagg.id
       LEFT JOIN produto_imagens pagg_img ON pagg.id = pagg_img.produto_id AND pagg_img.eh_capa = TRUE
+      LEFT JOIN produto_brindes pb ON p.id = pb.produto_id
+      LEFT JOIN produtos pbp ON pb.brinde_produto_id = pbp.id
+      LEFT JOIN produto_imagens pbp_img ON pbp.id = pbp_img.produto_id AND pbp_img.eh_capa = TRUE
       WHERE p.id = $1
     `, [id]);
 
@@ -203,10 +231,12 @@ router.get("/:id", async (req, res) => {
       desconto_destaque: row.desconto_destaque,
       validade_promocao: row.validade_promocao ? new Date(row.validade_promocao).toISOString().split('T')[0] : null,
       ocasiao: row.ocasiao || null,
+      eh_brinde: row.eh_brinde === 1 || row.eh_brinde === true,
       created_at: row.created_at,
       ingredientes: [],
       imagens: [],
-      agregados: []
+      agregados: [],
+      brindes: []
     };
 
     const ingMap = new Map();
@@ -245,6 +275,15 @@ router.get("/:id", async (req, res) => {
           imagem: r.agg_imagem
         });
       }
+      if (r.brinde_id && !product.brindes.some(b => b.id === r.brinde_id)) {
+        product.brindes.push({
+          id: r.brinde_id,
+          nome: r.brinde_nome,
+          tipo_quantidade: r.brinde_tipo_quantidade || 'unidade',
+          estoque: r.brinde_estoque,
+          imagem: r.brinde_imagem
+        });
+      }
     });
 
     res.json(product);
@@ -256,7 +295,7 @@ router.get("/:id", async (req, res) => {
 
 // CRIAR PRODUTO
 router.post("/", authenticateToken, requireRole('admin'), async (req, res) => {
-  const { nome, descricao, preco_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque, validade_promocao, agregados, ativo, eh_agregado, custo, estoque, ocasiao } = req.body;
+  const { nome, descricao, preco_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque, validade_promocao, agregados, ativo, eh_agregado, custo, estoque, ocasiao, eh_brinde, brindes } = req.body;
   const client = await pool.connect();
 
   try {
@@ -266,8 +305,8 @@ router.post("/", authenticateToken, requireRole('admin'), async (req, res) => {
     const validadeFinal = isDestaque ? (validade_promocao || null) : null;
     const descontoFinal = isDestaque ? (desconto_destaque || 0) : 0;
 
-    let insertFields = ["nome", "descricao", "preco_venda", "margem_revenda", "preco_revenda", "rendimento", "eh_destaque", "desconto_destaque", "validade_promocao", "ativo", "eh_agregado", "ocasiao"];
-    let insertValues = ["$1", "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9", "$10", "$11", "$12"];
+    let insertFields = ["nome", "descricao", "preco_venda", "margem_revenda", "preco_revenda", "rendimento", "eh_destaque", "desconto_destaque", "validade_promocao", "ativo", "eh_agregado", "ocasiao", "eh_brinde"];
+    let insertValues = ["$1", "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9", "$10", "$11", "$12", "$13"];
     let insertParams = [
       nome,
       descricao || null,
@@ -280,7 +319,8 @@ router.post("/", authenticateToken, requireRole('admin'), async (req, res) => {
       validadeFinal,
       (ativo === false ? false : true),
       eh_agregado || false,
-      ocasiao || null
+      ocasiao || null,
+      eh_brinde || false
     ];
     let paramIndex = insertParams.length + 1;
 
@@ -338,6 +378,19 @@ router.post("/", authenticateToken, requireRole('admin'), async (req, res) => {
       );
     }
 
+    if (brindes && brindes.length > 0) {
+      const vals = [];
+      const placeholders = brindes.map((b, i) => {
+        const base = i * 3;
+        vals.push(produtoId, b.id, b.tipo_quantidade || 'unidade');
+        return `($${base+1}, $${base+2}, $${base+3})`;
+      });
+      await client.query(
+        `INSERT INTO produto_brindes (produto_id, brinde_produto_id, tipo_quantidade) VALUES ${placeholders.join(', ')}`,
+        vals
+      );
+    }
+
     await client.query("COMMIT");
     invalidateProductsCache();
     res.status(201).json({ message: "Produto criado com sucesso!", id: produtoId });
@@ -364,7 +417,7 @@ router.post("/", authenticateToken, requireRole('admin'), async (req, res) => {
 // ATUALIZAR PRODUTO (Edição total)
 router.put("/:id", authenticateToken, requireRole('admin'), async (req, res) => {
   const { id } = req.params;
-  const { nome, descricao, preco_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque, validade_promocao, agregados, ativo, eh_agregado, custo, estoque, ocasiao } = req.body;
+  const { nome, descricao, preco_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque, validade_promocao, agregados, ativo, eh_agregado, custo, estoque, ocasiao, eh_brinde, brindes } = req.body;
   const client = await pool.connect();
 
   try {
@@ -386,7 +439,8 @@ router.put("/:id", authenticateToken, requireRole('admin'), async (req, res) => 
       "validade_promocao = $9",
       "ativo = $10",
       "eh_agregado = $11",
-      "ocasiao = $12"
+      "ocasiao = $12",
+      "eh_brinde = $13"
     ];
     let updateParams = [
       nome,
@@ -400,7 +454,8 @@ router.put("/:id", authenticateToken, requireRole('admin'), async (req, res) => 
       validadeFinal,
       (ativo === false ? false : true),
       eh_agregado || false,
-      ocasiao || null
+      ocasiao || null,
+      eh_brinde || false
     ];
     let paramIndex = updateParams.length + 1;
 
@@ -462,6 +517,20 @@ router.put("/:id", authenticateToken, requireRole('admin'), async (req, res) => 
       });
       await client.query(
         `INSERT INTO produto_agregados (produto_id, agregado_id, preco) VALUES ${placeholders.join(', ')}`,
+        vals
+      );
+    }
+
+    await client.query("DELETE FROM produto_brindes WHERE produto_id = $1", [id]);
+    if (brindes && brindes.length > 0) {
+      const vals = [];
+      const placeholders = brindes.map((b, i) => {
+        const base = i * 3;
+        vals.push(id, b.id, b.tipo_quantidade || 'unidade');
+        return `($${base+1}, $${base+2}, $${base+3})`;
+      });
+      await client.query(
+        `INSERT INTO produto_brindes (produto_id, brinde_produto_id, tipo_quantidade) VALUES ${placeholders.join(', ')}`,
         vals
       );
     }
