@@ -219,6 +219,7 @@ export async function initDatabase() {
 
     // Migrações (Colunas novas) - Executa uma por uma de forma segura
     logs.push(await addColumnSafe("ingredientes", "usado_para_revenda BOOLEAN DEFAULT TRUE"));
+    logs.push(await addColumnSafe("produtos", "margem_venda DECIMAL(10, 2) DEFAULT 0"));
     logs.push(await addColumnSafe("produtos", "margem_revenda DECIMAL(10, 2) DEFAULT 0"));
     logs.push(await addColumnSafe("produtos", "preco_revenda DECIMAL(10, 2) DEFAULT 0"));
     logs.push(await addColumnSafe("produtos", "rendimento INTEGER DEFAULT 1"));

@@ -361,6 +361,7 @@ export default function Dashboard() {
         descricao: editProduct.descricao,
         preco_venda: Number(editProduct.preco_venda),
         rendimento: Number(editRendimento),
+        margem_venda: Number(editMargem),
         margem_revenda: Number(editMargemRevenda),
         preco_revenda: Number(editProduct.preco_revenda),
         ingredientes: editProduct.ingredientes.map(ing => ({

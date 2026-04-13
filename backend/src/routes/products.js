@@ -76,6 +76,7 @@ async function fetchProducts() {
         nome: row.nome,
         descricao: row.descricao,
         preco_venda: row.preco_venda,
+        margem_venda: row.margem_venda,
         margem_revenda: row.margem_revenda,
         preco_revenda: row.preco_revenda,
         rendimento: row.rendimento,
@@ -220,6 +221,7 @@ router.get("/:id", async (req, res) => {
       nome: row.nome,
       descricao: row.descricao,
       preco_venda: row.preco_venda,
+      margem_venda: row.margem_venda,
       margem_revenda: row.margem_revenda,
       preco_revenda: row.preco_revenda,
       rendimento: row.rendimento,
@@ -295,7 +297,7 @@ router.get("/:id", async (req, res) => {
 
 // CRIAR PRODUTO
 router.post("/", authenticateToken, requireRole('admin'), async (req, res) => {
-  const { nome, descricao, preco_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque, validade_promocao, agregados, ativo, eh_agregado, custo, estoque, ocasiao, eh_brinde, brindes } = req.body;
+  const { nome, descricao, preco_venda, margem_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque, validade_promocao, agregados, ativo, eh_agregado, custo, estoque, ocasiao, eh_brinde, brindes } = req.body;
   const client = await pool.connect();
 
   try {
@@ -305,12 +307,13 @@ router.post("/", authenticateToken, requireRole('admin'), async (req, res) => {
     const validadeFinal = isDestaque ? (validade_promocao || null) : null;
     const descontoFinal = isDestaque ? (desconto_destaque || 0) : 0;
 
-    let insertFields = ["nome", "descricao", "preco_venda", "margem_revenda", "preco_revenda", "rendimento", "eh_destaque", "desconto_destaque", "validade_promocao", "ativo", "eh_agregado", "ocasiao", "eh_brinde"];
-    let insertValues = ["$1", "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9", "$10", "$11", "$12", "$13"];
+    let insertFields = ["nome", "descricao", "preco_venda", "margem_venda", "margem_revenda", "preco_revenda", "rendimento", "eh_destaque", "desconto_destaque", "validade_promocao", "ativo", "eh_agregado", "ocasiao", "eh_brinde"];
+    let insertValues = ["$1", "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9", "$10", "$11", "$12", "$13", "$14"];
     let insertParams = [
       nome,
       descricao || null,
       preco_venda,
+      margem_venda || 0,
       margem_revenda || 0,
       preco_revenda || 0,
       rendimento || 1,
@@ -417,7 +420,7 @@ router.post("/", authenticateToken, requireRole('admin'), async (req, res) => {
 // ATUALIZAR PRODUTO (Edição total)
 router.put("/:id", authenticateToken, requireRole('admin'), async (req, res) => {
   const { id } = req.params;
-  const { nome, descricao, preco_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque, validade_promocao, agregados, ativo, eh_agregado, custo, estoque, ocasiao, eh_brinde, brindes } = req.body;
+  const { nome, descricao, preco_venda, margem_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque, validade_promocao, agregados, ativo, eh_agregado, custo, estoque, ocasiao, eh_brinde, brindes } = req.body;
   const client = await pool.connect();
 
   try {
@@ -431,21 +434,23 @@ router.put("/:id", authenticateToken, requireRole('admin'), async (req, res) => 
       "nome = $1",
       "descricao = $2",
       "preco_venda = $3",
-      "margem_revenda = $4",
-      "preco_revenda = $5",
-      "rendimento = $6",
-      "eh_destaque = $7",
-      "desconto_destaque = $8",
-      "validade_promocao = $9",
-      "ativo = $10",
-      "eh_agregado = $11",
-      "ocasiao = $12",
-      "eh_brinde = $13"
+      "margem_venda = $4",
+      "margem_revenda = $5",
+      "preco_revenda = $6",
+      "rendimento = $7",
+      "eh_destaque = $8",
+      "desconto_destaque = $9",
+      "validade_promocao = $10",
+      "ativo = $11",
+      "eh_agregado = $12",
+      "ocasiao = $13",
+      "eh_brinde = $14"
     ];
     let updateParams = [
       nome,
       descricao || null,
       preco_venda,
+      margem_venda || 0,
       margem_revenda || 0,
       preco_revenda || 0,
       rendimento || 1,

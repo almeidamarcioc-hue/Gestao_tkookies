@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import api from "../services/api";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -61,6 +61,7 @@ export default function Products() {
   const [agregadoPreco, setAgregadoPreco] = useState("");
   const [ocasiao, setOcasiao] = useState([]);
   const [editingId, setEditingId] = useState(null);
+  const suppressPriceCalcRef = useRef(false);
   const [OCASIOES, setOCASOES] = useState([]);
 
   const [ehBrinde, setEhBrinde] = useState(false);
@@ -152,6 +153,11 @@ export default function Products() {
   }, []);
 
   useEffect(() => {
+    // Bloqueia recalculação ao carregar produto para edição (preserva preços salvos)
+    if (suppressPriceCalcRef.current) {
+      suppressPriceCalcRef.current = false;
+      return;
+    }
     // Se for agregado, o custo vem do input manual, não dos ingredientes
     if (ehAgregado) {
         const custo = Number(custoManual) || 0;
@@ -363,12 +369,44 @@ export default function Products() {
     try {
       const res = await api.get(`/produtos/${prod.id}`);
       const p = res.data;
+
+      // Calcula margem_venda a partir do preco_venda salvo para evitar que o
+      // useEffect sobrescreva o preço ao carregar o produto para edição.
+      // Usa custo_base/estoque_base que vêm no response do produto.
+      const custoReceita = (p.ingredientes || []).reduce((acc, item) => {
+        if (!item.apenas_revenda) {
+          const unit = (Number(item.custo_base) || 0) / (Number(item.estoque_base) || 1);
+          acc += unit * Number(item.quantidade);
+        }
+        return acc;
+      }, 0);
+      const custoRevReceita = (p.ingredientes || []).reduce((acc, item) => {
+        if (item.usado_para_revenda || item.apenas_revenda) {
+          const unit = (Number(item.custo_base) || 0) / (Number(item.estoque_base) || 1);
+          acc += unit * Number(item.quantidade);
+        }
+        return acc;
+      }, 0);
+      const qtdCookies = Number(p.rendimento) || 1;
+      const cu = custoReceita / qtdCookies;
+      const cuRev = custoRevReceita / qtdCookies;
+      const savedPreco = Number(p.preco_venda) || 0;
+      const savedPrecoRev = Number(p.preco_revenda) || 0;
+      // Usa margem_venda armazenada se disponível, senão deriva do preço salvo
+      const percentualCalc = p.margem_venda != null
+        ? Number(p.margem_venda)
+        : (cu > 0 ? ((savedPreco / cu - 1) * 100) : 0);
+      const margemRevCalc = p.margem_revenda != null
+        ? Number(p.margem_revenda)
+        : (cuRev > 0 ? ((savedPrecoRev / cuRev - 1) * 100) : 0);
+
+      suppressPriceCalcRef.current = true; // impede useEffect de sobrescrever preços
       setEditingId(p.id);
       setNome(p.nome || "");
       setDescricao(p.descricao || "");
       setRendimento(p.rendimento || 1);
-      setPercentual(p.margem_venda?.toFixed(2) || 0);
-      setMargemRevenda(p.margem_revenda || 0);
+      setPercentual(Number(percentualCalc.toFixed(2)));
+      setMargemRevenda(Number(margemRevCalc.toFixed(2)));
       setPrecoVenda(Number(p.preco_venda) || 0);
       setPrecoRevenda(Number(p.preco_revenda) || 0);
       setEhDestaque(p.eh_destaque || false);
@@ -412,6 +450,7 @@ export default function Products() {
       descricao: descricao,
       preco_venda: valorFinalVenda,
       rendimento: Number(rendimento),
+      margem_venda: Number(percentual),
       margem_revenda: Number(margemRevenda),
       preco_revenda: valorFinalRevenda,
       ingredientes: itens.map(i => ({
