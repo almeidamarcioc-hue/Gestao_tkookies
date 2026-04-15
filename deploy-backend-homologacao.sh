@@ -17,7 +17,7 @@ echo "🔧 Deployando backend de HOMOLOGAÇÃO..."
 cd "$(dirname "$0")/backend"
 VERCEL_ORG_ID=team_31qTCpSCknu7NW8rhSwhjHUX \
 VERCEL_PROJECT_ID=prj_MSAzyiSyIFEmMH69wD9WTk0VfzXr \
-npx vercel@latest deploy --prod
+npx vercel@50.4.0 deploy --prod
 
 echo ""
 echo "✅ Backend de homologação atualizado!"
