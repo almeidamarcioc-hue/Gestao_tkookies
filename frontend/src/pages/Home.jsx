@@ -665,6 +665,9 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                   <Typography variant="body2" color="text.secondary">
                     {getTodayScheduleLabel(config)}
                   </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                    🚚 Entregas das 14:00 às 17:00
+                  </Typography>
                 </Box>
               </Box>
               <Box display="flex" flexDirection="column" alignItems="flex-end" gap={0.5}>
