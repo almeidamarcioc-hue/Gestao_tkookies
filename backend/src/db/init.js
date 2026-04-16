@@ -306,6 +306,36 @@ export async function initDatabase() {
     } catch (e) {
       logs.push(`[pedidos] Index status erro: ${e.message}`);
     }
+    try {
+      await pool.query("CREATE INDEX IF NOT EXISTS idx_itens_pedido_produto_id ON itens_pedido(produto_id)");
+      logs.push("[itens_pedido] Index produto_id criado");
+    } catch (e) {
+      logs.push(`[itens_pedido] Index produto_id erro: ${e.message}`);
+    }
+    try {
+      await pool.query("CREATE INDEX IF NOT EXISTS idx_pedidos_data_status ON pedidos(data_pedido, status)");
+      logs.push("[pedidos] Index composto (data_pedido, status) criado");
+    } catch (e) {
+      logs.push(`[pedidos] Index composto (data_pedido, status) erro: ${e.message}`);
+    }
+    try {
+      await pool.query("CREATE INDEX IF NOT EXISTS idx_produtos_ativo ON produtos(ativo)");
+      logs.push("[produtos] Index ativo criado");
+    } catch (e) {
+      logs.push(`[produtos] Index ativo erro: ${e.message}`);
+    }
+    try {
+      await pool.query("CREATE INDEX IF NOT EXISTS idx_pontos_fidelidade_cliente_id ON pontos_fidelidade(cliente_id)");
+      logs.push("[pontos_fidelidade] Index cliente_id criado");
+    } catch (e) {
+      logs.push(`[pontos_fidelidade] Index cliente_id erro: ${e.message}`);
+    }
+    try {
+      await pool.query("CREATE INDEX IF NOT EXISTS idx_lancamentos_pedido_id ON lancamentos_financeiros(pedido_id)");
+      logs.push("[lancamentos_financeiros] Index pedido_id criado");
+    } catch (e) {
+      logs.push(`[lancamentos_financeiros] Index pedido_id erro: ${e.message}`);
+    }
     logs.push(await addColumnSafe("combos", "imagem TEXT"));
     logs.push(await addColumnSafe("produtos", "descricao VARCHAR(1000)"));
     logs.push(await addColumnSafe("clientes", "is_revendedor BOOLEAN DEFAULT FALSE"));
