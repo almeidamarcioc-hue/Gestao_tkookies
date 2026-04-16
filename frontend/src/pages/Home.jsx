@@ -656,8 +656,8 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           {/* MAIN CONTENT COLUMN */}
           <Grid item xs={12} md={8}>
             
-            {/* Banner Informativo de Horários - Agora no topo da listagem */}
-            <Box sx={{ mb: 4, p: 2, borderRadius: 1, bgcolor: '#FFF8F0', border: '1px solid #FFCC80', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+            {/* Banner Informativo de Horários - Visível apenas em mobile (no desktop fica no sidebar) */}
+            <Box sx={{ mb: 4, p: 2, borderRadius: 1, bgcolor: '#FFF8F0', border: '1px solid #FFCC80', display: { xs: 'flex', md: 'none' }, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
               <Box display="flex" alignItems="center" gap={2}>
                 <AccessTime sx={{ color: terracotta }} />
                 <Box>
@@ -731,7 +731,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
 
             {/* 2. DESTAQUES (Mosaic Grid) */}
             {featuredProduct && (
-              <Box sx={{ mb: 8 }}>
+              <Box id="destaques-section" sx={{ mb: 8 }}>
                  <Typography variant="h5" fontWeight="900" gutterBottom sx={{ color: espresso, mb: 1 }}>
                     Destaques
                  </Typography>
@@ -849,7 +849,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
 
             {/* SEÇÃO COMBOS ESPECIAIS */}
             {combos.length > 0 && (
-              <Box sx={{ mb: 8, mx: -3, px: 3, py: 5, bgcolor: '#FDF3E7', borderRadius: 5, border: '1px solid rgba(212,88,10,0.08)' }}>
+              <Box id="combos-section" sx={{ mb: 8, mx: -3, px: 3, py: 5, bgcolor: '#FDF3E7', borderRadius: 5, border: '1px solid rgba(212,88,10,0.08)' }}>
                 <Typography variant="h5" gutterBottom fontWeight="900" sx={{ color: espresso, mb: 1 }}>
                   Combos Especiais
                 </Typography>
@@ -1058,17 +1058,110 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
 
           {/* SIDEBAR COLUMN (Right) */}
           <Grid item xs={12} md={4}>
-            <Box sx={{ 
-              position: 'sticky', 
+            <Box sx={{
+              position: 'sticky',
               top: 100,
-              // Limita a altura para garantir que não cubra o rodapé e permita rolagem interna se necessário
-              maxHeight: 'calc(100vh - 120px)', 
+              maxHeight: 'calc(100vh - 120px)',
               overflowY: 'auto',
-              pb: 2
+              pb: 2,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 3
             }}>
-              
-              {/* Order Status / Bag */}
-              <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: 4, bgcolor: 'white', boxShadow: '0 4px 24px rgba(44,24,16,0.10)' }}>
+
+              {/* Card: Status da Loja - apenas desktop */}
+              <Paper elevation={0} sx={{ p: 3, borderRadius: 4, bgcolor: isStoreOpen ? '#F1F8E9' : '#FFF3E0', boxShadow: '0 4px 24px rgba(44,24,16,0.10)', display: { xs: 'none', md: 'block' } }}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
+                  <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 1.5 }}>
+                    Status da Loja
+                  </Typography>
+                  <Chip
+                    label={isStoreOpen ? "Aberto" : "Fechado"}
+                    color={isStoreOpen ? "success" : "error"}
+                    size="small"
+                    sx={{ fontWeight: 'bold' }}
+                  />
+                </Box>
+                <Box display="flex" alignItems="center" gap={1}>
+                  <AccessTime sx={{ color: terracotta, fontSize: 18 }} />
+                  <Typography variant="body2" color="text.secondary">
+                    {getTodayScheduleLabel(config)}
+                  </Typography>
+                </Box>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, pl: 3.5 }}>
+                  🚚 Entregas das 14:00 às 17:00
+                </Typography>
+                {!isStoreOpen && (
+                  <Button
+                    fullWidth
+                    href={`https://wa.me/${config.whatsapp_number || '5555997312557'}?text=${encodeURIComponent('Olá! Gostaria de fazer um pedido na TKookies')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    variant="contained"
+                    size="small"
+                    sx={{ mt: 2, bgcolor: '#25D366', '&:hover': { bgcolor: '#1EBE5D' }, borderRadius: 2, textTransform: 'none', fontWeight: 'bold' }}
+                    startIcon={<WhatsApp />}
+                  >
+                    Pedir pelo WhatsApp
+                  </Button>
+                )}
+              </Paper>
+
+              {/* Card: Sabor da Semana resumido - apenas desktop */}
+              {saborSemana && (
+                <Paper elevation={0} sx={{ p: 3, borderRadius: 4, bgcolor: espresso, boxShadow: '0 4px 24px rgba(44,24,16,0.10)', display: { xs: 'none', md: 'block' } }}>
+                  <Chip label="⭐ Sabor da Semana" sx={{ bgcolor: caramel, color: 'white', fontWeight: 'bold', mb: 1.5 }} size="small" />
+                  {saborSemana.imagens?.[0] && (
+                    <Box component="img"
+                      src={saborSemana.imagens.find(i => i.eh_capa)?.imagem || saborSemana.imagens[0]?.imagem}
+                      sx={{ width: '100%', height: 130, objectFit: 'cover', borderRadius: 2, mb: 1.5 }}
+                    />
+                  )}
+                  <Typography variant="subtitle1" fontWeight="900" sx={{ color: 'white' }} gutterBottom>
+                    {saborSemana.nome}
+                  </Typography>
+                  <Typography variant="h6" sx={{ color: caramel, fontWeight: 'bold', mb: 1.5 }}>
+                    R$ {Number(saborSemana.preco_venda).toFixed(2)}
+                  </Typography>
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    onClick={() => handleQtyChange(saborSemana.id, 1)}
+                    disabled={!isStoreOpen || saborSemana.estoque <= 0}
+                    sx={{ borderRadius: 2, bgcolor: caramel, '&:hover': { bgcolor: '#b07e20' }, fontWeight: 'bold', textTransform: 'none' }}
+                  >
+                    Quero esse sabor!
+                  </Button>
+                </Paper>
+              )}
+
+              {/* Card: Navegação Rápida - apenas desktop */}
+              <Paper elevation={0} sx={{ p: 3, borderRadius: 4, bgcolor: 'white', boxShadow: '0 4px 24px rgba(44,24,16,0.10)', display: { xs: 'none', md: 'block' } }}>
+                <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" gutterBottom sx={{ textTransform: 'uppercase', letterSpacing: 1.5 }}>
+                  Ir para
+                </Typography>
+                <Box display="flex" flexDirection="column" gap={0.5} mt={1}>
+                  {[
+                    { label: '🌟 Destaques', anchor: 'destaques-section' },
+                    { label: '🍪 Cardápio', anchor: 'cardapio' },
+                    { label: '🎁 Combos Especiais', anchor: 'combos-section' },
+                  ].map(({ label, anchor }) => (
+                    <Button
+                      key={label}
+                      fullWidth
+                      variant="text"
+                      size="small"
+                      onClick={() => document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth' })}
+                      sx={{ justifyContent: 'flex-start', color: espresso, borderRadius: 2, textTransform: 'none', fontWeight: 600, pl: 1, '&:hover': { bgcolor: '#FFF8F0', color: terracotta } }}
+                    >
+                      {label}
+                    </Button>
+                  ))}
+                </Box>
+              </Paper>
+
+              {/* Card: Sua Sacola */}
+              <Paper elevation={0} sx={{ p: 3, borderRadius: 4, bgcolor: 'white', boxShadow: '0 4px 24px rgba(44,24,16,0.10)' }}>
                 <Typography variant="h6" fontWeight="bold" gutterBottom display="flex" alignItems="center" gap={1}>
                   <ShoppingBag /> Sua Sacola
                 </Typography>
