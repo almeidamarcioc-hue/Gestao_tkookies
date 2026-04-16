@@ -650,46 +650,51 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
         </Box>
       </Box>
 
-      <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, pb: 20 }}>
-
-        <Grid container spacing={4}>
-          {/* MAIN CONTENT COLUMN */}
-          <Grid item xs={12} md={8}>
-            
-            {/* Banner Informativo de Horários - Agora no topo da listagem */}
-            <Box sx={{ mb: 4, p: 2, borderRadius: 1, bgcolor: '#FFF8F0', border: '1px solid #FFCC80', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
-              <Box display="flex" alignItems="center" gap={2}>
-                <AccessTime sx={{ color: terracotta }} />
-                <Box>
-                  <Typography variant="subtitle2" fontWeight="bold" color="primary">Horário de Atendimento</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {getTodayScheduleLabel(config)}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                    🚚 Entregas das 14:00 às 17:00
-                  </Typography>
-                </Box>
+      {/* BARRA DE STATUS DA LOJA — full-width, entre marquee e conteúdo */}
+      <Box sx={{
+        bgcolor: isStoreOpen ? '#F1F8E9' : '#FFF3E0',
+        borderBottom: '1px solid',
+        borderColor: isStoreOpen ? '#C8E6C9' : '#FFCC80',
+        py: 1.2,
+      }}>
+        <Container maxWidth="xl">
+          <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1.5}>
+            <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
+              <Box display="flex" alignItems="center" gap={1}>
+                <AccessTime sx={{ color: terracotta, fontSize: 18 }} />
+                <Typography variant="body2" color="text.secondary" fontWeight={500}>
+                  {getTodayScheduleLabel(config)}
+                </Typography>
               </Box>
-              <Box display="flex" flexDirection="column" alignItems="flex-end" gap={0.5}>
-                <Chip
-                  label={isStoreOpen ? "ABERTO AGORA" : "FECHADO NO MOMENTO"}
-                  color={isStoreOpen ? "success" : "error"}
-                  size="small"
-                  sx={{ fontWeight: 'bold' }}
-                />
-                {!isStoreOpen && (
-                  <Button
-                    size="small"
-                    href={`https://wa.me/${config.whatsapp_number || '5555997312557'}?text=${encodeURIComponent('Olá! Gostaria de fazer um pedido na TKookies')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    sx={{ color: '#25D366', fontWeight: 'bold', fontSize: '0.75rem', p: 0, textTransform: 'none', lineHeight: 1.2 }}
-                  >
-                    💬 Deixe seu pedido pelo WhatsApp
-                  </Button>
-                )}
-              </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ display: { xs: 'none', sm: 'block' } }}>
+                🚚 Entregas das 14:00 às 17:00
+              </Typography>
             </Box>
+            <Box display="flex" alignItems="center" gap={1.5}>
+              <Chip
+                label={isStoreOpen ? "Aberto agora" : "Fechado no momento"}
+                color={isStoreOpen ? "success" : "error"}
+                size="small"
+                sx={{ fontWeight: 'bold' }}
+              />
+              {!isStoreOpen && (
+                <Button
+                  size="small"
+                  href={`https://wa.me/${config.whatsapp_number || '5555997312557'}?text=${encodeURIComponent('Olá! Gostaria de fazer um pedido na TKookies')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  startIcon={<WhatsApp sx={{ fontSize: 16 }} />}
+                  sx={{ color: '#25D366', fontWeight: 'bold', fontSize: '0.75rem', textTransform: 'none', border: '1px solid #25D366', borderRadius: 2, py: 0.3, px: 1.5 }}
+                >
+                  Pedir pelo WhatsApp
+                </Button>
+              )}
+            </Box>
+          </Box>
+        </Container>
+      </Box>
+
+      <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1, pb: 20, px: { xs: 2, md: 4 } }}>
 
             {/* SABOR DA SEMANA */}
             {saborSemana && (
@@ -731,7 +736,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
 
             {/* 2. DESTAQUES (Mosaic Grid) */}
             {featuredProduct && (
-              <Box sx={{ mb: 8 }}>
+              <Box id="destaques-section" sx={{ mb: 8 }}>
                  <Typography variant="h5" fontWeight="900" gutterBottom sx={{ color: espresso, mb: 1 }}>
                     Destaques
                  </Typography>
@@ -849,7 +854,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
 
             {/* SEÇÃO COMBOS ESPECIAIS */}
             {combos.length > 0 && (
-              <Box sx={{ mb: 8, mx: -3, px: 3, py: 5, bgcolor: '#FDF3E7', borderRadius: 5, border: '1px solid rgba(212,88,10,0.08)' }}>
+              <Box id="combos-section" sx={{ mb: 8, mx: -3, px: 3, py: 5, bgcolor: '#FDF3E7', borderRadius: 5, border: '1px solid rgba(212,88,10,0.08)' }}>
                 <Typography variant="h5" gutterBottom fontWeight="900" sx={{ color: espresso, mb: 1 }}>
                   Combos Especiais
                 </Typography>
@@ -860,9 +865,9 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                     const hasStock = Number(combo.estoque) > 0;
                     
                     return (
-                      <Grid item xs={12} sm={6} key={combo.id}>
+                      <Grid item xs={12} sm={6} md={4} key={combo.id}>
                         <Card sx={{ ...cardSx }}>
-                           <Box sx={{ position: 'relative', height: { xs: 220, md: 280 } }}>
+                           <Box sx={{ position: 'relative', height: { xs: 200, md: 220 } }}>
                               <Box 
                                 component="img" 
                                 src={combo.imagem || "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?q=80&w=1965&auto=format&fit=crop"} 
@@ -923,11 +928,11 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                   const qty = getQty(prod.id);
                   
                   return (
-                    <Grid item xs={12} sm={6} key={prod.id} component={motion.div} variants={itemVariants}>
+                    <Grid item xs={12} sm={6} md={4} key={prod.id} component={motion.div} variants={itemVariants}>
                       <Card sx={{ ...cardSx }}
                         onMouseEnter={() => setHoveredCard(prod.id)}
                         onMouseLeave={() => setHoveredCard(null)}>
-                         <Box sx={{ position: 'relative', height: { xs: 220, md: 280 }, overflow: 'hidden' }}>
+                         <Box sx={{ position: 'relative', height: { xs: 200, md: 220 }, overflow: 'hidden' }}>
                             <Box
                               component="img"
                               src={coverImage}
@@ -1053,78 +1058,6 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                 })}
               </Grid>
             </Box>
-
-          </Grid>
-
-          {/* SIDEBAR COLUMN (Right) */}
-          <Grid item xs={12} md={4}>
-            <Box sx={{ 
-              position: 'sticky', 
-              top: 100,
-              // Limita a altura para garantir que não cubra o rodapé e permita rolagem interna se necessário
-              maxHeight: 'calc(100vh - 120px)', 
-              overflowY: 'auto',
-              pb: 2
-            }}>
-              
-              {/* Order Status / Bag */}
-              <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: 4, bgcolor: 'white', boxShadow: '0 4px 24px rgba(44,24,16,0.10)' }}>
-                <Typography variant="h6" fontWeight="bold" gutterBottom display="flex" alignItems="center" gap={1}>
-                  <ShoppingBag /> Sua Sacola
-                </Typography>
-                <AnimatePresence mode="wait">
-                  {cart.length === 0 ? (
-                    <motion.div
-                      key="empty-cart"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <Box textAlign="center" py={2}>
-                         <Typography variant="body2" color="text.secondary" gutterBottom>
-                           Sua sacola está vazia.
-                         </Typography>
-                         <Typography variant="caption" color="text.disabled">
-                           Adicione itens deliciosos!
-                         </Typography>
-                      </Box>
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="full-cart"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <Box>
-                         <Typography variant="body2" gutterBottom>{cart.length} item(s) adicionado(s)</Typography>
-                         <Typography variant="h6" color="primary" fontWeight="bold" gutterBottom>
-                           Total: R$ {totalPrice.toFixed(2)}
-                         </Typography>
-                         <Button fullWidth variant="contained" onClick={handleCheckout} sx={{ mt: 1, borderRadius: 4 }}>
-                           Ver Sacola
-                         </Button>
-                         <Button
-                           fullWidth
-                           variant="text"
-                           color="error"
-                           size="small"
-                           startIcon={<DeleteOutline />}
-                           onClick={handleClearCart}
-                           sx={{ mt: 1, textTransform: 'none' }}>
-                           Limpar Sacola
-                         </Button>
-                      </Box>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </Paper>
-
-            </Box>
-          </Grid>
-        </Grid>
 
       {/* MONTE SEU KIT — full width, após cardápio */}
       {(() => {
