@@ -18,7 +18,7 @@ const dbConfig = {
     rejectUnauthorized: false
   } : undefined,
   waitForConnections: true,
-  connectionLimit: 10,
+  connectionLimit: 3,
   queueLimit: 0,
   connectTimeout: 10000 // 10 segundos para timeout de conexão
 };

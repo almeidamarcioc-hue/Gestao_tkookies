@@ -5,7 +5,24 @@ import Groq from "groq-sdk";
 
 const router = Router();
 
+// Cache em memória — evita disparar 7 queries pesadas a cada acesso
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutos
+let dadosCache = null;
+let cacheTimestamp = 0;
+
 async function coletarDados() {
+  const agora = Date.now();
+  if (dadosCache && (agora - cacheTimestamp) < CACHE_TTL_MS) {
+    return dadosCache;
+  }
+
+  const dados = await coletarDadosBanco();
+  dadosCache = dados;
+  cacheTimestamp = agora;
+  return dados;
+}
+
+async function coletarDadosBanco() {
   const [pedidos, topProdutos, topClientes, clientesSumidos, pedidosPorDia, financeiro, vendasPorProdutoDia] = await Promise.all([
     // Resumo de pedidos dos últimos 30 dias
     pool.query(`
