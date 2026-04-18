@@ -83,9 +83,20 @@ export default function BoxBuilder({ products = [], addToCart, isStoreOpen, kitD
 
   const handleAddToCart = async () => {
     if (!isFull) return;
+    // Ratio do desconto (ex: 0.9 para 10% off); 1 se não houver desconto
+    const discountRatio = hasDiscount && totalPrice > 0 ? discountedPrice / totalPrice : 1;
+
     for (const [id, qty] of Object.entries(selections)) {
       const prod = products.find(p => String(p.id) === String(id));
-      if (prod) await addToCart(prod, qty);
+      if (!prod) continue;
+      const prodParaCarrinho = discountRatio < 1
+        ? {
+            ...prod,
+            preco_venda: parseFloat((Number(prod.preco_venda) * discountRatio).toFixed(2)),
+            preco_original_kit: Number(prod.preco_venda),
+          }
+        : prod;
+      await addToCart(prodParaCarrinho, qty);
     }
     setSelections({});
     setBoxSize(null);
