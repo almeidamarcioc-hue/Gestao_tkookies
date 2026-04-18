@@ -31,7 +31,7 @@ export default function BoxBuilder({ products = [], addToCart, isStoreOpen, kitD
 
   const availableProducts = products.filter(p => p.estoque > 0 && p.ativo !== false);
 
-  if (activeSizes.length === 0) return null;
+  if (activeSizes.length === 0 || availableProducts.length === 0) return null;
 
   const totalSelected = useMemo(
     () => Object.values(selections).reduce((a, b) => a + b, 0),
@@ -107,7 +107,7 @@ export default function BoxBuilder({ products = [], addToCart, isStoreOpen, kitD
     : [];
 
   return (
-    <Box>
+    <Box sx={{ mt: 8, p: { xs: 3, md: 5 }, bgcolor: '#FDF3E7', borderRadius: 5, border: '1px solid rgba(196,146,42,0.15)' }}>
       {/* CABEÇALHO */}
       <Box mb={4} textAlign="center">
         <Typography variant="h5" fontWeight="900" sx={{ color: espresso, mb: 1 }}>
