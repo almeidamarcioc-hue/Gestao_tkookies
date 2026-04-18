@@ -377,6 +377,9 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
                             {item.eh_destaque && item.desconto_destaque > 0 && (
                               <Typography variant="caption" color="error">Oferta Especial</Typography>
                             )}
+                            {item.preco_original_kit && (
+                              <Typography variant="caption" sx={{ color: '#2E7D32', fontWeight: 'bold' }}>🎁 Desconto Kit</Typography>
+                            )}
                           </Box>
                         </Box>
                       </TableCell>
@@ -385,6 +388,11 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
                         {!clientUser?.is_revendedor && item.eh_destaque && item.desconto_destaque > 0 && (
                           <Typography variant="caption" sx={{ textDecoration: 'line-through', color: '#8D6E63' }}>
                             R$ {Number(item.preco_venda).toFixed(2)}
+                          </Typography>
+                        )}
+                        {item.preco_original_kit && (
+                          <Typography variant="caption" sx={{ textDecoration: 'line-through', color: '#8D6E63', display: 'block' }}>
+                            R$ {Number(item.preco_original_kit).toFixed(2)}
                           </Typography>
                         )}
                       </TableCell>

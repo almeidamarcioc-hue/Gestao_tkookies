@@ -1,8 +1,20 @@
 // Versão do sistema — atualizar a cada release antes do merge para main
-export const APP_VERSION = "1.00.02";
+export const APP_VERSION = "1.00.03";
 
 // Histórico de versões
 export const CHANGELOG = [
+  {
+    version: "1.00.03",
+    data: "2026-04-18",
+    descricao: "Produção de combos, desconto de kit no carrinho e melhorias na tela de kit",
+    itens: [
+      "Combos: campo 'Quantidade a produzir' com preview de consumo de estoque",
+      "Combos: criação/edição debita estoque dos produtos e define estoque do combo",
+      "Kit: seção sempre visível quando há produtos com estoque disponível",
+      "Kit: quantidade disponível exibida em cada card de produto",
+      "Kit: desconto aplicado corretamente no carrinho (preço riscado + label 'Desconto Kit')",
+    ],
+  },
   {
     version: "1.00.02",
     data: "2026-04-15",

@@ -31,7 +31,7 @@ export default function BoxBuilder({ products = [], addToCart, isStoreOpen, kitD
 
   const availableProducts = products.filter(p => p.estoque > 0 && p.ativo !== false);
 
-  if (activeSizes.length === 0) return null;
+  if (activeSizes.length === 0 || availableProducts.length === 0) return null;
 
   const totalSelected = useMemo(
     () => Object.values(selections).reduce((a, b) => a + b, 0),
@@ -83,9 +83,20 @@ export default function BoxBuilder({ products = [], addToCart, isStoreOpen, kitD
 
   const handleAddToCart = async () => {
     if (!isFull) return;
+    // Ratio do desconto (ex: 0.9 para 10% off); 1 se não houver desconto
+    const discountRatio = hasDiscount && totalPrice > 0 ? discountedPrice / totalPrice : 1;
+
     for (const [id, qty] of Object.entries(selections)) {
       const prod = products.find(p => String(p.id) === String(id));
-      if (prod) await addToCart(prod, qty);
+      if (!prod) continue;
+      const prodParaCarrinho = discountRatio < 1
+        ? {
+            ...prod,
+            preco_venda: parseFloat((Number(prod.preco_venda) * discountRatio).toFixed(2)),
+            preco_original_kit: Number(prod.preco_venda),
+          }
+        : prod;
+      await addToCart(prodParaCarrinho, qty);
     }
     setSelections({});
     setBoxSize(null);
@@ -107,7 +118,7 @@ export default function BoxBuilder({ products = [], addToCart, isStoreOpen, kitD
     : [];
 
   return (
-    <Box>
+    <Box sx={{ mt: 8, p: { xs: 3, md: 5 }, bgcolor: '#FDF3E7', borderRadius: 5, border: '1px solid rgba(196,146,42,0.15)' }}>
       {/* CABEÇALHO */}
       <Box mb={4} textAlign="center">
         <Typography variant="h5" fontWeight="900" sx={{ color: espresso, mb: 1 }}>
@@ -259,6 +270,9 @@ export default function BoxBuilder({ products = [], addToCart, isStoreOpen, kitD
                         </Typography>
                         <Typography variant="caption" color={terracotta} fontWeight="bold">
                           R$ {Number(prod.preco_venda).toFixed(2)}
+                        </Typography>
+                        <Typography variant="caption" display="block" sx={{ color: Number(prod.estoque) <= 3 ? '#E65100' : 'text.secondary', fontSize: '0.65rem', mt: 0.3 }}>
+                          {Number(prod.estoque)} disponíve{Number(prod.estoque) === 1 ? 'l' : 'is'}
                         </Typography>
                         <Box display="flex" alignItems="center" justifyContent="center" gap={0.5} mt={1}>
                           <IconButton size="small" onClick={() => handleRemove(prod)} disabled={qty === 0}

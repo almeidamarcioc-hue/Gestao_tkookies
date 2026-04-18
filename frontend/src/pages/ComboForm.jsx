@@ -16,6 +16,8 @@ export default function ComboForm() {
   const [precoVenda, setPrecoVenda] = useState("");
   const [imagem, setImagem] = useState("");
   const [ativo, setAtivo] = useState(true);
+  const [quantidadeProducao, setQuantidadeProducao] = useState(1); // Qtd a produzir (nova) ou ajustar (edição)
+  const [estoqueAtual, setEstoqueAtual] = useState(0); // Estoque atual (carregado na edição)
   const [itens, setItens] = useState([]);
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
   const [ingredienteSelecionado, setIngredienteSelecionado] = useState(null);
@@ -85,7 +87,9 @@ export default function ComboForm() {
       setPrecoVenda(combo.preco_venda);
       setImagem(combo.imagem || "");
       setAtivo(combo.ativo === 0 || combo.ativo === false ? false : true);
-      
+      setEstoqueAtual(Number(combo.estoque) || 0);
+      setQuantidadeProducao(Number(combo.estoque) || 0);
+
       const itensMapeados = combo.itens.map(item => {
         const prodOriginal = produtos.find(p => p.id === item.produto_id);
         return {
@@ -205,7 +209,8 @@ export default function ComboForm() {
       itens,
       ingredientes: comboIngredientes,
       imagem,
-      ativo
+      ativo,
+      estoque: Number(quantidadeProducao)
     };
 
     try {
@@ -391,6 +396,43 @@ export default function ComboForm() {
             ))}
           </TableBody>
         </Table>
+
+        {/* Produção / Estoque */}
+        <Box sx={{ bgcolor: '#e8eaf6', p: 2.5, borderRadius: 2, mt: 3, mb: 1, border: '1px solid #c5cae9' }}>
+          <Typography variant="subtitle1" fontWeight="bold" color="primary" gutterBottom>
+            {id ? "Ajuste de Estoque do Combo" : "Quantidade a Produzir"}
+          </Typography>
+          {id && (
+            <Typography variant="body2" color="text.secondary" mb={1.5}>
+              Estoque atual do combo: <strong>{estoqueAtual}</strong> unidade(s)
+            </Typography>
+          )}
+          <TextField
+            label={id ? "Nova quantidade total de combos" : "Quantidade de combos a produzir"}
+            type="number"
+            value={quantidadeProducao}
+            onChange={e => setQuantidadeProducao(Math.max(0, Number(e.target.value)))}
+            sx={{ width: 260 }}
+            inputProps={{ min: 0 }}
+            helperText={
+              id
+                ? `Os estoques dos produtos serão recalculados (devolvendo o consumo anterior e debitando o novo)`
+                : `O estoque de cada produto será debitado pela quantidade × ${quantidadeProducao} combo(s)`
+            }
+          />
+          {itens.length > 0 && quantidadeProducao > 0 && (
+            <Box mt={2}>
+              <Typography variant="subtitle2" fontWeight="bold" mb={0.5}>
+                Consumo de produtos (para {quantidadeProducao} combo{quantidadeProducao !== 1 ? 's' : ''}):
+              </Typography>
+              {itens.map((item, idx) => (
+                <Typography key={idx} variant="body2" sx={{ ml: 1 }}>
+                  • {item.nome}: {item.quantidade} × {quantidadeProducao} = <strong>{item.quantidade * quantidadeProducao} unid.</strong>
+                </Typography>
+              ))}
+            </Box>
+          )}
+        </Box>
 
         <Box sx={{ bgcolor: '#f5f5f5', p: 3, borderRadius: 2, mt: 4 }}>
             <Grid container spacing={3}>
