@@ -136,18 +136,36 @@ router.get("/:id", async (req, res) => {
 
 // CRIAR
 router.post("/", async (req, res) => {
-  const { nome, preco_venda, imagem, itens, ingredientes, ativo } = req.body;
+  const { nome, preco_venda, imagem, itens, ingredientes, ativo, estoque } = req.body;
+  const qtdProduzir = Number(estoque) || 0;
   const client = await pool.connect();
-  
+
   try {
     await client.query("BEGIN");
-    
-    // Insere o combo
+
+    // Valida e debita estoque dos produtos (se houver quantidade a produzir)
+    if (qtdProduzir > 0 && itens && itens.length > 0) {
+      for (const item of itens) {
+        const res = await client.query("SELECT nome, estoque FROM produtos WHERE id = $1", [item.produto_id]);
+        if (!res.rows[0]) throw new Error(`Produto ID ${item.produto_id} não encontrado`);
+        const estoqueDisp = Number(res.rows[0].estoque) || 0;
+        const necessario = Number(item.quantidade) * qtdProduzir;
+        if (estoqueDisp < necessario) {
+          throw new Error(`Estoque insuficiente de "${res.rows[0].nome}": disponível ${estoqueDisp}, necessário ${necessario}`);
+        }
+      }
+      for (const item of itens) {
+        const deducao = Number(item.quantidade) * qtdProduzir;
+        await client.query("UPDATE produtos SET estoque = estoque - $1 WHERE id = $2", [deducao, item.produto_id]);
+      }
+    }
+
+    // Insere o combo com estoque
     const resCombo = await client.query(
-      "INSERT INTO combos (nome, preco_venda, imagem, ativo) VALUES ($1, $2, $3, $4) RETURNING id",
-      [nome, preco_venda, imagem, (ativo === true || ativo === 1 || ativo === "true") ? 1 : 0]
+      "INSERT INTO combos (nome, preco_venda, imagem, ativo, estoque) VALUES ($1, $2, $3, $4, $5) RETURNING id",
+      [nome, preco_venda, imagem, (ativo === true || ativo === 1 || ativo === "true") ? 1 : 0, qtdProduzir]
     );
-    
+
     // Compatibilidade para pegar o ID gerado
     let comboId;
     if (resCombo.rows && resCombo.rows.length > 0) {
@@ -199,17 +217,48 @@ router.post("/", async (req, res) => {
 // ATUALIZAR
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
-  const { nome, preco_venda, imagem, itens, ingredientes, ativo } = req.body;
+  const { nome, preco_venda, imagem, itens, ingredientes, ativo, estoque } = req.body;
+  const qtdNova = Number(estoque) || 0;
   const client = await pool.connect();
-  
+
   try {
     await client.query("BEGIN");
-    
+
+    // Busca o estado atual do combo (estoque e itens) para restaurar estoques de produtos
+    const oldComboRes = await client.query("SELECT estoque FROM combos WHERE id = $1", [id]);
+    const estoqueAntigo = Number(oldComboRes.rows[0]?.estoque) || 0;
+    const oldItensRes = await client.query("SELECT produto_id, quantidade FROM combo_itens WHERE combo_id = $1", [id]);
+
+    // Devolve o consumo anterior aos produtos
+    if (estoqueAntigo > 0) {
+      for (const oldItem of oldItensRes.rows) {
+        const restore = Number(oldItem.quantidade) * estoqueAntigo;
+        await client.query("UPDATE produtos SET estoque = estoque + $1 WHERE id = $2", [restore, oldItem.produto_id]);
+      }
+    }
+
+    // Valida e debita o novo consumo
+    if (qtdNova > 0 && itens && itens.length > 0) {
+      for (const item of itens) {
+        const res = await client.query("SELECT nome, estoque FROM produtos WHERE id = $1", [item.produto_id]);
+        if (!res.rows[0]) throw new Error(`Produto ID ${item.produto_id} não encontrado`);
+        const estoqueDisp = Number(res.rows[0].estoque) || 0;
+        const necessario = Number(item.quantidade) * qtdNova;
+        if (estoqueDisp < necessario) {
+          throw new Error(`Estoque insuficiente de "${res.rows[0].nome}": disponível ${estoqueDisp}, necessário ${necessario}`);
+        }
+      }
+      for (const item of itens) {
+        const deducao = Number(item.quantidade) * qtdNova;
+        await client.query("UPDATE produtos SET estoque = estoque - $1 WHERE id = $2", [deducao, item.produto_id]);
+      }
+    }
+
     await client.query(
-      "UPDATE combos SET nome = $1, preco_venda = $2, imagem = $3, ativo = $4 WHERE id = $5",
-      [nome, preco_venda, imagem, (ativo === true || ativo === 1 || ativo === "true") ? 1 : 0, id]
+      "UPDATE combos SET nome = $1, preco_venda = $2, imagem = $3, ativo = $4, estoque = $5 WHERE id = $6",
+      [nome, preco_venda, imagem, (ativo === true || ativo === 1 || ativo === "true") ? 1 : 0, qtdNova, id]
     );
-    
+
     // Remove itens antigos e insere os novos
     await client.query("DELETE FROM combo_itens WHERE combo_id = $1", [id]);
     
