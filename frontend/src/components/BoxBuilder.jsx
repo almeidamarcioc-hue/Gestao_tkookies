@@ -260,6 +260,9 @@ export default function BoxBuilder({ products = [], addToCart, isStoreOpen, kitD
                         <Typography variant="caption" color={terracotta} fontWeight="bold">
                           R$ {Number(prod.preco_venda).toFixed(2)}
                         </Typography>
+                        <Typography variant="caption" display="block" sx={{ color: Number(prod.estoque) <= 3 ? '#E65100' : 'text.secondary', fontSize: '0.65rem', mt: 0.3 }}>
+                          {Number(prod.estoque)} disponíve{Number(prod.estoque) === 1 ? 'l' : 'is'}
+                        </Typography>
                         <Box display="flex" alignItems="center" justifyContent="center" gap={0.5} mt={1}>
                           <IconButton size="small" onClick={() => handleRemove(prod)} disabled={qty === 0}
                             sx={{ p: 0.5, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 2, '&:disabled': { opacity: 0.3 } }}>
