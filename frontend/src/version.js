@@ -1,8 +1,18 @@
 // Versão do sistema — atualizar a cada release antes do merge para main
-export const APP_VERSION = "1.00.03";
+export const APP_VERSION = "1.00.04";
 
 // Histórico de versões
 export const CHANGELOG = [
+  {
+    version: "1.00.04",
+    data: "2026-04-18",
+    descricao: "Melhorias na home e login mobile",
+    itens: [
+      "Home: remove opção 'Todos' da seção Presenteie com Amor",
+      "Mobile: login abre diretamente ao tocar em Perfil ou Favoritos",
+      "Mobile: drawer de login com z-index e largura responsiva corrigidos",
+    ],
+  },
   {
     version: "1.00.03",
     data: "2026-04-18",

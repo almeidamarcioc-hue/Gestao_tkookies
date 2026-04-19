@@ -787,9 +787,14 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
               );
               if (ocasioesComProduto.length === 0) return null;
 
-              const filtrados = ocasiaoFiltro === "Todos"
-                ? prodsComOcasiao
-                : prodsComOcasiao.filter(p => p.ocasiao.split(",").includes(ocasiaoFiltro));
+              // Se nenhuma ocasião válida estiver selecionada, usa a primeira por padrão
+              const filtroEfetivo = ocasioesComProduto.some(o => o.value === ocasiaoFiltro)
+                ? ocasiaoFiltro
+                : ocasioesComProduto[0]?.value;
+
+              const filtrados = filtroEfetivo
+                ? prodsComOcasiao.filter(p => p.ocasiao.split(",").includes(filtroEfetivo))
+                : prodsComOcasiao;
 
               return (
                 <Box sx={{ mb: 8 }}>
@@ -798,16 +803,11 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                   </Typography>
                   <Box sx={{ bgcolor: caramel, height: 3, width: 48, borderRadius: 2, mb: 3 }} />
                   <Box display="flex" gap={1} flexWrap="wrap" mb={3}>
-                    <Chip label="Todos" onClick={() => setOcasiaoFiltro("Todos")}
-                      sx={{ fontWeight: 'bold', cursor: 'pointer',
-                        bgcolor: ocasiaoFiltro === "Todos" ? terracotta : 'rgba(212,88,10,0.1)',
-                        color: ocasiaoFiltro === "Todos" ? 'white' : terracotta,
-                        '&:hover': { bgcolor: terracotta, color: 'white' } }} />
                     {ocasioesComProduto.map(o => (
                       <Chip key={o.value} label={o.label} onClick={() => setOcasiaoFiltro(o.value)}
                         sx={{ fontWeight: 'bold', cursor: 'pointer',
-                          bgcolor: ocasiaoFiltro === o.value ? terracotta : 'rgba(212,88,10,0.1)',
-                          color: ocasiaoFiltro === o.value ? 'white' : terracotta,
+                          bgcolor: filtroEfetivo === o.value ? terracotta : 'rgba(212,88,10,0.1)',
+                          color: filtroEfetivo === o.value ? 'white' : terracotta,
                           '&:hover': { bgcolor: terracotta, color: 'white' } }} />
                     ))}
                   </Box>

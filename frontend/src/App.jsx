@@ -757,9 +757,16 @@ export default function App() {
         anchor="right"
         open={clientLoginOpen}
         onClose={() => setClientLoginOpen(false)}
-        sx={{ '& .MuiDrawer-paper': { backgroundColor: "#FFFAF5", borderLeft: "1px solid rgba(44,24,16,0.08)" } }}
+        sx={{
+          zIndex: 1400,
+          '& .MuiDrawer-paper': {
+            backgroundColor: "#FFFAF5",
+            borderLeft: "1px solid rgba(44,24,16,0.08)",
+            width: { xs: '88vw', sm: 320 },
+          }
+        }}
       >
-        <Box sx={{ width: 300, p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Typography variant="h5" fontWeight="bold" sx={{ color: '#2C1810', textAlign: 'center' }}>
             {loginMode === 'reseller' ? 'Área do Parceiro' : 'Área do Cliente'}
           </Typography>
@@ -789,9 +796,16 @@ export default function App() {
         anchor="right"
         open={adminLoginOpen}
         onClose={() => setAdminLoginOpen(false)}
-        sx={{ '& .MuiDrawer-paper': { backgroundColor: "#FFFAF5", borderLeft: "1px solid rgba(44,24,16,0.08)" } }}
+        sx={{
+          zIndex: 1400,
+          '& .MuiDrawer-paper': {
+            backgroundColor: "#FFFAF5",
+            borderLeft: "1px solid rgba(44,24,16,0.08)",
+            width: { xs: '88vw', sm: 320 },
+          }
+        }}
       >
-        <Box sx={{ width: 300, p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Typography variant="h5" fontWeight="bold" sx={{ color: '#2C1810', textAlign: 'center' }}>
             Acesso Administrativo
           </Typography>
@@ -807,8 +821,12 @@ export default function App() {
           <BottomNavigation value={pathname} sx={{ bgcolor: '#FFFAF5', borderTop: '1px solid rgba(44,24,16,0.10)' }}>
             <BottomNavigationAction label="Início" value="/" icon={<HomeIcon />} component={Link} to="/" sx={{ color: '#8D6E63', '&.Mui-selected': { color: '#D4580A' } }} />
             <BottomNavigationAction label="Cardápio" value="#cardapio" icon={<MenuBook />} onClick={() => { navigate('/'); setTimeout(() => { document.getElementById('cardapio')?.scrollIntoView({ behavior: 'smooth' }); }, 150); }} sx={{ color: '#8D6E63', '&.Mui-selected': { color: '#D4580A' } }} />
-            <BottomNavigationAction label="Favoritos" value="/meus-favoritos" icon={<Favorite />} component={Link} to="/meus-favoritos" sx={{ color: '#8D6E63', '&.Mui-selected': { color: '#D4580A' } }} />
-            <BottomNavigationAction label="Perfil" value="/perfil" icon={<AccountCircle />} component={Link} to="/perfil" sx={{ color: '#8D6E63', '&.Mui-selected': { color: '#D4580A' } }} />
+            <BottomNavigationAction label="Favoritos" value="/meus-favoritos" icon={<Favorite />}
+              onClick={() => clientUser ? navigate('/meus-favoritos') : handleOpenLogin('client')}
+              sx={{ color: '#8D6E63', '&.Mui-selected': { color: '#D4580A' } }} />
+            <BottomNavigationAction label="Perfil" value="/perfil" icon={<AccountCircle />}
+              onClick={() => clientUser ? navigate('/perfil') : handleOpenLogin('client')}
+              sx={{ color: '#8D6E63', '&.Mui-selected': { color: '#D4580A' } }} />
           </BottomNavigation>
         </Box>
       )}
