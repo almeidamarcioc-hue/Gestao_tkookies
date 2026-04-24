@@ -166,13 +166,7 @@ router.post("/", async (req, res) => {
       [nome, preco_venda, imagem, (ativo === true || ativo === 1 || ativo === "true") ? 1 : 0, qtdProduzir]
     );
 
-    // Compatibilidade para pegar o ID gerado
-    let comboId;
-    if (resCombo.rows && resCombo.rows.length > 0) {
-        comboId = resCombo.rows[0].id;
-    } else if (resCombo.insertId) {
-        comboId = resCombo.insertId;
-    }
+    const comboId = resCombo.rows[0].id;
 
     // Insere os itens
     if (itens && itens.length > 0) {
