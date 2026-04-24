@@ -31,15 +31,12 @@ router.get("/", async (req, res) => {
       FROM combos c
       LEFT JOIN combo_itens ci ON c.id = ci.combo_id
       LEFT JOIN produtos p ON ci.produto_id = p.id
-      LEFT JOIN combo_ingredientes cing ON c.id = cing.combo_id
-      LEFT JOIN ingredientes ing ON cing.ingrediente_id = ing.id
     `;
-    
+
     const params = [];
 
     if (apenas_ativos === 'true') {
-      // Filtra apenas combos ativos (MySQL utiliza 1 para true)
-      query += " WHERE c.ativo = 1";
+      query += " WHERE c.ativo = TRUE";
     }
     
     query += " ORDER BY c.nome ASC";
