@@ -1,4 +1,5 @@
 // Versão do sistema — atualizar a cada release antes do merge para main
+
 export const APP_VERSION = "1.00.04";
 
 // Histórico de versões
