@@ -28,7 +28,7 @@
     "express-rate-limit": "^8.3.2",
     "groq-sdk": "^1.1.2",
     "jsonwebtoken": "^9.0.3",
-    "pg": "^8.13.3"
+    "pg": "^8.20.0"
   },
   "optionalDependencies": {
     "escpos": "^3.0.0-alpha.6",
