@@ -25,9 +25,7 @@ router.get("/", async (req, res) => {
     let query = `
       SELECT c.*,
              ci.id as item_id, ci.quantidade as item_quantidade,
-             p.id as produto_id, p.nome as produto_nome, p.preco_venda as produto_preco,
-             cing.id as cing_id, cing.ingrediente_id, cing.quantidade as cing_quantidade, cing.preco_venda as cing_preco,
-             ing.nome as ingrediente_nome
+             p.id as produto_id, p.nome as produto_nome, p.preco_venda as produto_preco
       FROM combos c
       LEFT JOIN combo_itens ci ON c.id = ci.combo_id
       LEFT JOIN produtos p ON ci.produto_id = p.id
