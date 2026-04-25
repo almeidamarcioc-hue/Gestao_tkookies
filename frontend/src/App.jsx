@@ -141,6 +141,7 @@ export default function App() {
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
   const [scrolled, setScrolled] = useState(false);
+  const [siteConfig, setSiteConfig] = useState({ opening_hours: '', whatsapp_number: '5555997312557' });
 
   // ── Temporizador do carrinho (30 min) ──────────────────────────────────────
   const CART_TIMEOUT_MS = 30 * 60 * 1000;
@@ -251,6 +252,27 @@ export default function App() {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  // Config fetch para slim bar
+  useEffect(() => {
+    const cached = sessionStorage.getItem('_cfg');
+    if (cached) { try { setSiteConfig(JSON.parse(cached)); } catch {} }
+    else {
+      api.get('/configuracoes').then(res => {
+        if (res.data) { sessionStorage.setItem('_cfg', JSON.stringify(res.data)); setSiteConfig(res.data); }
+      }).catch(() => {});
+    }
+  }, []);
+
+  const getTodayLabel = (cfg) => {
+    if (!cfg.opening_hours) return 'Entregas 14–17h';
+    try {
+      const sch = typeof cfg.opening_hours === 'string' ? JSON.parse(cfg.opening_hours) : cfg.opening_hours;
+      const today = sch.find(s => Number(s.day) === new Date().getDay());
+      if (!today || !today.open) return 'Fechado hoje · Entregas 14–17h';
+      return `Aberto hoje das ${today.open_time} às ${today.close_time} · Entregas 14–17h`;
+    } catch { return 'Entregas 14–17h'; }
+  };
 
   const openCad = Boolean(anchorCad);
   const openCons = Boolean(anchorCons);
@@ -483,6 +505,26 @@ export default function App() {
             ⚠️&nbsp; AMBIENTE DE HOMOLOGAÇÃO &nbsp;—&nbsp; Não utilizar dados reais &nbsp;⚠️
           </Box>
         )}
+
+        {/* ── Slim bar — status da loja ──────────────────────────── */}
+        <Box sx={{
+          py: '5px', px: { xs: 2, md: 5 },
+          borderBottom: isHome && !scrolled ? '1px solid rgba(251,246,236,.12)' : '1px solid var(--rule)',
+          display: 'flex', alignItems: 'center',
+        }}>
+          <Typography sx={{
+            fontFamily: '"DM Mono", monospace',
+            fontSize: '11px',
+            fontWeight: 600,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: isHome && !scrolled ? 'rgba(251,246,236,.75)' : 'var(--ink)',
+            transition: 'color .4s',
+          }}>
+            {getTodayLabel(siteConfig)}
+          </Typography>
+        </Box>
+
         <Toolbar sx={{ px: { xs: 2, md: 5 }, minHeight: '68px !important' }}>
           {/* Hamburguer mobile (apenas admin) */}
           <IconButton
@@ -497,18 +539,18 @@ export default function App() {
 
           {/* Logo */}
           <Box component={Link} to="/" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, textDecoration: 'none', flexGrow: 1 }}>
-            {/* TK em círculo escuro */}
+            {/* TK em círculo */}
             <Box sx={{
-              width: 38, height: 38, borderRadius: '50%',
-              bgcolor: isHome && !scrolled ? 'rgba(251,246,236,.15)' : '#1A0F08',
-              border: isHome && !scrolled ? '1px solid rgba(251,246,236,.35)' : 'none',
+              width: 42, height: 42, borderRadius: '50%',
+              bgcolor: '#1A0F08',
+              border: '2px solid #C8843A',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexShrink: 0,
             }}>
               <Typography sx={{
                 fontFamily: '"Fraunces", Georgia, serif',
-                fontWeight: 400,
-                fontSize: '14px',
+                fontWeight: 700,
+                fontSize: '15px',
                 color: '#FBF6EC',
                 letterSpacing: '-0.02em',
                 lineHeight: 1,
@@ -517,21 +559,21 @@ export default function App() {
             <Box>
               <Typography sx={{
                 fontFamily: '"Fraunces", Georgia, serif',
-                fontWeight: 400,
+                fontWeight: 700,
                 fontSize: '22px',
                 color: isHome && !scrolled ? '#FBF6EC' : '#1A0F08',
-                letterSpacing: '-0.03em',
-                lineHeight: 1,
+                letterSpacing: '-0.02em',
+                lineHeight: 1.1,
               }}>TKookies</Typography>
+              <Box sx={{ width: '100%', height: '1px', bgcolor: '#C8843A', my: '3px' }} />
               <Typography sx={{
                 fontFamily: '"DM Mono", monospace',
-                fontSize: '9px',
-                letterSpacing: '0.15em',
+                fontSize: '8px',
+                letterSpacing: '0.22em',
                 textTransform: 'uppercase',
                 color: '#C8843A',
                 lineHeight: 1,
-                mt: '2px',
-              }}>ARTESANAL · EST. 2021</Typography>
+              }}>ARTESANAL</Typography>
             </Box>
           </Box>
 
@@ -656,33 +698,31 @@ export default function App() {
                     <Button
                       onClick={() => handleOpenLogin('client')}
                       sx={{
-                        fontSize: '13px', fontWeight: 500, ml: 1,
+                        fontSize: '12px', fontWeight: 500, ml: 1,
                         color: isHome && !scrolled ? 'rgba(251,246,236,.85)' : 'rgba(26,15,8,.75)',
                         border: '1px solid',
                         borderColor: isHome && !scrolled ? 'rgba(251,246,236,.35)' : 'rgba(26,15,8,.2)',
-                        borderRadius: 999, px: 2.5, py: 0.6,
+                        borderRadius: 999, px: 2, py: 0.5,
                         '&:hover': { bgcolor: isHome && !scrolled ? 'rgba(251,246,236,.08)' : 'rgba(26,15,8,.05)', borderColor: isHome && !scrolled ? 'rgba(251,246,236,.6)' : 'rgba(26,15,8,.4)' },
                         transition: 'all .3s',
                       }}
                     >
-                      Entrar
+                      Área do Cliente
                     </Button>
-                    <Box
-                      component={Link}
-                      to="/carrinho"
+                    <Button
+                      onClick={() => handleOpenLogin('reseller')}
                       sx={{
-                        display: 'flex', alignItems: 'center', gap: 0.75,
-                        bgcolor: isHome && !scrolled ? 'var(--terracotta)' : '#1A0F08',
+                        fontSize: '12px', fontWeight: 500, ml: 0.75,
+                        bgcolor: isHome && !scrolled ? 'rgba(251,246,236,.15)' : '#1A0F08',
                         color: '#FBF6EC',
-                        borderRadius: 999, px: 2.5, py: 0.75,
-                        textDecoration: 'none', ml: 0.75,
-                        fontSize: '13px', fontWeight: 500,
+                        border: isHome && !scrolled ? '1px solid rgba(251,246,236,.3)' : '1px solid transparent',
+                        borderRadius: 999, px: 2, py: 0.5,
+                        '&:hover': { opacity: 0.85 },
                         transition: 'all .3s',
-                        '&:hover': { opacity: 0.88 },
                       }}
                     >
-                      Fazer Pedido
-                    </Box>
+                      Área do Parceiro
+                    </Button>
                   </>
                 )}
               </>

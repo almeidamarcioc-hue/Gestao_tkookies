@@ -55,6 +55,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
   const filterBg = useTransform(scrollY, [0, 300], ["brightness(0.6) blur(0px)", "brightness(0.6) blur(10px)"]); // Efeito Blur progressivo
   const textOpacity = useTransform(scrollY, [0, 300], [1, 0]); // Efeito Fade Out no texto
   const buttonOpacity = useTransform(scrollY, [200, 500], [1, 0]); // Efeito Fade Out no botão (mais lento que o texto)
+  const heroImgBlur = useTransform(scrollY, [0, 450], ['blur(0px)', 'blur(14px)']);
 
   const [config, setConfig] = useState({
     home_title: "TKookies",
@@ -498,14 +499,19 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
         {/* Imagem de fundo (configurada em Configurações) */}
         {config.home_bg && (
           <Box
-            component="img"
+            component={motion.img}
             src={config.home_bg}
             alt=""
+            initial={{ scale: 1.07 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 1.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+            style={{ filter: heroImgBlur }}
             sx={{
               position: 'absolute', inset: 0,
               width: '100%', height: '100%',
               objectFit: 'cover',
               objectPosition: 'center',
+              transformOrigin: 'center center',
             }}
           />
         )}
@@ -561,7 +567,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
       </Box>
 
       {/* ── MARQUEE ────────────────────────────────────────────────── */}
-      <Box sx={{ bgcolor: 'var(--ink)', py: '14px', overflow: 'hidden', position: 'relative', mt: 0 }}>
+      <Box sx={{ bgcolor: 'var(--ink)', py: '7px', overflow: 'hidden', position: 'relative', mt: 0 }}>
         <Box sx={{
           display: 'flex',
           alignItems: 'center',
@@ -597,26 +603,6 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
               ))}
             </Box>
           ))}
-        </Box>
-      </Box>
-
-      {/* ── STATUS DA LOJA (slim bar) ─────────────────────────────── */}
-      <Box sx={{ borderBottom: '1px solid var(--rule)', py: 1, px: { xs: 3, md: '6vw' } }}>
-        <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
-          <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '13px', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink)' }}>
-            {getTodayScheduleLabel(config)} · Entregas 14–17h
-          </Typography>
-          {!isStoreOpen && (
-            <Button
-              size="small"
-              href={`https://wa.me/${config.whatsapp_number || '5555997312557'}?text=${encodeURIComponent('Olá! Gostaria de fazer um pedido na TKookies')}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              sx={{ color: '#25D366', fontFamily: '"DM Mono", monospace', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', border: '1px solid #25D366', borderRadius: 999, py: 0.3, px: 1.5 }}
-            >
-              Pedir pelo WhatsApp
-            </Button>
-          )}
         </Box>
       </Box>
 
