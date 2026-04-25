@@ -139,6 +139,7 @@ export default function App() {
   const [loginMode, setLoginMode] = useState('client'); // 'client' | 'reseller'
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [scrolled, setScrolled] = useState(false);
 
   // ── Temporizador do carrinho (30 min) ──────────────────────────────────────
   const CART_TIMEOUT_MS = 30 * 60 * 1000;
@@ -241,6 +242,13 @@ export default function App() {
     };
     window.addEventListener('session-expired', handleSessionExpired);
     return () => window.removeEventListener('session-expired', handleSessionExpired);
+  }, []);
+
+  // Scroll detector para o header
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   const openCad = Boolean(anchorCad);
@@ -447,7 +455,18 @@ export default function App() {
       ) : (
         <>
       <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <AppBar position="sticky" sx={{ top: 0, zIndex: 1100 }}>
+      <AppBar
+        position="sticky"
+        sx={{
+          top: 0,
+          zIndex: 1100,
+          backgroundColor: scrolled ? 'rgba(251,246,236,.92)' : 'transparent',
+          backdropFilter: scrolled ? 'blur(12px)' : 'none',
+          boxShadow: scrolled ? '0 1px 0 rgba(42,26,14,.10)' : 'none',
+          borderBottom: scrolled ? '1px solid var(--rule)' : '1px solid transparent',
+          transition: 'background-color .4s cubic-bezier(.2,.8,.2,1), box-shadow .4s cubic-bezier(.2,.8,.2,1)',
+        }}
+      >
         {import.meta.env.VITE_ENVIRONMENT === 'homologacao' && (
           <Box sx={{
             bgcolor: '#B71C1C',
@@ -463,26 +482,69 @@ export default function App() {
             ⚠️&nbsp; AMBIENTE DE HOMOLOGAÇÃO &nbsp;—&nbsp; Não utilizar dados reais &nbsp;⚠️
           </Box>
         )}
-        <Toolbar>
+        <Toolbar sx={{ px: { xs: 2, md: 5 }, minHeight: '68px !important' }}>
+          {/* Hamburguer mobile (apenas admin) */}
           <IconButton
             color="inherit"
             aria-label="open drawer"
             edge="start"
             onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { xs: isLoggedIn ? 'flex' : 'none', md: 'none' } }}
+            sx={{ mr: 1, display: { xs: isLoggedIn ? 'flex' : 'none', md: 'none' } }}
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h5" component={Link} to="/" sx={{ flexGrow: 1, fontWeight: '900', textDecoration: 'none', color: 'primary.main', letterSpacing: '-0.5px' }}>
-            TKookies
-          </Typography>
-          <Box display={{ xs: 'none', md: 'flex' }} gap={1}>
-            <Button color="inherit" component={Link} to="/">Início</Button>
-            
+
+          {/* Logo */}
+          <Box component={Link} to="/" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, textDecoration: 'none', flexGrow: 1 }}>
+            {/* TK em círculo escuro */}
+            <Box sx={{
+              width: 38, height: 38, borderRadius: '50%',
+              bgcolor: '#1A0F08',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+            }}>
+              <Typography sx={{
+                fontFamily: '"Fraunces", Georgia, serif',
+                fontWeight: 400,
+                fontSize: '14px',
+                color: '#FBF6EC',
+                letterSpacing: '-0.02em',
+                lineHeight: 1,
+              }}>TK</Typography>
+            </Box>
+            <Box>
+              <Typography sx={{
+                fontFamily: '"Fraunces", Georgia, serif',
+                fontWeight: 400,
+                fontSize: '22px',
+                color: '#1A0F08',
+                letterSpacing: '-0.03em',
+                lineHeight: 1,
+              }}>TKookies</Typography>
+              <Typography sx={{
+                fontFamily: '"DM Mono", monospace',
+                fontSize: '9px',
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase',
+                color: '#C8843A',
+                lineHeight: 1,
+                mt: '2px',
+              }}>ARTESANAL · EST. 2021</Typography>
+            </Box>
+          </Box>
+
+          {/* Nav Desktop */}
+          <Box display={{ xs: 'none', md: 'flex' }} alignItems="center" gap={0.5}>
+            <Button
+              color="inherit"
+              component={Link}
+              to="/"
+              sx={{ fontSize: '13px', fontWeight: 500, color: 'rgba(26,15,8,.7)', '&:hover': { color: '#1A0F08', bgcolor: 'transparent' } }}
+            >Início</Button>
+
             {isLoggedIn ? (
               <>
-                {/* Menu Cadastros */}
-                <Button color="inherit" onClick={(e) => setAnchorCad(e.currentTarget)}>CADASTROS</Button>
+                <Button color="inherit" onClick={(e) => setAnchorCad(e.currentTarget)} sx={{ fontSize: '13px', fontWeight: 500 }}>Cadastros</Button>
                 <Menu anchorEl={anchorCad} open={openCad} onClose={handleClose}>
                   <MenuItem component={Link} to="/produtos/novo" onClick={handleClose}>Novo Produto</MenuItem>
                   <MenuItem component={Link} to="/ingredientes/novo" onClick={handleClose}>Novo Ingrediente</MenuItem>
@@ -491,8 +553,7 @@ export default function App() {
                   <MenuItem component={Link} to="/revendedores" onClick={handleClose}>Novo Revendedor</MenuItem>
                 </Menu>
 
-                {/* Menu Consultas */}
-                <Button color="inherit" onClick={(e) => setAnchorCons(e.currentTarget)}>CONSULTAS</Button>
+                <Button color="inherit" onClick={(e) => setAnchorCons(e.currentTarget)} sx={{ fontSize: '13px', fontWeight: 500 }}>Consultas</Button>
                 <Menu anchorEl={anchorCons} open={openCons} onClose={handleClose}>
                   <MenuItem component={Link} to="/produtos" onClick={handleClose}>Produtos</MenuItem>
                   <MenuItem component={Link} to="/ingredientes" onClick={handleClose}>Ingredientes</MenuItem>
@@ -503,19 +564,18 @@ export default function App() {
                   <MenuItem component={Link} to="/status" onClick={handleClose}>Status do Sistema</MenuItem>
                 </Menu>
 
-                <Button color="inherit" component={Link} to="/production">PRODUÇÃO</Button>
-                <Button color="inherit" component={Link} to="/financeiro">FINANCEIRO</Button>
-                <Button color="inherit" component={Link} to="/configuracoes">Configurações</Button>
-                {/* Menu Pedidos */}
-                <Button color="inherit" onClick={(e) => setAnchorPed(e.currentTarget)}>PEDIDOS</Button>
+                <Button color="inherit" component={Link} to="/production" sx={{ fontSize: '13px', fontWeight: 500 }}>Produção</Button>
+                <Button color="inherit" component={Link} to="/financeiro" sx={{ fontSize: '13px', fontWeight: 500 }}>Financeiro</Button>
+                <Button color="inherit" component={Link} to="/configuracoes" sx={{ fontSize: '13px', fontWeight: 500 }}>Config</Button>
+
+                <Button color="inherit" onClick={(e) => setAnchorPed(e.currentTarget)} sx={{ fontSize: '13px', fontWeight: 500 }}>Pedidos</Button>
                 <Menu anchorEl={anchorPed} open={openPed} onClose={handleClose}>
                   <MenuItem component={Link} to="/pedidos/novo" onClick={handleClose}>Novo Pedido</MenuItem>
                   <MenuItem component={Link} to="/pedidos" onClick={handleClose}>Consultar Pedidos</MenuItem>
                   <MenuItem component={Link} to="/painel-cozinha" onClick={handleClose}>Painel de Cozinha (KDS)</MenuItem>
                 </Menu>
 
-                {/* Menu Relatórios */}
-                <Button color="inherit" onClick={(e) => setAnchorRel(e.currentTarget)}>RELATÓRIOS</Button>
+                <Button color="inherit" onClick={(e) => setAnchorRel(e.currentTarget)} sx={{ fontSize: '13px', fontWeight: 500 }}>Relatórios</Button>
                 <Menu anchorEl={anchorRel} open={openRel} onClose={handleClose}>
                   <MenuItem component={Link} to="/relatorios/dizimo" onClick={handleClose}>Dízimo</MenuItem>
                   <MenuItem component={Link} to="/relatorios/top-produtos" onClick={handleClose}>Sabores mais Amados</MenuItem>
@@ -526,14 +586,14 @@ export default function App() {
                   <MenuItem component={Link} to="/analytics" onClick={handleClose}>Google Analytics</MenuItem>
                 </Menu>
 
-                <Button color="inherit" onClick={handleLogout}>SAIR</Button>
+                <Button color="inherit" onClick={handleLogout} sx={{ fontSize: '13px', fontWeight: 500, color: 'error.main' }}>Sair</Button>
               </>
             ) : (
               <>
                 {clientUser ? (
                   <>
-                    <Button color="inherit" startIcon={<AccountCircle />} onClick={(e) => setAnchorClient(e.currentTarget)}>
-                      Olá, {clientUser.nome.split(' ')[0]} {clientUser.is_revendedor ? '(Parceiro)' : ''}
+                    <Button color="inherit" startIcon={<AccountCircle />} onClick={(e) => setAnchorClient(e.currentTarget)} sx={{ fontSize: '13px', fontWeight: 500 }}>
+                      {clientUser.nome.split(' ')[0]}{clientUser.is_revendedor ? ' (Parceiro)' : ''}
                     </Button>
                     <Menu anchorEl={anchorClient} open={openClient} onClose={handleClose}>
                       <MenuItem component={Link} to="/perfil" onClick={handleClose}>Meu Perfil</MenuItem>
@@ -544,22 +604,45 @@ export default function App() {
                   </>
                 ) : (
                   <>
-                    <Button variant="contained" onClick={() => handleOpenLogin('client')} sx={{ borderRadius: 50 }}>
+                    <Button variant="contained" onClick={() => handleOpenLogin('client')} sx={{ fontSize: '13px' }}>
                       Área do Cliente
                     </Button>
-                    <Button variant="outlined" onClick={() => handleOpenLogin('reseller')} sx={{ borderRadius: 50, borderColor: '#D4580A', color: '#D4580A' }}>
+                    <Button variant="outlined" onClick={() => handleOpenLogin('reseller')} sx={{ fontSize: '13px', borderColor: '#C8531B', color: '#C8531B' }}>
                       Área do Parceiro
                     </Button>
                   </>
                 )}
               </>
             )}
-            
-            {/* Ícone do Carrinho (Sempre visível ou apenas para clientes) */}
+
+            {/* Sacola — pill escuro com badge terracotta */}
             {!isLoggedIn && (
-              <IconButton color="inherit" component={Link} to="/carrinho">
-                <Badge badgeContent={cart.reduce((acc, item) => acc + item.quantidade, 0)} sx={{ '& .MuiBadge-badge': { bgcolor: '#D4580A', color: 'white' } }}><ShoppingCart /></Badge>
-              </IconButton>
+              <Box
+                component={Link}
+                to="/carrinho"
+                sx={{
+                  display: 'flex', alignItems: 'center', gap: 0.75,
+                  bgcolor: '#1A0F08', color: '#FBF6EC',
+                  borderRadius: 999, px: 2, py: 0.75,
+                  textDecoration: 'none', ml: 0.5,
+                  fontSize: '13px', fontWeight: 500,
+                  transition: 'opacity .3s',
+                  '&:hover': { opacity: 0.85 },
+                }}
+              >
+                <ShoppingCart sx={{ fontSize: 16 }} />
+                {cart.reduce((acc, item) => acc + item.quantidade, 0) > 0 && (
+                  <Box sx={{
+                    bgcolor: '#C8531B', color: '#FBF6EC',
+                    borderRadius: 999, minWidth: 18, height: 18,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '11px', fontWeight: 700, px: 0.5,
+                  }}>
+                    {cart.reduce((acc, item) => acc + item.quantidade, 0)}
+                  </Box>
+                )}
+                Sacola
+              </Box>
             )}
           </Box>
         </Toolbar>
@@ -573,25 +656,27 @@ export default function App() {
         ModalProps={{ keepMounted: true }}
         sx={{
           display: { xs: 'block', md: 'none' },
-          '& .MuiDrawer-paper': { 
-            boxSizing: 'border-box', 
-            width: 250,
-            backgroundColor: "rgba(255, 255, 255, 0.8)", // Fundo branco translúcido
-            backdropFilter: "blur(12px)", // Efeito de vidro (Glassmorphism)
-            borderRight: "1px solid rgba(255, 255, 255, 0.5)",
-            boxShadow: "4px 0 20px rgba(78, 52, 46, 0.1)" // Sombra marrom suave
+          '& .MuiDrawer-paper': {
+            boxSizing: 'border-box',
+            width: '80vw',
+            maxWidth: 320,
+            backgroundColor: 'rgba(251,246,236,.95)',
+            backdropFilter: 'blur(16px)',
+            borderRight: '1px solid rgba(42,26,14,.14)',
+            boxShadow: '4px 0 32px rgba(26,15,8,.12)',
           },
         }}
       >
-        <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
-          <Typography variant="h6" sx={{ my: 2, fontWeight: '900', color: 'primary.main' }}>
-            <Box component="span" sx={{ 
-              background: 'linear-gradient(135deg, #4E342E 0%, #8D6E63 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              letterSpacing: '-0.5px'
-            }}>TKookies</Box>
-          </Typography>
+        <Box onClick={handleDrawerToggle} sx={{ textAlign: 'left', px: 3 }}>
+          <Box sx={{ py: 2.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box sx={{ width: 32, height: 32, borderRadius: '50%', bgcolor: '#1A0F08', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Typography sx={{ fontFamily: '"Fraunces", serif', fontSize: '12px', color: '#FBF6EC' }}>TK</Typography>
+            </Box>
+            <Box>
+              <Typography sx={{ fontFamily: '"Fraunces", serif', fontSize: '18px', color: '#1A0F08', letterSpacing: '-0.02em', lineHeight: 1 }}>TKookies</Typography>
+              <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '8px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#C8843A' }}>ARTESANAL · EST. 2021</Typography>
+            </Box>
+          </Box>
           <Divider />
           <List>
             <ListItem disablePadding><ListItemButton component={Link} to="/" onClick={handleDrawerToggle}><ListItemText primary="HOME" /></ListItemButton></ListItem>
