@@ -14,7 +14,7 @@ const router = Router();
 async function ensureTableExists() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS configuracoes (
-      id INT AUTO_INCREMENT PRIMARY KEY,
+      id SERIAL PRIMARY KEY,
       chave VARCHAR(50) NOT NULL UNIQUE,
       valor TEXT
     )
@@ -50,8 +50,8 @@ router.get("/", async (req, res) => {
     });
     res.json(config);
   } catch (error) {
-    // Se a tabela não existir (ER_NO_SUCH_TABLE ou mensagem de erro), tenta criar
-    if (error.code === 'ER_NO_SUCH_TABLE' || error.code === '1146' || (error.message && error.message.includes("doesn't exist"))) {
+    // Se a tabela não existir, tenta criar
+    if (error.code === '42P01' || (error.message && error.message.includes('does not exist'))) {
       await ensureTableExists();
       return res.json({});
     }
@@ -71,8 +71,8 @@ router.post("/", authenticateToken, requireRole('admin'), async (req, res) => {
     for (const [key, value] of Object.entries(configs)) {
       // Upsert (Insert or Update) - Sintaxe compatível com MySQL/TiDB (via wrapper)
       await client.query(
-        `INSERT INTO configuracoes (chave, valor) VALUES ($1, $2) 
-         ON DUPLICATE KEY UPDATE valor = VALUES(valor)`,
+        `INSERT INTO configuracoes (chave, valor) VALUES ($1, $2)
+         ON CONFLICT (chave) DO UPDATE SET valor = EXCLUDED.valor`,
         [key, value]
       );
     }
@@ -81,9 +81,8 @@ router.post("/", authenticateToken, requireRole('admin'), async (req, res) => {
     res.json({ message: "Configurações salvas!" });
   } catch (error) {
     // Tenta criar tabela se o erro for de falta de tabela
-    if (error.code === 'ER_NO_SUCH_TABLE' || (error.message && error.message.includes("doesn't exist"))) {
+    if (error.code === '42P01' || (error.message && error.message.includes('does not exist'))) {
       await ensureTableExists();
-      // Após criar, você pode sugerir ao usuário tentar salvar novamente
     }
     if (client) {
       try { await client.query("ROLLBACK"); } catch (rbErr) {}
