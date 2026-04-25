@@ -31,15 +31,12 @@ router.get("/", async (req, res) => {
       FROM combos c
       LEFT JOIN combo_itens ci ON c.id = ci.combo_id
       LEFT JOIN produtos p ON ci.produto_id = p.id
-      LEFT JOIN combo_ingredientes cing ON c.id = cing.combo_id
-      LEFT JOIN ingredientes ing ON cing.ingrediente_id = ing.id
     `;
-    
+
     const params = [];
 
     if (apenas_ativos === 'true') {
-      // Filtra apenas combos ativos (MySQL utiliza 1 para true)
-      query += " WHERE c.ativo = 1";
+      query += " WHERE c.ativo = TRUE";
     }
     
     query += " ORDER BY c.nome ASC";
@@ -166,13 +163,7 @@ router.post("/", async (req, res) => {
       [nome, preco_venda, imagem, (ativo === true || ativo === 1 || ativo === "true") ? 1 : 0, qtdProduzir]
     );
 
-    // Compatibilidade para pegar o ID gerado
-    let comboId;
-    if (resCombo.rows && resCombo.rows.length > 0) {
-        comboId = resCombo.rows[0].id;
-    } else if (resCombo.insertId) {
-        comboId = resCombo.insertId;
-    }
+    const comboId = resCombo.rows[0].id;
 
     // Insere os itens
     if (itens && itens.length > 0) {
