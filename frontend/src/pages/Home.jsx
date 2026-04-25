@@ -1266,8 +1266,115 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
         </Box>
       </Box>
 
-      {/* SEÇÃO REVENDEDOR (B2B) - Com zIndex para garantir visibilidade */}
-      <Box id="revendedor" sx={{ position: 'relative', zIndex: 2, mt: 8 }}>
+      {/* ── FOOTER ──────────────────────────────────────────────── */}
+      <Box sx={{ mt: 10, mx: { xs: -3, md: '-6vw' }, px: { xs: 3, md: '6vw' }, pt: { xs: 8, md: 12 }, pb: { xs: 6, md: 8 }, bgcolor: 'var(--ink)', position: 'relative', overflow: 'hidden' }}>
+        {/* Wordmark gigante no fundo */}
+        <Typography sx={{
+          position: 'absolute',
+          bottom: -24,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          fontFamily: '"Fraunces", serif',
+          fontWeight: 300,
+          fontSize: 'clamp(120px, 28vw, 360px)',
+          letterSpacing: '-0.06em',
+          color: 'var(--paper)',
+          opacity: 0.06,
+          whiteSpace: 'nowrap',
+          userSelect: 'none',
+          pointerEvents: 'none',
+          lineHeight: 1,
+        }}>
+          tkookies
+        </Typography>
+
+        {/* Grid de conteúdo */}
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.6fr 1fr 1fr 1fr' }, gap: { xs: 6, md: 4 }, position: 'relative', zIndex: 1 }}>
+          {/* Col 1 — CTA newsletter */}
+          <Box>
+            <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 300, fontSize: { xs: '32px', md: '42px' }, letterSpacing: '-0.04em', color: 'var(--paper)', lineHeight: 1.1, mb: 3 }}>
+              Pede um{' '}
+              <Typography component="span" sx={{ fontFamily: '"Instrument Serif", serif', fontStyle: 'italic', color: 'var(--caramel)', fontSize: 'inherit', letterSpacing: 'inherit' }}>
+                cookie
+              </Typography>
+              {' '}agora?
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+              <Box component="input" placeholder="seu@email.com" sx={{ flex: 1, bgcolor: 'rgba(251,246,236,.08)', border: '1px solid rgba(251,246,236,.2)', borderRadius: '2px', px: 2, py: 1.5, color: 'var(--paper)', fontFamily: 'Inter', fontSize: '14px', outline: 'none', '&::placeholder': { color: 'rgba(251,246,236,.35)' } }} />
+              <Box sx={{ borderRadius: 999, px: 2.5, py: 1.5, bgcolor: 'var(--terracotta)', color: 'var(--paper)', fontFamily: 'Inter', fontSize: '13px', fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', transition: 'all .4s cubic-bezier(.2,.8,.2,1)', '&:hover': { bgcolor: '#A8421A' } }}>
+                Enviar
+              </Box>
+            </Box>
+            <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--paper)', opacity: 0.3 }}>
+              Sem spam. Só cookies.
+            </Typography>
+          </Box>
+
+          {/* Col 2 — Visite */}
+          <Box>
+            <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--caramel)', mb: 2 }}>Visite</Typography>
+            {[
+              { label: 'Cardápio', href: '#cardapio' },
+              { label: 'Combos', href: '#combos-section' },
+              { label: 'Seja Revendedor', href: '#revendedor' },
+              { label: 'Nossa história', to: '/sobre' },
+            ].map((item, i) => (
+              <Box key={i} sx={{ mb: 1 }}>
+                {item.to ? (
+                  <Typography component={Link} to={item.to} sx={{ fontFamily: 'Inter', fontSize: '15px', color: 'var(--paper)', opacity: 0.65, textDecoration: 'none', '&:hover': { opacity: 1 }, transition: 'opacity .3s' }}>
+                    {item.label}
+                  </Typography>
+                ) : (
+                  <Typography component="a" href={item.href} onClick={(e) => { e.preventDefault(); document.querySelector(item.href)?.scrollIntoView({ behavior: 'smooth' }); }} sx={{ fontFamily: 'Inter', fontSize: '15px', color: 'var(--paper)', opacity: 0.65, textDecoration: 'none', cursor: 'pointer', '&:hover': { opacity: 1 }, transition: 'opacity .3s' }}>
+                    {item.label}
+                  </Typography>
+                )}
+              </Box>
+            ))}
+          </Box>
+
+          {/* Col 3 — Horários */}
+          <Box>
+            <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--caramel)', mb: 2 }}>Horários</Typography>
+            <Typography sx={{ fontFamily: 'Inter', fontSize: '15px', color: 'var(--paper)', opacity: 0.65, lineHeight: 1.8 }}>
+              {getTodayScheduleLabel(config)}
+            </Typography>
+            <Typography sx={{ fontFamily: 'Inter', fontSize: '14px', color: 'var(--paper)', opacity: 0.45, mt: 1 }}>
+              Entregas 14h – 17h<br />Apenas delivery
+            </Typography>
+          </Box>
+
+          {/* Col 4 — Acompanhe */}
+          <Box>
+            <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--caramel)', mb: 2 }}>Acompanhe</Typography>
+            {[
+              { icon: <Instagram sx={{ fontSize: 16 }} />, label: config.instagram_handle || '@tkookies_', href: config.instagram_url || 'https://www.instagram.com/tkookies_/' },
+              { icon: <WhatsApp sx={{ fontSize: 16 }} />, label: 'WhatsApp', href: `https://wa.me/${config.whatsapp_number || '5555997312557'}` },
+            ].map((item, i) => (
+              <Box key={i} component="a" href={item.href} target="_blank" rel="noopener noreferrer" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, color: 'var(--paper)', opacity: 0.65, textDecoration: 'none', '&:hover': { opacity: 1 }, transition: 'opacity .3s' }}>
+                {item.icon}
+                <Typography sx={{ fontFamily: 'Inter', fontSize: '15px' }}>{item.label}</Typography>
+              </Box>
+            ))}
+          </Box>
+        </Box>
+
+        {/* Bottom bar */}
+        <Box sx={{ mt: 8, pt: 3, borderTop: '1px solid rgba(251,246,236,.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2, position: 'relative', zIndex: 1 }}>
+          <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--paper)', opacity: 0.3 }}>
+            © 2024 TKookies · Três de Maio, RS
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'var(--terracotta)' }} />
+            <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--paper)', opacity: 0.3 }}>
+              Feito com carinho artesanal
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
+
+      {/* ── REVENDEDOR ──────────────────────────────────────────── */}
+      <Box id="revendedor" sx={{ position: 'relative', zIndex: 2 }}>
         <ResellerCTA />
       </Box>
 
