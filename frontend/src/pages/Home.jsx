@@ -1164,70 +1164,104 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
       })()}
 
 
-      {/* CARROSSEL DE DEPOIMENTOS */}
-      <Box sx={{ mt: 8, mx: { xs: -2, lg: 0 }, bgcolor: espresso, borderRadius: { xs: 0, md: 5 }, py: 6, px: { xs: 2, md: 6 } }}>
-        <Typography variant="h5" fontWeight="900" textAlign="center" sx={{ color: 'white', mb: 4 }}>
-          O que nossos clientes dizem
-        </Typography>
+      {/* ── DIÁRIO (Depoimentos) ─────────────────────────────────── */}
+      <Box sx={{ mt: 10, mx: { xs: -3, md: '-6vw' }, px: { xs: 3, md: '6vw' }, py: { xs: 8, md: 12 }, bgcolor: 'var(--cream)' }}>
+        {/* Header */}
+        <Box sx={{ mb: 6 }}>
+          <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--caramel)', mb: 1.5 }}>
+            § 03 — O Diário
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 2, flexWrap: 'wrap' }}>
+            <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 300, fontSize: { xs: '34px', md: '48px' }, letterSpacing: '-0.04em', color: 'var(--ink)', lineHeight: 1.05 }}>
+              O que dizem por aí
+            </Typography>
+            <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--caramel)' }}>
+              ★ 4.94 · 312 avaliações
+            </Typography>
+          </Box>
+        </Box>
         <TestimonialsCarousel />
       </Box>
 
-      {/* NOSSA HISTÓRIA */}
+      {/* ── HISTÓRIA ────────────────────────────────────────────── */}
       {config.about_title && (
-        <Box sx={{ mt: 8, bgcolor: espresso, borderRadius: 4, p: { xs: 3, md: 6 }, color: 'white' }}>
-          <Grid container spacing={4} alignItems="center">
-            <Grid item xs={12} md={7}>
-              <Typography variant="overline" sx={{ color: caramel, fontWeight: 'bold', letterSpacing: 2 }}>Nossa História</Typography>
-              <Typography variant="h4" fontWeight="900" gutterBottom sx={{ fontFamily: '"Playfair Display", serif', mt: 1 }}>
+        <Box sx={{ mt: 10 }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: { xs: 6, md: 10 }, alignItems: 'start' }}>
+            {/* Esquerda */}
+            <Box>
+              {/* CookieMark SVG */}
+              <Box sx={{ mb: 3 }}>
+                <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="60" cy="60" r="58" stroke="var(--ink)" strokeWidth="1.5" opacity="0.3"/>
+                  <circle cx="60" cy="60" r="48" stroke="var(--ink)" strokeWidth="1" opacity="0.15"/>
+                  {[[60,28],[82,38],[92,60],[82,82],[60,92],[38,82],[28,60],[38,38]].map(([cx,cy],i) => (
+                    <circle key={i} cx={cx} cy={cy} r="4" fill="var(--ink)" opacity="0.5"/>
+                  ))}
+                  <circle cx="60" cy="60" r="6" fill="var(--terracotta)" opacity="0.8"/>
+                </svg>
+              </Box>
+              <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--caramel)', mb: 1.5 }}>
+                § 04 — Nossa História
+              </Typography>
+              <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 300, fontSize: { xs: '34px', md: '52px' }, letterSpacing: '-0.04em', color: 'var(--ink)', lineHeight: 1.05, mb: 3 }}>
                 {config.about_title}
               </Typography>
-              <Typography variant="body1" sx={{ opacity: 0.85, lineHeight: 1.8, mb: 3 }}>
+              <Typography sx={{ fontFamily: 'Inter', fontSize: '15px', color: 'var(--ink)', opacity: 0.65, lineHeight: 1.8, mb: 3, maxWidth: 440 }}>
                 {config.about_desc}
               </Typography>
-              <Button component={Link} to="/sobre" variant="outlined"
-                sx={{ color: caramel, borderColor: caramel, borderRadius: 50, '&:hover': { bgcolor: caramel, color: 'white' } }}>
+              <Button component={Link} to="/sobre" sx={{ borderRadius: 999, px: 4, py: 1.5, border: '1px solid var(--rule)', color: 'var(--ink)', bgcolor: 'transparent', fontFamily: 'Inter', fontSize: '14px', fontWeight: 500, '&:hover': { borderColor: 'var(--ink)', bgcolor: 'transparent' }, transition: 'all .4s cubic-bezier(.2,.8,.2,1)' }}>
                 Conheça nossa história
               </Button>
-            </Grid>
-            <Grid item xs={12} md={5}>
-              <Grid container spacing={2}>
-                {[
-                  { title: config.about_card1_title, desc: config.about_card1_desc },
-                  { title: config.about_card2_title, desc: config.about_card2_desc },
-                  { title: config.about_card3_title, desc: config.about_card3_desc },
-                ].filter(c => c.title).map((card, i) => (
-                  <Grid item xs={12} key={i}>
-                    <Box sx={{ bgcolor: 'rgba(255,255,255,0.08)', borderRadius: 3, p: 2, borderLeft: `3px solid ${caramel}` }}>
-                      <Typography variant="subtitle1" fontWeight="bold" sx={{ color: caramel }}>{card.title}</Typography>
-                      <Typography variant="body2" sx={{ opacity: 0.8 }}>{card.desc}</Typography>
-                    </Box>
-                  </Grid>
-                ))}
-              </Grid>
-            </Grid>
-          </Grid>
+            </Box>
+
+            {/* Direita — cards */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {/* Card destaque numérico */}
+              <Box sx={{ bgcolor: 'var(--terracotta)', borderRadius: '2px', p: 4, color: 'var(--paper)' }}>
+                <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 300, fontSize: '64px', letterSpacing: '-0.04em', lineHeight: 1, color: 'var(--paper)', opacity: 0.9 }}>
+                  1.842
+                </Typography>
+                <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--paper)', opacity: 0.75, mt: 0.5 }}>
+                  caixas entregues
+                </Typography>
+              </Box>
+
+              {/* Mini cards de conteúdo */}
+              {[
+                { title: config.about_card1_title, desc: config.about_card1_desc },
+                { title: config.about_card2_title, desc: config.about_card2_desc },
+                { title: config.about_card3_title, desc: config.about_card3_desc },
+              ].filter(c => c.title).map((card, i) => (
+                <Box key={i} sx={{ border: '1px solid var(--rule)', borderRadius: '2px', p: 3 }}>
+                  <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 400, fontSize: '18px', color: 'var(--ink)', letterSpacing: '-0.02em', mb: 0.5 }}>{card.title}</Typography>
+                  <Typography sx={{ fontFamily: 'Inter', fontSize: '14px', color: 'var(--ink)', opacity: 0.6, lineHeight: 1.6 }}>{card.desc}</Typography>
+                </Box>
+              ))}
+            </Box>
+          </Box>
         </Box>
       )}
 
-      {/* INSTAGRAM / UGC */}
-      <Box sx={{ mt: 8, textAlign: 'center', p: { xs: 3, md: 4 }, bgcolor: '#FFF8F0', borderRadius: 4 }}>
-        <Instagram sx={{ fontSize: 40, color: terracotta, mb: 1 }} />
-        <Typography variant="h5" fontWeight="900" sx={{ color: espresso, mb: 1 }}>
-          Faça parte da nossa história
+      {/* ── INSTAGRAM ───────────────────────────────────────────── */}
+      <Box sx={{ mt: 10, py: 8, px: { xs: 3, md: '6vw' }, bgcolor: 'var(--cream)', mx: { xs: -3, md: '-6vw' }, textAlign: 'center' }}>
+        <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--caramel)', mb: 2 }}>
+          Siga a jornada
         </Typography>
-        <Typography variant="body1" sx={{ color: '#795548', mb: 3, maxWidth: 500, mx: 'auto' }}>
-          Compartilhe sua experiência com a gente! Marque <strong>{config.instagram_handle ? `@${config.instagram_handle.replace('@','')}` : '@tkookies_'}</strong> nas suas fotos!
+        <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 300, fontSize: { xs: '32px', md: '48px' }, letterSpacing: '-0.04em', color: 'var(--ink)', mb: 1 }}>
+          Faça parte da nossa história.
         </Typography>
-        <Box display="flex" gap={2} justifyContent="center" flexWrap="wrap">
-          <Button variant="contained" href={config.instagram_url || 'https://www.instagram.com/tkookies_/'} target="_blank"
-            startIcon={<Instagram />}
-            sx={{ borderRadius: 50, bgcolor: '#E1306C', '&:hover': { bgcolor: '#c12457' }, fontWeight: 'bold' }}>
+        <Typography sx={{ fontFamily: 'Inter', fontSize: '15px', color: 'var(--ink)', opacity: 0.6, mb: 4, maxWidth: 480, mx: 'auto' }}>
+          Marque <strong>{config.instagram_handle ? `@${config.instagram_handle.replace('@','')}` : '@tkookies_'}</strong> nas suas fotos e apareça aqui.
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <Button href={config.instagram_url || 'https://www.instagram.com/tkookies_/'} target="_blank" startIcon={<Instagram />}
+            sx={{ borderRadius: 999, px: 4, py: 1.5, bgcolor: '#E1306C', color: 'white', fontFamily: 'Inter', fontSize: '14px', fontWeight: 500, '&:hover': { bgcolor: '#c12457' }, transition: 'all .4s cubic-bezier(.2,.8,.2,1)' }}>
             {config.instagram_handle || '@tkookies_'}
           </Button>
-          <Button variant="outlined" href={`https://wa.me/${config.whatsapp_number || '5555997312557'}?text=${encodeURIComponent('Olá! Gostaria de ver o cardápio da TKookies')}`}
+          <Button href={`https://wa.me/${config.whatsapp_number || '5555997312557'}?text=${encodeURIComponent('Olá! Gostaria de ver o cardápio da TKookies')}`}
             target="_blank" startIcon={<WhatsApp />}
-            sx={{ borderRadius: 50, color: '#25D366', borderColor: '#25D366', '&:hover': { bgcolor: '#25D366', color: 'white' }, fontWeight: 'bold' }}>
-            Ver no WhatsApp
+            sx={{ borderRadius: 999, px: 4, py: 1.5, border: '1px solid #25D366', color: '#25D366', bgcolor: 'transparent', fontFamily: 'Inter', fontSize: '14px', fontWeight: 500, '&:hover': { bgcolor: '#25D366', color: 'white' }, transition: 'all .4s cubic-bezier(.2,.8,.2,1)' }}>
+            WhatsApp
           </Button>
         </Box>
       </Box>
