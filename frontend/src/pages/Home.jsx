@@ -481,201 +481,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
   return (
     <Box sx={{ bgcolor: 'var(--paper)', minHeight: '100vh', overflowX: 'hidden', '@keyframes pulse': { '0%,100%': { opacity: 1 }, '50%': { opacity: 0.4 } }, '@keyframes marqueeScroll': { '0%': { transform: 'translateX(0)' }, '100%': { transform: 'translateX(-50%)' } } }}>
 
-      {/* ── HERO ──────────────────────────────────────────────────── */}
-      <Box sx={{
-        display: 'grid',
-        gridTemplateColumns: { xs: '1fr', md: '1.2fr 1fr' },
-        minHeight: { xs: 'auto', md: '88vh' },
-        px: { xs: 3, md: '6vw' },
-        pt: { xs: 6, md: '10vh' },
-        pb: { xs: 0, md: 0 },
-        gap: { xs: 5, md: '5vw' },
-        alignItems: 'center',
-      }}>
-        {/* Coluna esquerda */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-          {/* Meta row */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-            <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--caramel)' }}>
-              Vol. 04 — Outono / 2026
-            </Typography>
-            <Box sx={{ width: 1, height: 14, bgcolor: 'var(--rule)' }} />
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: isStoreOpen ? '#5CB85C' : '#E74C3C', animation: isStoreOpen ? 'pulse 2s ease-in-out infinite' : 'none', flexShrink: 0 }} />
-              <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink)' }}>
-                {isStoreOpen ? 'Aberto · Entregamos hoje' : 'Fechado agora'}
-              </Typography>
-            </Box>
-          </Box>
 
-          {/* Título display */}
-          <Box sx={{ lineHeight: 0.9 }}>
-            <Typography component="span" sx={{
-              display: 'block',
-              fontFamily: '"Fraunces", Georgia, serif',
-              fontWeight: 300,
-              fontSize: 'clamp(52px, 9.5vw, 148px)',
-              letterSpacing: '-0.04em',
-              color: 'var(--ink)',
-              lineHeight: 0.9,
-            }}>
-              Cookies que
-            </Typography>
-            <Typography component="span" sx={{
-              display: 'block',
-              fontFamily: '"Instrument Serif", Georgia, serif',
-              fontStyle: 'italic',
-              fontWeight: 400,
-              fontSize: 'clamp(52px, 9.5vw, 148px)',
-              letterSpacing: '-0.04em',
-              color: 'var(--terracotta)',
-              lineHeight: 0.95,
-            }}>
-              descansam
-            </Typography>
-          </Box>
-
-          {/* Subtítulos */}
-          <Box>
-            <Typography sx={{
-              fontFamily: '"Fraunces", Georgia, serif',
-              fontWeight: 600,
-              fontSize: 'clamp(24px, 3vw, 40px)',
-              color: 'var(--ink)',
-              letterSpacing: '-0.025em',
-              lineHeight: 1.1,
-            }}>
-              por 72 horas.
-            </Typography>
-            <Typography sx={{
-              fontFamily: '"Fraunces", Georgia, serif',
-              fontWeight: 300,
-              fontSize: 'clamp(20px, 2.5vw, 32px)',
-              color: 'var(--ink)',
-              opacity: 0.55,
-              letterSpacing: '-0.02em',
-              mt: 0.5,
-            }}>
-              Servidas mornas.
-            </Typography>
-          </Box>
-
-          {/* CTAs */}
-          <Box sx={{ display: 'flex', gap: 1.5, mt: 1, flexWrap: 'wrap' }}>
-            <Button
-              onClick={() => document.getElementById('cardapio')?.scrollIntoView({ behavior: 'smooth' })}
-              sx={{
-                borderRadius: 999, px: 4, py: 1.5,
-                bgcolor: 'var(--ink)', color: 'var(--paper)',
-                fontFamily: 'Inter', fontSize: '14px', fontWeight: 500,
-                transition: 'all .4s cubic-bezier(.2,.8,.2,1)',
-                '&:hover': { bgcolor: '#2C1A10', transform: 'translateY(-1px)' },
-              }}
-            >
-              Ver Cardápio
-            </Button>
-            {clientUser && (
-              <Button
-                onClick={() => navigate('/meus-favoritos')}
-                sx={{
-                  borderRadius: 999, px: 4, py: 1.5,
-                  border: '1px solid var(--rule)', color: 'var(--ink)',
-                  bgcolor: 'transparent', fontFamily: 'Inter', fontSize: '14px', fontWeight: 500,
-                  '&:hover': { borderColor: 'var(--ink)', bgcolor: 'transparent' },
-                }}
-              >
-                Favoritos ({favorites.length})
-              </Button>
-            )}
-          </Box>
-        </Box>
-
-        {/* Coluna direita — imagem do produto destaque */}
-        {featuredProduct && (
-          <Box sx={{ position: 'relative', display: 'flex', alignItems: 'flex-end', pb: { md: 10 }, mt: { xs: 0, md: 0 } }}>
-            {/* Selo girado */}
-            <Box sx={{
-              position: 'absolute', top: { xs: 12, md: 20 }, right: { xs: 12, md: 20 }, zIndex: 10,
-              width: 88, height: 88, borderRadius: '50%',
-              bgcolor: 'var(--terracotta)',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              transform: 'rotate(-12deg)',
-            }}>
-              <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '7.5px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--paper)', textAlign: 'center', lineHeight: 1.5, px: 1 }}>
-                edição limitada
-              </Typography>
-              <Box sx={{ width: 22, height: '1px', bgcolor: 'rgba(251,246,236,.4)', my: 0.4 }} />
-              <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 400, fontSize: '22px', color: 'var(--paper)', lineHeight: 1 }}>72H</Typography>
-            </Box>
-
-            {/* Imagem produto */}
-            <Box sx={{ width: '100%', aspectRatio: '4/5', overflow: 'hidden', borderRadius: '2px', maxHeight: { xs: '55vw', md: '72vh' } }}>
-              <Box
-                component="img"
-                src={featuredProduct.imagens?.find(i => i.eh_capa)?.imagem || featuredProduct.imagens?.[0]?.imagem}
-                alt={featuredProduct.nome}
-                sx={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform .8s cubic-bezier(.2,.8,.2,1)', '&:hover': { transform: 'scale(1.04)' } }}
-              />
-            </Box>
-
-            {/* Card glassmorphism */}
-            <Box sx={{
-              position: 'absolute',
-              bottom: { xs: -40, md: 0 },
-              left: { xs: 16, md: -48 },
-              bgcolor: 'rgba(251,246,236,.88)',
-              backdropFilter: 'blur(16px)',
-              border: '1px solid rgba(42,26,14,.12)',
-              borderRadius: '2px',
-              p: { xs: 2, md: 2.5 },
-              maxWidth: 200,
-              boxShadow: '0 12px 40px rgba(26,15,8,.10)',
-            }}>
-              <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--caramel)', mb: 0.5 }}>Sabor da semana</Typography>
-              <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 400, fontSize: '18px', color: 'var(--ink)', lineHeight: 1.1, mb: 1, letterSpacing: '-0.02em' }}>
-                {featuredProduct.nome}
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0 }}>
-                <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 300, fontSize: '14px', color: 'var(--terracotta)', letterSpacing: '-0.01em' }}>R$</Typography>
-                <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 400, fontSize: '32px', color: 'var(--terracotta)', letterSpacing: '-0.03em', lineHeight: 1 }}>
-                  {Math.floor(Number(featuredProduct.preco_venda))}
-                </Typography>
-                <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 300, fontSize: '16px', color: 'var(--terracotta)', opacity: 0.65, alignSelf: 'flex-end', mb: '3px' }}>
-                  ,{String(Number(featuredProduct.preco_venda).toFixed(2)).slice(-2)}
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-        )}
-      </Box>
-
-      {/* Bottom stat row */}
-      <Box sx={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
-        borderTop: '1px solid var(--rule)',
-        mt: featuredProduct ? { xs: 8, md: 6 } : 4,
-        mx: { xs: 3, md: '6vw' },
-      }}>
-        {[
-          { num: '72h', label: 'de fermentação' },
-          { num: '9', label: 'sabores únicos' },
-          { num: '14h', label: 'no forno' },
-          { num: '17h', label: 'última entrega' },
-        ].map(({ num, label }, i) => (
-          <Box key={i} sx={{
-            py: { xs: 3, md: 5 }, px: { xs: 1.5, md: 4 },
-            borderRight: i < 3 ? '1px solid var(--rule)' : 'none',
-          }}>
-            <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 300, fontSize: { xs: '32px', md: '56px' }, letterSpacing: '-0.04em', color: 'var(--ink)', lineHeight: 1 }}>
-              {num}
-            </Typography>
-            <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--caramel)', mt: 0.5, display: { xs: 'none', sm: 'block' } }}>
-              {label}
-            </Typography>
-          </Box>
-        ))}
-      </Box>
 
       {/* ── MARQUEE ────────────────────────────────────────────────── */}
       <Box sx={{ bgcolor: 'var(--ink)', py: '14px', overflow: 'hidden', position: 'relative', mt: 0 }}>
@@ -720,7 +526,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
       {/* ── STATUS DA LOJA (slim bar) ─────────────────────────────── */}
       <Box sx={{ borderBottom: '1px solid var(--rule)', py: 1, px: { xs: 3, md: '6vw' } }}>
         <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
-          <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink)', opacity: 0.6 }}>
+          <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '13px', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink)' }}>
             {getTodayScheduleLabel(config)} · Entregas 14–17h
           </Typography>
           {!isStoreOpen && (
@@ -901,7 +707,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                 {/* Header 2-col */}
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 4, mb: 6, pb: 4, borderBottom: '1px solid rgba(251,246,236,.12)' }}>
                   <Box>
-                    <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--caramel)', mb: 1.5 }}>
+                    <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '13px', fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--caramel)', mb: 1.5 }}>
                       § 02 — Combos Especiais
                     </Typography>
                     <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 300, fontSize: { xs: '34px', md: '48px' }, letterSpacing: '-0.04em', color: 'var(--paper)', lineHeight: 1.05 }}>
@@ -992,25 +798,11 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
 
             {/* ── CARDÁPIO ──────────────────────────────────────────────── */}
             <Box id="cardapio" sx={{ mt: 10 }}>
-              {/* Header 2-col */}
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 4, mb: 6, pb: 4, borderBottom: '1px solid var(--rule)' }}>
-                <Box>
-                  <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--caramel)', mb: 1.5 }}>
-                    § 01 — O Cardápio
-                  </Typography>
-                  <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 300, fontSize: { xs: '36px', md: '52px' }, letterSpacing: '-0.04em', color: 'var(--ink)', lineHeight: 1.05 }}>
-                    Nove sabores,{' '}
-                    <Typography component="span" sx={{ fontFamily: '"Instrument Serif", serif', fontStyle: 'italic', color: 'var(--terracotta)', fontSize: 'inherit', letterSpacing: 'inherit' }}>
-                      uma obsessão.
-                    </Typography>
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'flex-end' }}>
-                  <Typography sx={{ fontFamily: 'Inter', fontSize: '15px', color: 'var(--ink)', opacity: 0.65, lineHeight: 1.7, maxWidth: 400 }}>
-                    Cada cookie é fermentado por 72 horas, assado por encomenda e entregue morno. Ingredientes selecionados, sem conservantes.
-                  </Typography>
-                </Box>
-              </Box>
+
+              {/* Label da seção */}
+              <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '13px', fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--caramel)', mb: 4, display: 'block' }}>
+                § 01 — O Cardápio
+              </Typography>
 
               {/* Grid de produtos — editorial */}
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(3, 1fr)' }, gap: { xs: 2, md: 3 } }}>
@@ -1168,7 +960,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
       <Box sx={{ mt: 10, mx: { xs: -3, md: '-6vw' }, px: { xs: 3, md: '6vw' }, py: { xs: 8, md: 12 }, bgcolor: 'var(--cream)' }}>
         {/* Header */}
         <Box sx={{ mb: 6 }}>
-          <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--caramel)', mb: 1.5 }}>
+          <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '13px', fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--caramel)', mb: 1.5 }}>
             § 03 — O Diário
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 2, flexWrap: 'wrap' }}>
@@ -1266,112 +1058,6 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
         </Box>
       </Box>
 
-      {/* ── FOOTER ──────────────────────────────────────────────── */}
-      <Box sx={{ mt: 10, mx: { xs: -3, md: '-6vw' }, px: { xs: 3, md: '6vw' }, pt: { xs: 8, md: 12 }, pb: { xs: 6, md: 8 }, bgcolor: 'var(--ink)', position: 'relative', overflow: 'hidden' }}>
-        {/* Wordmark gigante no fundo */}
-        <Typography sx={{
-          position: 'absolute',
-          bottom: -24,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          fontFamily: '"Fraunces", serif',
-          fontWeight: 300,
-          fontSize: 'clamp(120px, 28vw, 360px)',
-          letterSpacing: '-0.06em',
-          color: 'var(--paper)',
-          opacity: 0.06,
-          whiteSpace: 'nowrap',
-          userSelect: 'none',
-          pointerEvents: 'none',
-          lineHeight: 1,
-        }}>
-          tkookies
-        </Typography>
-
-        {/* Grid de conteúdo */}
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.6fr 1fr 1fr 1fr' }, gap: { xs: 6, md: 4 }, position: 'relative', zIndex: 1 }}>
-          {/* Col 1 — CTA newsletter */}
-          <Box>
-            <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 300, fontSize: { xs: '32px', md: '42px' }, letterSpacing: '-0.04em', color: 'var(--paper)', lineHeight: 1.1, mb: 3 }}>
-              Pede um{' '}
-              <Typography component="span" sx={{ fontFamily: '"Instrument Serif", serif', fontStyle: 'italic', color: 'var(--caramel)', fontSize: 'inherit', letterSpacing: 'inherit' }}>
-                cookie
-              </Typography>
-              {' '}agora?
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-              <Box component="input" placeholder="seu@email.com" sx={{ flex: 1, bgcolor: 'rgba(251,246,236,.08)', border: '1px solid rgba(251,246,236,.2)', borderRadius: '2px', px: 2, py: 1.5, color: 'var(--paper)', fontFamily: 'Inter', fontSize: '14px', outline: 'none', '&::placeholder': { color: 'rgba(251,246,236,.35)' } }} />
-              <Box sx={{ borderRadius: 999, px: 2.5, py: 1.5, bgcolor: 'var(--terracotta)', color: 'var(--paper)', fontFamily: 'Inter', fontSize: '13px', fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', transition: 'all .4s cubic-bezier(.2,.8,.2,1)', '&:hover': { bgcolor: '#A8421A' } }}>
-                Enviar
-              </Box>
-            </Box>
-            <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--paper)', opacity: 0.3 }}>
-              Sem spam. Só cookies.
-            </Typography>
-          </Box>
-
-          {/* Col 2 — Visite */}
-          <Box>
-            <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--caramel)', mb: 2 }}>Visite</Typography>
-            {[
-              { label: 'Cardápio', href: '#cardapio' },
-              { label: 'Combos', href: '#combos-section' },
-              { label: 'Seja Revendedor', href: '#revendedor' },
-              { label: 'Nossa história', to: '/sobre' },
-            ].map((item, i) => (
-              <Box key={i} sx={{ mb: 1 }}>
-                {item.to ? (
-                  <Typography component={Link} to={item.to} sx={{ fontFamily: 'Inter', fontSize: '15px', color: 'var(--paper)', opacity: 0.65, textDecoration: 'none', '&:hover': { opacity: 1 }, transition: 'opacity .3s' }}>
-                    {item.label}
-                  </Typography>
-                ) : (
-                  <Typography component="a" href={item.href} onClick={(e) => { e.preventDefault(); document.querySelector(item.href)?.scrollIntoView({ behavior: 'smooth' }); }} sx={{ fontFamily: 'Inter', fontSize: '15px', color: 'var(--paper)', opacity: 0.65, textDecoration: 'none', cursor: 'pointer', '&:hover': { opacity: 1 }, transition: 'opacity .3s' }}>
-                    {item.label}
-                  </Typography>
-                )}
-              </Box>
-            ))}
-          </Box>
-
-          {/* Col 3 — Horários */}
-          <Box>
-            <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--caramel)', mb: 2 }}>Horários</Typography>
-            <Typography sx={{ fontFamily: 'Inter', fontSize: '15px', color: 'var(--paper)', opacity: 0.65, lineHeight: 1.8 }}>
-              {getTodayScheduleLabel(config)}
-            </Typography>
-            <Typography sx={{ fontFamily: 'Inter', fontSize: '14px', color: 'var(--paper)', opacity: 0.45, mt: 1 }}>
-              Entregas 14h – 17h<br />Apenas delivery
-            </Typography>
-          </Box>
-
-          {/* Col 4 — Acompanhe */}
-          <Box>
-            <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--caramel)', mb: 2 }}>Acompanhe</Typography>
-            {[
-              { icon: <Instagram sx={{ fontSize: 16 }} />, label: config.instagram_handle || '@tkookies_', href: config.instagram_url || 'https://www.instagram.com/tkookies_/' },
-              { icon: <WhatsApp sx={{ fontSize: 16 }} />, label: 'WhatsApp', href: `https://wa.me/${config.whatsapp_number || '5555997312557'}` },
-            ].map((item, i) => (
-              <Box key={i} component="a" href={item.href} target="_blank" rel="noopener noreferrer" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, color: 'var(--paper)', opacity: 0.65, textDecoration: 'none', '&:hover': { opacity: 1 }, transition: 'opacity .3s' }}>
-                {item.icon}
-                <Typography sx={{ fontFamily: 'Inter', fontSize: '15px' }}>{item.label}</Typography>
-              </Box>
-            ))}
-          </Box>
-        </Box>
-
-        {/* Bottom bar */}
-        <Box sx={{ mt: 8, pt: 3, borderTop: '1px solid rgba(251,246,236,.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2, position: 'relative', zIndex: 1 }}>
-          <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--paper)', opacity: 0.3 }}>
-            © 2024 TKookies · Três de Maio, RS
-          </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'var(--terracotta)' }} />
-            <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--paper)', opacity: 0.3 }}>
-              Feito com carinho artesanal
-            </Typography>
-          </Box>
-        </Box>
-      </Box>
 
       {/* ── REVENDEDOR ──────────────────────────────────────────── */}
       <Box id="revendedor" sx={{ position: 'relative', zIndex: 2 }}>

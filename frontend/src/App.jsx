@@ -780,65 +780,6 @@ export default function App() {
         </Routes>
       </Box>
 
-      {/* Rodapé */}
-      <Box component="footer" sx={{ bgcolor: '#2C1810', color: 'white', py: 6, mt: 'auto', pb: { xs: 12, md: 6 } }}>
-        <Container maxWidth="lg">
-          <Grid container spacing={4}>
-            <Grid item xs={12} md={4}>
-              <Typography variant="overline" sx={{ color: '#C4922A', fontWeight: 'bold', letterSpacing: 2 }}>TKookies</Typography>
-              <Typography variant="h6" fontWeight="900" gutterBottom sx={{ fontFamily: '"Playfair Display", serif', mt: 0.5 }}>
-                Um pedacinho de felicidade
-              </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.75, mb: 2 }}>
-                Feito com amor e os melhores ingredientes para você.
-              </Typography>
-              <Button color="inherit" component={Link} to="/sobre" sx={{ p: 0, minWidth: 0, textTransform: 'none', fontWeight: 'normal', textDecoration: 'underline', opacity: 0.7 }}>
-                Sobre Nós
-              </Button>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Typography variant="overline" sx={{ color: '#C4922A', fontWeight: 'bold', letterSpacing: 2 }}>Contato</Typography>
-              <Typography variant="body2" display="block" sx={{ mb: 0.5, mt: 1 }}>📍 Três de Maio - RS</Typography>
-              <Typography variant="body2" display="block" sx={{ mb: 0.5 }}>📞 (55) 9 9731 2557</Typography>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Typography variant="overline" sx={{ color: '#C4922A', fontWeight: 'bold', letterSpacing: 2 }}>Redes Sociais</Typography>
-              <Box display="flex" gap={1} mt={1}>
-                <IconButton color="inherit" href="https://www.instagram.com/tkookies_/" target="_blank" aria-label="Instagram">
-                  <Instagram />
-                </IconButton>
-                <IconButton color="inherit" href="https://www.facebook.com/tkookiestm" target="_blank" aria-label="Facebook">
-                  <Facebook />
-                </IconButton>
-                <IconButton href="https://wa.me/5555997312557" target="_blank" aria-label="WhatsApp" sx={{ bgcolor: '#25D366', color: 'white', '&:hover': { bgcolor: '#1EBE5D' } }}>
-                  <WhatsApp />
-                </IconButton>
-              </Box>
-            </Grid>
-          </Grid>
-          <Divider sx={{ my: 3, bgcolor: 'rgba(255,255,255,0.2)' }} />
-          <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="body2" sx={{ opacity: 0.6, mb: 1 }}>
-              Todos o direitos reservados - TK<Box component="span" sx={{ fontSize: '0.8em' }}>🍪🍪</Box>kies © {new Date().getFullYear()}
-            </Typography>
-            <Typography variant="caption" sx={{ opacity: 0.35, display: 'block', mb: 1, letterSpacing: 1 }}>
-              v{APP_VERSION}
-            </Typography>
-            <IconButton 
-              onClick={() => isLoggedIn ? navigate('/produtos') : setAdminLoginOpen(true)} 
-              sx={{ 
-                color: '#fff', 
-                border: '1px solid rgba(255,255,255,0.3)', 
-                opacity: 0.7,
-                '&:hover': { opacity: 1, bgcolor: 'rgba(255,255,255,0.1)' }
-              }}
-              title="Acesso Administrativo"
-            >
-              <Lock fontSize="small" />
-            </IconButton>
-          </Box>
-        </Container>
-      </Box>
       </Box>
 
       {/* Drawer Login Cliente */}
