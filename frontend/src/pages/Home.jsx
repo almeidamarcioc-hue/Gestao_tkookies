@@ -75,6 +75,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
   const [hoveredCard, setHoveredCard] = useState(null);
   const [isStoreOpen, setIsStoreOpen] = useState(true);
 
+  const [totalPedidos, setTotalPedidos] = useState(null);
   const [products, setProducts] = useState([]);
   const [combos, setCombos] = useState([]);
   const [featuredProduct, setFeaturedProduct] = useState(null);
@@ -179,6 +180,11 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
         }
       }).catch(err => console.log("Usando configurações padrão"));
     }
+
+    // Total de pedidos realizados
+    api.get("/pedidos/count").then(res => {
+      if (res.data?.total !== undefined) setTotalPedidos(res.data.total);
+    }).catch(() => {});
 
     // Carregar produtos para o cardápio
     api.get("/produtos").then(res => {
@@ -567,7 +573,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
       </Box>
 
       {/* ── MARQUEE ────────────────────────────────────────────────── */}
-      <Box sx={{ bgcolor: 'var(--ink)', py: '7px', overflow: 'hidden', position: 'relative', mt: 0 }}>
+      <Box sx={{ bgcolor: 'var(--ink)', py: '3px', overflow: 'hidden', position: 'relative', mt: 0 }}>
         <Box sx={{
           display: 'flex',
           alignItems: 'center',
@@ -606,7 +612,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
         </Box>
       </Box>
 
-      <Box sx={{ px: { xs: 3, md: '6vw' }, position: 'relative', zIndex: 1, pb: 20 }}>
+      <Box sx={{ px: { xs: 3, md: '6vw' }, position: 'relative', zIndex: 1, pb: 0 }}>
 
             {/* SABOR DA SEMANA */}
             {saborSemana && (
@@ -876,8 +882,6 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                   const precoFinal = prod.eh_destaque && Number(prod.desconto_destaque) > 0
                     ? Number(prod.preco_venda) * (1 - Number(prod.desconto_destaque) / 100)
                     : Number(prod.preco_venda);
-                  const numStr = String(idx + 1).padStart(2, '0');
-
                   return (
                     <Box
                       key={prod.id}
@@ -899,11 +903,6 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                         onMouseLeave={() => setHoveredCard(null)}
                         onClick={() => handleOpenDetails(prod)}
                       >
-                        {/* Número */}
-                        <Box sx={{ position: 'absolute', top: 10, right: 10, zIndex: 2, width: 28, height: 28, borderRadius: '50%', bgcolor: 'var(--paper)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '10px', color: 'var(--ink)', letterSpacing: '-0.01em' }}>{numStr}</Typography>
-                        </Box>
-
                         {/* Badge pill */}
                         {prod.eh_destaque && Number(prod.desconto_destaque) > 0 && (
                           <Box sx={{ position: 'absolute', top: 10, left: 10, zIndex: 2, bgcolor: 'var(--paper)', borderRadius: 999, px: 1.5, py: 0.3 }}>
@@ -1074,10 +1073,10 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
               {/* Card destaque numérico */}
               <Box sx={{ bgcolor: 'var(--terracotta)', borderRadius: '2px', p: 4, color: 'var(--paper)' }}>
                 <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 300, fontSize: '64px', letterSpacing: '-0.04em', lineHeight: 1, color: 'var(--paper)', opacity: 0.9 }}>
-                  1.842
+                  {totalPedidos !== null ? totalPedidos.toLocaleString('pt-BR') : '—'}
                 </Typography>
                 <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--paper)', opacity: 0.75, mt: 0.5 }}>
-                  caixas entregues
+                  pedidos realizados
                 </Typography>
               </Box>
 
@@ -1159,7 +1158,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
         const location = (config.home_location || '').replace(/^[^\w]+/, '').trim();
 
         return (
-          <Box sx={{ mx: { xs: -3, md: '-6vw' }, px: { xs: 3, md: '6vw' }, pt: { xs: 8, md: 12 }, pb: { xs: 6, md: 8 }, bgcolor: 'var(--ink)', position: 'relative', overflow: 'hidden' }}>
+          <Box sx={{ width: '100vw', position: 'relative', left: '50%', transform: 'translateX(-50%)', px: { xs: 3, md: '6vw' }, pt: { xs: 8, md: 12 }, pb: { xs: 6, md: 8 }, bgcolor: 'var(--ink)', overflow: 'hidden' }}>
             {/* Wordmark de fundo */}
             <Typography sx={{
               position: 'absolute', bottom: -24, left: '50%', transform: 'translateX(-50%)',

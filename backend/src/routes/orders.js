@@ -5,6 +5,16 @@ import { requireRole } from "../middlewares/auth.js";
 
 const router = Router();
 
+// CONTAGEM PÚBLICA DE PEDIDOS REALIZADOS
+router.get("/count", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT COUNT(*) AS total FROM pedidos");
+    res.json({ total: Number(result.rows[0].total) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // LISTAR PEDIDOS (apenas admin)
 router.get("/", requireRole('admin'), async (req, res) => {
   try {
