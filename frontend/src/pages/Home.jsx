@@ -717,51 +717,27 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
         </Box>
       </Box>
 
-      {/* BARRA DE STATUS DA LOJA — full-width, entre marquee e conteúdo */}
-      <Box sx={{
-        bgcolor: isStoreOpen ? '#F1F8E9' : '#FFF3E0',
-        borderBottom: '1px solid',
-        borderColor: isStoreOpen ? '#C8E6C9' : '#FFCC80',
-        py: 1.2,
-      }}>
-        <Container maxWidth="xl">
-          <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1.5}>
-            <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
-              <Box display="flex" alignItems="center" gap={1}>
-                <AccessTime sx={{ color: terracotta, fontSize: 18 }} />
-                <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                  {getTodayScheduleLabel(config)}
-                </Typography>
-              </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ display: { xs: 'none', sm: 'block' } }}>
-                🚚 Entregas das 14:00 às 17:00
-              </Typography>
-            </Box>
-            <Box display="flex" alignItems="center" gap={1.5}>
-              <Chip
-                label={isStoreOpen ? "Aberto agora" : "Fechado no momento"}
-                color={isStoreOpen ? "success" : "error"}
-                size="small"
-                sx={{ fontWeight: 'bold' }}
-              />
-              {!isStoreOpen && (
-                <Button
-                  size="small"
-                  href={`https://wa.me/${config.whatsapp_number || '5555997312557'}?text=${encodeURIComponent('Olá! Gostaria de fazer um pedido na TKookies')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  startIcon={<WhatsApp sx={{ fontSize: 16 }} />}
-                  sx={{ color: '#25D366', fontWeight: 'bold', fontSize: '0.75rem', textTransform: 'none', border: '1px solid #25D366', borderRadius: 2, py: 0.3, px: 1.5 }}
-                >
-                  Pedir pelo WhatsApp
-                </Button>
-              )}
-            </Box>
-          </Box>
-        </Container>
+      {/* ── STATUS DA LOJA (slim bar) ─────────────────────────────── */}
+      <Box sx={{ borderBottom: '1px solid var(--rule)', py: 1, px: { xs: 3, md: '6vw' } }}>
+        <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
+          <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink)', opacity: 0.6 }}>
+            {getTodayScheduleLabel(config)} · Entregas 14–17h
+          </Typography>
+          {!isStoreOpen && (
+            <Button
+              size="small"
+              href={`https://wa.me/${config.whatsapp_number || '5555997312557'}?text=${encodeURIComponent('Olá! Gostaria de fazer um pedido na TKookies')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{ color: '#25D366', fontFamily: '"DM Mono", monospace', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', border: '1px solid #25D366', borderRadius: 999, py: 0.3, px: 1.5 }}
+            >
+              Pedir pelo WhatsApp
+            </Button>
+          )}
+        </Box>
       </Box>
 
-      <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1, pb: 20, px: { xs: 2, md: 4 } }}>
+      <Box sx={{ px: { xs: 3, md: '6vw' }, position: 'relative', zIndex: 1, pb: 20 }}>
 
             {/* SABOR DA SEMANA */}
             {saborSemana && (
@@ -982,148 +958,163 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
             )}
 
 
-            {/* SEÇÃO CARDÁPIO */}
-            <Box id="cardapio">
-              <Typography variant="h5" gutterBottom fontWeight="900" sx={{ color: espresso, mb: 1 }}>
-                Cardápio
-              </Typography>
-              <Box sx={{ bgcolor: terracotta, height: 3, width: 48, borderRadius: 2, mb: 3 }} />
+            {/* ── CARDÁPIO ──────────────────────────────────────────────── */}
+            <Box id="cardapio" sx={{ mt: 10 }}>
+              {/* Header 2-col */}
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 4, mb: 6, pb: 4, borderBottom: '1px solid var(--rule)' }}>
+                <Box>
+                  <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--caramel)', mb: 1.5 }}>
+                    § 01 — O Cardápio
+                  </Typography>
+                  <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 300, fontSize: { xs: '36px', md: '52px' }, letterSpacing: '-0.04em', color: 'var(--ink)', lineHeight: 1.05 }}>
+                    Nove sabores,{' '}
+                    <Typography component="span" sx={{ fontFamily: '"Instrument Serif", serif', fontStyle: 'italic', color: 'var(--terracotta)', fontSize: 'inherit', letterSpacing: 'inherit' }}>
+                      uma obsessão.
+                    </Typography>
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'flex-end' }}>
+                  <Typography sx={{ fontFamily: 'Inter', fontSize: '15px', color: 'var(--ink)', opacity: 0.65, lineHeight: 1.7, maxWidth: 400 }}>
+                    Cada cookie é fermentado por 72 horas, assado por encomenda e entregue morno. Ingredientes selecionados, sem conservantes.
+                  </Typography>
+                </Box>
+              </Box>
 
-              <Grid container spacing={3} component={motion.div} variants={containerVariants} initial="hidden" animate={products.length > 0 ? "visible" : "hidden"}>
-                {products.filter(p => !combos.some(c => c.produto_vinculado_id === p.id)).map(prod => {
+              {/* Grid de produtos — editorial */}
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(3, 1fr)' }, gap: { xs: 2, md: 3 } }}>
+                {products.filter(p => !combos.some(c => c.produto_vinculado_id === p.id)).map((prod, idx) => {
                   const coverImage = prod.imagens?.find(img => img.eh_capa)?.imagem || prod.imagens?.[0]?.imagem;
+                  const altImage = prod.imagens?.find(i => !i.eh_capa)?.imagem || prod.imagens?.[1]?.imagem;
                   const qty = getQty(prod.id);
-                  
+                  const precoFinal = prod.eh_destaque && Number(prod.desconto_destaque) > 0
+                    ? Number(prod.preco_venda) * (1 - Number(prod.desconto_destaque) / 100)
+                    : Number(prod.preco_venda);
+                  const numStr = String(idx + 1).padStart(2, '0');
+
                   return (
-                    <Grid item xs={12} sm={6} md={4} key={prod.id} component={motion.div} variants={itemVariants}>
-                      <Card sx={{ ...cardSx }}
+                    <Box
+                      key={prod.id}
+                      sx={{
+                        display: 'flex', flexDirection: 'column',
+                        border: '1px solid var(--rule)',
+                        borderRadius: '2px',
+                        overflow: 'hidden',
+                        bgcolor: 'var(--paper)',
+                        opacity: Number(prod.estoque) <= 0 ? 0.65 : 1,
+                        transition: 'border-color .4s cubic-bezier(.2,.8,.2,1)',
+                        '&:hover': { borderColor: 'var(--caramel)' },
+                      }}
+                    >
+                      {/* Imagem */}
+                      <Box
+                        sx={{ position: 'relative', aspectRatio: '5/4', overflow: 'hidden', cursor: 'pointer' }}
                         onMouseEnter={() => setHoveredCard(prod.id)}
-                        onMouseLeave={() => setHoveredCard(null)}>
-                         <Box sx={{ position: 'relative', height: { xs: 200, md: 220 }, overflow: 'hidden' }}>
-                            <Box
-                              component="img"
-                              src={coverImage}
-                              sx={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer',
-                                position: 'absolute', inset: 0,
-                                opacity: hoveredCard === prod.id && prod.imagens?.length > 1 ? 0 : 1,
-                                transition: 'opacity 0.4s ease' }}
-                              onClick={() => handleOpenDetails(prod)}
-                            />
-                            {prod.imagens?.length > 1 && (
-                              <Box component="img"
-                                src={prod.imagens.find(i => !i.eh_capa)?.imagem || prod.imagens[1]?.imagem}
-                                sx={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer',
-                                  position: 'absolute', inset: 0,
-                                  opacity: hoveredCard === prod.id ? 1 : 0,
-                                  transition: 'opacity 0.4s ease' }}
-                                onClick={() => handleOpenDetails(prod)}
-                              />
-                            )}
-                            
-                            {/* Marcador de Agregado Disponível */}
-                            {prod.agregados && prod.agregados.length > 0 && (
-                              <Chip 
-                                label="Embalagem especial disponível" 
-                                size="small" 
-                                sx={{ 
-                                  position: 'absolute', 
-                                  bottom: 8, 
-                                  left: 8, 
-                                  bgcolor: 'rgba(255, 255, 255, 0.95)', 
-                                  color: '#E65100', 
-                                  fontWeight: 'bold', 
-                                  fontSize: '0.7rem',
-                                  height: 24,
-                                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                                }} 
-                                icon={<CardGiftcard sx={{ '&&': { color: '#E65100', width: 16 } }} />}
-                              />
-                            )}
+                        onMouseLeave={() => setHoveredCard(null)}
+                        onClick={() => handleOpenDetails(prod)}
+                      >
+                        {/* Número */}
+                        <Box sx={{ position: 'absolute', top: 10, right: 10, zIndex: 2, width: 28, height: 28, borderRadius: '50%', bgcolor: 'var(--paper)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '10px', color: 'var(--ink)', letterSpacing: '-0.01em' }}>{numStr}</Typography>
+                        </Box>
 
-                        {/* Badge de Desconto */}
+                        {/* Badge pill */}
                         {prod.eh_destaque && Number(prod.desconto_destaque) > 0 && (
-                          <Chip
-                            label={`${Number(prod.desconto_destaque).toFixed(0)}% OFF`}
-                            size="small"
-                            sx={{ position: 'absolute', top: 8, left: 8, fontWeight: 'bold', bgcolor: caramel, color: 'white', zIndex: 1 }}
-                          />
+                          <Box sx={{ position: 'absolute', top: 10, left: 10, zIndex: 2, bgcolor: 'var(--paper)', borderRadius: 999, px: 1.5, py: 0.3 }}>
+                            <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--terracotta)' }}>
+                              {Number(prod.desconto_destaque).toFixed(0)}% off
+                            </Typography>
+                          </Box>
+                        )}
+                        {prod.agregados?.length > 0 && (
+                          <Box sx={{ position: 'absolute', bottom: 10, left: 10, zIndex: 2, bgcolor: 'var(--paper)', borderRadius: 999, px: 1.5, py: 0.3, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <CardGiftcard sx={{ fontSize: 11, color: 'var(--terracotta)' }} />
+                            <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--terracotta)' }}>Kit disponível</Typography>
+                          </Box>
                         )}
 
-                        {/* Tarja de Indisponível */}
-                        {prod.estoque <= 0 && (
-                          <Chip
-                            label="Indisponível"
-                            color="error"
-                            size="small"
-                            sx={{ position: 'absolute', top: prod.eh_destaque && Number(prod.desconto_destaque) > 0 ? 40 : 8, left: 8, fontWeight: 'bold' }}
-                          />
+                        {/* Cover image */}
+                        <Box component="img" src={coverImage} sx={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0, opacity: hoveredCard === prod.id && altImage ? 0 : 1, transition: 'opacity .8s cubic-bezier(.2,.8,.2,1), transform .8s cubic-bezier(.2,.8,.2,1)', transform: hoveredCard === prod.id ? 'scale(1.05)' : 'scale(1)' }} />
+                        {altImage && (
+                          <Box component="img" src={altImage} sx={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0, opacity: hoveredCard === prod.id ? 1 : 0, transition: 'opacity .8s cubic-bezier(.2,.8,.2,1)' }} />
                         )}
 
+                        {/* Indisponível */}
+                        {Number(prod.estoque) <= 0 && (
+                          <Box sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(26,15,8,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>
+                            <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--paper)' }}>Indisponível</Typography>
+                          </Box>
+                        )}
+                      </Box>
 
-                            <IconButton 
-                              size="small"
-                              onClick={() => toggleFavorite(prod)}
-                              sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'white', '&:hover': { bgcolor: '#f5f5f5' } }}
+                      {/* Corpo */}
+                      <Box sx={{ p: { xs: 1.5, md: 2 }, flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                        <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--caramel)' }}>
+                          Cookie artesanal
+                        </Typography>
+                        <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 400, fontSize: { xs: '18px', md: '22px' }, color: 'var(--ink)', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+                          {prod.nome}
+                        </Typography>
+                        <Typography sx={{ fontFamily: 'Inter', fontSize: '13px', color: 'var(--ink)', opacity: 0.6, lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                          {prod.descricao}
+                        </Typography>
+                        {Number(prod.estoque) > 0 && (
+                          <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink)', opacity: 0.45, mt: 0.5 }}>
+                            {Number(prod.estoque)} un. disponíveis
+                          </Typography>
+                        )}
+                      </Box>
+
+                      {/* Footer */}
+                      <Box sx={{ px: { xs: 1.5, md: 2 }, pb: { xs: 1.5, md: 2 }, pt: 0, borderTop: '1px solid var(--rule)', mt: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+                        <Box>
+                          {prod.eh_destaque && Number(prod.desconto_destaque) > 0 && (
+                            <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 300, fontSize: '12px', color: 'var(--ink)', opacity: 0.4, textDecoration: 'line-through', lineHeight: 1 }}>
+                              R$ {Number(prod.preco_venda).toFixed(2)}
+                            </Typography>
+                          )}
+                          <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0 }}>
+                            <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 300, fontSize: '12px', color: 'var(--terracotta)' }}>R$</Typography>
+                            <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 400, fontSize: { xs: '22px', md: '28px' }, color: 'var(--terracotta)', letterSpacing: '-0.03em', lineHeight: 1 }}>
+                              {Math.floor(precoFinal)}
+                            </Typography>
+                            <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 300, fontSize: '13px', color: 'var(--terracotta)', opacity: 0.6, alignSelf: 'flex-end', mb: '2px' }}>
+                              ,{String(precoFinal.toFixed(2)).slice(-2)}
+                            </Typography>
+                          </Box>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <IconButton size="small" onClick={() => toggleFavorite(prod)} sx={{ color: favorites.includes(Number(prod.id)) ? '#ef4444' : 'var(--ink)', opacity: 0.6, p: 0.5 }}>
+                            {favorites.includes(Number(prod.id)) ? <Favorite sx={{ fontSize: 16 }} /> : <FavoriteBorder sx={{ fontSize: 16 }} />}
+                          </IconButton>
+                          {Number(prod.estoque) <= 0 ? null : qty === 0 ? (
+                            <Box
+                              onClick={() => handleQtyChange(prod.id, 1)}
+                              sx={{
+                                borderRadius: 999, px: 2, py: 0.75,
+                                bgcolor: 'var(--ink)', color: 'var(--paper)',
+                                fontFamily: 'Inter', fontSize: '12px', fontWeight: 500,
+                                cursor: isStoreOpen ? 'pointer' : 'default',
+                                opacity: isStoreOpen ? 1 : 0.5,
+                                transition: 'all .3s',
+                                whiteSpace: 'nowrap',
+                                userSelect: 'none',
+                              }}
                             >
-                               {favorites.includes(Number(prod.id)) ? <Favorite sx={{ color: '#ef4444' }} /> : <FavoriteBorder />}
-                            </IconButton>
-                         </Box>
-                         <CardContent sx={{ flexGrow: 1, pb: 1 }}>
-                            <Typography variant="subtitle1" fontWeight="bold" gutterBottom sx={{ lineHeight: 1.3 }}>{prod.nome}</Typography>
-                            <Typography variant="body2" color="text.secondary" noWrap>{prod.descricao}</Typography>
-                            {Number(prod.estoque) > 0 && (
-                              <Typography variant="caption" color="primary" sx={{ fontWeight: 'bold', mt: 1, display: 'block' }}>
-                                Estoque: {Number(prod.estoque)} unidades
-                              </Typography>
-                            )}
-                            <Button size="small" variant="outlined" onClick={() => handleOpenDetails(prod)} sx={{ mt: 1, borderRadius: 4, textTransform: 'none', fontSize: '0.8rem' }}>
-                              Ver Detalhes
-                            </Button>
-                         </CardContent>
-                         <Box sx={{ p: 2, pt: 0, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                            <Box>
-                              {prod.eh_destaque && Number(prod.desconto_destaque) > 0 ? (
-                                <>
-                                  <Typography variant="caption" sx={{ textDecoration: 'line-through', color: '#9E9E9E', display: 'block', lineHeight: 1 }}>
-                                    R$ {Number(prod.preco_venda).toFixed(2)}
-                                  </Typography>
-                                  <Typography sx={{ fontSize: '1.4rem', fontWeight: 900, color: terracotta }}>
-                                    R$ {(Number(prod.preco_venda) * (1 - Number(prod.desconto_destaque) / 100)).toFixed(2)}
-                                  </Typography>
-                                </>
-                              ) : (
-                                <Typography sx={{ fontSize: '1.4rem', fontWeight: 900, color: terracotta }}>R$ {Number(prod.preco_venda).toFixed(2)}</Typography>
-                              )}
+                              + Sacola
                             </Box>
-                            {prod.estoque <= 0 ? (
-                              <Chip label="Indisponível" color="error" size="small" sx={{ fontWeight: 'bold', alignSelf: 'flex-start' }} />
-                            ) : qty === 0 ? (
-                              <Button variant="contained" fullWidth disabled={!isStoreOpen} onClick={() => handleQtyChange(prod.id, 1)} sx={{ borderRadius: 4 }}>
-                                Adicionar
-                              </Button>
-                            ) : (
-                              <Box display="flex" alignItems="center" gap={0.5} sx={{ border: `2px solid ${terracotta}`, borderRadius: 4, p: 0.5 }}>
-                                <IconButton
-                                  size="small"
-                                  onClick={() => handleQtyChange(prod.id, -1)}
-                                  disabled={qty <= 0 || !isStoreOpen}
-                                  sx={{ flex: 1 }}
-                                ><Remove fontSize="small" /></IconButton>
-                                <Typography fontWeight="bold" sx={{ flex: 1, textAlign: 'center', opacity: isStoreOpen ? 1 : 0.5 }}>{qty}</Typography>
-                                <IconButton
-                                  size="small"
-                                  onClick={() => handleQtyChange(prod.id, 1)}
-                                  sx={{ bgcolor: isStoreOpen ? terracotta : '#bdbdbd', color: 'white', flex: 1, '&:hover': { bgcolor: '#B84508' } }}
-                                  disabled={!isStoreOpen}
-                                ><Add fontSize="small" /></IconButton>
-                              </Box>
-                            )}
-                         </Box>
-                      </Card>
-                    </Grid>
+                          ) : (
+                            <Box sx={{ display: 'flex', alignItems: 'center', border: '1px solid var(--rule)', borderRadius: 999, overflow: 'hidden' }}>
+                              <IconButton size="small" onClick={() => handleQtyChange(prod.id, -1)} sx={{ p: 0.5, borderRadius: 0 }}><Remove sx={{ fontSize: 14 }} /></IconButton>
+                              <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '12px', px: 1, minWidth: 20, textAlign: 'center' }}>{qty}</Typography>
+                              <IconButton size="small" onClick={() => handleQtyChange(prod.id, 1)} disabled={!isStoreOpen} sx={{ p: 0.5, borderRadius: 0, bgcolor: 'var(--ink)', color: 'var(--paper)', '&:hover': { bgcolor: 'var(--ink)' } }}><Add sx={{ fontSize: 14 }} /></IconButton>
+                            </Box>
+                          )}
+                        </Box>
+                      </Box>
+                    </Box>
                   );
                 })}
-              </Grid>
+              </Box>
             </Box>
 
       {/* MONTE SEU KIT — full width, após cardápio */}
@@ -1472,7 +1463,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           {snackbarMessage}
         </Alert>
       </Snackbar>
-    </Container>
+    </Box>
     </Box>
   );
 }
