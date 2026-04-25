@@ -11,7 +11,7 @@ router.get("/", async (req, res) => {
     const params = [];
 
     if (startDate && endDate) {
-      query += " WHERE data_vencimento BETWEEN DATE(?) AND DATE(?)";
+      query += " WHERE data_vencimento BETWEEN $1::date AND $2::date";
       params.push(startDate, endDate);
     }
 
@@ -27,7 +27,7 @@ router.get("/", async (req, res) => {
 // CRIAR LANÇAMENTO
 router.post("/", async (req, res) => {
   const { tipo, descricao, valor, data_vencimento, status, parcelas } = req.body;
-  
+
   const numParcelas = Number(parcelas) || 1;
   const connection = await pool.connect();
 
@@ -36,7 +36,7 @@ router.post("/", async (req, res) => {
 
     const valorTotal = Number(valor);
     const valorParcela = valorTotal / numParcelas;
-    
+
     // Data base para cálculo dos vencimentos
     const dataBase = new Date(data_vencimento);
 
@@ -53,7 +53,7 @@ router.post("/", async (req, res) => {
       const descFinal = numParcelas > 1 ? `${descricao} (${i + 1}/${numParcelas})` : descricao;
 
       await connection.query(
-        "INSERT INTO lancamentos_financeiros (tipo, descricao, valor, data_vencimento, status, parcela_numero, total_parcelas, group_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO lancamentos_financeiros (tipo, descricao, valor, data_vencimento, status, parcela_numero, total_parcelas, group_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
         [tipo, descFinal, valorParcela, vencimentoStr, status || 'Pendente', i + 1, numParcelas, groupId]
       );
     }
@@ -75,7 +75,7 @@ router.put("/:id", async (req, res) => {
   const { tipo, descricao, valor, data_vencimento, status } = req.body;
   try {
     await pool.query(
-      "UPDATE lancamentos_financeiros SET tipo = ?, descricao = ?, valor = ?, data_vencimento = ?, status = ? WHERE id = ?",
+      "UPDATE lancamentos_financeiros SET tipo = $1, descricao = $2, valor = $3, data_vencimento = $4, status = $5 WHERE id = $6",
       [tipo, descricao, valor, data_vencimento, status, id]
     );
     res.json({ message: "Lançamento atualizado!" });
@@ -96,27 +96,27 @@ router.delete("/:id", async (req, res) => {
 
     // Se o usuário pediu para deletar todas as parcelas
     if (deleteAll === 'true') {
-      const result = await client.query("SELECT group_id, descricao, total_parcelas FROM lancamentos_financeiros WHERE id = ?", [id]);
-      
+      const result = await client.query("SELECT group_id, descricao, total_parcelas FROM lancamentos_financeiros WHERE id = $1", [id]);
+
       if (result.rows.length === 0) {
         await client.query("ROLLBACK");
         return res.status(404).json({ error: "Lançamento não encontrado." });
       }
-      
+
       const item = result.rows[0];
-      
+
       // Estratégia 1: Usar group_id (preferencial)
       if (item.group_id) {
-        await client.query("DELETE FROM lancamentos_financeiros WHERE group_id = ?", [item.group_id]);
+        await client.query("DELETE FROM lancamentos_financeiros WHERE group_id = $1", [item.group_id]);
         await client.query("COMMIT");
         return res.json({ message: "Todas as parcelas foram removidas!" });
-      } 
+      }
       // Estratégia 2: Fallback para registros antigos sem group_id
       else if (item.total_parcelas > 1) {
         const baseDescription = item.descricao.replace(/\s\(\d+\/\d+\)$/, '').trim();
-        
+
         const deleteResult = await client.query(
-          "DELETE FROM lancamentos_financeiros WHERE descricao LIKE ? AND total_parcelas = ?",
+          "DELETE FROM lancamentos_financeiros WHERE descricao LIKE $1 AND total_parcelas = $2",
           [`${baseDescription} (%/${item.total_parcelas})`, item.total_parcelas]
         );
 
@@ -127,8 +127,8 @@ router.delete("/:id", async (req, res) => {
       }
     }
 
-    // Fallback final: deleta apenas o item individual se as estratégias de exclusão em massa não se aplicarem.
-    await client.query("DELETE FROM lancamentos_financeiros WHERE id = ?", [id]);
+    // Fallback final: deleta apenas o item individual
+    await client.query("DELETE FROM lancamentos_financeiros WHERE id = $1", [id]);
     await client.query("COMMIT");
     res.json({ message: "Lançamento removido!" });
   } catch (error) {
@@ -154,7 +154,7 @@ router.get("/dashboard", async (req, res) => {
       const now = new Date();
       const currentDay = now.getDay(); // 0 (Dom) - 6 (Sab)
       const distanceToMonday = currentDay === 0 ? 6 : currentDay - 1;
-      
+
       const mondayDate = new Date(now);
       mondayDate.setDate(now.getDate() - distanceToMonday);
       startStr = mondayDate.toISOString().split('T')[0];
@@ -180,56 +180,55 @@ router.get("/dashboard", async (req, res) => {
     const dashRes = await pool.query(
       `SELECT
         SUM(CASE WHEN tipo = 'Saída' AND (
-          (status = 'Pendente' AND DATE(data_vencimento) <= DATE(?))
-          OR (status = 'Pago' AND DATE(data_vencimento) BETWEEN DATE(?) AND DATE(?))
+          (status = 'Pendente' AND data_vencimento <= $1::date)
+          OR (status = 'Pago' AND data_vencimento BETWEEN $2::date AND $3::date)
         ) THEN valor ELSE 0 END) as meta_semana,
 
         SUM(CASE WHEN tipo = 'Entrada' AND status = 'Pago'
-          AND DATE(data_vencimento) BETWEEN DATE(?) AND DATE(?)
+          AND data_vencimento BETWEEN $4::date AND $5::date
         THEN valor ELSE 0 END) as vendas_semana,
 
         SUM(CASE WHEN tipo = 'Entrada' AND status = 'Pendente'
         THEN valor ELSE 0 END) as provisao_total,
 
         SUM(CASE WHEN tipo = 'Entrada' AND status = 'Pago'
-          AND DATE(data_vencimento) = DATE(?)
-          AND DATE(data_vencimento) BETWEEN DATE(?) AND DATE(?)
+          AND data_vencimento = $6::date
+          AND data_vencimento BETWEEN $7::date AND $8::date
         THEN valor ELSE 0 END) as vendas_hoje,
 
         SUM(CASE WHEN tipo = 'Entrada' AND status = 'Pendente'
-          AND DATE(data_vencimento) = DATE(?)
-          AND DATE(data_vencimento) BETWEEN DATE(?) AND DATE(?)
+          AND data_vencimento = $9::date
+          AND data_vencimento BETWEEN $10::date AND $11::date
         THEN valor ELSE 0 END) as provisao_hoje,
 
         SUM(CASE WHEN tipo = 'Saída' AND (
-          (status = 'Pendente' AND DATE(data_vencimento) <= DATE(?))
-          OR (status = 'Pago' AND DATE(data_vencimento) BETWEEN DATE(?) AND DATE(?))
+          (status = 'Pendente' AND data_vencimento <= $12::date)
+          OR (status = 'Pago' AND data_vencimento BETWEEN $13::date AND $14::date)
         ) THEN valor ELSE 0 END) as meta_mensal,
 
         SUM(CASE WHEN tipo = 'Entrada' AND status = 'Pago'
-          AND DATE(data_vencimento) BETWEEN DATE(?) AND DATE(?)
+          AND data_vencimento BETWEEN $15::date AND $16::date
         THEN valor ELSE 0 END) as vendas_mensal,
 
         SUM(CASE WHEN tipo = 'Entrada' AND status = 'Pendente'
-          AND DATE(data_vencimento) BETWEEN DATE(?) AND DATE(?)
+          AND data_vencimento BETWEEN $17::date AND $18::date
         THEN valor ELSE 0 END) as provisao_mensal
 
       FROM lancamentos_financeiros`,
       [
-        // meta_semana
+        // meta_semana: $1, $2, $3
         endStr, startStr, endStr,
-        // vendas_semana
+        // vendas_semana: $4, $5
         startStr, endStr,
-        // provisao_total — sem params
-        // vendas_hoje
+        // vendas_hoje: $6, $7, $8
         todayStr, startStr, endStr,
-        // provisao_hoje
+        // provisao_hoje: $9, $10, $11
         todayStr, startStr, endStr,
-        // meta_mensal
+        // meta_mensal: $12, $13, $14
         effectiveEndMonth, startMonth, effectiveEndMonth,
-        // vendas_mensal
+        // vendas_mensal: $15, $16
         startMonth, effectiveEndMonth,
-        // provisao_mensal
+        // provisao_mensal: $17, $18
         startMonth, effectiveEndMonth
       ]
     );
