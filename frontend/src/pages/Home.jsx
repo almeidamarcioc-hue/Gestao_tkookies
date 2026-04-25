@@ -895,65 +895,97 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
               );
             })()}
 
-            {/* SEÇÃO COMBOS ESPECIAIS */}
+            {/* ── COMBOS ───────────────────────────────────────────────── */}
             {combos.length > 0 && (
-              <Box id="combos-section" sx={{ mb: 8, mx: -3, px: 3, py: 5, bgcolor: '#FDF3E7', borderRadius: 5, border: '1px solid rgba(212,88,10,0.08)' }}>
-                <Typography variant="h5" gutterBottom fontWeight="900" sx={{ color: espresso, mb: 1 }}>
-                  Combos Especiais
-                </Typography>
-                <Box sx={{ bgcolor: caramel, height: 3, width: 48, borderRadius: 2, mb: 3 }} />
-                <Grid container spacing={3}>
-                  {combos.map(combo => {
+              <Box id="combos-section" sx={{ mt: 10, mx: { xs: -3, md: '-6vw' }, px: { xs: 3, md: '6vw' }, py: { xs: 8, md: 12 }, bgcolor: 'var(--ink)' }}>
+                {/* Header 2-col */}
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 4, mb: 6, pb: 4, borderBottom: '1px solid rgba(251,246,236,.12)' }}>
+                  <Box>
+                    <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--caramel)', mb: 1.5 }}>
+                      § 02 — Combos Especiais
+                    </Typography>
+                    <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 300, fontSize: { xs: '34px', md: '48px' }, letterSpacing: '-0.04em', color: 'var(--paper)', lineHeight: 1.05 }}>
+                      Mais sabor,{' '}
+                      <Typography component="span" sx={{ fontFamily: '"Instrument Serif", serif', fontStyle: 'italic', color: 'var(--caramel)', fontSize: 'inherit', letterSpacing: 'inherit' }}>
+                        mais alegria.
+                      </Typography>
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'flex-end' }}>
+                    <Typography sx={{ fontFamily: 'Inter', fontSize: '15px', color: 'var(--paper)', opacity: 0.5, lineHeight: 1.7, maxWidth: 400 }}>
+                      Kits cuidadosamente montados para compartilhar. Cada combo é feito por encomenda com os sabores do dia.
+                    </Typography>
+                  </Box>
+                </Box>
+
+                {/* Grid de combos */}
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
+                  {combos.map((combo, idx) => {
                     const qty = getQty(combo.id);
                     const hasStock = Number(combo.estoque) > 0;
-                    
+                    const numStr = `№ ${String(idx + 1).padStart(2, '0')}`;
+
                     return (
-                      <Grid item xs={12} sm={6} md={4} key={combo.id}>
-                        <Card sx={{ ...cardSx }}>
-                           <Box sx={{ position: 'relative', height: { xs: 200, md: 220 } }}>
-                              <Box 
-                                component="img" 
-                                src={combo.imagem || "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?q=80&w=1965&auto=format&fit=crop"} 
-                                sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                              />
-                              {!hasStock && (
-                                <Chip label="Indisponível" color="error" size="small" sx={{ position: 'absolute', top: 8, left: 8, fontWeight: 'bold' }} />
-                              )}
-                           </Box>
-                           <CardContent sx={{ flexGrow: 1 }}>
-                              <Typography variant="subtitle1" fontWeight="bold" gutterBottom sx={{ lineHeight: 1.3 }}>{combo.nome}</Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                {combo.itens?.map(i => `${i.quantidade}x ${i.nome}`).join(' + ')}
-                              </Typography>
-                              {hasStock && (
-                                <Typography variant="caption" color="primary" sx={{ fontWeight: 'bold', mt: 1, display: 'block' }}>
-                                  Disponível: {Number(combo.estoque)} combos
-                                </Typography>
-                              )}
-                           </CardContent>
-                           <Box sx={{ p: 2, pt: 0, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                              <Typography sx={{ fontSize: '1.4rem', fontWeight: 900, color: terracotta }}>
-                                R$ {Number(combo.preco_venda).toFixed(2)}
-                              </Typography>
-                              {!hasStock ? (
-                                <Chip label="Esgotado" color="error" size="small" sx={{ fontWeight: 'bold', alignSelf: 'flex-start' }} />
-                              ) : qty === 0 ? (
-                                <Button variant="contained" fullWidth disabled={!isStoreOpen} onClick={() => handleQtyChange(combo.id, 1)} sx={{ borderRadius: 4 }}>
-                                  Adicionar
-                                </Button>
-                              ) : (
-                                <Box display="flex" alignItems="center" gap={0.5} sx={{ border: `2px solid ${terracotta}`, borderRadius: 4, p: 0.5 }}>
-                                  <IconButton size="small" onClick={() => handleQtyChange(combo.id, -1)} disabled={!isStoreOpen}><Remove fontSize="small" /></IconButton>
-                                  <Typography fontWeight="bold" sx={{ flex: 1, textAlign: 'center' }}>{qty}</Typography>
-                                  <IconButton size="small" onClick={() => handleQtyChange(combo.id, 1)} sx={{ bgcolor: terracotta, color: 'white', flex: 1 }} disabled={!isStoreOpen}><Add fontSize="small" /></IconButton>
-                                </Box>
-                              )}
-                           </Box>
-                        </Card>
-                      </Grid>
+                      <Box key={combo.id} sx={{ display: 'flex', flexDirection: 'column', border: '1px solid rgba(251,246,236,.12)', borderRadius: '2px', overflow: 'hidden', bgcolor: 'rgba(251,246,236,.04)', transition: 'border-color .4s', '&:hover': { borderColor: 'rgba(200,132,58,.4)' } }}>
+                        {/* Imagem */}
+                        <Box sx={{ position: 'relative', aspectRatio: '4/5', overflow: 'hidden' }}>
+                          <Box component="img"
+                            src={combo.imagem || "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?q=80&w=800&auto=format&fit=crop"}
+                            sx={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform .8s cubic-bezier(.2,.8,.2,1)', '&:hover': { transform: 'scale(1.04)' } }}
+                          />
+                          {/* Número mix-blend */}
+                          <Typography sx={{ position: 'absolute', top: 12, left: 14, fontFamily: '"DM Mono", monospace', fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--paper)', mixBlendMode: 'difference', zIndex: 1 }}>
+                            {numStr}
+                          </Typography>
+                          {!hasStock && (
+                            <Box sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(26,15,8,.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>
+                              <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--paper)' }}>Esgotado</Typography>
+                            </Box>
+                          )}
+                        </Box>
+
+                        {/* Corpo */}
+                        <Box sx={{ p: 2.5, flexGrow: 1 }}>
+                          <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 400, fontSize: '22px', color: 'var(--paper)', letterSpacing: '-0.025em', lineHeight: 1.1, mb: 1 }}>
+                            {combo.nome}
+                          </Typography>
+                          <Typography sx={{ fontFamily: 'Inter', fontSize: '13px', color: 'var(--paper)', opacity: 0.5, lineHeight: 1.6 }}>
+                            {combo.itens?.map(i => `${i.quantidade}× ${i.nome}`).join(' · ')}
+                          </Typography>
+                          {hasStock && (
+                            <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--caramel)', mt: 1, opacity: 0.7 }}>
+                              {Number(combo.estoque)} disponíveis
+                            </Typography>
+                          )}
+                        </Box>
+
+                        {/* Footer */}
+                        <Box sx={{ px: 2.5, pb: 2.5, pt: 0, borderTop: '1px solid rgba(251,246,236,.10)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0 }}>
+                            <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 300, fontSize: '12px', color: 'var(--paper)', opacity: 0.6 }}>R$</Typography>
+                            <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 400, fontSize: '28px', color: 'var(--paper)', letterSpacing: '-0.03em', lineHeight: 1 }}>
+                              {Math.floor(Number(combo.preco_venda))}
+                            </Typography>
+                            <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 300, fontSize: '14px', color: 'var(--paper)', opacity: 0.5, alignSelf: 'flex-end', mb: '2px' }}>
+                              ,{String(Number(combo.preco_venda).toFixed(2)).slice(-2)}
+                            </Typography>
+                          </Box>
+                          {!hasStock ? null : qty === 0 ? (
+                            <Box onClick={() => handleQtyChange(combo.id, 1)} sx={{ borderRadius: 999, px: 2.5, py: 0.9, bgcolor: 'var(--terracotta)', color: 'var(--paper)', fontFamily: 'Inter', fontSize: '13px', fontWeight: 500, cursor: isStoreOpen ? 'pointer' : 'default', opacity: isStoreOpen ? 1 : 0.5, transition: 'all .3s', userSelect: 'none', whiteSpace: 'nowrap' }}>
+                              + Sacola
+                            </Box>
+                          ) : (
+                            <Box sx={{ display: 'flex', alignItems: 'center', border: '1px solid rgba(251,246,236,.2)', borderRadius: 999, overflow: 'hidden' }}>
+                              <IconButton size="small" onClick={() => handleQtyChange(combo.id, -1)} sx={{ p: 0.5, borderRadius: 0, color: 'var(--paper)' }}><Remove sx={{ fontSize: 14 }} /></IconButton>
+                              <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '12px', px: 1, color: 'var(--paper)', minWidth: 20, textAlign: 'center' }}>{qty}</Typography>
+                              <IconButton size="small" onClick={() => handleQtyChange(combo.id, 1)} disabled={!isStoreOpen} sx={{ p: 0.5, borderRadius: 0, bgcolor: 'var(--terracotta)', color: 'var(--paper)', '&:hover': { bgcolor: 'var(--terracotta)' } }}><Add sx={{ fontSize: 14 }} /></IconButton>
+                            </Box>
+                          )}
+                        </Box>
+                      </Box>
                     );
                   })}
-                </Grid>
+                </Box>
               </Box>
             )}
 
