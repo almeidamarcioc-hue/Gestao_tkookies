@@ -120,6 +120,7 @@ export default function App() {
   const queryClient = new QueryClient();
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const isHome = pathname === '/';
   const [anchorCad, setAnchorCad] = useState(null);
   const [anchorCons, setAnchorCons] = useState(null);
   const [anchorPed, setAnchorPed] = useState(null);
@@ -499,7 +500,8 @@ export default function App() {
             {/* TK em círculo escuro */}
             <Box sx={{
               width: 38, height: 38, borderRadius: '50%',
-              bgcolor: '#1A0F08',
+              bgcolor: isHome && !scrolled ? 'rgba(251,246,236,.15)' : '#1A0F08',
+              border: isHome && !scrolled ? '1px solid rgba(251,246,236,.35)' : 'none',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexShrink: 0,
             }}>
@@ -517,7 +519,7 @@ export default function App() {
                 fontFamily: '"Fraunces", Georgia, serif',
                 fontWeight: 400,
                 fontSize: '22px',
-                color: '#1A0F08',
+                color: isHome && !scrolled ? '#FBF6EC' : '#1A0F08',
                 letterSpacing: '-0.03em',
                 lineHeight: 1,
               }}>TKookies</Typography>
@@ -535,15 +537,14 @@ export default function App() {
 
           {/* Nav Desktop */}
           <Box display={{ xs: 'none', md: 'flex' }} alignItems="center" gap={0.5}>
-            <Button
-              color="inherit"
-              component={Link}
-              to="/"
-              sx={{ fontSize: '13px', fontWeight: 500, color: 'rgba(26,15,8,.7)', '&:hover': { color: '#1A0F08', bgcolor: 'transparent' } }}
-            >Início</Button>
-
             {isLoggedIn ? (
               <>
+                <Button
+                  color="inherit"
+                  component={Link}
+                  to="/"
+                  sx={{ fontSize: '13px', fontWeight: 500, color: 'rgba(26,15,8,.7)', '&:hover': { color: '#1A0F08', bgcolor: 'transparent' } }}
+                >Início</Button>
                 <Button color="inherit" onClick={(e) => setAnchorCad(e.currentTarget)} sx={{ fontSize: '13px', fontWeight: 500 }}>Cadastros</Button>
                 <Menu anchorEl={anchorCad} open={openCad} onClose={handleClose}>
                   <MenuItem component={Link} to="/produtos/novo" onClick={handleClose}>Novo Produto</MenuItem>
@@ -590,9 +591,33 @@ export default function App() {
               </>
             ) : (
               <>
+                {/* Links públicos de navegação */}
+                {[
+                  { label: 'Cardápio', id: 'cardapio' },
+                  { label: 'História', path: '/sobre' },
+                  { label: 'Diário', id: 'diario-section' },
+                  { label: 'Combos', id: 'combos-section' },
+                ].map((item) => (
+                  <Button
+                    key={item.label}
+                    color="inherit"
+                    {...(item.path
+                      ? { component: Link, to: item.path }
+                      : { onClick: () => { if (isHome) document.getElementById(item.id)?.scrollIntoView({ behavior: 'smooth' }); else { navigate('/'); setTimeout(() => document.getElementById(item.id)?.scrollIntoView({ behavior: 'smooth' }), 300); } } }
+                    )}
+                    sx={{
+                      fontSize: '13px', fontWeight: 500,
+                      color: isHome && !scrolled ? 'rgba(251,246,236,.85)' : 'rgba(26,15,8,.7)',
+                      '&:hover': { color: isHome && !scrolled ? '#FBF6EC' : '#1A0F08', bgcolor: 'transparent' },
+                    }}
+                  >
+                    {item.label}
+                  </Button>
+                ))}
+
                 {clientUser ? (
                   <>
-                    <Button color="inherit" startIcon={<AccountCircle />} onClick={(e) => setAnchorClient(e.currentTarget)} sx={{ fontSize: '13px', fontWeight: 500 }}>
+                    <Button color="inherit" startIcon={<AccountCircle />} onClick={(e) => setAnchorClient(e.currentTarget)} sx={{ fontSize: '13px', fontWeight: 500, color: isHome && !scrolled ? 'rgba(251,246,236,.85)' : 'rgba(26,15,8,.7)' }}>
                       {clientUser.nome.split(' ')[0]}{clientUser.is_revendedor ? ' (Parceiro)' : ''}
                     </Button>
                     <Menu anchorEl={anchorClient} open={openClient} onClose={handleClose}>
@@ -601,48 +626,66 @@ export default function App() {
                       <MenuItem component={Link} to="/meus-pedidos" onClick={handleClose}>Meus Pedidos</MenuItem>
                       <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>Sair</MenuItem>
                     </Menu>
+                    {/* Sacola para cliente logado */}
+                    <Box
+                      component={Link}
+                      to="/carrinho"
+                      sx={{
+                        display: 'flex', alignItems: 'center', gap: 0.75,
+                        bgcolor: isHome && !scrolled ? 'rgba(251,246,236,.12)' : '#1A0F08',
+                        color: '#FBF6EC',
+                        border: isHome && !scrolled ? '1px solid rgba(251,246,236,.3)' : 'none',
+                        borderRadius: 999, px: 2, py: 0.75,
+                        textDecoration: 'none', ml: 0.5,
+                        fontSize: '13px', fontWeight: 500,
+                        transition: 'opacity .3s',
+                        '&:hover': { opacity: 0.85 },
+                      }}
+                    >
+                      <ShoppingCart sx={{ fontSize: 16 }} />
+                      {cart.reduce((acc, item) => acc + item.quantidade, 0) > 0 && (
+                        <Box sx={{ bgcolor: '#C8531B', color: '#FBF6EC', borderRadius: 999, minWidth: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, px: 0.5 }}>
+                          {cart.reduce((acc, item) => acc + item.quantidade, 0)}
+                        </Box>
+                      )}
+                      Sacola
+                    </Box>
                   </>
                 ) : (
                   <>
-                    <Button variant="contained" onClick={() => handleOpenLogin('client')} sx={{ fontSize: '13px' }}>
-                      Área do Cliente
+                    <Button
+                      onClick={() => handleOpenLogin('client')}
+                      sx={{
+                        fontSize: '13px', fontWeight: 500, ml: 1,
+                        color: isHome && !scrolled ? 'rgba(251,246,236,.85)' : 'rgba(26,15,8,.75)',
+                        border: '1px solid',
+                        borderColor: isHome && !scrolled ? 'rgba(251,246,236,.35)' : 'rgba(26,15,8,.2)',
+                        borderRadius: 999, px: 2.5, py: 0.6,
+                        '&:hover': { bgcolor: isHome && !scrolled ? 'rgba(251,246,236,.08)' : 'rgba(26,15,8,.05)', borderColor: isHome && !scrolled ? 'rgba(251,246,236,.6)' : 'rgba(26,15,8,.4)' },
+                        transition: 'all .3s',
+                      }}
+                    >
+                      Entrar
                     </Button>
-                    <Button variant="outlined" onClick={() => handleOpenLogin('reseller')} sx={{ fontSize: '13px', borderColor: '#C8531B', color: '#C8531B' }}>
-                      Área do Parceiro
-                    </Button>
+                    <Box
+                      component={Link}
+                      to="/carrinho"
+                      sx={{
+                        display: 'flex', alignItems: 'center', gap: 0.75,
+                        bgcolor: isHome && !scrolled ? 'var(--terracotta)' : '#1A0F08',
+                        color: '#FBF6EC',
+                        borderRadius: 999, px: 2.5, py: 0.75,
+                        textDecoration: 'none', ml: 0.75,
+                        fontSize: '13px', fontWeight: 500,
+                        transition: 'all .3s',
+                        '&:hover': { opacity: 0.88 },
+                      }}
+                    >
+                      Fazer Pedido
+                    </Box>
                   </>
                 )}
               </>
-            )}
-
-            {/* Sacola — pill escuro com badge terracotta */}
-            {!isLoggedIn && (
-              <Box
-                component={Link}
-                to="/carrinho"
-                sx={{
-                  display: 'flex', alignItems: 'center', gap: 0.75,
-                  bgcolor: '#1A0F08', color: '#FBF6EC',
-                  borderRadius: 999, px: 2, py: 0.75,
-                  textDecoration: 'none', ml: 0.5,
-                  fontSize: '13px', fontWeight: 500,
-                  transition: 'opacity .3s',
-                  '&:hover': { opacity: 0.85 },
-                }}
-              >
-                <ShoppingCart sx={{ fontSize: 16 }} />
-                {cart.reduce((acc, item) => acc + item.quantidade, 0) > 0 && (
-                  <Box sx={{
-                    bgcolor: '#C8531B', color: '#FBF6EC',
-                    borderRadius: 999, minWidth: 18, height: 18,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '11px', fontWeight: 700, px: 0.5,
-                  }}>
-                    {cart.reduce((acc, item) => acc + item.quantidade, 0)}
-                  </Box>
-                )}
-                Sacola
-              </Box>
             )}
           </Box>
         </Toolbar>

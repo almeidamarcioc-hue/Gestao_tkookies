@@ -483,6 +483,83 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
 
 
 
+      {/* ── HERO ──────────────────────────────────────────────────── */}
+      <Box sx={{
+        position: 'relative',
+        mt: '-68px',
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        mx: { xs: -3, md: '-6vw' },
+        overflow: 'hidden',
+      }}>
+        {/* Imagem de fundo (configurada em Configurações) */}
+        {config.home_bg && (
+          <Box
+            component="img"
+            src={config.home_bg}
+            alt=""
+            sx={{
+              position: 'absolute', inset: 0,
+              width: '100%', height: '100%',
+              objectFit: 'cover',
+              objectPosition: 'center',
+            }}
+          />
+        )}
+        {/* Overlay escuro */}
+        <Box sx={{
+          position: 'absolute', inset: 0,
+          background: config.home_bg
+            ? 'linear-gradient(to bottom, rgba(26,15,8,.42) 0%, rgba(26,15,8,.62) 100%)'
+            : 'linear-gradient(135deg, #1A0F08 0%, #2C1810 100%)',
+        }} />
+
+        {/* Conteúdo centralizado */}
+        <Box sx={{ position: 'relative', zIndex: 1, textAlign: 'center', px: { xs: 3, md: '8vw' }, pt: '68px' }}>
+          <Typography sx={{
+            fontFamily: '"Fraunces", Georgia, serif',
+            fontWeight: 300,
+            fontSize: 'clamp(44px, 7.5vw, 112px)',
+            color: '#FBF6EC',
+            letterSpacing: '-0.04em',
+            lineHeight: 1,
+            display: 'block',
+          }}>
+            Um pedacinho
+          </Typography>
+          <Typography sx={{
+            fontFamily: '"Instrument Serif", Georgia, serif',
+            fontStyle: 'italic',
+            fontWeight: 400,
+            fontSize: 'clamp(44px, 7.5vw, 112px)',
+            color: 'var(--terracotta)',
+            letterSpacing: '-0.04em',
+            lineHeight: 1.05,
+            display: 'block',
+          }}>
+            de felicidade
+          </Typography>
+          <Button
+            onClick={() => document.getElementById('cardapio')?.scrollIntoView({ behavior: 'smooth' })}
+            sx={{
+              mt: { xs: 4, md: 5 },
+              borderRadius: 999, px: { xs: 3.5, md: 5 }, py: 1.5,
+              border: '1px solid rgba(251,246,236,.55)',
+              color: '#FBF6EC',
+              fontFamily: 'Inter', fontSize: '13px', fontWeight: 500,
+              letterSpacing: '0.1em', textTransform: 'uppercase',
+              '&:hover': { bgcolor: 'rgba(251,246,236,.1)', borderColor: '#FBF6EC' },
+              transition: 'all .4s cubic-bezier(.2,.8,.2,1)',
+            }}
+          >
+            Ver Cardápio
+          </Button>
+        </Box>
+      </Box>
+
       {/* ── MARQUEE ────────────────────────────────────────────────── */}
       <Box sx={{ bgcolor: 'var(--ink)', py: '14px', overflow: 'hidden', position: 'relative', mt: 0 }}>
         <Box sx={{
@@ -1063,6 +1140,135 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
       <Box id="revendedor" sx={{ position: 'relative', zIndex: 2 }}>
         <ResellerCTA />
       </Box>
+
+      {/* ── FOOTER ──────────────────────────────────────────────── */}
+      {(() => {
+        // Formata horários agrupando dias com mesmo horário
+        const scheduleLines = (() => {
+          try {
+            const raw = config.opening_hours;
+            if (!raw) return [];
+            const schedule = typeof raw === 'string' ? JSON.parse(raw) : raw;
+            const open = schedule.filter(s => s.open);
+            if (!open.length) return [];
+            const groups = [];
+            let cur = null;
+            const DAY_ABBR = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+            open.forEach(s => {
+              const key = `${s.open_time}–${s.close_time}`;
+              if (cur && cur.key === key) {
+                cur.days.push(DAY_ABBR[s.day]);
+              } else {
+                cur = { key, days: [DAY_ABBR[s.day]], open_time: s.open_time, close_time: s.close_time };
+                groups.push(cur);
+              }
+            });
+            return groups.map(g => {
+              const label = g.days.length > 1 ? `${g.days[0]}–${g.days[g.days.length - 1]}` : g.days[0];
+              return `${label} · ${g.open_time.replace(':','h')}–${g.close_time.replace(':','h')}`;
+            });
+          } catch { return []; }
+        })();
+
+        const location = (config.home_location || '').replace(/^[^\w]+/, '').trim();
+
+        return (
+          <Box sx={{ mx: { xs: -3, md: '-6vw' }, px: { xs: 3, md: '6vw' }, pt: { xs: 8, md: 12 }, pb: { xs: 6, md: 8 }, bgcolor: 'var(--ink)', position: 'relative', overflow: 'hidden' }}>
+            {/* Wordmark de fundo */}
+            <Typography sx={{
+              position: 'absolute', bottom: -24, left: '50%', transform: 'translateX(-50%)',
+              fontFamily: '"Fraunces", serif', fontWeight: 300,
+              fontSize: 'clamp(120px, 28vw, 360px)',
+              letterSpacing: '-0.06em', color: 'var(--paper)', opacity: 0.05,
+              whiteSpace: 'nowrap', userSelect: 'none', pointerEvents: 'none', lineHeight: 1,
+            }}>
+              tkookies
+            </Typography>
+
+            {/* Grid principal */}
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.5fr 1fr 1fr' }, gap: { xs: 6, md: 4 }, position: 'relative', zIndex: 1 }}>
+
+              {/* Col 1 — CTA */}
+              <Box>
+                <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 300, fontSize: { xs: '36px', md: '48px' }, letterSpacing: '-0.04em', color: 'var(--paper)', lineHeight: 1.05 }}>
+                  Pede um{' '}
+                  <Typography component="span" sx={{ fontFamily: '"Instrument Serif", serif', fontStyle: 'italic', color: 'var(--caramel)', fontSize: 'inherit', letterSpacing: 'inherit' }}>
+                    cookie
+                  </Typography>
+                  {' '}agora?
+                </Typography>
+              </Box>
+
+              {/* Col 2 — Visite */}
+              <Box>
+                <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--caramel)', mb: 2.5 }}>Visite</Typography>
+                {location.split('/').map((line, i) => (
+                  <Typography key={i} sx={{ fontFamily: 'Inter', fontSize: '14px', color: 'var(--paper)', opacity: 0.65, lineHeight: 1.9 }}>
+                    {line.trim()}
+                  </Typography>
+                ))}
+                {config.whatsapp_number && (
+                  <Typography
+                    component="a"
+                    href={`https://wa.me/${config.whatsapp_number}`}
+                    target="_blank"
+                    sx={{ fontFamily: 'Inter', fontSize: '14px', color: 'var(--paper)', opacity: 0.65, lineHeight: 1.9, textDecoration: 'none', display: 'block', mt: 0.5, '&:hover': { opacity: 1 } }}
+                  >
+                    {config.whatsapp_number.replace(/^55(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3')}
+                  </Typography>
+                )}
+              </Box>
+
+              {/* Col 3 — Horários */}
+              <Box>
+                <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--caramel)', mb: 2.5 }}>Horários</Typography>
+                {scheduleLines.length > 0 ? scheduleLines.map((line, i) => (
+                  <Typography key={i} sx={{ fontFamily: 'Inter', fontSize: '14px', color: 'var(--paper)', opacity: 0.65, lineHeight: 1.9 }}>{line}</Typography>
+                )) : (
+                  <Typography sx={{ fontFamily: 'Inter', fontSize: '14px', color: 'var(--paper)', opacity: 0.65, lineHeight: 1.9 }}>
+                    {getTodayScheduleLabel(config)}
+                  </Typography>
+                )}
+                <Typography sx={{ fontFamily: 'Inter', fontSize: '13px', color: 'var(--paper)', opacity: 0.4, lineHeight: 1.9, mt: 0.5 }}>
+                  Entregas: até 17h
+                </Typography>
+              </Box>
+
+              {/* Col 4 — Acompanhe */}
+              <Box>
+                <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--caramel)', mb: 2.5 }}>Acompanhe</Typography>
+                {[
+                  { label: 'Instagram', href: config.instagram_url || 'https://www.instagram.com/tkookies_/' },
+                  { label: 'Facebook', href: 'https://www.facebook.com/tkookiestm' },
+                  { label: 'WhatsApp', href: `https://wa.me/${config.whatsapp_number || '5555997312557'}` },
+                ].map((item) => (
+                  <Box
+                    key={item.label}
+                    component="a"
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5, color: 'var(--paper)', opacity: 0.65, textDecoration: 'none', '&:hover': { opacity: 1 }, transition: 'opacity .2s', maxWidth: 160 }}
+                  >
+                    <Typography sx={{ fontFamily: 'Inter', fontSize: '14px' }}>{item.label}</Typography>
+                    <Typography sx={{ fontFamily: 'Inter', fontSize: '13px', ml: 1, opacity: 0.7 }}>↗</Typography>
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+
+            {/* Bottom bar */}
+            <Box sx={{ mt: 8, pt: 3, borderTop: '1px solid rgba(251,246,236,.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2, position: 'relative', zIndex: 1 }}>
+              <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--paper)', opacity: 0.28 }}>
+                © TKookies · {new Date().getFullYear()} · Todos os direitos reservados
+              </Typography>
+              <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--paper)', opacity: 0.28 }}>
+                Feito com manteiga e atenção
+              </Typography>
+            </Box>
+          </Box>
+        );
+      })()}
 
       {/* Botão Flutuante B2B */}
       {totalItems === 0 && (
