@@ -1388,17 +1388,21 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           bottom: { xs: 76, md: 40 },
           right: { xs: 16, md: 40 },
           zIndex: 1100,
-          bgcolor: '#FFFFFF',
-          color: terracotta,
-          fontWeight: 'bold',
-          border: `1px solid ${terracotta}`,
-          boxShadow: `0 4px 15px rgba(212, 88, 10, 0.2)`,
-          '&:hover': { bgcolor: '#FFF8F0' },
-          textTransform: 'none'
+          bgcolor: 'var(--paper)',
+          color: 'var(--terracotta)',
+          fontFamily: 'Inter',
+          fontWeight: 500,
+          fontSize: '13px',
+          border: '1px solid var(--terracotta)',
+          boxShadow: '0 4px 20px rgba(200,83,27,.15)',
+          borderRadius: 999,
+          '&:hover': { bgcolor: 'var(--cream)' },
+          textTransform: 'none',
+          transition: 'all .4s cubic-bezier(.2,.8,.2,1)',
         }}
       >
-        <Storefront sx={{ mr: 1 }} />
-        Seja um Revendedor Parceiro
+        <Storefront sx={{ mr: 1, fontSize: 18 }} />
+        Seja um Parceiro
       </Fab>
       )}
 
@@ -1420,51 +1424,56 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
           }}
         >
           <Box sx={{
-            bgcolor: espresso,
+            bgcolor: 'var(--ink)',
             p: { xs: 1.5, md: 2 },
             display: 'flex',
             flexDirection: { xs: 'column', sm: 'row' },
             justifyContent: 'space-between',
             alignItems: 'center',
             gap: { xs: 1.5, sm: 0 },
-            border: 'none',
-            boxShadow: '0 -4px 20px rgba(0,0,0,0.1)',
-            borderRadius: '4px'
+            border: '1px solid rgba(251,246,236,.1)',
+            boxShadow: '0 -8px 32px rgba(26,15,8,.12)',
+            borderRadius: '2px',
           }}>
             <Box display="flex" alignItems="center" gap={1.5} sx={{ width: { xs: '100%', sm: 'auto' }, justifyContent: { xs: 'center', sm: 'flex-start' } }}>
-              <IconButton onClick={() => navigate("/carrinho")} sx={{ color: 'white' }}>
-                <Badge badgeContent={totalItems} sx={{ '& .MuiBadge-badge': { bgcolor: terracotta } }}>
+              <IconButton onClick={() => navigate("/carrinho")} sx={{ color: 'var(--paper)' }}>
+                <Badge badgeContent={totalItems} sx={{ '& .MuiBadge-badge': { bgcolor: 'var(--terracotta)', color: 'var(--paper)' } }}>
                   <ShoppingBag />
                 </Badge>
               </IconButton>
-
               {clientUser && (
-                <IconButton onClick={() => navigate("/meus-favoritos")} sx={{ color: '#ff6b6b' }}>
+                <IconButton onClick={() => navigate("/meus-favoritos")} sx={{ color: '#ef4444' }}>
                   <Badge badgeContent={favorites.length} color="default">
-                    <Favorite />
+                    <Favorite sx={{ fontSize: 20 }} />
                   </Badge>
                 </IconButton>
               )}
-
-              <Box sx={{ ml: 1 }}>
-                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', lineHeight: 1, display: 'block' }}>Total do pedido</Typography>
-                <Typography variant="h6" fontWeight="bold" sx={{ color: caramel, lineHeight: 1.2, fontSize: { xs: '1.1rem', md: '1.25rem' } }}>R$ {totalPrice.toFixed(2)}</Typography>
+              <Box sx={{ ml: 0.5 }}>
+                <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--paper)', opacity: 0.5, lineHeight: 1, display: 'block' }}>Total do pedido</Typography>
+                <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 400, fontSize: { xs: '22px', md: '26px' }, color: 'var(--caramel)', lineHeight: 1.1, letterSpacing: '-0.02em' }}>R$ {totalPrice.toFixed(2)}</Typography>
               </Box>
             </Box>
-            <Button
-              variant="contained"
+            <Box
               onClick={handleCheckout}
-              endIcon={<ArrowForward />}
               sx={{
                 width: { xs: '100%', sm: 'auto' },
-                borderRadius: '4px',
-                fontWeight: 'bold',
-                px: { xs: 2, md: 3 },
-                fontSize: { xs: '0.85rem', md: '1rem' }
+                borderRadius: 999,
+                px: { xs: 3, md: 4 },
+                py: 1.5,
+                bgcolor: 'var(--terracotta)',
+                color: 'var(--paper)',
+                fontFamily: 'Inter',
+                fontWeight: 500,
+                fontSize: { xs: '14px', md: '15px' },
+                cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1,
+                transition: 'all .4s cubic-bezier(.2,.8,.2,1)',
+                '&:hover': { bgcolor: '#A8421A' },
+                userSelect: 'none',
               }}
             >
-              Finalizar
-            </Button>
+              Finalizar pedido <ArrowForward sx={{ fontSize: 16 }} />
+            </Box>
           </Box>
         </Box>
       )}
