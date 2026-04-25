@@ -677,50 +677,39 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
         ))}
       </Box>
 
-      {/* FAIXA DE CONFIANÇA — Marquee estilo Levain Bakery */}
-      <Box sx={{
-        bgcolor: espresso,
-        py: 1.2,
-        overflow: 'hidden',
-        position: 'relative',
-        '&::before, &::after': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          width: 60,
-          height: '100%',
-          zIndex: 2,
-        },
-        '&::before': { left: 0, background: `linear-gradient(to right, ${espresso}, transparent)` },
-        '&::after': { right: 0, background: `linear-gradient(to left, ${espresso}, transparent)` },
-      }}>
+      {/* ── MARQUEE ────────────────────────────────────────────────── */}
+      <Box sx={{ bgcolor: 'var(--ink)', py: '14px', overflow: 'hidden', position: 'relative', mt: 0 }}>
         <Box sx={{
           display: 'flex',
-          gap: 0,
-          animation: 'marquee 28s linear infinite',
+          alignItems: 'center',
           width: 'max-content',
-          '@keyframes marquee': {
-            '0%': { transform: 'translateX(0)' },
-            '100%': { transform: 'translateX(-50%)' },
-          },
+          animation: 'marqueeScroll 38s linear infinite',
         }}>
           {[...Array(2)].map((_, rep) => (
-            <Box key={rep} sx={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+            <Box key={rep} sx={{ display: 'flex', alignItems: 'center' }}>
               {[
-                { icon: '🍪', text: 'Feito à mão' },
-                { icon: '🥚', text: 'Ingredientes selecionados' },
-                { icon: '📦', text: 'Entrega no mesmo dia' },
-                { icon: '❤️', text: 'Com muito carinho' },
-                { icon: '⭐', text: 'Receitas artesanais' },
-                { icon: '🌾', text: 'Sem conservantes' },
-                { icon: '🎁', text: 'Perfeito para presentear' },
-                { icon: '✨', text: 'Qualidade premium' },
-              ].map((item, i) => (
-                <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 3, borderRight: '1px solid rgba(255,255,255,0.12)', flexShrink: 0 }}>
-                  <Typography sx={{ fontSize: '0.95rem' }}>{item.icon}</Typography>
-                  <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.85)', fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', fontSize: '0.7rem', whiteSpace: 'nowrap' }}>
-                    {item.text}
+                'Feito à mão',
+                'Ingredientes selecionados',
+                'Entrega no mesmo dia',
+                'Receitas artesanais',
+                'Sem conservantes',
+                'Perfeito para presentear',
+                'Qualidade premium',
+                'Fermentação lenta',
+              ].map((text, i) => (
+                <Box key={i} sx={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                  <Typography sx={{
+                    fontFamily: '"Fraunces", Georgia, serif',
+                    fontWeight: 300,
+                    fontSize: { xs: '24px', md: '36px' },
+                    color: 'var(--paper)',
+                    letterSpacing: '-0.02em',
+                    whiteSpace: 'nowrap',
+                    px: { xs: 2, md: 3 },
+                  }}>
+                    {text}
                   </Typography>
+                  <Typography sx={{ color: 'var(--terracotta)', fontSize: { xs: '18px', md: '24px' }, px: 0.5, flexShrink: 0 }}>✦</Typography>
                 </Box>
               ))}
             </Box>
