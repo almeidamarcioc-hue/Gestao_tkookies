@@ -44,69 +44,73 @@ import { APP_VERSION } from "./version";
 
 const theme = createTheme({
   palette: {
-    primary: { main: "#D4580A" },
-    secondary: { main: "#C4922A" },
-    background: { default: "#FFFAF5", paper: "#FFFFFF" },
-    text: { primary: "#2C1810", secondary: "#5D4037" },
+    primary: { main: "#C8531B" },
+    secondary: { main: "#C8843A" },
+    background: { default: "#FBF6EC", paper: "#FBF6EC" },
+    text: { primary: "#1A0F08", secondary: "#6B4C35" },
     success: { main: "#2E7D32" },
     error: { main: "#C62828" },
   },
   typography: {
-    fontFamily: '"Nunito", "Segoe UI", sans-serif',
-    h1: { fontFamily: '"Playfair Display", Georgia, serif', fontWeight: 900 },
-    h2: { fontFamily: '"Playfair Display", Georgia, serif', fontWeight: 900 },
-    h3: { fontFamily: '"Playfair Display", Georgia, serif', fontWeight: 700 },
-    h4: { fontFamily: '"Playfair Display", Georgia, serif', fontWeight: 700, color: "#2C1810" },
-    h5: { fontFamily: '"Playfair Display", Georgia, serif', fontWeight: 700, color: "#2C1810" },
-    h6: { fontWeight: 700 },
-    button: { fontWeight: 700, textTransform: "none" },
+    fontFamily: '"Inter", "Segoe UI", sans-serif',
+    h1: { fontFamily: '"Fraunces", Georgia, serif', fontWeight: 300, letterSpacing: '-0.04em' },
+    h2: { fontFamily: '"Fraunces", Georgia, serif', fontWeight: 400, letterSpacing: '-0.04em' },
+    h3: { fontFamily: '"Fraunces", Georgia, serif', fontWeight: 400, letterSpacing: '-0.03em' },
+    h4: { fontFamily: '"Fraunces", Georgia, serif', fontWeight: 400, letterSpacing: '-0.02em', color: "#1A0F08" },
+    h5: { fontFamily: '"Fraunces", Georgia, serif', fontWeight: 400, color: "#1A0F08" },
+    h6: { fontWeight: 500 },
+    button: { fontWeight: 500, textTransform: "none" },
   },
-  shape: { borderRadius: 4 },
+  shape: { borderRadius: 2 },
   components: {
     MuiAppBar: {
       styleOverrides: {
         root: {
-          backgroundColor: "#FFFAF5",
-          color: "#2C1810",
+          backgroundColor: "#FBF6EC",
+          color: "#1A0F08",
           boxShadow: "none",
-          borderBottom: "1px solid rgba(44,24,16,0.08)",
+          borderBottom: "1px solid rgba(42,26,14,.14)",
         },
       },
     },
     MuiButton: {
       styleOverrides: {
-        root: { borderRadius: 50, padding: "8px 24px" },
+        root: {
+          borderRadius: 999,
+          padding: "8px 24px",
+          transition: "all .4s cubic-bezier(.2,.8,.2,1)",
+        },
         contained: {
-          boxShadow: "0 4px 14px rgba(212,88,10,0.25)",
-          "&:hover": { backgroundColor: "#B84508", boxShadow: "0 6px 20px rgba(212,88,10,0.35)" }
+          boxShadow: "none",
+          "&:hover": { backgroundColor: "#A8421A", boxShadow: "none" },
         },
         outlined: {
-          "&:hover": { backgroundColor: "rgba(212,88,10,0.06)" }
+          "&:hover": { backgroundColor: "rgba(200,83,27,0.06)" },
         },
       },
     },
     MuiPaper: {
       styleOverrides: {
         root: {
-          boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.02)",
-          border: "1px solid rgba(44,24,16,0.08)",
+          boxShadow: "none",
+          border: "1px solid rgba(42,26,14,.14)",
         },
       },
     },
     MuiTableCell: {
       styleOverrides: {
-        head: { backgroundColor: "#FFF8F0", color: "#2C1810", fontWeight: "bold" },
-        root: { borderBottom: "1px solid rgba(44,24,16,0.06)" },
+        head: { backgroundColor: "#F6EFE3", color: "#1A0F08", fontWeight: "bold" },
+        root: { borderBottom: "1px solid rgba(42,26,14,.08)" },
       },
     },
     MuiTextField: {
       styleOverrides: {
-        root: { "& .MuiOutlinedInput-root": { borderRadius: 4 } },
+        root: { "& .MuiOutlinedInput-root": { borderRadius: 2 } },
       },
     },
     MuiChip: {
       styleOverrides: {
-        root: { borderRadius: 50 },
+        root: { borderRadius: 999 },
       },
     },
   },

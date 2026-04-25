@@ -1,0 +1,57 @@
+/* ── CSS Variables ─────────────────────────────────────────────────── */
+:root {
+  --paper:      #FBF6EC;
+  --cream:      #F6EFE3;
+  --ink:        #1A0F08;
+  --terracotta: #C8531B;
+  --caramel:    #C8843A;
+  --rule:       rgba(42,26,14,.14);
+  --ease-out:   cubic-bezier(.2,.8,.2,1);
+}
+
+/* ── Base ──────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Granulado de papel (SVG noise) ────────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  background-size: 300px 300px;
+  mix-blend-mode: multiply;
+  opacity: 0.35;
+}
+
+/* ── Selection ─────────────────────────────────────────────────────── */
+::selection {
+  background: var(--terracotta);
+  color: var(--paper);
+}
+
+/* ── Tipografia utilitária ─────────────────────────────────────────── */
+.eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--caramel);
+}
+
+.serif-italic {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-style: italic;
+  color: var(--terracotta);
+}
