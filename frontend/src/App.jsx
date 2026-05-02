@@ -264,14 +264,18 @@ export default function App() {
     }
   }, []);
 
-  const getTodayLabel = (cfg) => {
-    if (!cfg.opening_hours) return 'Entregas 14–17h';
+  const getStoreStatus = (cfg) => {
+    if (!cfg.opening_hours) return { open: null, label: 'Entregas 14–17h' };
     try {
-      const sch = typeof cfg.opening_hours === 'string' ? JSON.parse(cfg.opening_hours) : cfg.opening_hours;
-      const today = sch.find(s => Number(s.day) === new Date().getDay());
-      if (!today || !today.open) return 'Fechado hoje · Entregas 14–17h';
-      return `Aberto hoje das ${today.open_time} às ${today.close_time} · Entregas 14–17h`;
-    } catch { return 'Entregas 14–17h'; }
+      const schedule = typeof cfg.opening_hours === 'string' ? JSON.parse(cfg.opening_hours) : cfg.opening_hours;
+      const now = new Date();
+      const day = now.getDay();
+      const current = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+      const today = schedule.find(s => Number(s.day) === day);
+      if (!today || !today.open) return { open: false, label: 'Fechado hoje · Entregas 14–17h' };
+      const isOpen = current >= today.open_time && current <= today.close_time;
+      return { open: isOpen, label: `${isOpen ? 'Aberto' : 'Fechado'} hoje das ${today.open_time} às ${today.close_time} · Entregas 14–17h` };
+    } catch { return { open: null, label: 'Entregas 14–17h' }; }
   };
 
   const openCad = Boolean(anchorCad);
@@ -478,6 +482,41 @@ export default function App() {
       ) : (
         <>
       <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+
+      {/* ── Slim bar — fora do AppBar para evitar interferência MUI ── */}
+      {(() => {
+        const { open, label } = getStoreStatus(siteConfig);
+        return (
+          <Box sx={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 1101,
+            backgroundColor: '#FBF6EC',
+            borderBottom: '1px solid rgba(42,26,14,.14)',
+            display: 'flex', alignItems: 'center', gap: 1,
+            py: '5px', px: { xs: 2, md: 5 },
+          }}>
+            {open !== null && (
+              <Box sx={{
+                width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                backgroundColor: open ? '#2E7D32' : '#C62828',
+                boxShadow: open ? '0 0 0 2px rgba(46,125,50,.2)' : '0 0 0 2px rgba(198,40,40,.2)',
+              }} />
+            )}
+            <Typography sx={{
+              fontFamily: '"DM Mono", monospace',
+              fontSize: '11px',
+              fontWeight: 600,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: '#1A0F08',
+            }}>
+              {label}
+            </Typography>
+          </Box>
+        );
+      })()}
+
       <AppBar
         position="sticky"
         sx={{
@@ -505,25 +544,6 @@ export default function App() {
             ⚠️&nbsp; AMBIENTE DE HOMOLOGAÇÃO &nbsp;—&nbsp; Não utilizar dados reais &nbsp;⚠️
           </Box>
         )}
-
-        {/* ── Slim bar — status da loja ──────────────────────────── */}
-        <Box sx={{
-          py: '5px', px: { xs: 2, md: 5 },
-          borderBottom: isHome && !scrolled ? '1px solid rgba(251,246,236,.12)' : '1px solid var(--rule)',
-          display: 'flex', alignItems: 'center',
-        }}>
-          <Typography sx={{
-            fontFamily: '"DM Mono", monospace',
-            fontSize: '11px',
-            fontWeight: 600,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: isHome && !scrolled ? 'rgba(251,246,236,.75)' : 'var(--ink)',
-            transition: 'color .4s',
-          }}>
-            {getTodayLabel(siteConfig)}
-          </Typography>
-        </Box>
 
         <Toolbar sx={{ px: { xs: 2, md: 5 }, minHeight: '68px !important' }}>
           {/* Hamburguer mobile (apenas admin) */}

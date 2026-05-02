@@ -573,7 +573,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
       </Box>
 
       {/* ── MARQUEE ────────────────────────────────────────────────── */}
-      <Box sx={{ bgcolor: 'var(--ink)', py: '3px', overflow: 'hidden', position: 'relative', mt: 0 }}>
+      <Box sx={{ bgcolor: 'var(--ink)', py: '1px', overflow: 'hidden', position: 'relative', mt: 0 }}>
         <Box sx={{
           display: 'flex',
           alignItems: 'center',
@@ -596,15 +596,15 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
                   <Typography sx={{
                     fontFamily: '"Fraunces", Georgia, serif',
                     fontWeight: 300,
-                    fontSize: { xs: '24px', md: '36px' },
+                    fontSize: { xs: '14px', md: '18px' },
                     color: 'var(--paper)',
-                    letterSpacing: '-0.02em',
+                    letterSpacing: '-0.01em',
                     whiteSpace: 'nowrap',
-                    px: { xs: 2, md: 3 },
+                    px: { xs: 1.5, md: 2 },
                   }}>
                     {text}
                   </Typography>
-                  <Typography sx={{ color: 'var(--terracotta)', fontSize: { xs: '18px', md: '24px' }, px: 0.5, flexShrink: 0 }}>✦</Typography>
+                  <Typography sx={{ color: 'var(--terracotta)', fontSize: { xs: '10px', md: '13px' }, px: 0.5, flexShrink: 0 }}>✦</Typography>
                 </Box>
               ))}
             </Box>
@@ -1125,6 +1125,8 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
       <Box id="revendedor" sx={{ position: 'relative', zIndex: 2 }}>
         <ResellerCTA />
       </Box>
+
+      <Box sx={{ height: { xs: 32, md: 48 }, bgcolor: 'var(--paper)' }} />
 
       {/* ── FOOTER ──────────────────────────────────────────────── */}
       {(() => {
