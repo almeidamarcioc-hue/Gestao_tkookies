@@ -25,15 +25,10 @@ export default function BoxBuilder({ products = [], addToCart, isStoreOpen, kitD
 
   const availableProducts = products.filter(p => p.estoque > 0 && p.ativo !== false);
 
-  if (activeSizes.length === 0 || availableProducts.length === 0) return null;
-
   const totalSelected = useMemo(
     () => Object.values(selections).reduce((a, b) => a + b, 0),
     [selections]
   );
-
-  const slotsRemaining = boxSize ? boxSize - totalSelected : 0;
-  const isFull = boxSize && totalSelected === boxSize;
 
   const totalPrice = useMemo(() => {
     return Object.entries(selections).reduce((acc, [id, qty]) => {
@@ -50,6 +45,10 @@ export default function BoxBuilder({ products = [], addToCart, isStoreOpen, kitD
     return Math.max(0, totalPrice - Number(kd.valor));
   }, [totalPrice, boxSize, kitDescontos]);
 
+  if (activeSizes.length === 0 || availableProducts.length === 0) return null;
+
+  const slotsRemaining = boxSize ? boxSize - totalSelected : 0;
+  const isFull = boxSize && totalSelected === boxSize;
   const hasDiscount = discountedPrice < totalPrice;
 
   const handleAdd = (product) => {
