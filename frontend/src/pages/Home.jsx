@@ -48,7 +48,7 @@ const cardSx = {
   flexDirection: 'column'
 };
 
-export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addToCart, updateCartQuantity, removeFromCart, clearCart }) {
+export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clientUser, cart, addToCart, updateCartQuantity, removeFromCart, clearCart }) {
   const navigate = useNavigate();
   const { scrollY } = useScroll();
   const yBg = useTransform(scrollY, [0, 500], [0, 200]); // Efeito Parallax: move o fundo mais devagar que o scroll
@@ -1126,7 +1126,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
         <ResellerCTA />
       </Box>
 
-      <Box sx={{ height: { xs: 32, md: 48 }, bgcolor: 'var(--paper)' }} />
+      <Box sx={{ height: { xs: 64, md: 96 }, bgcolor: 'var(--paper)' }} />
 
       {/* ── FOOTER ──────────────────────────────────────────────── */}
       {(() => {
@@ -1160,7 +1160,7 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
         const location = (config.home_location || '').replace(/^[^\w]+/, '').trim();
 
         return (
-          <Box sx={{ width: '100vw', position: 'relative', left: '50%', transform: 'translateX(-50%)', px: { xs: 3, md: '6vw' }, pt: { xs: 8, md: 12 }, pb: { xs: 6, md: 8 }, bgcolor: 'var(--ink)', overflow: 'hidden' }}>
+          <Box sx={{ width: '100vw', position: 'relative', left: '50%', transform: 'translateX(-50%)', px: { xs: 3, md: '6vw' }, pt: { xs: 8, md: 12 }, pb: { xs: 6, md: 8 }, bgcolor: '#100806', borderTop: '2px solid rgba(200,132,58,.25)', overflow: 'hidden' }}>
             {/* Wordmark de fundo */}
             <Typography sx={{
               position: 'absolute', bottom: -24, left: '50%', transform: 'translateX(-50%)',
@@ -1249,9 +1249,24 @@ export default function Home({ isLoggedIn, onLoginClick, clientUser, cart, addTo
               <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--paper)', opacity: 0.28 }}>
                 © TKookies · {new Date().getFullYear()} · Todos os direitos reservados
               </Typography>
-              <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--paper)', opacity: 0.28 }}>
-                Feito com manteiga e atenção
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--paper)', opacity: 0.28 }}>
+                  Feito com manteiga e atenção
+                </Typography>
+                <Box
+                  component="button"
+                  onClick={() => onAdminLoginClick && onAdminLoginClick()}
+                  title="Acesso administrativo"
+                  sx={{
+                    background: 'none', border: 'none', cursor: 'pointer', p: 0.5,
+                    color: 'rgba(251,246,236,.40)', display: 'flex', alignItems: 'center',
+                    '&:hover': { color: 'rgba(251,246,236,.75)' },
+                    transition: 'color .3s',
+                  }}
+                >
+                  <Lock sx={{ fontSize: 14 }} />
+                </Box>
+              </Box>
             </Box>
           </Box>
         );

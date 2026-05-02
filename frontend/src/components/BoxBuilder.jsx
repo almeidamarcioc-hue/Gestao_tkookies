@@ -1,27 +1,21 @@
 import { useState, useMemo } from "react";
 import {
-  Box, Typography, Grid, Card, CardContent, IconButton,
-  Button, Chip, LinearProgress, Tooltip
+  Box, Typography, Grid, IconButton,
+  Button, Tooltip
 } from "@mui/material";
-import { Add, Remove, CheckCircle, ShoppingBag } from "@mui/icons-material";
-import { motion, AnimatePresence } from "framer-motion";
-
-const terracotta = '#D4580A';
-const espresso = '#2C1810';
-const caramel = '#C4922A';
+import { Add, Remove, ShoppingBag } from "@mui/icons-material";
 
 const BOX_SIZES = [
-  { qty: 4,  label: "Mini",    desc: "4 cookies",  icon: "🍪" },
-  { qty: 6,  label: "Média",   desc: "6 cookies",  icon: "🍪🍪" },
-  { qty: 8,  label: "Grande",  desc: "8 cookies",  icon: "🍪🍪🍪" },
-  { qty: 12, label: "Festa",   desc: "12 cookies", icon: "🍪🍪🍪🍪" },
+  { qty: 4,  label: "Mini",   desc: "4 un" },
+  { qty: 6,  label: "Média",  desc: "6 un" },
+  { qty: 8,  label: "Grande", desc: "8 un" },
+  { qty: 12, label: "Festa",  desc: "12 un" },
 ];
 
 export default function BoxBuilder({ products = [], addToCart, isStoreOpen, kitDescontos = {} }) {
   const [boxSize, setBoxSize] = useState(null);
-  const [selections, setSelections] = useState({}); // { productId: quantity }
+  const [selections, setSelections] = useState({});
 
-  // Only show sizes that are marked active (or all if no config was set)
   const hasConfig = Object.keys(kitDescontos).length > 0;
   const activeSizes = BOX_SIZES.filter(s => {
     if (!hasConfig) return true;
@@ -83,7 +77,6 @@ export default function BoxBuilder({ products = [], addToCart, isStoreOpen, kitD
 
   const handleAddToCart = async () => {
     if (!isFull) return;
-    // Ratio do desconto (ex: 0.9 para 10% off); 1 se não houver desconto
     const discountRatio = hasDiscount && totalPrice > 0 ? discountedPrice / totalPrice : 1;
 
     for (const [id, qty] of Object.entries(selections)) {
@@ -102,7 +95,6 @@ export default function BoxBuilder({ products = [], addToCart, isStoreOpen, kitD
     setBoxSize(null);
   };
 
-  // Visual slots (empty/filled cookies)
   const slots = boxSize
     ? Array.from({ length: boxSize }, (_, i) => {
         let filled = 0;
@@ -118,60 +110,127 @@ export default function BoxBuilder({ products = [], addToCart, isStoreOpen, kitD
     : [];
 
   return (
-    <Box sx={{ mt: 8, p: { xs: 3, md: 5 }, bgcolor: '#FDF3E7', borderRadius: 5, border: '1px solid rgba(196,146,42,0.15)' }}>
+    <Box sx={{
+      mx: { xs: -3, md: '-6vw' },
+      px: { xs: 3, md: '6vw' },
+      py: { xs: 8, md: 12 },
+      bgcolor: 'var(--paper)',
+      borderTop: '1px solid var(--rule)',
+    }}>
       {/* CABEÇALHO */}
-      <Box mb={4} textAlign="center">
-        <Typography variant="h5" fontWeight="900" sx={{ color: espresso, mb: 1 }}>
-          Monte seu Kit
+      <Box mb={6}>
+        <Typography sx={{
+          fontFamily: '"DM Mono", monospace',
+          fontSize: '13px',
+          fontWeight: 600,
+          letterSpacing: '0.18em',
+          textTransform: 'uppercase',
+          color: 'var(--caramel)',
+          mb: 2,
+        }}>
+          § — Monte seu Kit
         </Typography>
-        <Box sx={{ bgcolor: caramel, height: 3, width: 48, borderRadius: 2, mb: 2, mx: 'auto' }} />
-        <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 480, mx: 'auto' }}>
+        <Typography sx={{
+          fontFamily: '"Fraunces", Georgia, serif',
+          fontWeight: 300,
+          fontSize: { xs: '34px', md: '48px' },
+          letterSpacing: '-0.04em',
+          color: 'var(--ink)',
+          mb: 2,
+          lineHeight: 1.1,
+        }}>
+          Escolha seus sabores
+        </Typography>
+        <Typography sx={{
+          fontFamily: 'Inter',
+          fontSize: '14px',
+          color: 'var(--ink)',
+          opacity: 0.65,
+          lineHeight: 1.8,
+          maxWidth: 480,
+        }}>
           Escolha o tamanho da sua caixinha e selecione os sabores que mais te encantam.
           Cada kit é montado com carinho especialmente para você.
         </Typography>
       </Box>
 
       {/* SELETOR DE TAMANHO */}
-      <Box mb={4}>
-        <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" mb={1.5} textAlign="center" sx={{ letterSpacing: 1, textTransform: 'uppercase', fontSize: '0.72rem' }}>
-          1. Escolha o tamanho
+      <Box mb={6}>
+        <Typography sx={{
+          fontFamily: '"DM Mono", monospace',
+          fontSize: '11px',
+          fontWeight: 600,
+          letterSpacing: '0.18em',
+          textTransform: 'uppercase',
+          color: 'var(--ink)',
+          opacity: 0.45,
+          mb: 2,
+        }}>
+          1 — Tamanho
         </Typography>
-        <Box display="flex" gap={2} justifyContent="center" flexWrap="wrap">
+        <Box display="flex" gap={2} flexWrap="wrap">
           {activeSizes.map(s => {
             const kd = kitDescontos[String(s.qty)];
             const discountLabel = kd && Number(kd.valor) > 0
               ? kd.tipo === 'percentual' ? `-${kd.valor}%` : `-R$${Number(kd.valor).toFixed(2)}`
               : null;
+            const isSelected = boxSize === s.qty;
             return (
               <Box
                 key={s.qty}
-                component={motion.div}
-                whileHover={{ y: -3 }}
-                whileTap={{ scale: 0.97 }}
                 onClick={() => handleChangeSize(s.qty)}
                 sx={{
                   cursor: 'pointer',
-                  border: boxSize === s.qty ? `2px solid ${terracotta}` : '2px solid rgba(44,24,16,0.12)',
-                  borderRadius: 4,
-                  px: 3, py: 2,
+                  border: isSelected ? '2px solid var(--terracotta)' : '1px solid var(--rule)',
+                  borderRadius: '2px',
+                  px: 3,
+                  py: 1.5,
                   textAlign: 'center',
-                  bgcolor: boxSize === s.qty ? 'rgba(212,88,10,0.06)' : 'white',
+                  bgcolor: isSelected ? 'rgba(180,70,20,0.05)' : 'transparent',
                   minWidth: 90,
-                  transition: 'all 0.2s',
                   position: 'relative',
+                  transition: 'border-color 0.15s, background 0.15s',
+                  '&:hover': {
+                    borderColor: isSelected ? 'var(--terracotta)' : 'var(--ink)',
+                  },
                 }}
               >
                 {discountLabel && (
                   <Box sx={{
-                    position: 'absolute', top: -10, right: -10,
-                    bgcolor: '#2E7D32', color: 'white', borderRadius: 50,
-                    px: 1, py: 0.2, fontSize: '0.65rem', fontWeight: 'bold',
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
-                  }}>{discountLabel}</Box>
+                    position: 'absolute',
+                    top: -10,
+                    right: -10,
+                    bgcolor: 'var(--terracotta)',
+                    color: 'var(--cream)',
+                    borderRadius: '2px',
+                    px: 0.75,
+                    py: 0.15,
+                    fontFamily: '"DM Mono", monospace',
+                    fontSize: '10px',
+                    fontWeight: 600,
+                    letterSpacing: '0.05em',
+                  }}>
+                    {discountLabel}
+                  </Box>
                 )}
-                <Typography sx={{ fontSize: '1.4rem', mb: 0.5 }}>{s.icon}</Typography>
-                <Typography fontWeight="bold" sx={{ color: boxSize === s.qty ? terracotta : espresso }}>{s.label}</Typography>
-                <Typography variant="caption" color="text.secondary">{s.desc}</Typography>
+                <Typography sx={{
+                  fontFamily: '"Fraunces", Georgia, serif',
+                  fontWeight: 300,
+                  fontSize: '16px',
+                  color: isSelected ? 'var(--terracotta)' : 'var(--ink)',
+                  lineHeight: 1.2,
+                }}>
+                  {s.label}
+                </Typography>
+                <Typography sx={{
+                  fontFamily: '"DM Mono", monospace',
+                  fontSize: '11px',
+                  color: 'var(--ink)',
+                  opacity: 0.5,
+                  letterSpacing: '0.05em',
+                }}>
+                  {s.desc}
+                </Typography>
               </Box>
             );
           })}
@@ -179,63 +238,93 @@ export default function BoxBuilder({ products = [], addToCart, isStoreOpen, kitD
       </Box>
 
       {boxSize && (
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35 }}
-        >
-          {/* SLOTS VISUAIS */}
-          <Box mb={4}>
-            <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" mb={1.5} textAlign="center" sx={{ letterSpacing: 1, textTransform: 'uppercase', fontSize: '0.72rem' }}>
-              2. Sua caixinha
+        <>
+          {/* BARRA DE PROGRESSO */}
+          <Box mb={6}>
+            <Typography sx={{
+              fontFamily: '"DM Mono", monospace',
+              fontSize: '11px',
+              fontWeight: 600,
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase',
+              color: 'var(--ink)',
+              opacity: 0.45,
+              mb: 2,
+            }}>
+              2 — Sua caixinha
             </Typography>
-            <Box display="flex" flexWrap="wrap" gap={1} justifyContent="center" mb={1.5}>
+
+            {/* Slots visuais */}
+            <Box display="flex" flexWrap="wrap" gap={1} mb={2}>
               {slots.map((prod, i) => (
                 <Box
                   key={i}
-                  component={motion.div}
-                  initial={{ scale: 0.7, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
                   sx={{
-                    width: 56, height: 56,
-                    borderRadius: 3,
-                    border: prod ? `2px solid ${terracotta}` : '2px dashed rgba(44,24,16,0.15)',
-                    bgcolor: prod ? 'rgba(212,88,10,0.07)' : '#FDFAF6',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    width: 52,
+                    height: 52,
+                    borderRadius: '2px',
+                    border: prod
+                      ? '2px solid var(--terracotta)'
+                      : '1px dashed var(--rule)',
+                    bgcolor: prod ? 'rgba(180,70,20,0.05)' : 'transparent',
                     overflow: 'hidden',
-                    position: 'relative',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  {prod ? (
+                  {prod && (
                     prod.imagens?.[0]?.imagem
-                      ? <Box component="img" src={prod.imagens.find(i => i.eh_capa)?.imagem || prod.imagens[0].imagem}
+                      ? <Box component="img"
+                          src={prod.imagens.find(im => im.eh_capa)?.imagem || prod.imagens[0].imagem}
                           sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : <Typography sx={{ fontSize: '1.6rem' }}>🍪</Typography>
-                  ) : (
-                    <Typography color="text.disabled" sx={{ fontSize: '1.4rem' }}>○</Typography>
+                      : <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '10px', color: 'var(--terracotta)', letterSpacing: '0.05em' }}>
+                          ok
+                        </Typography>
                   )}
                 </Box>
               ))}
             </Box>
-            <LinearProgress
-              variant="determinate"
-              value={(totalSelected / boxSize) * 100}
-              sx={{
-                height: 6, borderRadius: 3, mx: 'auto', maxWidth: 340,
-                bgcolor: 'rgba(44,24,16,0.08)',
-                '& .MuiLinearProgress-bar': { bgcolor: isFull ? '#2E7D32' : terracotta, borderRadius: 3 }
-              }}
-            />
-            <Typography variant="caption" color={isFull ? 'success.main' : 'text.secondary'}
-              display="block" textAlign="center" mt={0.5} fontWeight="bold">
-              {isFull ? '✓ Caixinha completa!' : `${totalSelected} de ${boxSize} selecionados — faltam ${slotsRemaining}`}
+
+            {/* Barra de progresso thin */}
+            <Box sx={{ height: '2px', bgcolor: 'var(--rule)', maxWidth: 340, position: 'relative' }}>
+              <Box sx={{
+                position: 'absolute',
+                left: 0,
+                top: 0,
+                height: '100%',
+                width: `${(totalSelected / boxSize) * 100}%`,
+                bgcolor: isFull ? 'var(--caramel)' : 'var(--terracotta)',
+                transition: 'width 0.3s ease',
+              }} />
+            </Box>
+            <Typography sx={{
+              fontFamily: '"DM Mono", monospace',
+              fontSize: '11px',
+              color: 'var(--ink)',
+              opacity: isFull ? 1 : 0.5,
+              letterSpacing: '0.05em',
+              mt: 1,
+            }}>
+              {isFull
+                ? '✓ Caixinha completa'
+                : `${totalSelected} de ${boxSize} — faltam ${slotsRemaining}`}
             </Typography>
           </Box>
 
           {/* GRID DE PRODUTOS */}
-          <Box mb={4}>
-            <Typography variant="subtitle2" fontWeight="bold" color="text.secondary" mb={1.5} textAlign="center" sx={{ letterSpacing: 1, textTransform: 'uppercase', fontSize: '0.72rem' }}>
-              3. Escolha os sabores
+          <Box mb={6}>
+            <Typography sx={{
+              fontFamily: '"DM Mono", monospace',
+              fontSize: '11px',
+              fontWeight: 600,
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase',
+              color: 'var(--ink)',
+              opacity: 0.45,
+              mb: 2,
+            }}>
+              3 — Sabores
             </Typography>
             <Grid container spacing={2}>
               {availableProducts.map(prod => {
@@ -245,53 +334,110 @@ export default function BoxBuilder({ products = [], addToCart, isStoreOpen, kitD
 
                 return (
                   <Grid item xs={6} sm={4} md={3} key={prod.id}>
-                    <Card sx={{
-                      borderRadius: 4,
-                      border: qty > 0 ? `2px solid ${terracotta}` : '1px solid rgba(44,24,16,0.10)',
-                      bgcolor: qty > 0 ? 'rgba(212,88,10,0.04)' : '#FDFAF6',
-                      boxShadow: qty > 0 ? `0 4px 16px rgba(212,88,10,0.15)` : '0 2px 8px rgba(44,24,16,0.06)',
-                      transition: 'all 0.2s',
+                    <Box sx={{
+                      borderRadius: '2px',
+                      border: qty > 0 ? '2px solid var(--terracotta)' : '1px solid var(--rule)',
+                      bgcolor: qty > 0 ? 'rgba(180,70,20,0.04)' : 'var(--cream)',
+                      transition: 'border-color 0.15s, background 0.15s',
+                      overflow: 'hidden',
                       position: 'relative',
                     }}>
                       {qty > 0 && (
-                        <Chip
-                          label={qty}
-                          size="small"
-                          sx={{ position: 'absolute', top: 6, right: 6, zIndex: 2, bgcolor: terracotta, color: 'white', fontWeight: 'bold', minWidth: 28, height: 24 }}
-                        />
+                        <Box sx={{
+                          position: 'absolute',
+                          top: 6,
+                          right: 6,
+                          zIndex: 2,
+                          bgcolor: 'var(--terracotta)',
+                          color: 'var(--cream)',
+                          borderRadius: '2px',
+                          minWidth: 22,
+                          height: 22,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontFamily: '"DM Mono", monospace',
+                          fontSize: '11px',
+                          fontWeight: 600,
+                        }}>
+                          {qty}
+                        </Box>
                       )}
                       {img && (
                         <Box component="img" src={img}
-                          sx={{ width: '100%', height: 100, objectFit: 'cover', borderRadius: '16px 16px 0 0' }} />
+                          sx={{ width: '100%', height: 100, objectFit: 'cover', display: 'block' }} />
                       )}
-                      <CardContent sx={{ p: 1.5, pb: '8px !important' }}>
-                        <Typography variant="caption" fontWeight="bold" display="block" noWrap sx={{ color: espresso, mb: 0.5 }}>
+                      <Box sx={{ p: 1.5 }}>
+                        <Typography sx={{
+                          fontFamily: '"Fraunces", Georgia, serif',
+                          fontWeight: 300,
+                          fontSize: '13px',
+                          color: 'var(--ink)',
+                          mb: 0.25,
+                          lineHeight: 1.3,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}>
                           {prod.nome}
                         </Typography>
-                        <Typography variant="caption" color={terracotta} fontWeight="bold">
+                        <Typography sx={{
+                          fontFamily: '"DM Mono", monospace',
+                          fontSize: '11px',
+                          color: 'var(--terracotta)',
+                          letterSpacing: '0.04em',
+                        }}>
                           R$ {Number(prod.preco_venda).toFixed(2)}
                         </Typography>
-                        <Typography variant="caption" display="block" sx={{ color: Number(prod.estoque) <= 3 ? '#E65100' : 'text.secondary', fontSize: '0.65rem', mt: 0.3 }}>
+                        <Typography sx={{
+                          fontFamily: '"DM Mono", monospace',
+                          fontSize: '10px',
+                          color: Number(prod.estoque) <= 3 ? 'var(--terracotta)' : 'var(--ink)',
+                          opacity: Number(prod.estoque) <= 3 ? 1 : 0.4,
+                          mt: 0.3,
+                          letterSpacing: '0.04em',
+                        }}>
                           {Number(prod.estoque)} disponíve{Number(prod.estoque) === 1 ? 'l' : 'is'}
                         </Typography>
-                        <Box display="flex" alignItems="center" justifyContent="center" gap={0.5} mt={1}>
+                        <Box display="flex" alignItems="center" justifyContent="center" gap={0.5} mt={1.25}>
                           <IconButton size="small" onClick={() => handleRemove(prod)} disabled={qty === 0}
-                            sx={{ p: 0.5, border: '1px solid rgba(44,24,16,0.15)', borderRadius: 2, '&:disabled': { opacity: 0.3 } }}>
-                            <Remove fontSize="small" sx={{ fontSize: '0.9rem' }} />
+                            sx={{
+                              p: 0.5,
+                              border: '1px solid var(--rule)',
+                              borderRadius: '2px',
+                              '&:disabled': { opacity: 0.25 },
+                            }}>
+                            <Remove sx={{ fontSize: '0.85rem' }} />
                           </IconButton>
-                          <Typography fontWeight="bold" sx={{ minWidth: 20, textAlign: 'center', fontSize: '0.9rem' }}>{qty}</Typography>
+                          <Typography sx={{
+                            fontFamily: '"DM Mono", monospace',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            minWidth: 20,
+                            textAlign: 'center',
+                            color: 'var(--ink)',
+                          }}>
+                            {qty}
+                          </Typography>
                           <Tooltip title={!canAddMore && totalSelected >= boxSize ? "Caixinha cheia!" : ""}>
                             <span>
                               <IconButton size="small" onClick={() => handleAdd(prod)} disabled={!canAddMore}
-                                sx={{ p: 0.5, bgcolor: canAddMore ? terracotta : 'rgba(44,24,16,0.08)', color: canAddMore ? 'white' : 'rgba(44,24,16,0.3)', borderRadius: 2,
-                                  '&:hover': { bgcolor: canAddMore ? '#B84508' : undefined }, '&:disabled': { bgcolor: 'rgba(44,24,16,0.06)' } }}>
-                                <Add fontSize="small" sx={{ fontSize: '0.9rem' }} />
+                                sx={{
+                                  p: 0.5,
+                                  bgcolor: canAddMore ? 'var(--terracotta)' : 'transparent',
+                                  color: canAddMore ? 'var(--cream)' : 'var(--ink)',
+                                  border: canAddMore ? '1px solid var(--terracotta)' : '1px solid var(--rule)',
+                                  borderRadius: '2px',
+                                  '&:hover': { bgcolor: canAddMore ? '#b84508' : undefined },
+                                  '&:disabled': { opacity: 0.2 },
+                                }}>
+                                <Add sx={{ fontSize: '0.85rem' }} />
                               </IconButton>
                             </span>
                           </Tooltip>
                         </Box>
-                      </CardContent>
-                    </Card>
+                      </Box>
+                    </Box>
                   </Grid>
                 );
               })}
@@ -299,58 +445,88 @@ export default function BoxBuilder({ products = [], addToCart, isStoreOpen, kitD
           </Box>
 
           {/* RODAPÉ — Resumo + Botão */}
-          <AnimatePresence>
-            {totalSelected > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-              >
-                <Box sx={{
-                  position: 'sticky', bottom: { xs: 72, md: 24 }, zIndex: 10,
-                  bgcolor: isFull ? espresso : 'rgba(44,24,16,0.92)',
-                  backdropFilter: 'blur(8px)',
-                  borderRadius: 4, p: 2,
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2,
-                  flexWrap: 'wrap',
-                  boxShadow: '0 8px 32px rgba(44,24,16,0.25)',
+          {totalSelected > 0 && (
+            <Box sx={{
+              position: 'sticky',
+              bottom: { xs: 72, md: 24 },
+              zIndex: 10,
+              bgcolor: 'var(--ink)',
+              borderRadius: '2px',
+              p: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 2,
+              flexWrap: 'wrap',
+              border: '1px solid rgba(255,255,255,0.08)',
+            }}>
+              <Box>
+                <Typography sx={{
+                  fontFamily: '"DM Mono", monospace',
+                  fontSize: '11px',
+                  letterSpacing: '0.1em',
+                  color: 'rgba(253,248,240,0.55)',
+                  mb: 0.25,
+                  textTransform: 'uppercase',
                 }}>
-                  <Box>
-                    <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-                      {isFull ? '✓ Kit pronto para o carrinho!' : `${slotsRemaining} cookie${slotsRemaining > 1 ? 's' : ''} ainda falta${slotsRemaining > 1 ? 'm' : ''}`}
+                  {isFull
+                    ? '✓ Kit pronto para o carrinho'
+                    : `${slotsRemaining} cookie${slotsRemaining > 1 ? 's' : ''} ainda falta${slotsRemaining > 1 ? 'm' : ''}`}
+                </Typography>
+                <Box display="flex" alignItems="baseline" gap={1.5} flexWrap="wrap">
+                  {hasDiscount && (
+                    <Typography sx={{
+                      fontFamily: '"DM Mono", monospace',
+                      fontSize: '12px',
+                      color: 'rgba(253,248,240,0.35)',
+                      textDecoration: 'line-through',
+                    }}>
+                      R$ {totalPrice.toFixed(2)}
                     </Typography>
-                    <Box display="flex" alignItems="baseline" gap={1} flexWrap="wrap">
-                      {hasDiscount && (
-                        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.45)', textDecoration: 'line-through' }}>
-                          R$ {totalPrice.toFixed(2)}
-                        </Typography>
-                      )}
-                      <Typography variant="h6" fontWeight="bold" sx={{ color: hasDiscount ? '#81C784' : caramel }}>
-                        Total: R$ {discountedPrice.toFixed(2)}
-                      </Typography>
-                    </Box>
-                  </Box>
-                  <Button
-                    variant="contained"
-                    disabled={!isFull || !isStoreOpen}
-                    onClick={handleAddToCart}
-                    startIcon={<ShoppingBag />}
-                    sx={{
-                      bgcolor: isFull ? terracotta : 'rgba(255,255,255,0.15)',
-                      color: 'white',
-                      fontWeight: 'bold',
-                      px: 3,
-                      '&:hover': { bgcolor: '#B84508' },
-                      '&:disabled': { bgcolor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)' },
-                    }}
-                  >
-                    {isFull ? 'Adicionar ao Carrinho' : `Faltam ${slotsRemaining}`}
-                  </Button>
+                  )}
+                  <Typography sx={{
+                    fontFamily: '"Fraunces", Georgia, serif',
+                    fontWeight: 300,
+                    fontSize: '22px',
+                    color: hasDiscount ? 'var(--caramel)' : 'var(--cream)',
+                    letterSpacing: '-0.02em',
+                  }}>
+                    R$ {discountedPrice.toFixed(2)}
+                  </Typography>
                 </Box>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
+              </Box>
+              <Button
+                variant="contained"
+                disabled={!isFull || !isStoreOpen}
+                onClick={handleAddToCart}
+                startIcon={<ShoppingBag sx={{ fontSize: '1rem' }} />}
+                sx={{
+                  bgcolor: isFull ? 'var(--terracotta)' : 'rgba(255,255,255,0.1)',
+                  color: 'var(--cream)',
+                  fontFamily: '"DM Mono", monospace',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  borderRadius: '2px',
+                  px: 3,
+                  py: 1.25,
+                  boxShadow: 'none',
+                  '&:hover': {
+                    bgcolor: isFull ? '#b84508' : undefined,
+                    boxShadow: 'none',
+                  },
+                  '&:disabled': {
+                    bgcolor: 'rgba(255,255,255,0.06)',
+                    color: 'rgba(253,248,240,0.3)',
+                  },
+                }}
+              >
+                {isFull ? 'Adicionar ao Carrinho' : `Faltam ${slotsRemaining}`}
+              </Button>
+            </Box>
+          )}
+        </>
       )}
     </Box>
   );

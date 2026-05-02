@@ -522,11 +522,11 @@ export default function App() {
         sx={{
           top: 0,
           zIndex: 1100,
-          backgroundColor: scrolled ? 'rgba(251,246,236,.92)' : 'transparent',
-          backdropFilter: scrolled ? 'blur(12px)' : 'none',
+          backgroundColor: 'rgba(251,246,236,.97)',
+          backdropFilter: 'blur(12px)',
           boxShadow: scrolled ? '0 1px 0 rgba(42,26,14,.10)' : 'none',
-          borderBottom: scrolled ? '1px solid var(--rule)' : '1px solid transparent',
-          transition: 'background-color .4s cubic-bezier(.2,.8,.2,1), box-shadow .4s cubic-bezier(.2,.8,.2,1)',
+          borderBottom: '1px solid rgba(42,26,14,.10)',
+          transition: 'box-shadow .4s cubic-bezier(.2,.8,.2,1)',
         }}
       >
         {import.meta.env.VITE_ENVIRONMENT === 'homologacao' && (
@@ -581,7 +581,7 @@ export default function App() {
                 fontFamily: '"Fraunces", Georgia, serif',
                 fontWeight: 700,
                 fontSize: '22px',
-                color: isHome && !scrolled ? '#FBF6EC' : '#1A0F08',
+                color: '#1A0F08',
                 letterSpacing: '-0.02em',
                 lineHeight: 1.1,
               }}>TKookies</Typography>
@@ -669,8 +669,8 @@ export default function App() {
                     )}
                     sx={{
                       fontSize: '13px', fontWeight: 500,
-                      color: isHome && !scrolled ? 'rgba(251,246,236,.85)' : 'rgba(26,15,8,.7)',
-                      '&:hover': { color: isHome && !scrolled ? '#FBF6EC' : '#1A0F08', bgcolor: 'transparent' },
+                      color: 'rgba(26,15,8,.7)',
+                      '&:hover': { color: '#1A0F08', bgcolor: 'transparent' },
                     }}
                   >
                     {item.label}
@@ -679,7 +679,7 @@ export default function App() {
 
                 {clientUser ? (
                   <>
-                    <Button color="inherit" startIcon={<AccountCircle />} onClick={(e) => setAnchorClient(e.currentTarget)} sx={{ fontSize: '13px', fontWeight: 500, color: isHome && !scrolled ? 'rgba(251,246,236,.85)' : 'rgba(26,15,8,.7)' }}>
+                    <Button color="inherit" startIcon={<AccountCircle />} onClick={(e) => setAnchorClient(e.currentTarget)} sx={{ fontSize: '13px', fontWeight: 500, color: 'rgba(26,15,8,.7)' }}>
                       {clientUser.nome.split(' ')[0]}{clientUser.is_revendedor ? ' (Parceiro)' : ''}
                     </Button>
                     <Menu anchorEl={anchorClient} open={openClient} onClose={handleClose}>
@@ -694,9 +694,8 @@ export default function App() {
                       to="/carrinho"
                       sx={{
                         display: 'flex', alignItems: 'center', gap: 0.75,
-                        bgcolor: isHome && !scrolled ? 'rgba(251,246,236,.12)' : '#1A0F08',
+                        bgcolor: '#1A0F08',
                         color: '#FBF6EC',
-                        border: isHome && !scrolled ? '1px solid rgba(251,246,236,.3)' : 'none',
                         borderRadius: 999, px: 2, py: 0.75,
                         textDecoration: 'none', ml: 0.5,
                         fontSize: '13px', fontWeight: 500,
@@ -719,11 +718,11 @@ export default function App() {
                       onClick={() => handleOpenLogin('client')}
                       sx={{
                         fontSize: '12px', fontWeight: 500, ml: 1,
-                        color: isHome && !scrolled ? 'rgba(251,246,236,.85)' : 'rgba(26,15,8,.75)',
+                        color: 'rgba(26,15,8,.75)',
                         border: '1px solid',
-                        borderColor: isHome && !scrolled ? 'rgba(251,246,236,.35)' : 'rgba(26,15,8,.2)',
+                        borderColor: 'rgba(26,15,8,.2)',
                         borderRadius: 999, px: 2, py: 0.5,
-                        '&:hover': { bgcolor: isHome && !scrolled ? 'rgba(251,246,236,.08)' : 'rgba(26,15,8,.05)', borderColor: isHome && !scrolled ? 'rgba(251,246,236,.6)' : 'rgba(26,15,8,.4)' },
+                        '&:hover': { bgcolor: 'rgba(26,15,8,.05)', borderColor: 'rgba(26,15,8,.4)' },
                         transition: 'all .3s',
                       }}
                     >
@@ -733,9 +732,9 @@ export default function App() {
                       onClick={() => handleOpenLogin('reseller')}
                       sx={{
                         fontSize: '12px', fontWeight: 500, ml: 0.75,
-                        bgcolor: isHome && !scrolled ? 'rgba(251,246,236,.15)' : '#1A0F08',
+                        bgcolor: '#1A0F08',
                         color: '#FBF6EC',
-                        border: isHome && !scrolled ? '1px solid rgba(251,246,236,.3)' : '1px solid transparent',
+                        border: '1px solid transparent',
                         borderRadius: 999, px: 2, py: 0.5,
                         '&:hover': { opacity: 0.85 },
                         transition: 'all .3s',
@@ -829,7 +828,7 @@ export default function App() {
 
       <Box component="main" sx={{ flexGrow: 1, py: 4, pb: { xs: 10, md: 4 } }}>
         <Routes>
-          <Route path="/" element={<Home isLoggedIn={isLoggedIn} onLoginClick={() => setClientLoginOpen(true)} clientUser={clientUser} cart={cart} addToCart={addToCart} updateCartQuantity={updateCartQuantity} removeFromCart={removeFromCart} clearCart={clearCart} />} />
+          <Route path="/" element={<Home isLoggedIn={isLoggedIn} onLoginClick={() => setClientLoginOpen(true)} onAdminLoginClick={() => setAdminLoginOpen(true)} clientUser={clientUser} cart={cart} addToCart={addToCart} updateCartQuantity={updateCartQuantity} removeFromCart={removeFromCart} clearCart={clearCart} />} />
           <Route path="/cadastro" element={<ClientRegister />} />
           <Route path="/perfil" element={<ClientProfile user={clientUser} onUserUpdate={setClientUser} addToCart={addToCart} />} />
           <Route path="/carrinho" element={<Cart cart={cart} updateQuantity={updateCartQuantity} removeFromCart={removeFromCart} clearCart={clearCart} clientUser={clientUser} addToCart={addToCart} cartTimeLeft={cartTimeLeft} />} />
