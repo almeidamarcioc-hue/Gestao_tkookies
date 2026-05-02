@@ -117,7 +117,7 @@ const theme = createTheme({
 });
 
 export default function App() {
-  const queryClient = new QueryClient();
+  const [queryClient] = useState(() => new QueryClient());
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const isHome = pathname === '/';
