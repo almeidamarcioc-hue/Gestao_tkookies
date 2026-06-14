@@ -164,6 +164,7 @@ async function coletarDadosBanco() {
     pool.query(`
       SELECT
         pr.nome,
+        COALESCE(pr.rendimento, 1) AS rendimento,
         EXTRACT(DOW FROM ped.data_pedido)::int AS dia_num,
         ${dowExpr('ped.data_pedido')} AS dia_nome,
         COUNT(DISTINCT ped.data_pedido::date) AS dias_com_venda,
@@ -175,7 +176,7 @@ async function coletarDadosBanco() {
         AND ped.status != 'Cancelado'
         AND pr.ativo = TRUE
         AND pr.eh_agregado IS NOT TRUE
-      GROUP BY pr.id, pr.nome, EXTRACT(DOW FROM ped.data_pedido)::int, ${dowExpr('ped.data_pedido')}
+      GROUP BY pr.id, pr.nome, pr.rendimento, EXTRACT(DOW FROM ped.data_pedido)::int, ${dowExpr('ped.data_pedido')}
       ORDER BY pr.nome, dia_num
     `),
 
@@ -225,8 +226,10 @@ function montarPrompt(dados) {
 
   // Monta tabela de vendas por produto por dia com média real
   const porProduto = {};
+  const rendimentoPorNome = {};
   dados.vendasPorProdutoDia.forEach(r => {
     if (!porProduto[r.nome]) porProduto[r.nome] = {};
+    rendimentoPorNome[r.nome] = Math.max(1, Number(r.rendimento) || 1);
     const ocorr = ocorrencias[r.dia_num] || 13;
     const mediaPorOcorrencia = Number(r.total_vendido_dia) / ocorr;
     porProduto[r.nome][r.dia_nome] = {
@@ -243,11 +246,19 @@ function montarPrompt(dados) {
 
   const diasOrdem = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 
+  // tabelaVendas em RECEITAS (não unidades): divide mediaCeil pelo rendimento e arredonda para cima
   const tabelaVendas = Object.entries(porProduto).map(([nome, dias]) => {
-    const cols = diasOrdem.map(d => dias[d]?.mediaCeil ?? 0);
-    const total = cols.reduce((a, b) => a + b, 0);
-    const estoque = estoquePorNome[nome] ?? 0;
-    return `${nome} | Est: ${estoque} | ${cols.join(' | ')} | Total/sem: ${total}`;
+    const rend = rendimentoPorNome[nome] || 1;
+    // receitas necessárias por dia = CEIL(unidades_médias / rendimento)
+    const cols = diasOrdem.map(d => {
+      const unidades = dias[d]?.mediaCeil ?? 0;
+      return unidades > 0 ? Math.ceil(unidades / rend) : 0;
+    });
+    const totalRec = cols.reduce((a, b) => a + b, 0);
+    const estoqueUn = estoquePorNome[nome] ?? 0;
+    // estoque em receitas prontas (floor: só conta se tem receita completa disponível)
+    const estoqueRec = Math.floor(estoqueUn / rend);
+    return `${nome} | Rend: ${rend}un/rec | Est: ${estoqueUn}un (${estoqueRec} rec) | ${cols.join(' | ')} | Total/sem: ${totalRec} rec`;
   }).join('\n');
 
   const tabelaMargens = dados.topProdutos
@@ -308,23 +319,26 @@ Com base nos pedidos por dia da semana:
 - Para vender na Terça → produzir na Segunda
 - Para vender na Segunda → produzir no Sábado anterior
 
-**Dados de entrada (média por semana baseada em 90 dias de histórico):**
-Formato: Produto | Estoque Atual | Seg | Ter | Qua | Qui | Sex | Sáb | Dom | Total previsto/semana
-(Valores já são médias arredondadas para cima por dia da semana)
+**⚠️ IMPORTANTE — UNIDADE DE MEDIDA: todos os valores abaixo estão em RECEITAS, não em unidades.**
+Uma receita rende N unidades conforme indicado. O estoque também é mostrado em unidades (un) e em receitas completas disponíveis (rec).
+
+**Dados de entrada (média de receitas por semana — baseado em 90 dias de histórico):**
+Formato: Produto | Rend: Nun/rec | Est: Xun (Y rec) | Seg | Ter | Qua | Qui | Sex | Sáb | Dom | Total/sem
+(Valores são receitas necessárias por dia: CEIL(unidades_médias ÷ rendimento))
 
 ${tabelaVendas || 'Sem histórico de vendas por dia suficiente.'}
 
-**Passo 1 — Tabela PREVISÃO DE VENDAS (próxima semana):**
+**Passo 1 — Tabela PREVISÃO DE VENDAS (próxima semana, em receitas):**
 
-| Produto | Est. Atual | Seg | Ter | Qua | Qui | Sex | Sáb | TOTAL |
-|---------|-----------|-----|-----|-----|-----|-----|-----|-------|
-(preencha com os valores da tabela acima; use os valores médios calculados)
+| Produto | Rend (un/rec) | Est (rec disp.) | Seg | Ter | Qua | Qui | Sex | Sáb | TOTAL (rec) |
+|---------|---------------|-----------------|-----|-----|-----|-----|-----|-----|-------------|
+(preencha com os valores da tabela acima; use os valores em receitas)
 
-**Passo 2 — Tabela PLANO DE PRODUÇÃO:**
+**Passo 2 — Tabela PLANO DE PRODUÇÃO (em receitas):**
 
-| Dia de Produção | Para Vender em | Produto | Qtd a Produzir |
-|-----------------|----------------|---------|----------------|
-(inclua apenas qtd > 0; desconte o estoque atual apenas na 1ª produção da semana de cada produto)
+| Dia de Produção | Para Vender em | Produto | Receitas a Produzir | Rende (unidades) |
+|-----------------|----------------|---------|---------------------|------------------|
+(inclua apenas qtd > 0; desconte o estoque em receitas disponíveis apenas na 1ª produção da semana de cada produto; coluna "Rende" = receitas × rendimento)
 
 **Após as tabelas:** mensagem motivadora curta + versículo bíblico sobre trabalho e colheita.
 
