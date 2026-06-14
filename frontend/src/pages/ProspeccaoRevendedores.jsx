@@ -399,6 +399,25 @@ function EmpresaRow({ empresa, onConsultarCNPJ, aiAnalise }) {
                 </Box>
               )}
 
+              {/* Botão carregar QSA quando dados_receita já preenchido mas sem QSA */}
+              {dados && (!dados.qsa || dados.qsa.length === 0) && dados.cnpj && (
+                <Box flex={1} minWidth={200}>
+                  <Typography variant="subtitle2" fontWeight={700} color="#4E342E" gutterBottom>
+                    👥 Quadro Societário (QSA)
+                  </Typography>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={(e) => { e.stopPropagation(); consultarCNPJ(dados.cnpj.replace(/\D/g, "")); }}
+                    disabled={consultando}
+                    sx={{ color: "#4E342E", borderColor: "#4E342E" }}
+                    startIcon={consultando ? <CircularProgress size={14} /> : <Business />}
+                  >
+                    {consultando ? "Carregando..." : "Carregar QSA"}
+                  </Button>
+                </Box>
+              )}
+
               {/* Sugestão IA */}
               {aiAnalise && (
                 <Box flex={1} minWidth={240} bgcolor="#FFF3E0" borderRadius={2} p={1.5}>
@@ -434,8 +453,6 @@ export default function ProspeccaoRevendedores() {
   const [resumoIA, setResumoIA] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingIA, setLoadingIA] = useState(false);
-  const [loadingCNPJ, setLoadingCNPJ] = useState(false);
-  const [cnpjProgresso, setCnpjProgresso] = useState({ atual: 0, total: 0 });
   const [erro, setErro] = useState(null);
   const [erroIA, setErroIA] = useState(null);
   const [filtroTemp, setFiltroTemp] = useState("TODOS");
@@ -470,7 +487,6 @@ export default function ProspeccaoRevendedores() {
       const lista = json.empresas || [];
       setEmpresas(lista);
       setLoading(false);
-      buscarCNPJsAutomatico(lista);
     } catch (e) {
       setErro(`Não foi possível carregar estabelecimentos: ${e.message}`);
       setLoading(false);
@@ -545,41 +561,6 @@ export default function ProspeccaoRevendedores() {
     } finally {
       setAddLoading(false);
     }
-  }
-
-  // Busca CNPJ automaticamente para as top empresas (rate: 1/15s)
-  async function buscarCNPJsAutomatico(lista) {
-    const alvo = lista.slice(0, 20); // máximo 20 para não estourar rate limit
-    setLoadingCNPJ(true);
-    setCnpjProgresso({ atual: 0, total: alvo.length });
-
-    for (let i = 0; i < alvo.length; i++) {
-      const empresa = alvo[i];
-      // Pula se já tem CNPJ consultado
-      if (empresa.dados_receita) { setCnpjProgresso(p => ({ ...p, atual: i + 1 })); continue; }
-
-      try {
-        const params = new URLSearchParams({ nome: empresa.nome, uf: "RS" });
-        const res = await fetch(`${BASE_URL}/prospeccao-revendedores/buscar-cnpj?${params}`, {
-          headers: authHeaders(),
-        });
-        const json = await res.json();
-
-        if (json.cnpj) {
-          setEmpresas(prev => prev.map(e =>
-            e.osm_id === empresa.osm_id
-              ? { ...e, cnpj: json.cnpj, dados_receita: json.dados || null }
-              : e
-          ));
-        }
-      } catch { /* ignora erros individuais */ }
-
-      setCnpjProgresso({ atual: i + 1, total: alvo.length });
-
-      // Aguarda 15s entre requisições para respeitar rate limit
-      if (i < alvo.length - 1) await new Promise(r => setTimeout(r, 15_000));
-    }
-    setLoadingCNPJ(false);
   }
 
   async function analisarComIA() {
@@ -659,7 +640,7 @@ export default function ProspeccaoRevendedores() {
             🗺️ Prospecção de Revendedores
           </Typography>
           <Typography variant="body2" color="text.secondary" mt={0.5}>
-            Potenciais revendedores num raio de 50 km de Três de Maio, RS — dados via OpenStreetMap + Receita Federal
+            Potenciais revendedores num raio de 50 km de Três de Maio, RS — dados via Receita Federal (open.cnpja.com)
           </Typography>
         </Box>
         <Box display="flex" gap={1} alignItems="center">
@@ -746,26 +727,6 @@ export default function ProspeccaoRevendedores() {
             <Typography variant="caption">Total</Typography>
           </Paper>
         </Box>
-      )}
-
-      {/* Progresso busca CNPJ */}
-      {loadingCNPJ && (
-        <Paper sx={{ p: 1.5, mb: 2, bgcolor: "#E8F5E9", border: "1px solid #A5D6A7", borderRadius: 2 }}>
-          <Box display="flex" alignItems="center" gap={2}>
-            <CircularProgress size={16} sx={{ color: "#2E7D32" }} />
-            <Typography variant="body2" color="#2E7D32" fontWeight={700}>
-              Buscando CNPJs automaticamente... {cnpjProgresso.atual}/{cnpjProgresso.total}
-            </Typography>
-            <LinearProgress
-              variant="determinate"
-              value={(cnpjProgresso.atual / cnpjProgresso.total) * 100}
-              sx={{ flex: 1, borderRadius: 1, bgcolor: "#C8E6C9", "& .MuiLinearProgress-bar": { bgcolor: "#2E7D32" } }}
-            />
-          </Box>
-          <Typography variant="caption" color="text.secondary" mt={0.5} display="block">
-            ⏱ Respeitando limite da API gratuita (1 consulta/15s) — aguarde até {Math.ceil((cnpjProgresso.total - cnpjProgresso.atual) * 15 / 60)} min
-          </Typography>
-        </Paper>
       )}
 
       {/* Filtros e ordenação */}

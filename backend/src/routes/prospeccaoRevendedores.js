@@ -5,89 +5,61 @@ import Groq from "groq-sdk";
 
 const router = Router();
 
-// Coordenadas padrão: Três de Maio, RS
-const DEFAULT_LAT = -27.7847;
-const DEFAULT_LNG = -54.2394;
-const RAIO_METROS = 50_000; // 50 km
-
-// Tipos OSM mapeados para descrições em português
-const TIPO_MAP = {
-  bakery: "Padaria",
-  pastry: "Pastelaria / Confeitaria",
-  confectionery: "Casa de Doces",
-  chocolate: "Chocolateria",
-  cake: "Bolo / Doceria",
-  cafe: "Café",
-  fast_food: "Lanchonete",
-  deli: "Delicatessen",
-  restaurant: "Restaurante",
-  supermarket: "Supermercado",
-  convenience: "Mercearia / Conveniência",
-  coffee: "Cafeteria",
-  tea: "Casa de Chá",
-  ice_cream: "Sorveteria",
-  dairy: "Laticínios",
-  alcohol: "Bebidas",
-};
-
-// ─── Regras de temperatura (score 0-100) ─────────────────────────────────────
-
-const SCORE_POR_TIPO = {
-  bakery: 92,
-  pastry: 90,
-  confectionery: 90,
-  chocolate: 88,
-  cake: 87,
-  cafe: 68,
-  coffee: 65,
-  tea: 60,
-  ice_cream: 58,
-  deli: 55,
-  convenience: 50,
-  fast_food: 48,
-  dairy: 45,
-  restaurant: 38,
-  supermarket: 42,
-};
-
-const PALAVRAS_QUENTES = [
-  "padaria", "confeit", "doce", "bolo", "biscoito", "cookie", "pão",
-  "panific", "pastel", "recheado", "torta", "chocolate", "brigadeiro",
-  "açaí", "sorvet", "guloseima", "doceria",
+// ─── Municípios num raio de ~50 km de Três de Maio, RS ───────────────────────
+const MUNICIPIOS_50KM = [
+  { nome: "TRES DE MAIO",        dist: 0  },
+  { nome: "HORIZONTINA",         dist: 18 },
+  { nome: "TUPARENDI",           dist: 21 },
+  { nome: "SANTA ROSA",          dist: 28 },
+  { nome: "BOA VISTA DO BURICA", dist: 25 },
+  { nome: "CAMPINA DAS MISSOES", dist: 22 },
+  { nome: "CANDIDO GODOI",       dist: 25 },
+  { nome: "TUCUNDUVA",           dist: 28 },
 ];
 
-const PALAVRAS_MORNAS = [
-  "café", "coffee", "lanche", "empório", "mercado", "mercearia",
-  "cafeteria", "snack", "bar ", "quitanda", "mini market",
-];
+const TERMOS_BUSCA = ["padaria", "confeitaria"];
 
-function calcularTemperatura(tags) {
-  const tipo = (tags.shop || tags.amenity || "").toLowerCase();
-  const nome = (tags.name || "").toLowerCase();
+// ─── Temperatura por CNAE ────────────────────────────────────────────────────
 
-  let score = SCORE_POR_TIPO[tipo] ?? 30;
-
-  if (PALAVRAS_QUENTES.some((p) => nome.includes(p))) score = Math.min(100, score + 12);
-  else if (PALAVRAS_MORNAS.some((p) => nome.includes(p))) score = Math.min(100, score + 5);
-
-  if (score >= 80) return { nivel: "QUENTE", emoji: "🔥", cor: "#C62828", label: "Quente", score };
-  if (score >= 55) return { nivel: "MORNO", emoji: "🟡", cor: "#E65100", label: "Morno", score };
-  if (score >= 40) return { nivel: "AQUECENDO", emoji: "🌤️", cor: "#F9A825", label: "Aquecendo", score };
-  return { nivel: "FRIO", emoji: "❄️", cor: "#1565C0", label: "Frio", score };
+function calcularTemperaturaCNAE(cnaeDescricao, nomeEmpresa) {
+  const texto = [cnaeDescricao, nomeEmpresa].join(" ").toLowerCase();
+  if (/padari|confeit|biscoito|cookie|doce|doceria|panific|bolo|torta|chocolate|brigadeiro/.test(texto))
+    return { nivel: "QUENTE",    emoji: "🔥", cor: "#C62828", label: "Quente",    score: 90 };
+  if (/caf[eé]|cafeter|coffee|bar |lanche|empório|mercearia|conveniên/.test(texto))
+    return { nivel: "MORNO",     emoji: "🟡", cor: "#E65100", label: "Morno",     score: 65 };
+  if (/supermercado|minimercado|alimento|distribui|varejo/.test(texto))
+    return { nivel: "AQUECENDO", emoji: "🌤️", cor: "#F9A825", label: "Aquecendo", score: 50 };
+  return   { nivel: "FRIO",      emoji: "❄️", cor: "#1565C0", label: "Frio",      score: 35 };
 }
 
-// ─── Cálculo de distância Haversine ──────────────────────────────────────────
+// ─── Formatter open.cnpja.com ─────────────────────────────────────────────────
 
-function distanciaKm(lat1, lng1, lat2, lng2) {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lng2 - lng1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) ** 2;
-  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 10) / 10;
+function formatarOpenCNPJABusca(item) {
+  const cnpj = (item.taxId || "").replace(/\D/g, "");
+  const telefone = item.phones?.[0]
+    ? `(${item.phones[0].area || ""}) ${item.phones[0].number || ""}`.trim()
+    : null;
+  return {
+    cnpj,
+    razao_social: item.company?.name || null,
+    nome_fantasia: item.alias || null,
+    situacao: item.status?.text || null,
+    tipo: item.company?.entity?.text || null,
+    natureza_juridica: item.company?.nature?.text || null,
+    data_abertura: item.founded || null,
+    atividade_principal: item.mainActivity?.text || null,
+    cnae_codigo: item.mainActivity?.id || null,
+    capital_social: item.company?.equity || null,
+    email: item.emails?.[0]?.address || null,
+    telefone,
+    logradouro: [item.address?.street, item.address?.number, item.address?.details].filter(Boolean).join(", "),
+    bairro: item.address?.district || null,
+    municipio: item.address?.city || null,
+    uf: item.address?.state || null,
+    cep: item.address?.zip || null,
+    qsa: [],  // não disponível na busca; carregado sob demanda via BrasilAPI
+    fonte: "open.cnpja.com (dados Receita Federal)",
+  };
 }
 
 // Helper: AbortSignal com timeout compatível com Node 16+
@@ -99,178 +71,177 @@ function makeTimeoutSignal(ms) {
 }
 
 // ─── GET /prospeccao-revendedores/buscar ─────────────────────────────────────
-// Busca empresas no OpenStreetMap via Overpass API dentro do raio definido
+// Busca empresas na Receita Federal via open.cnpja.com (6 municípios × 2 termos)
 
 router.get("/buscar", requireRole("admin"), async (req, res) => {
-  // Tenta buscar coordenadas da TKookies nas configurações
-  let lat = DEFAULT_LAT;
-  let lng = DEFAULT_LNG;
-
-  try {
-    const result = await pool.query(
-      "SELECT chave, valor FROM configuracoes WHERE chave IN ('lat_tkookies', 'lng_tkookies')"
-    );
-    const rows = result.rows;
-    const configLat = rows.find((r) => r.chave === "lat_tkookies");
-    const configLng = rows.find((r) => r.chave === "lng_tkookies");
-    if (configLat) lat = parseFloat(configLat.valor);
-    if (configLng) lng = parseFloat(configLng.valor);
-  } catch {
-    // Usa coordenadas padrão se a tabela/coluna não existir
-  }
-
-  // Query Overpass — apenas nodes (way omitidos para reduzir carga nos servidores)
-  const overpassQuery = `[out:json][timeout:30];
-(
-  node["shop"~"bakery|pastry|confectionery|chocolate|cake|deli|convenience|coffee|supermarket"](around:${RAIO_METROS},${lat},${lng});
-  node["amenity"~"cafe|fast_food|ice_cream"](around:${RAIO_METROS},${lat},${lng});
-);
-out body;`;
-
-  // ─── Cache no banco (TTL 6h) ─────────────────────────────────────────────────
-  const CACHE_KEY = "overpass_cache";
+  const CACHE_KEY    = "overpass_cache";
   const CACHE_TS_KEY = "overpass_cache_ts";
-  const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+  const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 horas
 
+  // ── 1. Verificar cache ──────────────────────────────────────────────────────
   try {
     const cacheRows = await pool.query(
       "SELECT chave, valor FROM configuracoes WHERE chave = ANY($1)",
       [[CACHE_KEY, CACHE_TS_KEY]]
     );
     const cacheData = cacheRows.rows.find(r => r.chave === CACHE_KEY);
-    const cacheTs = cacheRows.rows.find(r => r.chave === CACHE_TS_KEY);
+    const cacheTs   = cacheRows.rows.find(r => r.chave === CACHE_TS_KEY);
     if (cacheData && cacheTs) {
       const age = Date.now() - Number(cacheTs.valor);
       if (age < CACHE_TTL_MS) {
-        console.log("[Overpass] Servindo do cache do banco");
+        console.log("[OpenCNPJA] Servindo do cache do banco");
         return res.json(JSON.parse(cacheData.valor));
       }
     }
   } catch (e) {
-    console.warn("[Overpass] Falha ao ler cache:", e.message);
+    console.warn("[OpenCNPJA] Falha ao ler cache:", e.message);
   }
 
-  // Mirrors da Overpass API — tenta em sequência com delay entre tentativas
-  const OVERPASS_MIRRORS = [
-    "https://overpass-api.de/api/interpreter",
-    "https://overpass.kumi.systems/api/interpreter",
-    "https://overpass.openstreetmap.fr/api/interpreter",
-  ];
+  // ── 2. Montar as 12 requisições (6 municípios × 2 termos) ──────────────────
+  const HEADERS = {
+    "User-Agent": "TKookies-ERP/1.0 (contact: marcioalmeida@migrate.info)",
+    "Accept": "application/json",
+  };
 
-  async function queryOverpass(query) {
-    const erros = [];
-    for (let i = 0; i < OVERPASS_MIRRORS.length; i++) {
-      const url = OVERPASS_MIRRORS[i];
-      if (i > 0) await new Promise(r => setTimeout(r, 1500)); // delay entre tentativas
-      const { signal, clear } = makeTimeoutSignal(30_000);
+  const requests = [];
+  for (const municipio of MUNICIPIOS_50KM) {
+    for (const termo of TERMOS_BUSCA) {
+      requests.push({ municipio, termo });
+    }
+  }
+
+  async function buscarUma({ municipio, termo }) {
+    const url = `https://open.cnpja.com/office/search?name=${encodeURIComponent(termo)}&state=RS&city=${encodeURIComponent(municipio.nome)}&status=ATIVA&limit=10`;
+    const { signal, clear } = makeTimeoutSignal(20_000);
+    try {
+      console.log(`[OpenCNPJA] ${termo} em ${municipio.nome}`);
+      const resp = await fetch(url, { signal, headers: HEADERS });
+      clear();
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      const offices = data.offices || data.results || data.data || [];
+      return { municipio, offices };
+    } catch (err) {
+      clear();
+      console.warn(`[OpenCNPJA] Falhou ${municipio.nome}/${termo}: ${err.message}`);
+      return { municipio, offices: [], erro: err.message };
+    }
+  }
+
+  const resultados = await Promise.allSettled(requests.map(buscarUma));
+
+  // ── 3. Coletar e desduplicar por CNPJ ──────────────────────────────────────
+  const porCNPJ = new Map(); // cnpj → { item, municipio }
+
+  for (const result of resultados) {
+    if (result.status !== "fulfilled") continue;
+    const { municipio, offices } = result.value;
+    for (const item of offices) {
+      const cnpj = (item.taxId || "").replace(/\D/g, "");
+      if (cnpj.length !== 14) continue;
+      if (!porCNPJ.has(cnpj)) {
+        porCNPJ.set(cnpj, { item, municipio });
+      }
+    }
+  }
+
+  // ── 4. Fallback se nenhuma requisição retornou dados ───────────────────────
+  if (porCNPJ.size === 0) {
+    console.warn("[OpenCNPJA] Todas as 12 requests falharam, tentando fallback sem filtro de cidade");
+    try {
+      const url = `https://open.cnpja.com/office/search?name=${encodeURIComponent(TERMOS_BUSCA[0])}&state=RS&status=ATIVA&limit=20`;
+      const { signal, clear } = makeTimeoutSignal(20_000);
+      const resp = await fetch(url, { signal, headers: HEADERS });
+      clear();
+      if (resp.ok) {
+        const data = await resp.json();
+        const offices = data.offices || data.results || data.data || [];
+        for (const item of offices.slice(0, 20)) {
+          const cnpj = (item.taxId || "").replace(/\D/g, "");
+          if (cnpj.length === 14 && !porCNPJ.has(cnpj)) {
+            porCNPJ.set(cnpj, { item, municipio: { nome: "RS", dist: null } });
+          }
+        }
+      }
+    } catch (err) {
+      console.error("[OpenCNPJA] Fallback sem cidade também falhou:", err.message);
+    }
+
+    if (porCNPJ.size === 0) {
+      // Tenta cache expirado como último recurso
       try {
-        console.log(`[Overpass] Tentando ${url}`);
-        const response = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "User-Agent": "TKookies-ERP/1.0 (prospecção comercial; contact: marcioalmeida@migrate.info)",
-            "Accept": "application/json, */*",
-          },
-          body: `data=${encodeURIComponent(query)}`,
-          signal,
-        });
-        clear();
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = await response.json();
-        console.log(`[Overpass] Sucesso em ${url} — ${data.elements?.length} elementos`);
-        return data;
-      } catch (err) {
-        clear();
-        console.warn(`[Overpass] Falhou ${url}: ${err.message}`);
-        erros.push(`${url}: ${err.message}`);
-      }
-    }
-    throw new Error(`Todos os servidores Overpass falharam. Detalhes: ${erros.join(" | ")}`);
-  }
+        const fallback = await pool.query(
+          "SELECT valor FROM configuracoes WHERE chave = $1",
+          [CACHE_KEY]
+        );
+        if (fallback.rows.length > 0) {
+          console.log("[OpenCNPJA] Servindo cache expirado como fallback");
+          return res.json({ ...JSON.parse(fallback.rows[0].valor), cache_expirado: true });
+        }
+      } catch { /* sem cache disponível */ }
 
-  try {
-    const data = await queryOverpass(overpassQuery);
-
-    const empresas = data.elements
-      .filter((el) => el.tags?.name)
-      .map((el) => {
-        const tags = el.tags || {};
-        const elLat = el.lat ?? el.center?.lat;
-        const elLng = el.lon ?? el.center?.lon;
-        const tipo = tags.shop || tags.amenity || "outro";
-        const temperatura = calcularTemperatura(tags);
-        const dist = elLat && elLng ? distanciaKm(lat, lng, elLat, elLng) : null;
-
-        return {
-          osm_id: el.id,
-          nome: tags.name,
-          tipo_osm: tipo,
-          tipo_label: TIPO_MAP[tipo] || tipo,
-          cidade: tags["addr:city"] || tags["addr:municipality"] || null,
-          bairro: tags["addr:suburb"] || tags["addr:quarter"] || null,
-          logradouro: tags["addr:street"]
-            ? `${tags["addr:street"]}${tags["addr:housenumber"] ? ", " + tags["addr:housenumber"] : ""}`
-            : null,
-          telefone: tags.phone || tags["contact:phone"] || null,
-          website: tags.website || tags["contact:website"] || null,
-          email: tags.email || tags["contact:email"] || null,
-          cnpj: tags["ref:CNPJ"] || tags.cnpj || null,
-          lat: elLat,
-          lng: elLng,
-          distancia_km: dist,
-          temperatura,
-          dados_receita: null, // preenchido quando o usuário consulta o CNPJ
-        };
-      })
-      .sort((a, b) => {
-        // Ordena: temperatura desc, depois distância asc
-        if (b.temperatura.score !== a.temperatura.score)
-          return b.temperatura.score - a.temperatura.score;
-        return (a.distancia_km ?? 999) - (b.distancia_km ?? 999);
+      return res.status(500).json({
+        error: "Não foi possível obter dados da Receita Federal no momento.",
+        detalhe: "Todas as requisições para open.cnpja.com falharam (12 requisições + fallback).",
       });
-
-    const resposta = {
-      empresas,
-      total: empresas.length,
-      raio_km: RAIO_METROS / 1000,
-      origem: { lat, lng, cidade: "Três de Maio, RS" },
-      aviso_limite:
-        "BrasilAPI: gratuita, sem limite documentado. ReceitaWS: 3 req/min no plano gratuito. Consulte CNPJs com moderação.",
-    };
-
-    // Salva no cache do banco (ignora erros de escrita)
-    try {
-      await pool.query(
-        `INSERT INTO configuracoes (chave, valor) VALUES ($1, $2), ($3, $4)
-         ON CONFLICT (chave) DO UPDATE SET valor = EXCLUDED.valor`,
-        [CACHE_KEY, JSON.stringify(resposta), CACHE_TS_KEY, String(Date.now())]
-      );
-    } catch (e) {
-      console.warn("[Overpass] Falha ao salvar cache:", e.message);
     }
-
-    res.json(resposta);
-  } catch (err) {
-    console.error("Erro Overpass API:", err.message);
-
-    // Tenta servir do cache expirado como fallback de último recurso
-    try {
-      const fallback = await pool.query(
-        "SELECT valor FROM configuracoes WHERE chave = $1",
-        [CACHE_KEY]
-      );
-      if (fallback.rows.length > 0) {
-        console.log("[Overpass] Servindo cache expirado como fallback");
-        return res.json({ ...JSON.parse(fallback.rows[0].valor), cache_expirado: true });
-      }
-    } catch { /* sem cache disponível */ }
-
-    res.status(500).json({
-      error: err.message,
-      detalhe: "Falha ao consultar servidores OpenStreetMap (Overpass API).",
-    });
   }
+
+  // ── 5. Formatar e calcular temperatura ─────────────────────────────────────
+  const empresas = Array.from(porCNPJ.values()).map(({ item, municipio }) => {
+    const dados_receita = formatarOpenCNPJABusca(item);
+    const cnaeDescricao = dados_receita.atividade_principal || "";
+    const nomeEmpresa   = dados_receita.razao_social || dados_receita.nome_fantasia || "";
+    const temperatura   = calcularTemperaturaCNAE(cnaeDescricao, nomeEmpresa);
+
+    return {
+      osm_id:       dados_receita.cnpj,
+      nome:         dados_receita.razao_social || dados_receita.nome_fantasia,
+      tipo_osm:     cnaeDescricao,
+      tipo_label:   cnaeDescricao.slice(0, 50),
+      cidade:       dados_receita.municipio,
+      bairro:       dados_receita.bairro,
+      logradouro:   dados_receita.logradouro,
+      telefone:     dados_receita.telefone,
+      website:      null,
+      email:        dados_receita.email,
+      cnpj:         dados_receita.cnpj,
+      lat:          null,
+      lng:          null,
+      distancia_km: municipio.dist,
+      temperatura,
+      dados_receita,
+    };
+  });
+
+  // Ordena: temperatura desc, depois distância asc
+  empresas.sort((a, b) => {
+    if (b.temperatura.score !== a.temperatura.score)
+      return b.temperatura.score - a.temperatura.score;
+    return (a.distancia_km ?? 999) - (b.distancia_km ?? 999);
+  });
+
+  const resposta = {
+    empresas,
+    total: empresas.length,
+    raio_km: 50,
+    origem: { lat: -27.7847, lng: -54.2394, cidade: "Três de Maio, RS" },
+    fonte: "open.cnpja.com (Receita Federal)",
+    aviso_limite: "Dados oriundos diretamente da Receita Federal via open.cnpja.com.",
+  };
+
+  // ── 6. Salvar no cache ──────────────────────────────────────────────────────
+  try {
+    await pool.query(
+      `INSERT INTO configuracoes (chave, valor) VALUES ($1, $2), ($3, $4)
+       ON CONFLICT (chave) DO UPDATE SET valor = EXCLUDED.valor`,
+      [CACHE_KEY, JSON.stringify(resposta), CACHE_TS_KEY, String(Date.now())]
+    );
+  } catch (e) {
+    console.warn("[OpenCNPJA] Falha ao salvar cache:", e.message);
+  }
+
+  res.json(resposta);
 });
 
 // ─── GET /prospeccao-revendedores/buscar-cnpj ────────────────────────────────
