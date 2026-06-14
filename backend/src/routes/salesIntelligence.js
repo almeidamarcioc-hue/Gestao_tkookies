@@ -319,7 +319,7 @@ Com base nos pedidos por dia da semana:
 
 **⚠️ REGRA DE CÁLCULO OBRIGATÓRIA:**
 - Os valores por dia são em **UNIDADES** (demanda média diária histórica)
-- O campo `Total: Xun → Y rec/sem` já mostra a conversão correta: CEIL(total_semana ÷ rendimento) — **use este número de receitas**
+- O campo "Total: Xun → Y rec/sem" já mostra a conversão correta: CEIL(total_semana ÷ rendimento) — **use este número de receitas**
 - **NUNCA** aplique CEIL por dia e some depois — isso superestima a produção
 - Exemplo correto: demanda 5un/dia × 6 dias = 30un ÷ rend 11 = CEIL(2,7) = **3 receitas**, não 6
 
@@ -332,7 +332,7 @@ ${tabelaVendas || 'Sem histórico de vendas por dia suficiente.'}
 
 | Produto | Rend (un/rec) | Estoque (un) | Seg | Ter | Qua | Qui | Sex | Sáb | Total (un) | Receitas/sem |
 |---------|---------------|--------------|-----|-----|-----|-----|-----|-----|------------|--------------|
-(use os valores da tabela acima; "Receitas/sem" = campo `Y rec/sem` já calculado — não recalcule)
+(use os valores da tabela acima; "Receitas/sem" = campo "Y rec/sem" já calculado — não recalcule)
 
 **Passo 2 — Tabela PLANO DE PRODUÇÃO (em receitas, agrupando para minimizar dias de produção):**
 
