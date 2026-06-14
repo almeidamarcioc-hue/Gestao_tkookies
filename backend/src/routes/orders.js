@@ -43,7 +43,7 @@ router.get("/", requireRole('admin'), async (req, res) => {
       LEFT JOIN clientes c ON p.cliente_id = c.id AND (p.tipo_cliente IS NULL OR p.tipo_cliente = 'consumidor')
       LEFT JOIN revendedores r ON p.cliente_id = r.id AND p.tipo_cliente = 'revendedor'
       ${whereClause}
-      ORDER BY p.id DESC
+      ORDER BY p.data_pedido DESC, p.id DESC
       ${paginationClause}
     `;
     const result = await pool.query(query, params);
