@@ -112,6 +112,37 @@ export default function BestSellersReport() {
             <Bar options={chartOptions} data={chartData} />
           </Paper>
 
+          {/* Tabela detalhada */}
+          <Paper sx={{ p: 3, mb: 4 }}>
+            <Typography variant="h6" mb={2} fontWeight="bold">Detalhamento por Produto</Typography>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 'bold', width: 40 }}>#</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Produto</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 'bold' }}>Qtd Vendida</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 'bold' }}>Receita Total</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 'bold' }}>Estoque Atual</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {reportData.map((item, i) => (
+                  <TableRow key={item.id} hover>
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary">{i + 1}</Typography>
+                    </TableCell>
+                    <TableCell>{item.nome}</TableCell>
+                    <TableCell align="right">{Number(item.total_vendido).toLocaleString('pt-BR')}</TableCell>
+                    <TableCell align="right">
+                      R$ {Number(item.receita_total || 0).toFixed(2)}
+                    </TableCell>
+                    <TableCell align="right">{Number(item.estoque_atual).toLocaleString('pt-BR')}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Paper>
+
           {produtosEncalhados.length > 0 && (
             <Alert severity="warning" sx={{ mb: 4 }}>
               <Typography fontWeight="bold">Atenção! Produtos com estoque mas sem vendas no período:</Typography>

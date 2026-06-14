@@ -14,6 +14,7 @@ const COLORS_LOW = ["#6D4C41", "#795548", "#8D6E63", "#A1887F", "#BCAAA4", "#D7C
 
 const fmtMoney = (v) => `R$ ${Number(v).toFixed(2)}`;
 const fmtNum = (v) => Number(v).toLocaleString('pt-BR');
+const fmtDate = (v) => v ? new Date(v).toLocaleDateString('pt-BR') : 'Nunca';
 
 function RankingTable({ data, cols }) {
   if (!data.length) return (
@@ -75,24 +76,28 @@ const tabs = [
 
 const colsTopClientes = [
   { key: "nome", label: "Cliente" },
+  { key: "tipo", label: "Tipo" },
   { key: "telefone", label: "Telefone" },
   { key: "total_pedidos", label: "Pedidos", align: "right", format: fmtNum },
   { key: "total_gasto", label: "Total Gasto", align: "right", format: fmtMoney },
 ];
 const colsClientesInativos = [
   { key: "nome", label: "Cliente" },
-  { key: "telefone", label: "Telefone" },
-  { key: "total_pedidos", label: "Pedidos", align: "right", format: fmtNum },
-  { key: "total_gasto", label: "Total Gasto", align: "right", format: fmtMoney },
+  { key: "tipo", label: "Tipo" },
+  { key: "total_pedidos", label: "Pedidos no período", align: "right", format: fmtNum },
+  { key: "total_gasto", label: "Total no período", align: "right", format: fmtMoney },
+  { key: "ultima_compra", label: "Última Compra", align: "right", format: fmtDate },
 ];
 const colsTopProdutos = [
   { key: "nome", label: "Produto" },
   { key: "total_vendido", label: "Qtd Vendida", align: "right", format: fmtNum },
+  { key: "receita_total", label: "Receita", align: "right", format: fmtMoney },
   { key: "estoque_atual", label: "Estoque Atual", align: "right", format: fmtNum },
 ];
 const colsProdutosParados = [
   { key: "nome", label: "Produto" },
-  { key: "total_vendido", label: "Qtd Vendida", align: "right", format: fmtNum },
+  { key: "total_vendido", label: "Qtd no Período", align: "right", format: fmtNum },
+  { key: "ultima_venda", label: "Última Venda", align: "right", format: (v) => v ? new Date(v).toLocaleDateString('pt-BR') : 'Sem vendas' },
   { key: "estoque_atual", label: "Estoque Atual", align: "right", format: fmtNum },
 ];
 

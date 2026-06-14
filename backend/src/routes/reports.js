@@ -144,14 +144,27 @@ router.get("/top-clientes", async (req, res) => {
   if (!startDate || !endDate) return res.status(400).json({ error: "Datas obrigatórias" });
   try {
     const result = await pool.query(`
-      SELECT
-        c.id, c.nome, c.telefone,
-        COUNT(p.id) AS total_pedidos,
-        COALESCE(SUM(p.valor_total), 0) AS total_gasto
-      FROM clientes c
-      JOIN pedidos p ON p.cliente_id = c.id AND p.status != 'Cancelado'
-        AND DATE(p.data_pedido) BETWEEN DATE($1) AND DATE($2)
-      GROUP BY c.id, c.nome, c.telefone
+      SELECT id, nome, telefone, tipo, total_pedidos, total_gasto FROM (
+        SELECT c.id, c.nome, c.telefone, 'Consumidor' as tipo,
+          COUNT(p.id)::int AS total_pedidos,
+          COALESCE(SUM(p.valor_total), 0) AS total_gasto
+        FROM clientes c
+        JOIN pedidos p ON p.cliente_id = c.id
+          AND (p.tipo_cliente IS NULL OR p.tipo_cliente != 'revendedor')
+          AND p.status != 'Cancelado'
+          AND DATE(p.data_pedido) BETWEEN DATE($1) AND DATE($2)
+        GROUP BY c.id, c.nome, c.telefone
+        UNION ALL
+        SELECT r.id, COALESCE(r.razao_social, r.contato) as nome, r.telefone, 'Revendedor' as tipo,
+          COUNT(p.id)::int AS total_pedidos,
+          COALESCE(SUM(p.valor_total), 0) AS total_gasto
+        FROM revendedores r
+        JOIN pedidos p ON p.cliente_id = r.id
+          AND p.tipo_cliente = 'revendedor'
+          AND p.status != 'Cancelado'
+          AND DATE(p.data_pedido) BETWEEN DATE($1) AND DATE($2)
+        GROUP BY r.id, r.razao_social, r.contato, r.telefone
+      ) combined
       ORDER BY total_gasto DESC
       LIMIT 10
     `, [startDate, endDate]);
@@ -168,14 +181,33 @@ router.get("/clientes-inativos", async (req, res) => {
   if (!startDate || !endDate) return res.status(400).json({ error: "Datas obrigatórias" });
   try {
     const result = await pool.query(`
-      SELECT
-        c.id, c.nome, c.telefone,
-        COUNT(p.id) AS total_pedidos,
-        COALESCE(SUM(p.valor_total), 0) AS total_gasto
-      FROM clientes c
-      LEFT JOIN pedidos p ON p.cliente_id = c.id AND p.status != 'Cancelado'
-        AND DATE(p.data_pedido) BETWEEN DATE($1) AND DATE($2)
-      GROUP BY c.id, c.nome, c.telefone
+      SELECT id, nome, telefone, tipo, total_pedidos, total_gasto, ultima_compra FROM (
+        SELECT c.id, c.nome, c.telefone, 'Consumidor' as tipo,
+          COUNT(p.id)::int AS total_pedidos,
+          COALESCE(SUM(p.valor_total), 0) AS total_gasto,
+          (SELECT MAX(pp.data_pedido) FROM pedidos pp
+           WHERE pp.cliente_id = c.id AND pp.status != 'Cancelado'
+           AND (pp.tipo_cliente IS NULL OR pp.tipo_cliente != 'revendedor')) as ultima_compra
+        FROM clientes c
+        LEFT JOIN pedidos p ON p.cliente_id = c.id
+          AND (p.tipo_cliente IS NULL OR p.tipo_cliente != 'revendedor')
+          AND p.status != 'Cancelado'
+          AND DATE(p.data_pedido) BETWEEN DATE($1) AND DATE($2)
+        GROUP BY c.id, c.nome, c.telefone
+        UNION ALL
+        SELECT r.id, COALESCE(r.razao_social, r.contato) as nome, r.telefone, 'Revendedor' as tipo,
+          COUNT(p.id)::int AS total_pedidos,
+          COALESCE(SUM(p.valor_total), 0) AS total_gasto,
+          (SELECT MAX(pp.data_pedido) FROM pedidos pp
+           WHERE pp.cliente_id = r.id AND pp.status != 'Cancelado'
+           AND pp.tipo_cliente = 'revendedor') as ultima_compra
+        FROM revendedores r
+        LEFT JOIN pedidos p ON p.cliente_id = r.id
+          AND p.tipo_cliente = 'revendedor'
+          AND p.status != 'Cancelado'
+          AND DATE(p.data_pedido) BETWEEN DATE($1) AND DATE($2)
+        GROUP BY r.id, r.razao_social, r.contato, r.telefone
+      ) combined
       ORDER BY total_pedidos ASC, total_gasto ASC
       LIMIT 10
     `, [startDate, endDate]);
@@ -194,11 +226,16 @@ router.get("/produtos-parados", async (req, res) => {
     const result = await pool.query(`
       SELECT
         p.id, p.nome,
-        COALESCE(SUM(ip.quantidade), 0) AS total_vendido,
-        p.estoque AS estoque_atual
+        COALESCE(SUM(ip.quantidade), 0)::int AS total_vendido,
+        COALESCE(SUM(ip.valor_total), 0) AS receita_total,
+        p.estoque AS estoque_atual,
+        (SELECT MAX(ped2.data_pedido) FROM itens_pedido ip2
+         JOIN pedidos ped2 ON ip2.pedido_id = ped2.id
+         WHERE ip2.produto_id = p.id AND ped2.status != 'Cancelado') as ultima_venda
       FROM produtos p
       LEFT JOIN itens_pedido ip ON p.id = ip.produto_id
-      LEFT JOIN pedidos ped ON ip.pedido_id = ped.id AND ped.status != 'Cancelado'
+      LEFT JOIN pedidos ped ON ip.pedido_id = ped.id
+        AND ped.status != 'Cancelado'
         AND DATE(ped.data_pedido) BETWEEN DATE($1) AND DATE($2)
       WHERE p.ativo = TRUE
       GROUP BY p.id, p.nome, p.estoque
@@ -223,14 +260,18 @@ router.get("/top-produtos", async (req, res) => {
   try {
     const query = `
       SELECT
-        p.id,
-        p.nome,
-        COALESCE(SUM(ip.quantidade), 0) as total_vendido,
-        p.estoque as estoque_atual
+        p.id, p.nome,
+        COALESCE(SUM(ip.quantidade), 0)::int as total_vendido,
+        COALESCE(SUM(ip.valor_total), 0) as receita_total,
+        p.estoque as estoque_atual,
+        p.preco_venda
       FROM produtos p
       LEFT JOIN itens_pedido ip ON p.id = ip.produto_id
-      LEFT JOIN pedidos ped ON ip.pedido_id = ped.id AND ped.status != 'Cancelado' AND DATE(ped.data_pedido) BETWEEN DATE($1) AND DATE($2)
-      GROUP BY p.id, p.nome, p.estoque
+      LEFT JOIN pedidos ped ON ip.pedido_id = ped.id
+        AND ped.status != 'Cancelado'
+        AND DATE(ped.data_pedido) BETWEEN DATE($1) AND DATE($2)
+      WHERE p.ativo = TRUE
+      GROUP BY p.id, p.nome, p.estoque, p.preco_venda
       ORDER BY total_vendido DESC;
     `;
 
