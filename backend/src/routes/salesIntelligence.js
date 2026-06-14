@@ -331,9 +331,9 @@ ${tabelaVendas || 'Sem histórico de vendas por dia suficiente.'}
 
 **Passo 1 — Tabela PREVISÃO DE VENDAS (próxima semana):**
 
-| Produto | Rend (un/rec) | Estoque (un) | Seg | Ter | Qua | Qui | Sex | Sáb | Total (un) | Receitas/sem |
-|---------|---------------|--------------|-----|-----|-----|-----|-----|-----|------------|--------------|
-(use os valores da tabela acima; "Receitas/sem" = campo "Y rec/sem" já calculado — não recalcule)
+| Produto | Rend (un/rec) | Estoque (un) | Seg | Ter | Qua | Qui | Sex | Sáb | Dom | Total (un) | Receitas/sem |
+|---------|---------------|--------------|-----|-----|-----|-----|-----|-----|-----|------------|--------------|
+(copie exatamente os valores da tabela acima; "Receitas/sem" = valor "Y rec/sem" já calculado — NÃO recalcule)
 
 **Passo 2 — Tabela PLANO DE PRODUÇÃO (em receitas, agrupando para minimizar dias de produção):**
 
