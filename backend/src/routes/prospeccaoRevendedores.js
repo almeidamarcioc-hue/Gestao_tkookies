@@ -107,9 +107,10 @@ router.get("/buscar", requireRole("admin"), async (req, res) => {
   let lng = DEFAULT_LNG;
 
   try {
-    const [rows] = await pool.query(
+    const result = await pool.query(
       "SELECT chave, valor FROM configuracoes WHERE chave IN ('lat_tkookies', 'lng_tkookies')"
     );
+    const rows = result.rows;
     const configLat = rows.find((r) => r.chave === "lat_tkookies");
     const configLng = rows.find((r) => r.chave === "lng_tkookies");
     if (configLat) lat = parseFloat(configLat.valor);

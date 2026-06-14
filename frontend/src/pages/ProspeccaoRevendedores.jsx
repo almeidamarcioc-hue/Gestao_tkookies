@@ -456,50 +456,25 @@ export default function ProspeccaoRevendedores() {
     setAiAnalises({});
     setResumoIA("");
 
-    // Bounding box é muito mais rápido que "around" no Overpass
-    const bb = `${BBOX.S},${BBOX.W},${BBOX.N},${BBOX.E}`;
-    const query = `[out:json][timeout:15][bbox:${bb}];
-(
-  node["shop"="bakery"];
-  node["shop"="pastry"];
-  node["shop"="confectionery"];
-  node["shop"="chocolate"];
-  node["shop"="cake"];
-  node["amenity"="cafe"];
-  node["amenity"="fast_food"];
-  node["amenity"="ice_cream"];
-  node["amenity"="restaurant"];
-  node["shop"="convenience"];
-  node["shop"="supermarket"];
-);
-out body;`;
-
-    let ultimoErro = "";
-    for (const mirror of OVERPASS_MIRRORS) {
-      try {
-        const res = await fetch(mirror, {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: `data=${encodeURIComponent(query)}`,
-          signal: AbortSignal.timeout(18_000),
-        });
-        if (!res.ok) { ultimoErro = `${mirror} retornou ${res.status}`; continue; }
-        const json = await res.json();
-        const empresas = (json.elements || [])
-          .filter((el) => el.tags?.name)
-          .map(mapearElemento)
-          .sort((a, b) => b.temperatura.score - a.temperatura.score || (a.distancia_km ?? 999) - (b.distancia_km ?? 999));
-        setEmpresas(empresas);
-        setLoading(false);
-        // Inicia busca automática de CNPJs após carregar
-        buscarCNPJsAutomatico(empresas);
-        return;
-      } catch (e) {
-        ultimoErro = `${mirror}: ${e.message}`;
+    try {
+      // Chama o backend como proxy para evitar CORS da Overpass API
+      const res = await fetch(`${BASE_URL}/prospeccao-revendedores/buscar`, {
+        headers: authHeaders(),
+        signal: AbortSignal.timeout(35_000),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `Erro ${res.status}`);
       }
+      const json = await res.json();
+      const lista = json.empresas || [];
+      setEmpresas(lista);
+      setLoading(false);
+      buscarCNPJsAutomatico(lista);
+    } catch (e) {
+      setErro(`Não foi possível carregar estabelecimentos: ${e.message}`);
+      setLoading(false);
     }
-    setErro(`Não foi possível acessar o OpenStreetMap. ${ultimoErro}`);
-    setLoading(false);
   }
 
   // Adiciona empresa manualmente — busca CNPJ por nome ou usa CNPJ informado

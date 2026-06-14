@@ -155,7 +155,7 @@ router.get("/top-clientes", async (req, res) => {
           AND DATE(p.data_pedido) BETWEEN DATE($1) AND DATE($2)
         GROUP BY c.id, c.nome, c.telefone
         UNION ALL
-        SELECT r.id, COALESCE(r.razao_social, r.contato) as nome, r.telefone, 'Revendedor' as tipo,
+        SELECT r.id, COALESCE(r.razao_social, r.nome_contato) as nome, r.telefone, 'Revendedor' as tipo,
           COUNT(p.id)::int AS total_pedidos,
           COALESCE(SUM(p.valor_total), 0) AS total_gasto
         FROM revendedores r
@@ -163,7 +163,7 @@ router.get("/top-clientes", async (req, res) => {
           AND p.tipo_cliente = 'revendedor'
           AND p.status != 'Cancelado'
           AND DATE(p.data_pedido) BETWEEN DATE($1) AND DATE($2)
-        GROUP BY r.id, r.razao_social, r.contato, r.telefone
+        GROUP BY r.id, r.razao_social, r.nome_contato, r.telefone
       ) combined
       ORDER BY total_gasto DESC
       LIMIT 10
@@ -195,7 +195,7 @@ router.get("/clientes-inativos", async (req, res) => {
           AND DATE(p.data_pedido) BETWEEN DATE($1) AND DATE($2)
         GROUP BY c.id, c.nome, c.telefone
         UNION ALL
-        SELECT r.id, COALESCE(r.razao_social, r.contato) as nome, r.telefone, 'Revendedor' as tipo,
+        SELECT r.id, COALESCE(r.razao_social, r.nome_contato) as nome, r.telefone, 'Revendedor' as tipo,
           COUNT(p.id)::int AS total_pedidos,
           COALESCE(SUM(p.valor_total), 0) AS total_gasto,
           (SELECT MAX(pp.data_pedido) FROM pedidos pp
@@ -206,7 +206,7 @@ router.get("/clientes-inativos", async (req, res) => {
           AND p.tipo_cliente = 'revendedor'
           AND p.status != 'Cancelado'
           AND DATE(p.data_pedido) BETWEEN DATE($1) AND DATE($2)
-        GROUP BY r.id, r.razao_social, r.contato, r.telefone
+        GROUP BY r.id, r.razao_social, r.nome_contato, r.telefone
       ) combined
       ORDER BY total_pedidos ASC, total_gasto ASC
       LIMIT 10
@@ -226,19 +226,24 @@ router.get("/produtos-parados", async (req, res) => {
     const result = await pool.query(`
       SELECT
         p.id, p.nome,
-        COALESCE(SUM(ip.quantidade), 0)::int AS total_vendido,
-        COALESCE(SUM(ip.valor_total), 0) AS receita_total,
+        COALESCE(v.total_vendido, 0)::int AS total_vendido,
+        COALESCE(v.receita_total, 0) AS receita_total,
         p.estoque AS estoque_atual,
         (SELECT MAX(ped2.data_pedido) FROM itens_pedido ip2
          JOIN pedidos ped2 ON ip2.pedido_id = ped2.id
          WHERE ip2.produto_id = p.id AND ped2.status != 'Cancelado') as ultima_venda
       FROM produtos p
-      LEFT JOIN itens_pedido ip ON p.id = ip.produto_id
-      LEFT JOIN pedidos ped ON ip.pedido_id = ped.id
-        AND ped.status != 'Cancelado'
-        AND DATE(ped.data_pedido) BETWEEN DATE($1) AND DATE($2)
+      LEFT JOIN (
+        SELECT ip.produto_id,
+          SUM(ip.quantidade) AS total_vendido,
+          SUM(ip.valor_total) AS receita_total
+        FROM itens_pedido ip
+        JOIN pedidos ped ON ip.pedido_id = ped.id
+          AND ped.status != 'Cancelado'
+          AND DATE(ped.data_pedido) BETWEEN DATE($1) AND DATE($2)
+        GROUP BY ip.produto_id
+      ) v ON p.id = v.produto_id
       WHERE p.ativo = TRUE
-      GROUP BY p.id, p.nome, p.estoque
       ORDER BY total_vendido ASC
       LIMIT 10
     `, [startDate, endDate]);
@@ -261,18 +266,23 @@ router.get("/top-produtos", async (req, res) => {
     const query = `
       SELECT
         p.id, p.nome,
-        COALESCE(SUM(ip.quantidade), 0)::int as total_vendido,
-        COALESCE(SUM(ip.valor_total), 0) as receita_total,
+        COALESCE(v.total_vendido, 0)::int as total_vendido,
+        COALESCE(v.receita_total, 0) as receita_total,
         p.estoque as estoque_atual,
         p.preco_venda
       FROM produtos p
-      LEFT JOIN itens_pedido ip ON p.id = ip.produto_id
-      LEFT JOIN pedidos ped ON ip.pedido_id = ped.id
-        AND ped.status != 'Cancelado'
-        AND DATE(ped.data_pedido) BETWEEN DATE($1) AND DATE($2)
+      LEFT JOIN (
+        SELECT ip.produto_id,
+          SUM(ip.quantidade) AS total_vendido,
+          SUM(ip.valor_total) AS receita_total
+        FROM itens_pedido ip
+        JOIN pedidos ped ON ip.pedido_id = ped.id
+          AND ped.status != 'Cancelado'
+          AND DATE(ped.data_pedido) BETWEEN DATE($1) AND DATE($2)
+        GROUP BY ip.produto_id
+      ) v ON p.id = v.produto_id
       WHERE p.ativo = TRUE
-      GROUP BY p.id, p.nome, p.estoque, p.preco_venda
-      ORDER BY total_vendido DESC;
+      ORDER BY total_vendido DESC
     `;
 
     const result = await pool.query(query, [startDate, endDate]);
