@@ -247,16 +247,17 @@ function montarPrompt(dados) {
   const diasOrdem = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 
   // tabelaVendas em UNIDADES por dia + receitas calculadas UMA vez para a semana
-  // CEIL aplicado ao total semanal (não por dia) para evitar superestimativa
+  // Exibe mediaCeil por dia (para planejamento diário), mas soma media bruta para o total
   const tabelaVendas = Object.entries(porProduto).map(([nome, dias]) => {
     const rend = rendimentoPorNome[nome] || 1;
-    // unidades médias por dia (sem CEIL aqui — arredonda só no total)
+    // para exibição: unidades por dia arredondadas para cima (não subprovisionamento)
     const colsUn = diasOrdem.map(d => dias[d]?.mediaCeil ?? 0);
-    const totalUn = colsUn.reduce((a, b) => a + b, 0);
-    // CEIL aplicado UMA vez ao total semanal
-    const receitasSemana = totalUn > 0 ? Math.ceil(totalUn / rend) : 0;
+    // para o total: soma das médias brutas (evita acumular overcounting de 7 CEILs)
+    const totalUnReal = diasOrdem.reduce((acc, d) => acc + (dias[d]?.media ?? 0), 0);
+    // CEIL aplicado UMA vez ao total real
+    const receitasSemana = totalUnReal > 0 ? Math.ceil(totalUnReal / rend) : 0;
     const estoqueUn = estoquePorNome[nome] ?? 0;
-    return `${nome} | Rend: ${rend}un/rec | Estoque: ${estoqueUn}un | ${colsUn.join(' | ')} | Total: ${totalUn}un → ${receitasSemana} rec/sem`;
+    return `${nome} | Rend: ${rend}un/rec | Estoque: ${estoqueUn}un | ${colsUn.join(' | ')} | Total: ${Math.round(totalUnReal)}un → ${receitasSemana} rec/sem`;
   }).join('\n');
 
   const tabelaMargens = dados.topProdutos
