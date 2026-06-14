@@ -246,19 +246,17 @@ function montarPrompt(dados) {
 
   const diasOrdem = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 
-  // tabelaVendas em RECEITAS (não unidades): divide mediaCeil pelo rendimento e arredonda para cima
+  // tabelaVendas em UNIDADES por dia + receitas calculadas UMA vez para a semana
+  // CEIL aplicado ao total semanal (não por dia) para evitar superestimativa
   const tabelaVendas = Object.entries(porProduto).map(([nome, dias]) => {
     const rend = rendimentoPorNome[nome] || 1;
-    // receitas necessárias por dia = CEIL(unidades_médias / rendimento)
-    const cols = diasOrdem.map(d => {
-      const unidades = dias[d]?.mediaCeil ?? 0;
-      return unidades > 0 ? Math.ceil(unidades / rend) : 0;
-    });
-    const totalRec = cols.reduce((a, b) => a + b, 0);
+    // unidades médias por dia (sem CEIL aqui — arredonda só no total)
+    const colsUn = diasOrdem.map(d => dias[d]?.mediaCeil ?? 0);
+    const totalUn = colsUn.reduce((a, b) => a + b, 0);
+    // CEIL aplicado UMA vez ao total semanal
+    const receitasSemana = totalUn > 0 ? Math.ceil(totalUn / rend) : 0;
     const estoqueUn = estoquePorNome[nome] ?? 0;
-    // estoque em receitas prontas (floor: só conta se tem receita completa disponível)
-    const estoqueRec = Math.floor(estoqueUn / rend);
-    return `${nome} | Rend: ${rend}un/rec | Est: ${estoqueUn}un (${estoqueRec} rec) | ${cols.join(' | ')} | Total/sem: ${totalRec} rec`;
+    return `${nome} | Rend: ${rend}un/rec | Estoque: ${estoqueUn}un | ${colsUn.join(' | ')} | Total: ${totalUn}un → ${receitasSemana} rec/sem`;
   }).join('\n');
 
   const tabelaMargens = dados.topProdutos
@@ -319,26 +317,28 @@ Com base nos pedidos por dia da semana:
 - Para vender na Terça → produzir na Segunda
 - Para vender na Segunda → produzir no Sábado anterior
 
-**⚠️ IMPORTANTE — UNIDADE DE MEDIDA: todos os valores abaixo estão em RECEITAS, não em unidades.**
-Uma receita rende N unidades conforme indicado. O estoque também é mostrado em unidades (un) e em receitas completas disponíveis (rec).
+**⚠️ REGRA DE CÁLCULO OBRIGATÓRIA:**
+- Os valores por dia são em **UNIDADES** (demanda média diária histórica)
+- O campo `Total: Xun → Y rec/sem` já mostra a conversão correta: CEIL(total_semana ÷ rendimento) — **use este número de receitas**
+- **NUNCA** aplique CEIL por dia e some depois — isso superestima a produção
+- Exemplo correto: demanda 5un/dia × 6 dias = 30un ÷ rend 11 = CEIL(2,7) = **3 receitas**, não 6
 
-**Dados de entrada (média de receitas por semana — baseado em 90 dias de histórico):**
-Formato: Produto | Rend: Nun/rec | Est: Xun (Y rec) | Seg | Ter | Qua | Qui | Sex | Sáb | Dom | Total/sem
-(Valores são receitas necessárias por dia: CEIL(unidades_médias ÷ rendimento))
+**Dados de entrada (unidades/dia, baseado em 90 dias de histórico):**
+Formato: Produto | Rend: Nun/rec | Estoque: Xun | Seg | Ter | Qua | Qui | Sex | Sáb | Dom | Total: Xun → Y rec/sem
 
 ${tabelaVendas || 'Sem histórico de vendas por dia suficiente.'}
 
-**Passo 1 — Tabela PREVISÃO DE VENDAS (próxima semana, em receitas):**
+**Passo 1 — Tabela PREVISÃO DE VENDAS (próxima semana):**
 
-| Produto | Rend (un/rec) | Est (rec disp.) | Seg | Ter | Qua | Qui | Sex | Sáb | TOTAL (rec) |
-|---------|---------------|-----------------|-----|-----|-----|-----|-----|-----|-------------|
-(preencha com os valores da tabela acima; use os valores em receitas)
+| Produto | Rend (un/rec) | Estoque (un) | Seg | Ter | Qua | Qui | Sex | Sáb | Total (un) | Receitas/sem |
+|---------|---------------|--------------|-----|-----|-----|-----|-----|-----|------------|--------------|
+(use os valores da tabela acima; "Receitas/sem" = campo `Y rec/sem` já calculado — não recalcule)
 
-**Passo 2 — Tabela PLANO DE PRODUÇÃO (em receitas):**
+**Passo 2 — Tabela PLANO DE PRODUÇÃO (em receitas, agrupando para minimizar dias de produção):**
 
-| Dia de Produção | Para Vender em | Produto | Receitas a Produzir | Rende (unidades) |
-|-----------------|----------------|---------|---------------------|------------------|
-(inclua apenas qtd > 0; desconte o estoque em receitas disponíveis apenas na 1ª produção da semana de cada produto; coluna "Rende" = receitas × rendimento)
+| Dia de Produção | Para Vender em | Produto | Receitas | Rende (unidades) |
+|-----------------|----------------|---------|----------|------------------|
+(inclua apenas receitas > 0; desconte o estoque em unidades do total semanal antes de calcular receitas; prefira agrupar produção em 1-2 dias por produto quando viável)
 
 **Após as tabelas:** mensagem motivadora curta + versículo bíblico sobre trabalho e colheita.
 
