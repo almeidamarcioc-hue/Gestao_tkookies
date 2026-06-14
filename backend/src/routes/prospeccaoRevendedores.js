@@ -119,17 +119,38 @@ router.get("/buscar", requireRole("admin"), async (req, res) => {
     // Usa coordenadas padrão se a tabela/coluna não existir
   }
 
-  // Query Overpass simplificada — apenas nodes para resposta mais rápida
-  const overpassQuery = `[out:json][timeout:25];
+  // Query Overpass — apenas nodes (way omitidos para reduzir carga nos servidores)
+  const overpassQuery = `[out:json][timeout:30];
 (
   node["shop"~"bakery|pastry|confectionery|chocolate|cake|deli|convenience|coffee|supermarket"](around:${RAIO_METROS},${lat},${lng});
   node["amenity"~"cafe|fast_food|ice_cream"](around:${RAIO_METROS},${lat},${lng});
-  way["shop"~"bakery|pastry|confectionery|cafe"](around:${RAIO_METROS},${lat},${lng});
-  way["amenity"~"cafe|fast_food"](around:${RAIO_METROS},${lat},${lng});
 );
-out body center;`;
+out body;`;
 
-  // Mirrors da Overpass API — tenta em sequência até um funcionar
+  // ─── Cache no banco (TTL 6h) ─────────────────────────────────────────────────
+  const CACHE_KEY = "overpass_cache";
+  const CACHE_TS_KEY = "overpass_cache_ts";
+  const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+
+  try {
+    const cacheRows = await pool.query(
+      "SELECT chave, valor FROM configuracoes WHERE chave = ANY($1)",
+      [[CACHE_KEY, CACHE_TS_KEY]]
+    );
+    const cacheData = cacheRows.rows.find(r => r.chave === CACHE_KEY);
+    const cacheTs = cacheRows.rows.find(r => r.chave === CACHE_TS_KEY);
+    if (cacheData && cacheTs) {
+      const age = Date.now() - Number(cacheTs.valor);
+      if (age < CACHE_TTL_MS) {
+        console.log("[Overpass] Servindo do cache do banco");
+        return res.json(JSON.parse(cacheData.valor));
+      }
+    }
+  } catch (e) {
+    console.warn("[Overpass] Falha ao ler cache:", e.message);
+  }
+
+  // Mirrors da Overpass API — tenta em sequência com delay entre tentativas
   const OVERPASS_MIRRORS = [
     "https://overpass-api.de/api/interpreter",
     "https://overpass.kumi.systems/api/interpreter",
@@ -138,13 +159,19 @@ out body center;`;
 
   async function queryOverpass(query) {
     const erros = [];
-    for (const url of OVERPASS_MIRRORS) {
-      const { signal, clear } = makeTimeoutSignal(28_000);
+    for (let i = 0; i < OVERPASS_MIRRORS.length; i++) {
+      const url = OVERPASS_MIRRORS[i];
+      if (i > 0) await new Promise(r => setTimeout(r, 1500)); // delay entre tentativas
+      const { signal, clear } = makeTimeoutSignal(30_000);
       try {
         console.log(`[Overpass] Tentando ${url}`);
         const response = await fetch(url, {
           method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": "TKookies-ERP/1.0 (prospecção comercial; contact: marcioalmeida@migrate.info)",
+            "Accept": "application/json, */*",
+          },
           body: `data=${encodeURIComponent(query)}`,
           signal,
         });
@@ -203,16 +230,42 @@ out body center;`;
         return (a.distancia_km ?? 999) - (b.distancia_km ?? 999);
       });
 
-    res.json({
+    const resposta = {
       empresas,
       total: empresas.length,
       raio_km: RAIO_METROS / 1000,
       origem: { lat, lng, cidade: "Três de Maio, RS" },
       aviso_limite:
         "BrasilAPI: gratuita, sem limite documentado. ReceitaWS: 3 req/min no plano gratuito. Consulte CNPJs com moderação.",
-    });
+    };
+
+    // Salva no cache do banco (ignora erros de escrita)
+    try {
+      await pool.query(
+        `INSERT INTO configuracoes (chave, valor) VALUES ($1, $2), ($3, $4)
+         ON CONFLICT (chave) DO UPDATE SET valor = EXCLUDED.valor`,
+        [CACHE_KEY, JSON.stringify(resposta), CACHE_TS_KEY, String(Date.now())]
+      );
+    } catch (e) {
+      console.warn("[Overpass] Falha ao salvar cache:", e.message);
+    }
+
+    res.json(resposta);
   } catch (err) {
     console.error("Erro Overpass API:", err.message);
+
+    // Tenta servir do cache expirado como fallback de último recurso
+    try {
+      const fallback = await pool.query(
+        "SELECT valor FROM configuracoes WHERE chave = $1",
+        [CACHE_KEY]
+      );
+      if (fallback.rows.length > 0) {
+        console.log("[Overpass] Servindo cache expirado como fallback");
+        return res.json({ ...JSON.parse(fallback.rows[0].valor), cache_expirado: true });
+      }
+    } catch { /* sem cache disponível */ }
+
     res.status(500).json({
       error: err.message,
       detalhe: "Falha ao consultar servidores OpenStreetMap (Overpass API).",
