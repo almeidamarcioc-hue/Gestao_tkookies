@@ -155,7 +155,7 @@ export default function InteligenciaVendas() {
             Inteligência de Vendas
           </Typography>
           <Typography variant="body2" color="text.secondary" mt={0.5}>
-            Análise automática com IA — últimos 30 dias
+            Análise automática com IA — últimos 90 dias
           </Typography>
         </Box>
         <Button

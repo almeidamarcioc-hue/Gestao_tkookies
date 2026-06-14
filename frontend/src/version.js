@@ -1,9 +1,20 @@
 // Versão do sistema — atualizar a cada release antes do merge para main
 
-export const APP_VERSION = "1.00.04";
+export const APP_VERSION = "1.00.05";
 
 // Histórico de versões
 export const CHANGELOG = [
+  {
+    version: "1.00.05",
+    data: "2026-06-14",
+    descricao: "Correções de UI, ordenação de pedidos e melhorias na inteligência de vendas",
+    itens: [
+      "Header: slim bar e navbar agrupados em wrapper sticky — logo não é mais cortada ao rolar",
+      "Pedidos: ordenação por data do pedido (descendente) ao invés de ID",
+      "Inteligência de vendas: navegação por blocos com sugestão de preços promocionais",
+      "Inteligência de vendas: janela de análise corrigida para 90 dias",
+    ],
+  },
   {
     version: "1.00.04",
     data: "2026-04-18",

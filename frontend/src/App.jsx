@@ -483,14 +483,14 @@ export default function App() {
         <>
       <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
 
-      {/* ── Slim bar — fora do AppBar para evitar interferência MUI ── */}
+      {/* ── Header wrapper sticky — slim bar + navbar juntos para evitar corte do logo ── */}
+      <Box sx={{ position: 'sticky', top: 0, zIndex: 1100 }}>
+
+      {/* Slim bar */}
       {(() => {
         const { open, label } = getStoreStatus(siteConfig);
         return (
           <Box sx={{
-            position: 'sticky',
-            top: 0,
-            zIndex: 1101,
             backgroundColor: '#FBF6EC',
             borderBottom: '1px solid rgba(42,26,14,.14)',
             display: 'flex', alignItems: 'center', gap: 1,
@@ -518,10 +518,8 @@ export default function App() {
       })()}
 
       <AppBar
-        position="sticky"
+        position="static"
         sx={{
-          top: 0,
-          zIndex: 1100,
           backgroundColor: 'rgba(251,246,236,.97)',
           backdropFilter: 'blur(12px)',
           boxShadow: scrolled ? '0 1px 0 rgba(42,26,14,.10)' : 'none',
@@ -749,6 +747,7 @@ export default function App() {
           </Box>
         </Toolbar>
       </AppBar>
+      </Box>{/* fim do header wrapper sticky */}
 
       {/* Menu Mobile (Drawer) */}
       <Drawer
