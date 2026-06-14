@@ -250,6 +250,21 @@ function montarPrompt(dados) {
     return `${nome} | Est: ${estoque} | ${cols.join(' | ')} | Total/sem: ${total}`;
   }).join('\n');
 
+  const tabelaMargens = dados.topProdutos
+    .filter(p => Number(p.preco_venda) > 0 && Number(p.custo) > 0 && Number(p.total_vendido) > 0)
+    .map(p => {
+      const preco = Number(p.preco_venda);
+      const custo = Number(p.custo);
+      const margemR = preco - custo;
+      const margemPct = ((margemR / preco) * 100).toFixed(1);
+      // desconto máximo mantendo margem mínima de 20%
+      const precoMin = custo / 0.80;
+      const descMax = Math.max(0, Math.floor(((preco - precoMin) / preco) * 100));
+      const descSug = Math.min(descMax, 15); // sugerir no máximo 15%
+      const precoPromo = (preco * (1 - descSug / 100)).toFixed(2);
+      return `${p.nome} | Preço: R$${preco.toFixed(2)} | Custo: R$${custo.toFixed(2)} | Margem: R$${margemR.toFixed(2)} (${margemPct}%) | Desconto máx seguro: ${descMax}% | Promoção sugerida: R$${precoPromo} (${descSug}% off)`;
+    }).join('\n');
+
   return `Você é uma inteligência de vendas especializada em confeitaria artesanal.
 Seu tom é direto, objetivo e motivador. Transforme dados reais em planos de ação concretos.
 Data da análise: ${dados.dataAnalise}
@@ -317,9 +332,16 @@ ${tabelaVendas || 'Sem histórico de vendas por dia suficiente.'}
 
 ### 💰 BLOCO 5 — INTELIGÊNCIA FINANCEIRA
 
-- **Dia ideal para promoção:** indique o dia mais frio e o desconto que ainda preserva margem positiva
-- **Perfil de desconto:** para quem aplicar (cliente direto, revendedor, novos clientes)
-- **Promoção sugerida:** (ex: "Compre 6 pague 5 às quartas" ou "10% para pedidos feitos pelo WhatsApp na Segunda")
+Use a tabela abaixo com os dados REAIS de margem de cada produto.
+
+**TABELA DE MARGENS E PREÇOS PROMOCIONAIS PRÉ-CALCULADOS:**
+${tabelaMargens || 'Dados de custo não disponíveis — use estimativas conservadoras.'}
+
+- **Dia ideal para promoção:** indique o(s) dia(s) com menor movimento (baseie-se nos dados de dia da semana)
+- **Produtos para promoção:** escolha produtos com margem suficiente e use os preços já calculados acima
+- **Formato sugerido:** ex. "Quinta-feira: Produto X de R$X,XX por R$X,XX (Y% off) — ainda gera R$X,XX de lucro por unidade"
+- **Para quem:** direcione ao perfil de cliente mais adequado (revendedor ou consumidor)
+- **NÃO invente preços:** use exatamente os valores da tabela acima
 
 ---
 
