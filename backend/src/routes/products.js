@@ -610,6 +610,30 @@ router.patch("/:id/ativo", authenticateToken, requireRole('admin'), async (req, 
   }
 });
 
+// APLICAR / REMOVER DESCONTO EM LOTE
+router.patch("/bulk-desconto", authenticateToken, requireRole('admin'), async (req, res) => {
+  const { ids, desconto, ativo } = req.body;
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ error: "Informe ao menos um produto." });
+  }
+  const descontoNum = Number(desconto) || 0;
+  const ehDestaque = ativo === true;
+  const descontoFinal = ehDestaque ? descontoNum : 0;
+
+  try {
+    await pool.query(
+      `UPDATE produtos SET eh_destaque = $1, desconto_destaque = $2
+       WHERE id = ANY($3::int[])`,
+      [ehDestaque, descontoFinal, ids]
+    );
+    invalidateProductsCache();
+    res.json({ message: `Desconto ${ehDestaque ? `de ${descontoNum}%` : "removido"} em ${ids.length} produto(s).` });
+  } catch (error) {
+    console.error("Erro bulk-desconto:", error);
+    res.status(500).json({ error: "Erro ao atualizar descontos." });
+  }
+});
+
 // DELETAR PRODUTO
 router.delete("/:id", authenticateToken, requireRole('admin'), async (req, res) => {
   const { id } = req.params;

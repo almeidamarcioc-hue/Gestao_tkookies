@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import api from "../services/api";
 import {
-  Box, Button, TextField, Typography, Paper, Container, IconButton, InputAdornment, Grid, Checkbox, FormControlLabel, FormGroup, Switch, Divider, Chip
+  Box, Button, TextField, Typography, Paper, Container, IconButton, InputAdornment, Grid, Checkbox, FormControlLabel, FormGroup, Switch, Divider, Chip,
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Alert, CircularProgress, Tooltip,
 } from "@mui/material";
-import { CloudUpload, Delete, Add } from "@mui/icons-material";
+import { CloudUpload, Delete, Add, LocalOffer, CheckBox, CheckBoxOutlineBlank, IndeterminateCheckBox } from "@mui/icons-material";
 import { APP_VERSION, CHANGELOG } from "../version";
 import DebugLogs from "../components/DebugLogs";
 import TestimonialsManager from "../components/TestimonialsManager";
@@ -56,6 +57,59 @@ export default function Settings() {
     { day: 5, label: "Sexta", open: true, open_time: "08:00", close_time: "18:00" },
     { day: 6, label: "Sábado", open: true, open_time: "08:00", close_time: "18:00" },
   ]);
+
+  // ─── Promoções em lote ──────────────────────────────────────────────────────
+  const [promoDesconto, setPromoDesconto] = useState("");
+  const [promoSelecionados, setPromoSelecionados] = useState([]);
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoMsg, setPromoMsg] = useState(null); // { type: "success"|"error", text }
+  const [produtosComEstoque, setProdutosComEstoque] = useState([]);
+
+  // Produtos com estoque para promoção (derivado de listaProdutos)
+  useEffect(() => {
+    const lista = (listaProdutos || []).filter(p => p.ativo && !p.eh_agregado && Number(p.estoque) > 0);
+    setProdutosComEstoque(lista);
+  }, [listaProdutos]);
+
+  const promoTodos = produtosComEstoque.length > 0 && promoSelecionados.length === produtosComEstoque.length;
+  const promoIndeterminate = promoSelecionados.length > 0 && !promoTodos;
+
+  function togglePromoTodos() {
+    if (promoTodos) setPromoSelecionados([]);
+    else setPromoSelecionados(produtosComEstoque.map(p => p.id));
+  }
+
+  function togglePromoProduto(id) {
+    setPromoSelecionados(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  }
+
+  async function aplicarDesconto() {
+    if (promoSelecionados.length === 0) { setPromoMsg({ type: "error", text: "Selecione ao menos um produto." }); return; }
+    const pct = Number(promoDesconto);
+    if (!pct || pct <= 0 || pct > 99) { setPromoMsg({ type: "error", text: "Informe um percentual entre 1 e 99." }); return; }
+    setPromoLoading(true); setPromoMsg(null);
+    try {
+      const res = await api.patch("/produtos/bulk-desconto", { ids: promoSelecionados, desconto: pct, ativo: true });
+      setPromoMsg({ type: "success", text: res.data.message });
+      api.get("/produtos").then(r => setListaProdutos(r.data || []));
+    } catch (e) {
+      setPromoMsg({ type: "error", text: e.response?.data?.error || "Erro ao aplicar desconto." });
+    } finally { setPromoLoading(false); }
+  }
+
+  async function removerDesconto() {
+    if (promoSelecionados.length === 0) { setPromoMsg({ type: "error", text: "Selecione ao menos um produto." }); return; }
+    setPromoLoading(true); setPromoMsg(null);
+    try {
+      const res = await api.patch("/produtos/bulk-desconto", { ids: promoSelecionados, desconto: 0, ativo: false });
+      setPromoMsg({ type: "success", text: res.data.message });
+      api.get("/produtos").then(r => setListaProdutos(r.data || []));
+    } catch (e) {
+      setPromoMsg({ type: "error", text: e.response?.data?.error || "Erro ao remover desconto." });
+    } finally { setPromoLoading(false); }
+  }
 
   // Estados para a página Sobre Nós
   const [aboutTitle, setAboutTitle] = useState("");
@@ -664,6 +718,168 @@ export default function Settings() {
             <Button variant="contained" onClick={handleSave}>Salvar</Button>
           </Grid>
         </Grid>
+      </Paper>
+
+      {/* ─── Promoções / Descontos em Lote ─────────────────────────────────── */}
+      <Paper sx={{ p: 3, mt: 3 }}>
+        <Box display="flex" alignItems="center" gap={1} mb={1}>
+          <LocalOffer sx={{ color: "#E65100" }} />
+          <Typography variant="h6" fontWeight={700}>Promoções / Descontos</Typography>
+        </Box>
+        <Typography variant="body2" color="text.secondary" mb={2}>
+          Selecione os produtos com estoque disponível, informe o percentual e aplique a promoção.
+          O preço original aparece riscado e o badge <strong>X% off</strong> é exibido na vitrine.
+        </Typography>
+
+        {promoMsg && (
+          <Alert severity={promoMsg.type} sx={{ mb: 2 }} onClose={() => setPromoMsg(null)}>
+            {promoMsg.text}
+          </Alert>
+        )}
+
+        {/* Controles */}
+        <Box display="flex" gap={2} alignItems="flex-end" mb={2} flexWrap="wrap">
+          <TextField
+            label="Desconto (%)"
+            type="number"
+            size="small"
+            value={promoDesconto}
+            onChange={e => setPromoDesconto(e.target.value)}
+            inputProps={{ min: 1, max: 99 }}
+            sx={{ width: 140 }}
+            InputProps={{
+              endAdornment: <InputAdornment position="end">%</InputAdornment>,
+            }}
+          />
+          <Button
+            variant="contained"
+            onClick={aplicarDesconto}
+            disabled={promoLoading || promoSelecionados.length === 0}
+            startIcon={promoLoading ? <CircularProgress size={16} sx={{ color: "white" }} /> : <LocalOffer />}
+            sx={{ bgcolor: "#E65100", "&:hover": { bgcolor: "#BF360C" } }}
+          >
+            Aplicar Desconto
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={removerDesconto}
+            disabled={promoLoading || promoSelecionados.length === 0}
+            sx={{ color: "#4E342E", borderColor: "#4E342E" }}
+          >
+            Remover Promoção
+          </Button>
+          {promoSelecionados.length > 0 && (
+            <Typography variant="caption" color="text.secondary" alignSelf="center">
+              {promoSelecionados.length} produto(s) selecionado(s)
+            </Typography>
+          )}
+        </Box>
+
+        {/* Tabela de produtos */}
+        {produtosComEstoque.length === 0 ? (
+          <Typography variant="body2" color="text.secondary">Nenhum produto ativo com estoque disponível.</Typography>
+        ) : (
+          <TableContainer sx={{ maxHeight: 420, border: "1px solid #F5E6D3", borderRadius: 1 }}>
+            <Table size="small" stickyHeader>
+              <TableHead>
+                <TableRow sx={{ bgcolor: "#4E342E" }}>
+                  <TableCell padding="checkbox" sx={{ bgcolor: "#4E342E" }}>
+                    <Tooltip title={promoTodos ? "Desmarcar todos" : "Selecionar todos"}>
+                      <Checkbox
+                        checked={promoTodos}
+                        indeterminate={promoIndeterminate}
+                        onChange={togglePromoTodos}
+                        sx={{ color: "white", "&.Mui-checked": { color: "white" }, "&.MuiCheckbox-indeterminate": { color: "white" } }}
+                      />
+                    </Tooltip>
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: 700, bgcolor: "#4E342E" }}>Produto</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: 700, bgcolor: "#4E342E" }}>Estoque</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: 700, bgcolor: "#4E342E" }}>Preço atual</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: 700, bgcolor: "#4E342E" }}>Preview com desconto</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: 700, bgcolor: "#4E342E" }}>Status</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {produtosComEstoque.map(p => {
+                  const selecionado = promoSelecionados.includes(p.id);
+                  const pct = Number(promoDesconto);
+                  const precoOriginal = Number(p.preco_venda);
+                  const precoComDesconto = pct > 0 ? precoOriginal * (1 - pct / 100) : null;
+                  const temPromoAtiva = p.eh_destaque && Number(p.desconto_destaque) > 0;
+
+                  return (
+                    <TableRow
+                      key={p.id}
+                      hover
+                      selected={selecionado}
+                      onClick={() => togglePromoProduto(p.id)}
+                      sx={{ cursor: "pointer", bgcolor: selecionado ? "#FFF3E0" : undefined }}
+                    >
+                      <TableCell padding="checkbox">
+                        <Checkbox
+                          checked={selecionado}
+                          onChange={() => togglePromoProduto(p.id)}
+                          onClick={e => e.stopPropagation()}
+                          sx={{ color: "#E65100", "&.Mui-checked": { color: "#E65100" } }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" fontWeight={600}>{p.nome}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">{p.estoque} un</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" fontFamily="monospace">
+                          R$ {precoOriginal.toFixed(2)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        {precoComDesconto != null ? (
+                          <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+                            <Typography
+                              variant="caption"
+                              sx={{ textDecoration: "line-through", color: "text.secondary" }}
+                            >
+                              R$ {precoOriginal.toFixed(2)}
+                            </Typography>
+                            <Typography variant="body2" fontWeight={700} color="#C62828">
+                              R$ {precoComDesconto.toFixed(2)}
+                            </Typography>
+                            <Chip
+                              label={`${pct.toFixed(0)}% off`}
+                              size="small"
+                              sx={{
+                                bgcolor: "#C62828", color: "white", fontWeight: 700,
+                                fontSize: "0.68rem", height: 20,
+                              }}
+                            />
+                          </Box>
+                        ) : (
+                          <Typography variant="caption" color="text.disabled">
+                            Informe o % acima
+                          </Typography>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {temPromoAtiva ? (
+                          <Chip
+                            label={`${Number(p.desconto_destaque).toFixed(0)}% off ativo`}
+                            size="small"
+                            sx={{ bgcolor: "#E65100", color: "white", fontWeight: 700, fontSize: "0.68rem" }}
+                          />
+                        ) : (
+                          <Typography variant="caption" color="text.disabled">Sem promoção</Typography>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
       </Paper>
 
       {/* Gerenciamento de Depoimentos */}
