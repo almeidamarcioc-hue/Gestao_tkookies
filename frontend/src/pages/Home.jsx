@@ -449,6 +449,13 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
           sx={{ position: 'absolute', top: 12, left: 12, fontWeight: 'bold', zIndex: 1 }}
         />
       )}
+      {Number(prod.desconto_destaque) > 0 && (
+        <Box sx={{ position: 'absolute', top: 10, left: 10, zIndex: 2, bgcolor: 'var(--paper)', borderRadius: 999, px: 1.5, py: 0.3 }}>
+          <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--terracotta)' }}>
+            {Number(prod.desconto_destaque).toFixed(0)}% off
+          </Typography>
+        </Box>
+      )}
       <Box sx={{ 
         position: 'absolute', 
         bottom: 0, 
