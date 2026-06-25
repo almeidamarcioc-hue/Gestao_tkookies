@@ -1,9 +1,22 @@
 // Versão do sistema — atualizar a cada release antes do merge para main
 
-export const APP_VERSION = "1.00.05";
+export const APP_VERSION = "1.00.06";
 
 // Histórico de versões
 export const CHANGELOG = [
+  {
+    version: "1.00.06",
+    data: "2026-06-24",
+    descricao: "Promoções em lote, prospecção via Receita Federal e correções na inteligência de vendas",
+    itens: [
+      "Configurações: nova seção Promoções — aplicar/remover desconto em lote com preview de preço riscado e badge X% off",
+      "Desconto independente do status Destaque — badge aparece para qualquer produto com desconto_destaque > 0",
+      "Inteligência de vendas: cálculo de receitas corrigido (CEIL aplicado ao total semanal, não por dia)",
+      "Inteligência de vendas: coluna Domingo adicionada ao cabeçalho do Passo 1",
+      "Prospecção de revendedores: fonte trocada de OpenStreetMap para Receita Federal (open.cnpja.com) — traz CNPJ, cidade e telefone reais",
+      "Prospecção: cache de 6h no banco para evitar bloqueios de rate limit",
+    ],
+  },
   {
     version: "1.00.05",
     data: "2026-06-14",

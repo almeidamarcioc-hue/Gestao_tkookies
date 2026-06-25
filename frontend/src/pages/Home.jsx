@@ -399,7 +399,7 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
     
     if (clientUser?.is_revendedor) {
       price = Number(item.preco_revenda);
-    } else if (item.eh_destaque && item.desconto_destaque > 0) {
+    } else if (Number(item.desconto_destaque) > 0) {
       price = price * (1 - Number(item.desconto_destaque) / 100);
     }
     
@@ -879,7 +879,7 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
                   const coverImage = prod.imagens?.find(img => img.eh_capa)?.imagem || prod.imagens?.[0]?.imagem;
                   const altImage = prod.imagens?.find(i => !i.eh_capa)?.imagem || prod.imagens?.[1]?.imagem;
                   const qty = getQty(prod.id);
-                  const precoFinal = prod.eh_destaque && Number(prod.desconto_destaque) > 0
+                  const precoFinal = Number(prod.desconto_destaque) > 0
                     ? Number(prod.preco_venda) * (1 - Number(prod.desconto_destaque) / 100)
                     : Number(prod.preco_venda);
                   return (
@@ -904,7 +904,7 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
                         onClick={() => handleOpenDetails(prod)}
                       >
                         {/* Badge pill */}
-                        {prod.eh_destaque && Number(prod.desconto_destaque) > 0 && (
+                        {Number(prod.desconto_destaque) > 0 && (
                           <Box sx={{ position: 'absolute', top: 10, left: 10, zIndex: 2, bgcolor: 'var(--paper)', borderRadius: 999, px: 1.5, py: 0.3 }}>
                             <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--terracotta)' }}>
                               {Number(prod.desconto_destaque).toFixed(0)}% off
@@ -953,7 +953,7 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
                       {/* Footer */}
                       <Box sx={{ px: { xs: 1.5, md: 2 }, pb: { xs: 1.5, md: 2 }, pt: 0, borderTop: '1px solid var(--rule)', mt: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
                         <Box>
-                          {prod.eh_destaque && Number(prod.desconto_destaque) > 0 && (
+                          {Number(prod.desconto_destaque) > 0 && (
                             <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 300, fontSize: '12px', color: 'var(--ink)', opacity: 0.4, textDecoration: 'line-through', lineHeight: 1 }}>
                               R$ {Number(prod.preco_venda).toFixed(2)}
                             </Typography>
@@ -1501,7 +1501,7 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
 
                 <Box display="flex" justifyContent="center" alignItems="center" gap={2}>
                   <Typography sx={{ fontSize: '1.8rem', color: terracotta, fontWeight: 'bold' }}>
-                    R$ {clientUser?.is_revendedor ? Number(selectedProduct.preco_revenda).toFixed(2) : (selectedProduct.eh_destaque && selectedProduct.desconto_destaque > 0
+                    R$ {clientUser?.is_revendedor ? Number(selectedProduct.preco_revenda).toFixed(2) : (Number(selectedProduct.desconto_destaque) > 0
                       ? (Number(selectedProduct.preco_venda) * (1 - Number(selectedProduct.desconto_destaque) / 100)).toFixed(2)
                       : Number(selectedProduct.preco_venda).toFixed(2)
                     )}

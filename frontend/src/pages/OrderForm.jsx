@@ -144,7 +144,7 @@ export default function OrderForm({ clientUser, isAdmin }) {
     // Prioridade: Revenda > Promoção > Normal
     if (cliente && cliente.is_revendedor) {
       valorUnitario = Number(produtoSelecionado.preco_revenda);
-    } else if (produtoSelecionado.eh_destaque && Number(produtoSelecionado.desconto_destaque) > 0) {
+    } else if (Number(produtoSelecionado.desconto_destaque) > 0) {
       valorUnitario = valorUnitario * (1 - Number(produtoSelecionado.desconto_destaque) / 100);
     }
 
@@ -409,7 +409,7 @@ export default function OrderForm({ clientUser, isAdmin }) {
               if (!option._isCombo) {
                 if (cliente && cliente.is_revendedor) {
                   textoPreco = `R$ ${Number(option.preco_revenda).toFixed(2)} (Revenda)`;
-                } else if (option.eh_destaque && Number(option.desconto_destaque) > 0) {
+                } else if (Number(option.desconto_destaque) > 0) {
                   const precoDesc = preco * (1 - Number(option.desconto_destaque) / 100);
                   textoPreco = `R$ ${precoDesc.toFixed(2)} (Promo)`;
                 }

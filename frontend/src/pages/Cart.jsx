@@ -170,7 +170,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
     if (clientUser?.is_revendedor) {
       return Number(item.preco_revenda);
     }
-    else if (item.eh_destaque && item.desconto_destaque > 0) {
+    else if (Number(item.desconto_destaque) > 0) {
       return Number(item.preco_venda) * (1 - Number(item.desconto_destaque) / 100);
     }
     return Number(item.preco_venda);
@@ -374,7 +374,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
                             {item.eh_brinde && (
                               <Typography variant="caption" sx={{ color: '#e91e8c', fontWeight: 'bold' }}>🎁 Brinde Grátis</Typography>
                             )}
-                            {item.eh_destaque && item.desconto_destaque > 0 && (
+                            {Number(item.desconto_destaque) > 0 && (
                               <Typography variant="caption" color="error">Oferta Especial</Typography>
                             )}
                             {item.preco_original_kit && (
@@ -385,7 +385,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
                       </TableCell>
                       <TableCell align="center">
                         <Typography variant="body2" color="#5D4037">R$ {price.toFixed(2)}</Typography>
-                        {!clientUser?.is_revendedor && item.eh_destaque && item.desconto_destaque > 0 && (
+                        {!clientUser?.is_revendedor && Number(item.desconto_destaque) > 0 && (
                           <Typography variant="caption" sx={{ textDecoration: 'line-through', color: '#8D6E63' }}>
                             R$ {Number(item.preco_venda).toFixed(2)}
                           </Typography>

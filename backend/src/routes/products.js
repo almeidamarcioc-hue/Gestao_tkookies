@@ -611,23 +611,31 @@ router.patch("/:id/ativo", authenticateToken, requireRole('admin'), async (req, 
 });
 
 // APLICAR / REMOVER DESCONTO EM LOTE
+// Não altera eh_destaque — desconto é independente do status de destaque
 router.patch("/bulk-desconto", authenticateToken, requireRole('admin'), async (req, res) => {
   const { ids, desconto, ativo } = req.body;
   if (!Array.isArray(ids) || ids.length === 0) {
     return res.status(400).json({ error: "Informe ao menos um produto." });
   }
   const descontoNum = Number(desconto) || 0;
-  const ehDestaque = ativo === true;
-  const descontoFinal = ehDestaque ? descontoNum : 0;
+  const aplicando = ativo === true;
 
   try {
-    await pool.query(
-      `UPDATE produtos SET eh_destaque = $1, desconto_destaque = $2
-       WHERE id = ANY($3::int[])`,
-      [ehDestaque, descontoFinal, ids]
-    );
+    if (aplicando) {
+      // Aplica apenas o desconto, sem mexer em eh_destaque
+      await pool.query(
+        `UPDATE produtos SET desconto_destaque = $1 WHERE id = ANY($2::int[])`,
+        [descontoNum, ids]
+      );
+    } else {
+      // Remove desconto E desfaz destaque que possa ter sido aplicado incorretamente por versões anteriores
+      await pool.query(
+        `UPDATE produtos SET desconto_destaque = 0, eh_destaque = false WHERE id = ANY($1::int[])`,
+        [ids]
+      );
+    }
     invalidateProductsCache();
-    res.json({ message: `Desconto ${ehDestaque ? `de ${descontoNum}%` : "removido"} em ${ids.length} produto(s).` });
+    res.json({ message: `Desconto ${aplicando ? `de ${descontoNum}%` : "removido"} em ${ids.length} produto(s).` });
   } catch (error) {
     console.error("Erro bulk-desconto:", error);
     res.status(500).json({ error: "Erro ao atualizar descontos." });

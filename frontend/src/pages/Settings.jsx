@@ -806,7 +806,7 @@ export default function Settings() {
                   const pct = Number(promoDesconto);
                   const precoOriginal = Number(p.preco_venda);
                   const precoComDesconto = pct > 0 ? precoOriginal * (1 - pct / 100) : null;
-                  const temPromoAtiva = p.eh_destaque && Number(p.desconto_destaque) > 0;
+                  const temPromoAtiva = Number(p.desconto_destaque) > 0;
 
                   return (
                     <TableRow
