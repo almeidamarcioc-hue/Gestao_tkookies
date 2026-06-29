@@ -943,7 +943,7 @@ export default function Settings() {
         <Box sx={{ bgcolor: "#FAF7F4", borderRadius: 2, p: 2, mb: 3, border: "1px solid rgba(78,52,46,0.1)" }}>
           <Typography variant="subtitle2" fontWeight={700} mb={2}>{cupomEditId ? "Editar Cupom" : "Novo Cupom"}</Typography>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={3}>
+            <Grid item xs={12} sm={6} md={4}>
               <TextField
                 label="Código"
                 size="small"
@@ -952,33 +952,36 @@ export default function Settings() {
                 onChange={e => setCupomForm(f => ({ ...f, codigo: e.target.value.toUpperCase() }))}
                 inputProps={{ style: { fontFamily: 'monospace', letterSpacing: '0.1em' } }}
                 placeholder="EX: PROMO10"
+                helperText="Código que o cliente digita no carrinho"
               />
             </Grid>
-            <Grid item xs={6} sm={2}>
+            <Grid item xs={12} sm={6} md={4}>
               <TextField
                 select
-                label="Tipo"
+                label="Tipo de desconto"
                 size="small"
                 fullWidth
                 value={cupomForm.tipo}
                 onChange={e => setCupomForm(f => ({ ...f, tipo: e.target.value }))}
                 SelectProps={{ native: true }}
+                helperText="Percentual (%) ou valor fixo (R$)"
               >
                 <option value="percentual">Percentual (%)</option>
                 <option value="valor">Valor fixo (R$)</option>
               </TextField>
             </Grid>
-            <Grid item xs={6} sm={2}>
+            <Grid item xs={12} sm={6} md={4}>
               <TextField
-                label={cupomForm.tipo === "percentual" ? "Desconto (%)" : "Valor (R$)"}
+                label={cupomForm.tipo === "percentual" ? "Desconto (%)" : "Valor do desconto (R$)"}
                 size="small"
                 fullWidth
                 type="number"
                 value={cupomForm.valor}
                 onChange={e => setCupomForm(f => ({ ...f, valor: e.target.value }))}
+                helperText={cupomForm.tipo === "percentual" ? "Ex: 20 = 20% de desconto" : "Ex: 15 = R$ 15,00 de desconto"}
               />
             </Grid>
-            <Grid item xs={6} sm={2}>
+            <Grid item xs={12} sm={6} md={4}>
               <TextField
                 label="Pedido mínimo (R$)"
                 size="small"
@@ -987,9 +990,10 @@ export default function Settings() {
                 value={cupomForm.valor_minimo}
                 onChange={e => setCupomForm(f => ({ ...f, valor_minimo: e.target.value }))}
                 placeholder="0"
+                helperText="Valor mínimo do pedido p/ usar (0 = sem mínimo)"
               />
             </Grid>
-            <Grid item xs={6} sm={2}>
+            <Grid item xs={12} sm={6} md={4}>
               <TextField
                 label="Validade"
                 size="small"
@@ -998,17 +1002,19 @@ export default function Settings() {
                 InputLabelProps={{ shrink: true }}
                 value={cupomForm.validade}
                 onChange={e => setCupomForm(f => ({ ...f, validade: e.target.value }))}
+                helperText="Último dia válido (vazio = sem prazo)"
               />
             </Grid>
-            <Grid item xs={6} sm={1}>
+            <Grid item xs={12} sm={6} md={4}>
               <TextField
-                label="Limite usos"
+                label="Limite de usos"
                 size="small"
                 fullWidth
                 type="number"
                 value={cupomForm.uso_maximo}
                 onChange={e => setCupomForm(f => ({ ...f, uso_maximo: e.target.value }))}
                 placeholder="∞"
+                helperText="Qtde máx. de usos (vazio = ilimitado)"
               />
             </Grid>
           </Grid>
