@@ -112,8 +112,8 @@ router.get("/:id", async (req, res) => {
 
 // CRIAR PEDIDO
 router.post("/", async (req, res) => {
-  const { cliente_id, data_pedido, forma_pagamento, observacao, frete, desconto, status, tipo_cliente, itens, origem } = req.body;
-  
+  const { cliente_id, data_pedido, forma_pagamento, observacao, frete, desconto, status, tipo_cliente, itens, origem, cupom_codigo } = req.body;
+
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -123,10 +123,10 @@ router.post("/", async (req, res) => {
     const valor_total = totalItens + Number(frete || 0) - Number(desconto || 0);
 
     const resPedido = await client.query(
-      `INSERT INTO pedidos 
-       (cliente_id, data_pedido, forma_pagamento, observacao, frete, desconto, valor_total, status, tipo_cliente) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
-      [cliente_id, data_pedido, forma_pagamento, observacao, frete || 0, desconto || 0, valor_total, status || 'Novo', tipo_cliente || 'consumidor']
+      `INSERT INTO pedidos
+       (cliente_id, data_pedido, forma_pagamento, observacao, frete, desconto, valor_total, status, tipo_cliente, cupom_codigo)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
+      [cliente_id, data_pedido, forma_pagamento, observacao, frete || 0, desconto || 0, valor_total, status || 'Novo', tipo_cliente || 'consumidor', cupom_codigo || null]
     );
     const pedidoId = resPedido.rows[0].id;
 
@@ -172,6 +172,12 @@ router.post("/", async (req, res) => {
     }
 
     await client.query("COMMIT");
+
+    // Incrementar uso do cupom (não bloqueia o pedido se falhar)
+    if (cupom_codigo) {
+      pool.query("UPDATE cupons SET usos_realizados = usos_realizados + 1 WHERE codigo = UPPER($1)", [cupom_codigo])
+        .catch(e => console.error("Erro ao incrementar uso do cupom:", e.message));
+    }
 
     // Pontos de fidelidade (não bloqueia o pedido se falhar)
     if (cliente_id) {

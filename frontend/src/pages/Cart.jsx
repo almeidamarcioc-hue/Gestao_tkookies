@@ -28,6 +28,10 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
   const [observacao, setObservacao] = useState("");
   const [isStoreOpen, setIsStoreOpen] = useState(true);
   const [config, setConfig] = useState({ open_time: "", close_time: "", open_days: "", pix_key: "", pix_name: "TKOOKIES", pix_city: "TRES DE MAIO" });
+  const [cupomInput, setCupomInput] = useState("");
+  const [cupomAplicado, setCupomAplicado] = useState(null); // { codigo, desconto, tipo, valor }
+  const [cupomLoading, setCupomLoading] = useState(false);
+  const [cupomErro, setCupomErro] = useState("");
   const navigate = useNavigate();
 
   // Estilos "Cozy Bakery"
@@ -178,7 +182,30 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
 
   const totalItems = cart.reduce((acc, item) => acc + (getItemPrice(item) * item.quantidade), 0);
   const finalFreight = deliveryType === "entrega" ? freightValue : 0;
-  const totalOrder = Math.max(0, totalItems + finalFreight - (usarPontos ? descontoPontos : 0));
+  const descontoCupom = cupomAplicado ? cupomAplicado.desconto : 0;
+  const totalOrder = Math.max(0, totalItems + finalFreight - (usarPontos ? descontoPontos : 0) - descontoCupom);
+
+  const handleAplicarCupom = async () => {
+    if (!cupomInput.trim()) return;
+    setCupomLoading(true);
+    setCupomErro("");
+    setCupomAplicado(null);
+    try {
+      const res = await api.post("/cupons/validar", { codigo: cupomInput.trim(), total: totalItems });
+      const { cupom, desconto } = res.data;
+      setCupomAplicado({ codigo: cupom.codigo, desconto, tipo: cupom.tipo, valor: cupom.valor });
+    } catch (err) {
+      setCupomErro(err.response?.data?.error || "Cupom inválido.");
+    } finally {
+      setCupomLoading(false);
+    }
+  };
+
+  const handleRemoverCupom = () => {
+    setCupomAplicado(null);
+    setCupomInput("");
+    setCupomErro("");
+  };
 
   const handleTogglePontos = async (checked) => {
     setUsarPontos(checked);
@@ -266,7 +293,8 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
       forma_pagamento: paymentMethod,
       observacao: obsFinal,
       frete: finalFreight,
-      desconto: usarPontos ? descontoPontos : 0,
+      desconto: (usarPontos ? descontoPontos : 0) + descontoCupom,
+      cupom_codigo: cupomAplicado ? cupomAplicado.codigo : null,
       status: "Novo",
       origem: 'carrinho',
       itens: cart.map(item => ({
@@ -675,6 +703,47 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
                   label={<Typography variant="body2">Usar meus pontos neste pedido</Typography>}
                 />
                 {usarPontos && <Typography variant="caption" color="#2E7D32" fontWeight="bold">- R$ {descontoPontos.toFixed(2)} de desconto aplicado</Typography>}
+              </Box>
+            )}
+
+            {/* CUPOM DE DESCONTO */}
+            {clientUser && (
+              <Box sx={{ mb: 2, p: 2, bgcolor: '#F9F6F1', borderRadius: 3, border: '1px solid rgba(78,52,46,0.15)' }}>
+                <Typography variant="subtitle2" fontWeight="bold" color="#4E342E" gutterBottom>Cupom de Desconto</Typography>
+                {cupomAplicado ? (
+                  <Box>
+                    <Box display="flex" alignItems="center" justifyContent="space-between">
+                      <Typography variant="body2" color="#2E7D32" fontWeight="bold">
+                        {cupomAplicado.codigo} — {cupomAplicado.tipo === 'percentual' ? `${cupomAplicado.valor}% off` : `R$ ${Number(cupomAplicado.valor).toFixed(2)} off`}
+                      </Typography>
+                      <Button size="small" onClick={handleRemoverCupom} sx={{ color: '#B71C1C', minWidth: 'auto', p: 0.5, fontSize: 11 }}>Remover</Button>
+                    </Box>
+                    <Typography variant="caption" color="#2E7D32">- R$ {descontoCupom.toFixed(2)} de desconto</Typography>
+                  </Box>
+                ) : (
+                  <Box display="flex" gap={1}>
+                    <TextField
+                      size="small"
+                      placeholder="Código do cupom"
+                      value={cupomInput}
+                      onChange={e => { setCupomInput(e.target.value.toUpperCase()); setCupomErro(""); }}
+                      onKeyDown={e => e.key === 'Enter' && handleAplicarCupom()}
+                      error={!!cupomErro}
+                      helperText={cupomErro}
+                      sx={{ flex: 1 }}
+                      inputProps={{ style: { fontFamily: 'monospace', letterSpacing: '0.1em' } }}
+                    />
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={handleAplicarCupom}
+                      disabled={cupomLoading || !cupomInput.trim()}
+                      sx={{ color: '#4E342E', borderColor: '#4E342E', whiteSpace: 'nowrap', px: 2 }}
+                    >
+                      {cupomLoading ? "..." : "Aplicar"}
+                    </Button>
+                  </Box>
+                )}
               </Box>
             )}
 

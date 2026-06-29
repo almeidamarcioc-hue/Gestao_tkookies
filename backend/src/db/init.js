@@ -233,6 +233,23 @@ export async function initDatabase() {
       )
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS cupons (
+        id SERIAL PRIMARY KEY,
+        codigo VARCHAR(50) UNIQUE NOT NULL,
+        tipo VARCHAR(10) NOT NULL CHECK (tipo IN ('percentual', 'valor')),
+        valor NUMERIC(10,2) NOT NULL,
+        ativo BOOLEAN DEFAULT true,
+        validade DATE,
+        valor_minimo NUMERIC(10,2) DEFAULT 0,
+        uso_maximo INT,
+        usos_realizados INT DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    logs.push(await addColumnSafe("pedidos", "cupom_codigo VARCHAR(50)"));
+
     // Índices de performance
     const indices = [
       "CREATE INDEX IF NOT EXISTS idx_pedidos_cliente_id ON pedidos(cliente_id)",

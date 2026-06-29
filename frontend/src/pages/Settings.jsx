@@ -111,6 +111,55 @@ export default function Settings() {
     } finally { setPromoLoading(false); }
   }
 
+  // ─── Cupons ─────────────────────────────────────────────────────────────────
+  const [cupons, setCupons] = useState([]);
+  const [cuponsLoading, setCuponsLoading] = useState(false);
+  const [cupomForm, setCupomForm] = useState({ codigo: "", tipo: "percentual", valor: "", validade: "", valor_minimo: "", uso_maximo: "" });
+  const [cupomMsg, setCupomMsg] = useState(null);
+  const [cupomEditId, setCupomEditId] = useState(null);
+
+  const carregarCupons = () => {
+    setCuponsLoading(true);
+    api.get("/cupons").then(r => setCupons(r.data || [])).catch(() => {}).finally(() => setCuponsLoading(false));
+  };
+
+  useEffect(() => { carregarCupons(); }, []);
+
+  const cupomFormVazio = { codigo: "", tipo: "percentual", valor: "", validade: "", valor_minimo: "", uso_maximo: "" };
+
+  async function salvarCupom() {
+    if (!cupomForm.codigo.trim() || !cupomForm.valor) {
+      setCupomMsg({ type: "error", text: "Código e valor são obrigatórios." }); return;
+    }
+    setCupomMsg(null);
+    try {
+      if (cupomEditId) {
+        await api.put(`/cupons/${cupomEditId}`, cupomForm);
+      } else {
+        await api.post("/cupons", cupomForm);
+      }
+      setCupomMsg({ type: "success", text: cupomEditId ? "Cupom atualizado!" : "Cupom criado!" });
+      setCupomForm(cupomFormVazio);
+      setCupomEditId(null);
+      carregarCupons();
+    } catch (e) {
+      setCupomMsg({ type: "error", text: e.response?.data?.error || "Erro ao salvar cupom." });
+    }
+  }
+
+  async function toggleCupomAtivo(cupom) {
+    try {
+      await api.put(`/cupons/${cupom.id}`, { ...cupom, ativo: !cupom.ativo });
+      carregarCupons();
+    } catch {}
+  }
+
+  async function deletarCupom(id) {
+    if (!window.confirm("Remover este cupom?")) return;
+    await api.delete(`/cupons/${id}`);
+    carregarCupons();
+  }
+
   // Estados para a página Sobre Nós
   const [aboutTitle, setAboutTitle] = useState("");
   const [aboutDesc, setAboutDesc] = useState("");
@@ -876,6 +925,155 @@ export default function Settings() {
                     </TableRow>
                   );
                 })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </Paper>
+
+      {/* ─── Cupons de Desconto ─────────────────────────────────────────────── */}
+      <Paper sx={{ p: 3, mt: 3 }}>
+        <Box display="flex" alignItems="center" gap={1} mb={2}>
+          <LocalOffer sx={{ color: "#C62828" }} />
+          <Typography variant="h6" fontWeight={700}>Cupons de Desconto</Typography>
+        </Box>
+        <Divider sx={{ mb: 3 }} />
+
+        {/* Formulário */}
+        <Box sx={{ bgcolor: "#FAF7F4", borderRadius: 2, p: 2, mb: 3, border: "1px solid rgba(78,52,46,0.1)" }}>
+          <Typography variant="subtitle2" fontWeight={700} mb={2}>{cupomEditId ? "Editar Cupom" : "Novo Cupom"}</Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={3}>
+              <TextField
+                label="Código"
+                size="small"
+                fullWidth
+                value={cupomForm.codigo}
+                onChange={e => setCupomForm(f => ({ ...f, codigo: e.target.value.toUpperCase() }))}
+                inputProps={{ style: { fontFamily: 'monospace', letterSpacing: '0.1em' } }}
+                placeholder="EX: PROMO10"
+              />
+            </Grid>
+            <Grid item xs={6} sm={2}>
+              <TextField
+                select
+                label="Tipo"
+                size="small"
+                fullWidth
+                value={cupomForm.tipo}
+                onChange={e => setCupomForm(f => ({ ...f, tipo: e.target.value }))}
+                SelectProps={{ native: true }}
+              >
+                <option value="percentual">Percentual (%)</option>
+                <option value="valor">Valor fixo (R$)</option>
+              </TextField>
+            </Grid>
+            <Grid item xs={6} sm={2}>
+              <TextField
+                label={cupomForm.tipo === "percentual" ? "Desconto (%)" : "Valor (R$)"}
+                size="small"
+                fullWidth
+                type="number"
+                value={cupomForm.valor}
+                onChange={e => setCupomForm(f => ({ ...f, valor: e.target.value }))}
+              />
+            </Grid>
+            <Grid item xs={6} sm={2}>
+              <TextField
+                label="Pedido mínimo (R$)"
+                size="small"
+                fullWidth
+                type="number"
+                value={cupomForm.valor_minimo}
+                onChange={e => setCupomForm(f => ({ ...f, valor_minimo: e.target.value }))}
+                placeholder="0"
+              />
+            </Grid>
+            <Grid item xs={6} sm={2}>
+              <TextField
+                label="Validade"
+                size="small"
+                fullWidth
+                type="date"
+                InputLabelProps={{ shrink: true }}
+                value={cupomForm.validade}
+                onChange={e => setCupomForm(f => ({ ...f, validade: e.target.value }))}
+              />
+            </Grid>
+            <Grid item xs={6} sm={1}>
+              <TextField
+                label="Limite usos"
+                size="small"
+                fullWidth
+                type="number"
+                value={cupomForm.uso_maximo}
+                onChange={e => setCupomForm(f => ({ ...f, uso_maximo: e.target.value }))}
+                placeholder="∞"
+              />
+            </Grid>
+          </Grid>
+          {cupomMsg && <Alert severity={cupomMsg.type} sx={{ mt: 2 }}>{cupomMsg.text}</Alert>}
+          <Box display="flex" gap={1} mt={2}>
+            <Button variant="contained" onClick={salvarCupom} sx={{ bgcolor: "#5D4037", "&:hover": { bgcolor: "#4E342E" } }}>
+              {cupomEditId ? "Salvar alterações" : "Criar cupom"}
+            </Button>
+            {cupomEditId && (
+              <Button variant="outlined" onClick={() => { setCupomEditId(null); setCupomForm(cupomFormVazio); setCupomMsg(null); }}>
+                Cancelar
+              </Button>
+            )}
+          </Box>
+        </Box>
+
+        {/* Lista de cupons */}
+        {cuponsLoading ? (
+          <Box display="flex" justifyContent="center" py={2}><CircularProgress size={24} /></Box>
+        ) : cupons.length === 0 ? (
+          <Typography variant="body2" color="text.secondary">Nenhum cupom cadastrado.</Typography>
+        ) : (
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 700 }}>Código</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Desconto</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Mínimo</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Validade</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Usos</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                  <TableCell />
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {cupons.map(c => (
+                  <TableRow key={c.id} sx={{ opacity: c.ativo ? 1 : 0.5 }}>
+                    <TableCell sx={{ fontFamily: 'monospace', fontWeight: 700, letterSpacing: '0.08em' }}>{c.codigo}</TableCell>
+                    <TableCell>
+                      {c.tipo === "percentual" ? `${Number(c.valor).toFixed(0)}%` : `R$ ${Number(c.valor).toFixed(2)}`}
+                    </TableCell>
+                    <TableCell>{Number(c.valor_minimo) > 0 ? `R$ ${Number(c.valor_minimo).toFixed(2)}` : "—"}</TableCell>
+                    <TableCell>{c.validade ? new Date(c.validade).toLocaleDateString('pt-BR') : "Sem validade"}</TableCell>
+                    <TableCell>{c.usos_realizados}{c.uso_maximo ? ` / ${c.uso_maximo}` : ""}</TableCell>
+                    <TableCell>
+                      <Switch
+                        size="small"
+                        checked={c.ativo}
+                        onChange={() => toggleCupomAtivo(c)}
+                        color="success"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Box display="flex" gap={0.5}>
+                        <IconButton size="small" onClick={() => { setCupomEditId(c.id); setCupomForm({ codigo: c.codigo, tipo: c.tipo, valor: String(c.valor), validade: c.validade ? c.validade.split('T')[0] : "", valor_minimo: String(c.valor_minimo || ""), uso_maximo: c.uso_maximo ? String(c.uso_maximo) : "" }); setCupomMsg(null); }}>
+                          <LocalOffer fontSize="small" />
+                        </IconButton>
+                        <IconButton size="small" color="error" onClick={() => deletarCupom(c.id)}>
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </TableContainer>

@@ -23,6 +23,7 @@ import analyticsRouter from "./routes/analytics.js";
 import salesIntelligenceRouter from "./routes/salesIntelligence.js";
 import prospeccaoRevendedoresRouter from "./routes/prospeccaoRevendedores.js";
 import fidelidadeRouter from "./routes/fidelidade.js";
+import cuponsRouter from "./routes/cupons.js";
 import { authenticateToken, requireRole } from "./middlewares/auth.js";
 
 const app = express();
@@ -152,6 +153,7 @@ app.use("/depoimentos", testimonialsRouter);
 app.use("/analytics", authenticateToken, analyticsRouter);
 app.use("/inteligencia-vendas", authenticateToken, salesIntelligenceRouter);
 app.use("/prospeccao-revendedores", authenticateToken, prospeccaoRevendedoresRouter);
+app.use("/cupons", cuponsRouter);
 
 // Rota especial para criar tabelas na Vercel (Executar uma vez após deploy)
 app.get("/api/migrate", authenticateToken, requireRole('admin'), async (req, res) => {
