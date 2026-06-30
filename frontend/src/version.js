@@ -1,9 +1,22 @@
 // Versão do sistema — atualizar a cada release antes do merge para main
 
-export const APP_VERSION = "1.00.06";
+export const APP_VERSION = "1.00.07";
 
 // Histórico de versões
 export const CHANGELOG = [
+  {
+    version: "1.00.07",
+    data: "2026-06-29",
+    descricao: "Cupons de desconto, badge nos destaques e correções de impressão e fidelidade",
+    itens: [
+      "Configurações: nova seção Cupons de Desconto — criar cupons por percentual ou valor fixo, com pedido mínimo, validade e limite de usos",
+      "Carrinho: cliente aplica código de cupom e vê o desconto aplicado (combinável com pontos de fidelidade)",
+      "Home: badge 'X% off' agora também aparece sobre a imagem dos produtos em destaque",
+      "Impressão e detalhes do pedido: distingue 'Desc. Cupom' (com o código) de 'Desc. Fidelidade', mostrando ambas quando usadas juntas",
+      "Correção: desconto de cupom não debita mais pontos de fidelidade do cliente — apenas a parcela de pontos consome saldo",
+      "Correção: página definida como pt-BR e sem tradução automática, evitando o travamento do app causado pelo Google Translate",
+    ],
+  },
   {
     version: "1.00.06",
     data: "2026-06-24",
