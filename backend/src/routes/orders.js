@@ -112,7 +112,17 @@ router.get("/:id", async (req, res) => {
 
 // CRIAR PEDIDO
 router.post("/", async (req, res) => {
-  const { cliente_id, data_pedido, forma_pagamento, observacao, frete, desconto, status, tipo_cliente, itens, origem, cupom_codigo } = req.body;
+  const { cliente_id, data_pedido, forma_pagamento, observacao, frete, desconto, status, tipo_cliente, itens, origem, cupom_codigo, desconto_fidelidade, desconto_cupom } = req.body;
+
+  // Detalhamento do desconto. Se o cliente novo enviar o breakdown, usa-o; senão
+  // infere pelo cupom_codigo (compatibilidade com pedidos/clientes antigos).
+  const hasBreakdown = desconto_fidelidade != null || desconto_cupom != null;
+  const dFidelidade = hasBreakdown
+    ? Number(desconto_fidelidade || 0)
+    : (cupom_codigo ? 0 : Number(desconto || 0));
+  const dCupom = hasBreakdown
+    ? Number(desconto_cupom || 0)
+    : (cupom_codigo ? Number(desconto || 0) : 0);
 
   const client = await pool.connect();
   try {
@@ -124,9 +134,9 @@ router.post("/", async (req, res) => {
 
     const resPedido = await client.query(
       `INSERT INTO pedidos
-       (cliente_id, data_pedido, forma_pagamento, observacao, frete, desconto, valor_total, status, tipo_cliente, cupom_codigo)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
-      [cliente_id, data_pedido, forma_pagamento, observacao, frete || 0, desconto || 0, valor_total, status || 'Novo', tipo_cliente || 'consumidor', cupom_codigo || null]
+       (cliente_id, data_pedido, forma_pagamento, observacao, frete, desconto, valor_total, status, tipo_cliente, cupom_codigo, desconto_fidelidade, desconto_cupom)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
+      [cliente_id, data_pedido, forma_pagamento, observacao, frete || 0, desconto || 0, valor_total, status || 'Novo', tipo_cliente || 'consumidor', cupom_codigo || null, dFidelidade, dCupom]
     );
     const pedidoId = resPedido.rows[0].id;
 
@@ -185,13 +195,13 @@ router.post("/", async (req, res) => {
         const cfgRes = await pool.query("SELECT valor FROM configuracoes WHERE chave = 'pontos_por_real'");
         const pontosPorReal = cfgRes.rows[0] ? Number(cfgRes.rows[0].valor) : 1;
 
-        // Débito: subtrair pontos usados como desconto (100 pontos = R$1)
-        const descontoUsado = Number(desconto || 0);
-        if (descontoUsado > 0) {
-          const pontosUsados = Math.round(descontoUsado * 100);
+        // Débito: subtrair APENAS os pontos efetivamente usados como desconto de fidelidade
+        // (100 pontos = R$1). Desconto de cupom NÃO consome pontos do cliente.
+        if (dFidelidade > 0) {
+          const pontosUsados = Math.round(dFidelidade * 100);
           await pool.query(
             "INSERT INTO pontos_fidelidade (cliente_id, pedido_id, pontos, tipo, descricao) VALUES ($1, $2, $3, 'debito', $4)",
-            [cliente_id, pedidoId, pontosUsados, `Desconto usado no Pedido #${pedidoId}`]
+            [cliente_id, pedidoId, pontosUsados, `Pontos usados no Pedido #${pedidoId}`]
           );
         }
 

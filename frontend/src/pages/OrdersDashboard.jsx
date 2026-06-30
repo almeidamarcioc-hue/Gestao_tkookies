@@ -401,12 +401,31 @@ export default function OrdersDashboard() {
                 <Typography variant="body2">R$ {Number(viewOrder.frete).toFixed(2)}</Typography>
               </Box>
             )}
-            {Number(viewOrder.desconto) > 0 && (
-              <Box display="flex" justifyContent="space-between">
-                <Typography variant="body2" color="success.main">Desc. Fidelidade</Typography>
-                <Typography variant="body2" color="success.main">- R$ {Number(viewOrder.desconto).toFixed(2)}</Typography>
-              </Box>
-            )}
+            {(() => {
+              const total = Number(viewOrder.desconto) || 0;
+              let dFid = Number(viewOrder.desconto_fidelidade) || 0;
+              let dCup = Number(viewOrder.desconto_cupom) || 0;
+              // Compatibilidade com pedidos antigos (sem breakdown)
+              if (dFid === 0 && dCup === 0 && total > 0) {
+                if (viewOrder.cupom_codigo) dCup = total; else dFid = total;
+              }
+              return (
+                <>
+                  {dFid > 0 && (
+                    <Box display="flex" justifyContent="space-between">
+                      <Typography variant="body2" color="success.main">Desc. Fidelidade</Typography>
+                      <Typography variant="body2" color="success.main">- R$ {dFid.toFixed(2)}</Typography>
+                    </Box>
+                  )}
+                  {dCup > 0 && (
+                    <Box display="flex" justifyContent="space-between">
+                      <Typography variant="body2" color="success.main">Desc. Cupom{viewOrder.cupom_codigo ? ` (${viewOrder.cupom_codigo})` : ''}</Typography>
+                      <Typography variant="body2" color="success.main">- R$ {dCup.toFixed(2)}</Typography>
+                    </Box>
+                  )}
+                </>
+              );
+            })()}
             <Box display="flex" justifyContent="space-between" mt={1}>
               <Typography variant="subtitle1" fontWeight="bold">TOTAL</Typography>
               <Typography variant="subtitle1" fontWeight="bold">R$ {Number(viewOrder.valor_total).toFixed(2)}</Typography>

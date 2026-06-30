@@ -33,6 +33,18 @@ export const printOrder = (order) => {
   const desconto = Number(order.desconto) || 0;
   const subtotal = total - frete + desconto;
 
+  // Detalhamento do desconto: fidelidade vs cupom.
+  let descFidelidade = Number(order.desconto_fidelidade) || 0;
+  let descCupom = Number(order.desconto_cupom) || 0;
+  // Compatibilidade com pedidos antigos (sem breakdown): decide pelo cupom_codigo.
+  if (descFidelidade === 0 && descCupom === 0 && desconto > 0) {
+    if (order.cupom_codigo) descCupom = desconto;
+    else descFidelidade = desconto;
+  }
+  const descontoRows = `
+        ${descFidelidade > 0 ? `<div class="total-row" style="color:#2e7d32"><span>Desc. Fidelidade:</span><span>- R$ ${descFidelidade.toFixed(2)}</span></div>` : ''}
+        ${descCupom > 0 ? `<div class="total-row" style="color:#2e7d32"><span>Desc. Cupom${order.cupom_codigo ? ` (${order.cupom_codigo})` : ''}:</span><span>- R$ ${descCupom.toFixed(2)}</span></div>` : ''}`;
+
   const labelCliente = (order.is_revendedor || order.tipo_cliente === 'revendedor') ? 'Revendedor' : 'Cliente';
 
   // Conteúdo HTML com CSS otimizado para impressoras térmicas (Alto Contraste)
@@ -100,7 +112,7 @@ export const printOrder = (order) => {
       <div class="totals">
         <div class="total-row"><span>Subtotal:</span><span>R$ ${subtotal.toFixed(2)}</span></div>
         ${frete > 0 ? `<div class="total-row"><span>Frete:</span><span>R$ ${frete.toFixed(2)}</span></div>` : ''}
-        ${desconto > 0 ? `<div class="total-row" style="color:#2e7d32"><span>Desc. Fidelidade:</span><span>- R$ ${desconto.toFixed(2)}</span></div>` : ''}
+        ${descontoRows}
         <div class="total-row final-total"><span>TOTAL:</span><span>R$ ${total.toFixed(2)}</span></div>
       </div>
 

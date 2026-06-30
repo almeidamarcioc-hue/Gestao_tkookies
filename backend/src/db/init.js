@@ -249,6 +249,9 @@ export async function initDatabase() {
     `);
 
     logs.push(await addColumnSafe("pedidos", "cupom_codigo VARCHAR(50)"));
+    // Detalhamento do desconto (fidelidade vs cupom) para impressão e contabilização correta dos pontos
+    logs.push(await addColumnSafe("pedidos", "desconto_fidelidade NUMERIC(10,2) DEFAULT 0"));
+    logs.push(await addColumnSafe("pedidos", "desconto_cupom NUMERIC(10,2) DEFAULT 0"));
 
     // Índices de performance
     const indices = [
