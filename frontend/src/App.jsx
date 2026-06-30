@@ -265,17 +265,17 @@ export default function App() {
   }, []);
 
   const getStoreStatus = (cfg) => {
-    if (!cfg.opening_hours) return { open: null, label: 'Entregas 14–17h' };
+    if (!cfg.opening_hours) return { open: null, label: 'Entregas e Retiradas 14–17h' };
     try {
       const schedule = typeof cfg.opening_hours === 'string' ? JSON.parse(cfg.opening_hours) : cfg.opening_hours;
       const now = new Date();
       const day = now.getDay();
       const current = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
       const today = schedule.find(s => Number(s.day) === day);
-      if (!today || !today.open) return { open: false, label: 'Fechado hoje · Entregas 14–17h' };
+      if (!today || !today.open) return { open: false, label: 'Fechado hoje · Entregas e Retiradas 14–17h' };
       const isOpen = current >= today.open_time && current <= today.close_time;
-      return { open: isOpen, label: `${isOpen ? 'Aberto' : 'Fechado'} hoje das ${today.open_time} às ${today.close_time} · Entregas 14–17h` };
-    } catch { return { open: null, label: 'Entregas 14–17h' }; }
+      return { open: isOpen, label: `${isOpen ? 'Aberto' : 'Fechado'} hoje das ${today.open_time} às ${today.close_time} · Entregas e Retiradas 14–17h` };
+    } catch { return { open: null, label: 'Entregas e Retiradas 14–17h' }; }
   };
 
   const openCad = Boolean(anchorCad);
