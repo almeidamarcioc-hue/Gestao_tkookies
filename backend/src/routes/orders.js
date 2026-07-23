@@ -231,7 +231,7 @@ router.post("/", async (req, res) => {
 // ATUALIZAR PEDIDO (apenas admin)
 router.put("/:id", requireRole('admin'), async (req, res) => {
   const { id } = req.params;
-  const { cliente_id, data_pedido, forma_pagamento, observacao, frete, desconto, status, tipo_cliente, itens } = req.body;
+  const { cliente_id, data_pedido, forma_pagamento, observacao, frete, desconto, status, tipo_cliente, itens, revendedor_id } = req.body;
 
   const client = await pool.connect();
   try {
@@ -270,11 +270,11 @@ router.put("/:id", requireRole('admin'), async (req, res) => {
 
     // 4. Atualizar Pedido
     await client.query(
-      `UPDATE pedidos SET 
-       cliente_id = $1, data_pedido = $2, forma_pagamento = $3, observacao = $4, 
-       frete = $5, desconto = $6, valor_total = $7, status = $8, tipo_cliente = $9
+      `UPDATE pedidos SET
+       cliente_id = $1, data_pedido = $2, forma_pagamento = $3, observacao = $4,
+       frete = $5, desconto = $6, valor_total = $7, status = $8, tipo_cliente = $9, revendedor_id = $11
        WHERE id = $10`,
-      [cliente_id, data_pedido, forma_pagamento, observacao, frete || 0, desconto || 0, valor_total, status, tipo_cliente, id]
+      [cliente_id || null, data_pedido, forma_pagamento, observacao, frete || 0, desconto || 0, valor_total, status, tipo_cliente, id, revendedor_id || null]
     );
 
     // 5. Inserir novos itens e baixar estoque

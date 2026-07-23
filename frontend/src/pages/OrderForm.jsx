@@ -105,15 +105,18 @@ export default function OrderForm({ clientUser, isAdmin }) {
     try {
       const res = await api.get(`/pedidos/${pedidoId}`);
       const p = res.data;
-      setCliente(listaClientes.find(c => c.id === p.cliente_id) || { 
-        id: p.cliente_id, 
+      const ehRev = !!p.is_revendedor;
+      setTipoCliente(ehRev ? 'revendedor' : 'consumidor');
+      const clienteEncontrado = !ehRev && listaClientes.find(c => c.id === p.cliente_id);
+      setCliente(clienteEncontrado || {
+        id: ehRev ? p.revendedor_id : p.cliente_id,
         nome: p.cliente_nome,
         telefone: p.telefone,
         endereco: p.endereco,
         numero: p.numero,
         bairro: p.bairro,
         cidade: p.cidade,
-        is_revendedor: p.is_revendedor
+        is_revendedor: ehRev
       });
       const brasiliaStr = new Date(p.data_pedido).toLocaleString('sv-SE', { timeZone: 'America/Sao_Paulo' });
       setDataPedido(brasiliaStr.split(' ')[0]);
@@ -194,8 +197,11 @@ export default function OrderForm({ clientUser, isAdmin }) {
     if (itens.length === 0) return alert("Adicione produtos ao pedido");
     if (itens.some(i => i.quantidade <= 0)) return alert("Quantidade dos produtos deve ser maior que zero");
 
+    const ehRevenda = tipoCliente === 'revendedor';
     const payload = {
-      cliente_id: cliente.id,
+      // Revendedor não é um "cliente" (FK p/ clientes) — vai em revendedor_id
+      cliente_id: ehRevenda ? null : cliente.id,
+      revendedor_id: ehRevenda ? cliente.id : null,
       data_pedido: new Date(`${dataPedido}T${horaPedido}:00-03:00`).toISOString(),
       forma_pagamento: formaPagamento,
       observacao,
