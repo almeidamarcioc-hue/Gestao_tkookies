@@ -899,8 +899,27 @@ export default function App() {
       >
         <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Typography variant="h5" fontWeight="bold" sx={{ color: '#2C1810', textAlign: 'center' }}>
-            {loginMode === 'reseller' ? 'Área do Parceiro' : 'Área do Cliente'}
+            Acesso ao Sistema
           </Typography>
+          {/* Seletor Cliente / Parceiro — permite que revendedores entrem por qualquer botão de acesso */}
+          <Box sx={{ display: 'flex', gap: 0.5, bgcolor: 'rgba(44,24,16,0.06)', borderRadius: 50, p: 0.5 }}>
+            {[{ m: 'client', label: 'Cliente' }, { m: 'reseller', label: 'Parceiro' }].map(({ m, label }) => (
+              <Button
+                key={m}
+                fullWidth
+                onClick={() => setLoginMode(m)}
+                sx={{
+                  borderRadius: 50, py: 1, textTransform: 'none', fontWeight: 700, fontSize: '14px',
+                  bgcolor: loginMode === m ? '#D4580A' : 'transparent',
+                  color: loginMode === m ? '#FBF6EC' : '#5D4037',
+                  boxShadow: 'none',
+                  '&:hover': { bgcolor: loginMode === m ? '#B84508' : 'rgba(44,24,16,0.04)', boxShadow: 'none' },
+                }}
+              >
+                {label}
+              </Button>
+            ))}
+          </Box>
           <TextField
             label="Login"
             fullWidth
