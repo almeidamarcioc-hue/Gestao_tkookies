@@ -958,7 +958,7 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
                       </Box>
 
                       {/* Footer */}
-                      <Box sx={{ px: { xs: 1.5, md: 2 }, pb: { xs: 1.5, md: 2 }, pt: 0, borderTop: '1px solid var(--rule)', mt: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+                      <Box sx={{ px: { xs: 1.5, md: 2 }, pb: { xs: 1.5, md: 2 }, pt: { xs: 1.5, md: 0 }, borderTop: '1px solid var(--rule)', mt: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap', rowGap: 1 }}>
                         <Box>
                           {Number(prod.desconto_destaque) > 0 && (
                             <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 300, fontSize: '12px', color: 'var(--ink)', opacity: 0.4, textDecoration: 'line-through', lineHeight: 1 }}>
@@ -967,7 +967,7 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
                           )}
                           <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0 }}>
                             <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 300, fontSize: '12px', color: 'var(--terracotta)' }}>R$</Typography>
-                            <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 400, fontSize: { xs: '22px', md: '28px' }, color: 'var(--terracotta)', letterSpacing: '-0.03em', lineHeight: 1 }}>
+                            <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 400, fontSize: { xs: '20px', md: '28px' }, color: 'var(--terracotta)', letterSpacing: '-0.03em', lineHeight: 1 }}>
                               {Math.floor(precoFinal)}
                             </Typography>
                             <Typography sx={{ fontFamily: '"Fraunces", serif', fontWeight: 300, fontSize: '13px', color: 'var(--terracotta)', opacity: 0.6, alignSelf: 'flex-end', mb: '2px' }}>
@@ -975,7 +975,7 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
                             </Typography>
                           </Box>
                         </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, ml: 'auto', flexShrink: 0 }}>
                           <IconButton size="small" onClick={() => toggleFavorite(prod)} sx={{ color: favorites.includes(Number(prod.id)) ? '#ef4444' : 'var(--ink)', opacity: 0.6, p: 0.5 }}>
                             {favorites.includes(Number(prod.id)) ? <Favorite sx={{ fontSize: 16 }} /> : <FavoriteBorder sx={{ fontSize: 16 }} />}
                           </IconButton>
@@ -983,7 +983,7 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
                             <Box
                               onClick={() => handleQtyChange(prod.id, 1)}
                               sx={{
-                                borderRadius: 999, px: 2, py: 0.75,
+                                borderRadius: 999, px: { xs: 1.5, md: 2 }, py: 0.75,
                                 bgcolor: 'var(--ink)', color: 'var(--paper)',
                                 fontFamily: 'Inter', fontSize: '12px', fontWeight: 500,
                                 cursor: isStoreOpen ? 'pointer' : 'default',
