@@ -285,6 +285,9 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
           return;
         }
         obsFinal += ` | Entrega: ${customAddress.endereco}, ${customAddress.numero}, ${customAddress.bairro} - ${customAddress.cidade || ""}`;
+      } else if (isRevenda) {
+        // Revendedor tem apenas CEP/cidade cadastrados (sem número/bairro)
+        obsFinal += ` | Entrega: ${clientUser.endereco || ''}${clientUser.cidade ? ' - ' + clientUser.cidade : ''}`;
       } else {
         obsFinal += ` | Entrega: ${clientUser.endereco}, ${clientUser.numero}, ${clientUser.bairro}`;
       }

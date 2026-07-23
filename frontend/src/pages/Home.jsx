@@ -259,7 +259,8 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
   }, [saborSemana, config.sabor_semana_fim]);
 
   useEffect(() => {
-    if (clientUser) {
+    // Revendedor não tem favoritos (não é um "cliente")
+    if (clientUser && !clientUser.is_revendedor) {
       api.get(`/favoritos/${clientUser.id}`)
         .then(res => {
           // Garante que estamos pegando apenas os IDs e convertendo para número se necessário
@@ -276,6 +277,7 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
       onLoginClick();
       return;
     }
+    if (clientUser.is_revendedor) return; // revenda não usa favoritos
     const prodId = Number(prod.id);
     const isFav = favorites.includes(prodId);
     try {
@@ -1012,9 +1014,11 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
                           </Box>
                         </Box>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, ml: 'auto', flexShrink: 0 }}>
-                          <IconButton size="small" onClick={() => toggleFavorite(prod)} sx={{ color: favorites.includes(Number(prod.id)) ? '#ef4444' : 'var(--ink)', opacity: 0.6, p: 0.5 }}>
-                            {favorites.includes(Number(prod.id)) ? <Favorite sx={{ fontSize: 16 }} /> : <FavoriteBorder sx={{ fontSize: 16 }} />}
-                          </IconButton>
+                          {!isReseller && (
+                            <IconButton size="small" onClick={() => toggleFavorite(prod)} sx={{ color: favorites.includes(Number(prod.id)) ? '#ef4444' : 'var(--ink)', opacity: 0.6, p: 0.5 }}>
+                              {favorites.includes(Number(prod.id)) ? <Favorite sx={{ fontSize: 16 }} /> : <FavoriteBorder sx={{ fontSize: 16 }} />}
+                            </IconButton>
+                          )}
                           {!podeAdicionar ? null : qty === 0 ? (
                             <Box
                               onClick={() => handleQtyChange(prod.id, 1)}
@@ -1378,7 +1382,7 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
                   <ShoppingBag />
                 </Badge>
               </IconButton>
-              {clientUser && (
+              {clientUser && !isReseller && (
                 <IconButton onClick={() => navigate("/meus-favoritos")} sx={{ color: '#ef4444' }}>
                   <Badge badgeContent={favorites.length} color="default">
                     <Favorite sx={{ fontSize: 20 }} />

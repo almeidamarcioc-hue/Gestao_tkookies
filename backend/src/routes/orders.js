@@ -41,7 +41,7 @@ router.get("/", requireRole('admin'), async (req, res) => {
              COALESCE(c.telefone, r.telefone) as cliente_telefone
       FROM pedidos p
       LEFT JOIN clientes c ON p.cliente_id = c.id AND (p.tipo_cliente IS NULL OR p.tipo_cliente = 'consumidor')
-      LEFT JOIN revendedores r ON p.cliente_id = r.id AND p.tipo_cliente = 'revendedor'
+      LEFT JOIN revendedores r ON p.revendedor_id = r.id
       ${whereClause}
       ORDER BY p.data_pedido DESC, p.id DESC
       ${paginationClause}
@@ -70,7 +70,7 @@ router.get("/:id", async (req, res) => {
              CASE WHEN p.tipo_cliente = 'revendedor' THEN true ELSE false END as is_revendedor
       FROM pedidos p
       LEFT JOIN clientes c ON p.cliente_id = c.id AND (p.tipo_cliente IS NULL OR p.tipo_cliente = 'consumidor')
-      LEFT JOIN revendedores r ON p.cliente_id = r.id AND p.tipo_cliente = 'revendedor'
+      LEFT JOIN revendedores r ON p.revendedor_id = r.id
       WHERE p.id = $1
     `;
     const headerRes = await pool.query(queryHeader, [id]);
