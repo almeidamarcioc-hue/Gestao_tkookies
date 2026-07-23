@@ -412,10 +412,11 @@ export default function App() {
 
   const removeFromCart = async (productId) => {
     const item = cart.find(i => i.id === productId);
-    if (item) {
+    // Revenda não reservou estoque — não pode liberar (senão infla o estoque do produto)
+    if (item && !clientUser?.is_revendedor) {
       const dbId = item.original_id || item.id;
-      await api.post("/estoque/liberar", { 
-        produto_id: dbId, 
+      await api.post("/estoque/liberar", {
+        produto_id: dbId,
         quantidade: item.quantidade,
         tipo: (item.itens?.length > 0) ? 'combo' : 'produto'
       })
@@ -429,22 +430,26 @@ export default function App() {
     const item = cart.find(i => i.id === productId);
     if (!item) return;
 
+    const isRevenda = !!clientUser?.is_revendedor;
     const delta = newQty - item.quantidade;
     const dbId = item.original_id || item.id;
 
     try {
-      if (delta > 0) {
-        await api.post("/estoque/reservar", { 
-          produto_id: dbId, 
-          quantidade: delta,
-          tipo: (item.itens?.length > 0) ? 'combo' : 'produto'
-        });
-      } else if (delta < 0) {
-        await api.post("/estoque/liberar", {
-          produto_id: dbId,
-          quantidade: Math.abs(delta),
-          tipo: (item.itens?.length > 0) ? 'combo' : 'produto'
-        });
+      // Revenda produz sob demanda — não reserva/libera estoque nem valida quantidade
+      if (!isRevenda) {
+        if (delta > 0) {
+          await api.post("/estoque/reservar", {
+            produto_id: dbId,
+            quantidade: delta,
+            tipo: (item.itens?.length > 0) ? 'combo' : 'produto'
+          });
+        } else if (delta < 0) {
+          await api.post("/estoque/liberar", {
+            produto_id: dbId,
+            quantidade: Math.abs(delta),
+            tipo: (item.itens?.length > 0) ? 'combo' : 'produto'
+          });
+        }
       }
       setCart((prev) => prev.map((i) => i.id === productId ? { ...i, quantidade: newQty } : i));
       return true; // Sucesso
@@ -457,7 +462,8 @@ export default function App() {
   const clearCart = async ({ skipLiberar = false } = {}) => {
     // skipLiberar=true quando o carrinho é limpo após pedido finalizado
     // (estoque já foi deduzido pela reserva, não deve ser devolvido)
-    if (!skipLiberar) {
+    // Revenda nunca reservou estoque, então também não libera.
+    if (!skipLiberar && !clientUser?.is_revendedor) {
       for (const item of cart) {
         const dbId = item.original_id || item.id;
         await api.post("/estoque/liberar", {
