@@ -92,6 +92,7 @@ export async function initDatabase() {
       CREATE TABLE IF NOT EXISTS pedidos (
         id SERIAL PRIMARY KEY,
         cliente_id INT REFERENCES clientes(id),
+        revendedor_id INT,
         data_pedido TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         valor_total DECIMAL(10, 2) DEFAULT 0,
         forma_pagamento VARCHAR(50),
@@ -259,6 +260,8 @@ export async function initDatabase() {
     // Revenda: produto disponível para produção sob demanda + previsão de entrega no pedido
     logs.push(await addColumnSafe("produtos", "disponivel_revenda BOOLEAN DEFAULT FALSE"));
     logs.push(await addColumnSafe("pedidos", "data_entrega_prevista TIMESTAMP"));
+    // Pedido de revenda: cliente_id fica null (FK p/ clientes), identidade vai em revendedor_id
+    logs.push(await addColumnSafe("pedidos", "revendedor_id INT"));
 
     // Índices de performance
     const indices = [

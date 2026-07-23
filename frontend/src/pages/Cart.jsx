@@ -297,7 +297,10 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
     }
 
     const payload = {
-      cliente_id: clientUser.id,
+      // Revenda não é um "cliente" (FK p/ clientes) — vai em revendedor_id
+      cliente_id: isRevenda ? null : clientUser.id,
+      revendedor_id: isRevenda ? clientUser.id : null,
+      tipo_cliente: isRevenda ? 'revendedor' : undefined,
       data_pedido: new Date(),
       forma_pagamento: paymentMethod,
       observacao: obsFinal,
