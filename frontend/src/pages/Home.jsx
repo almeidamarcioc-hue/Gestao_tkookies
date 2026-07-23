@@ -78,6 +78,7 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
 
   const [totalPedidos, setTotalPedidos] = useState(null);
   const [products, setProducts] = useState([]);
+  const [resellerProducts, setResellerProducts] = useState([]); // catálogo de revenda (inclui inativos marcados p/ revenda)
   const [combos, setCombos] = useState([]);
   const [featuredProduct, setFeaturedProduct] = useState(null);
   const [crossSellOpen, setCrossSellOpen] = useState(false);
@@ -201,7 +202,14 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
           return a.nome.localeCompare(b.nome, 'pt-BR');
         });
       setProducts(displayableProducts);
-      
+
+      // Catálogo de revenda: produtos marcados p/ revenda, mesmo inativos (não vendem no cardápio,
+      // mas a revenda produz sob demanda). Exclui agregados.
+      const revendaList = allProductsData
+        .filter(p => !p.eh_agregado && p.disponivel_revenda)
+        .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+      setResellerProducts(revendaList);
+
       // Encontra produtos destaque com estoque e seleciona um aleatório
       const featuredList = displayableProducts.filter(p => p.eh_destaque && Number(p.estoque) > 0);
       if (featuredList.length > 0) {
@@ -310,7 +318,7 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
       return;
     }
 
-    const item = products.find(p => p.id === prodId) || combos.find(c => c.id === prodId);
+    const item = products.find(p => p.id === prodId) || resellerProducts.find(p => p.id === prodId) || combos.find(c => c.id === prodId);
     if (!item) return;
 
     const currentQty = getQty(prodId);
@@ -887,7 +895,7 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
                   Preços de revenda · produção sob demanda · entrega em até 48h. Você pode pedir mesmo com a loja fechada.
                 </Typography>
               )}
-              {isReseller && products.filter(p => !combos.some(c => c.produto_vinculado_id === p.id) && Boolean(p.disponivel_revenda)).length === 0 && (
+              {isReseller && resellerProducts.filter(p => !combos.some(c => c.produto_vinculado_id === p.id)).length === 0 && (
                 <Typography sx={{ fontFamily: 'Inter', fontSize: '14px', color: 'var(--ink)', opacity: 0.6, mb: 4 }}>
                   Nenhum produto disponível para revenda no momento. Fale com a TKookies.
                 </Typography>
@@ -895,7 +903,7 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
 
               {/* Grid de produtos — editorial */}
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(3, 1fr)' }, gap: { xs: 2, md: 3 } }}>
-                {products.filter(p => !combos.some(c => c.produto_vinculado_id === p.id) && (!isReseller || Boolean(p.disponivel_revenda))).map((prod, idx) => {
+                {(isReseller ? resellerProducts : products).filter(p => !combos.some(c => c.produto_vinculado_id === p.id)).map((prod, idx) => {
                   const coverImage = prod.imagens?.find(img => img.eh_capa)?.imagem || prod.imagens?.[0]?.imagem;
                   const altImage = prod.imagens?.find(i => !i.eh_capa)?.imagem || prod.imagens?.[1]?.imagem;
                   const qty = getQty(prod.id);
