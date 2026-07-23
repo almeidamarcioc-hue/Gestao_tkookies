@@ -1,9 +1,17 @@
 // Versão do sistema — atualizar a cada release antes do merge para main
 
-export const APP_VERSION = "1.00.08";
+export const APP_VERSION = "1.00.09";
 
 // Histórico de versões
 export const CHANGELOG = [
+  {
+    version: "1.00.09",
+    data: "2026-07-23",
+    descricao: "Correção do pedido manual para revendedor",
+    itens: [
+      "Pedido manual (admin): ao selecionar um Revendedor Parceiro, o pedido agora é vinculado corretamente ao parceiro (antes vinha como 'Cliente Balcão')",
+    ],
+  },
   {
     version: "1.00.08",
     data: "2026-07-23",
