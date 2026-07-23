@@ -375,6 +375,7 @@ export default function Dashboard() {
         agregados: editProduct.agregados?.map(a => ({ id: a.id, preco: Number(a.preco) })) || [],
         eh_agregado: editEhAgregado,
         eh_brinde: editEhBrinde,
+        disponivel_revenda: editProduct.disponivel_revenda || false,
         brindes: editProduct.brindes?.map(b => ({ id: b.id, tipo_quantidade: b.tipo_quantidade })) || [],
         ocasiao: editOcasiao.join(","),
         ...(editEhAgregado && {
@@ -605,6 +606,10 @@ export default function Dashboard() {
                 <FormControlLabel
                   control={<Checkbox checked={editEhBrinde} onChange={(e) => setEditEhBrinde(e.target.checked)} />}
                   label="É Produto Brinde"
+                />
+                <FormControlLabel
+                  control={<Checkbox checked={editProduct.disponivel_revenda || false} onChange={(e) => setEditProduct({...editProduct, disponivel_revenda: e.target.checked})} />}
+                  label="Disponível para Revenda (produção sob demanda)"
                 />
                 {editProduct.eh_destaque && (
                   <TextField label="% Desconto" type="number" size="small" sx={{ width: 150 }} value={editProduct.desconto_destaque || 0} onChange={(e) => setEditProduct({...editProduct, desconto_destaque: e.target.value})} />
