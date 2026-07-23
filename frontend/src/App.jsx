@@ -720,10 +720,10 @@ export default function App() {
                     sx={{
                       fontSize: '12px', fontWeight: 500, ml: 1,
                       bgcolor: '#1A0F08',
-                      color: '#FBF6EC',
+                      color: '#FBF6EC !important',
                       border: '1px solid transparent',
                       borderRadius: 999, px: 3, py: 0.5,
-                      '&:hover': { opacity: 0.85 },
+                      '&:hover': { bgcolor: '#3E2723' },
                       transition: 'all .3s',
                     }}
                   >
