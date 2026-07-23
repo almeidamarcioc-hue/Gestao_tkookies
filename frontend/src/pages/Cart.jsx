@@ -356,8 +356,8 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
     <Container maxWidth="lg" sx={{ mt: 6, mb: 8 }}>
       <Typography variant="h3" fontWeight="900" gutterBottom sx={{ mb: 4, color: '#2C1810', textAlign: 'center' }}>Meu Carrinho</Typography>
 
-      {/* Banner do temporizador */}
-      {timerFormatted !== null && (
+      {/* Banner do temporizador (revenda não reserva estoque, sem timer) */}
+      {!isRevenda && timerFormatted !== null && (
         <Alert
           severity={timerSeverity}
           sx={{ mb: 3, fontWeight: 600, fontSize: '0.95rem', borderRadius: 2, alignItems: 'center' }}
@@ -462,7 +462,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
                     </TableRow>
                   );
               })}
-                {cart.some(item => (Number(item.estoque) || 0) <= 0 || item.quantidade > (Number(item.estoque) || 0)) && (
+                {!isRevenda && cart.some(item => (Number(item.estoque) || 0) <= 0 || item.quantidade > (Number(item.estoque) || 0)) && (
                   <TableRow>
                     <TableCell colSpan={5}>
                       <Alert severity="warning">Alguns produtos no seu carrinho estão com estoque baixo ou esgotado. Ajuste as quantidades para prosseguir.</Alert>
