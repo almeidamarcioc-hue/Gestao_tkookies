@@ -46,6 +46,7 @@ export async function initDatabase() {
         custo DECIMAL(10, 2) DEFAULT 0,
         ocasiao VARCHAR(200) DEFAULT NULL,
         eh_brinde BOOLEAN DEFAULT FALSE,
+        disponivel_revenda BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -255,6 +256,9 @@ export async function initDatabase() {
     // Garante colunas de acesso do revendedor em tabelas antigas (criadas sem login/senha)
     logs.push(await addColumnSafe("revendedores", "login VARCHAR(100)"));
     logs.push(await addColumnSafe("revendedores", "senha VARCHAR(255)"));
+    // Revenda: produto disponível para produção sob demanda + previsão de entrega no pedido
+    logs.push(await addColumnSafe("produtos", "disponivel_revenda BOOLEAN DEFAULT FALSE"));
+    logs.push(await addColumnSafe("pedidos", "data_entrega_prevista TIMESTAMP"));
 
     // Índices de performance
     const indices = [

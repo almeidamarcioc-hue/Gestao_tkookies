@@ -15,6 +15,7 @@ function formatTimeLeft(seconds) {
 }
 
 export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, clientUser, addToCart, cartTimeLeft }) {
+  const isRevenda = Boolean(clientUser?.is_revendedor);
   const [deliveryType, setDeliveryType] = useState("retira");
   const [paymentMethod, setPaymentMethod] = useState("Dinheiro");
   const [upsellOpen, setUpsellOpen] = useState(false);
@@ -260,7 +261,8 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
       return;
     }
 
-    if (!checkIfOpen(config)) {
+    // Revenda produz sob demanda e pode pedir mesmo com a loja fechada
+    if (!isRevenda && !checkIfOpen(config)) {
       setIsStoreOpen(false);
       alert("Infelizmente acabamos de fechar. Não é possível finalizar pedidos agora.");
       return;
@@ -270,6 +272,9 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
       alert("Seu carrinho está vazio.");
       return;
     }
+
+    // Revenda: entrega prevista = agora + 48h
+    const dataEntregaPrevista = isRevenda ? new Date(Date.now() + 48 * 60 * 60 * 1000) : null;
 
 
     let obsFinal = observacao;
@@ -287,6 +292,10 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
       obsFinal += " (Retirada)";
     }
 
+    if (isRevenda) {
+      obsFinal += ` | Revenda — entrega prevista: ${dataEntregaPrevista.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`;
+    }
+
     const payload = {
       cliente_id: clientUser.id,
       data_pedido: new Date(),
@@ -297,6 +306,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
       desconto_fidelidade: usarPontos ? descontoPontos : 0,
       desconto_cupom: descontoCupom,
       cupom_codigo: cupomAplicado ? cupomAplicado.codigo : null,
+      data_entrega_prevista: dataEntregaPrevista,
       status: "Novo",
       origem: 'carrinho',
       itens: cart.map(item => ({
@@ -427,19 +437,19 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
                         )}
                       </TableCell>
                       <TableCell align="center">
-                        <Box display="flex" alignItems="center" justifyContent="center" border="1px solid rgba(78, 52, 46, 0.2)" borderRadius={2} width="fit-content" mx="auto" sx={{ opacity: stock <= 0 ? 0.5 : 1 }}>
-                          <IconButton 
-                            size="small" 
-                            onClick={() => updateQuantity(item.id, item.quantidade - 1)} 
-                            sx={{ color: '#4E342E' }} 
-                            disabled={stock <= 0 || item.quantidade <= 1}
+                        <Box display="flex" alignItems="center" justifyContent="center" border="1px solid rgba(78, 52, 46, 0.2)" borderRadius={2} width="fit-content" mx="auto" sx={{ opacity: (!isRevenda && stock <= 0) ? 0.5 : 1 }}>
+                          <IconButton
+                            size="small"
+                            onClick={() => updateQuantity(item.id, item.quantidade - 1)}
+                            sx={{ color: '#4E342E' }}
+                            disabled={(!isRevenda && stock <= 0) || item.quantidade <= 1}
                           ><Remove fontSize="small" /></IconButton>
                           <Typography sx={{ px: 2, fontWeight: 'bold', color: '#4E342E' }}>{item.quantidade}</Typography>
-                          <IconButton 
-                            size="small" 
-                            onClick={() => updateQuantity(item.id, item.quantidade + 1)} 
-                            sx={{ color: '#4E342E' }} 
-                            disabled={stock <= 0 || item.quantidade >= stock}
+                          <IconButton
+                            size="small"
+                            onClick={() => updateQuantity(item.id, item.quantidade + 1)}
+                            sx={{ color: '#4E342E' }}
+                            disabled={!isRevenda && (stock <= 0 || item.quantidade >= stock)}
                           ><Add fontSize="small" /></IconButton>
                         </Box>
                       </TableCell>
@@ -749,17 +759,28 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
               </Box>
             )}
 
-            <Box display="flex" justifyContent="space-between" mb={3}>
+            <Box display="flex" justifyContent="space-between" mb={isRevenda ? 1 : 3}>
               <Typography variant="h6" fontWeight="bold" color="#4E342E">Total</Typography>
               <Typography variant="h6" fontWeight="bold" color="#2E7D32">R$ {totalOrder.toFixed(2)}</Typography>
             </Box>
+
+            {isRevenda && (
+              <Box sx={{ bgcolor: '#FFF8E1', border: '1px solid #FFE082', borderRadius: 2, p: 1.5, mb: 3 }}>
+                <Typography variant="body2" sx={{ color: '#8D6E00', fontWeight: 600 }}>
+                  Pedido de revenda · produção sob demanda
+                </Typography>
+                <Typography variant="caption" sx={{ color: '#8D6E00' }}>
+                  Entrega prevista em até 48h. Você pode finalizar mesmo com a loja fechada.
+                </Typography>
+              </Box>
+            )}
 
             <Button
               variant="contained"
               fullWidth
               size="large"
               onClick={handleOpenUpsell}
-              disabled={cart.length === 0 || !isStoreOpen || cart.some(item => !item.eh_brinde && ((Number(item.estoque) || 0) <= 0 || item.quantidade > (Number(item.estoque) || 0)))}
+              disabled={cart.length === 0 || (!isRevenda && (!isStoreOpen || cart.some(item => !item.eh_brinde && ((Number(item.estoque) || 0) <= 0 || item.quantidade > (Number(item.estoque) || 0)))))}
               sx={{
                 py: 1.5,
                 fontWeight: 'bold',
@@ -804,7 +825,7 @@ export default function Cart({ cart, updateQuantity, removeFromCart, clearCart, 
       <Button
         variant="contained"
         onClick={handleCheckout}
-        disabled={cart.length === 0 || !isStoreOpen || cart.some(item => !item.eh_brinde && ((Number(item.estoque) || 0) <= 0 || item.quantidade > (Number(item.estoque) || 0)))}
+        disabled={cart.length === 0 || (!isRevenda && (!isStoreOpen || cart.some(item => !item.eh_brinde && ((Number(item.estoque) || 0) <= 0 || item.quantidade > (Number(item.estoque) || 0)))))}
         sx={{ borderRadius: 50, px: 4, py: 1.2, fontWeight: 'bold' }}
       >
         FINALIZAR

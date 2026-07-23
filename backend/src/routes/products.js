@@ -89,6 +89,7 @@ async function fetchProducts() {
         validade_promocao: row.validade_promocao ? new Date(row.validade_promocao).toISOString().split('T')[0] : null,
         ocasiao: row.ocasiao || null,
         eh_brinde: row.eh_brinde === 1 || row.eh_brinde === true,
+        disponivel_revenda: row.disponivel_revenda === 1 || row.disponivel_revenda === true,
         created_at: row.created_at,
         ingredientes: [],
         imagens: [],
@@ -234,6 +235,7 @@ router.get("/:id", async (req, res) => {
       validade_promocao: row.validade_promocao ? new Date(row.validade_promocao).toISOString().split('T')[0] : null,
       ocasiao: row.ocasiao || null,
       eh_brinde: row.eh_brinde === 1 || row.eh_brinde === true,
+      disponivel_revenda: row.disponivel_revenda === 1 || row.disponivel_revenda === true,
       created_at: row.created_at,
       ingredientes: [],
       imagens: [],
@@ -297,7 +299,7 @@ router.get("/:id", async (req, res) => {
 
 // CRIAR PRODUTO
 router.post("/", authenticateToken, requireRole('admin'), async (req, res) => {
-  const { nome, descricao, preco_venda, margem_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque, validade_promocao, agregados, ativo, eh_agregado, custo, estoque, ocasiao, eh_brinde, brindes } = req.body;
+  const { nome, descricao, preco_venda, margem_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque, validade_promocao, agregados, ativo, eh_agregado, custo, estoque, ocasiao, eh_brinde, brindes, disponivel_revenda } = req.body;
   const client = await pool.connect();
 
   try {
@@ -307,8 +309,8 @@ router.post("/", authenticateToken, requireRole('admin'), async (req, res) => {
     const validadeFinal = isDestaque ? (validade_promocao || null) : null;
     const descontoFinal = isDestaque ? (desconto_destaque || 0) : 0;
 
-    let insertFields = ["nome", "descricao", "preco_venda", "margem_venda", "margem_revenda", "preco_revenda", "rendimento", "eh_destaque", "desconto_destaque", "validade_promocao", "ativo", "eh_agregado", "ocasiao", "eh_brinde"];
-    let insertValues = ["$1", "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9", "$10", "$11", "$12", "$13", "$14"];
+    let insertFields = ["nome", "descricao", "preco_venda", "margem_venda", "margem_revenda", "preco_revenda", "rendimento", "eh_destaque", "desconto_destaque", "validade_promocao", "ativo", "eh_agregado", "ocasiao", "eh_brinde", "disponivel_revenda"];
+    let insertValues = ["$1", "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9", "$10", "$11", "$12", "$13", "$14", "$15"];
     let insertParams = [
       nome,
       descricao || null,
@@ -323,7 +325,8 @@ router.post("/", authenticateToken, requireRole('admin'), async (req, res) => {
       (ativo === false ? false : true),
       eh_agregado || false,
       ocasiao || null,
-      eh_brinde || false
+      eh_brinde || false,
+      (disponivel_revenda === true || disponivel_revenda === 1 || disponivel_revenda === 'true')
     ];
     let paramIndex = insertParams.length + 1;
 
@@ -420,7 +423,7 @@ router.post("/", authenticateToken, requireRole('admin'), async (req, res) => {
 // ATUALIZAR PRODUTO (Edição total)
 router.put("/:id", authenticateToken, requireRole('admin'), async (req, res) => {
   const { id } = req.params;
-  const { nome, descricao, preco_venda, margem_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque, validade_promocao, agregados, ativo, eh_agregado, custo, estoque, ocasiao, eh_brinde, brindes } = req.body;
+  const { nome, descricao, preco_venda, margem_venda, margem_revenda, preco_revenda, ingredientes, rendimento, imagens, eh_destaque, desconto_destaque, validade_promocao, agregados, ativo, eh_agregado, custo, estoque, ocasiao, eh_brinde, brindes, disponivel_revenda } = req.body;
   const client = await pool.connect();
 
   try {
@@ -444,7 +447,8 @@ router.put("/:id", authenticateToken, requireRole('admin'), async (req, res) => 
       "ativo = $11",
       "eh_agregado = $12",
       "ocasiao = $13",
-      "eh_brinde = $14"
+      "eh_brinde = $14",
+      "disponivel_revenda = $15"
     ];
     let updateParams = [
       nome,
@@ -460,7 +464,8 @@ router.put("/:id", authenticateToken, requireRole('admin'), async (req, res) => 
       (ativo === false ? false : true),
       eh_agregado || false,
       ocasiao || null,
-      eh_brinde || false
+      eh_brinde || false,
+      (disponivel_revenda === true || disponivel_revenda === 1 || disponivel_revenda === 'true')
     ];
     let paramIndex = updateParams.length + 1;
 

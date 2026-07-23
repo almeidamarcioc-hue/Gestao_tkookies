@@ -65,6 +65,7 @@ export default function Products() {
   const [OCASIOES, setOCASOES] = useState([]);
 
   const [ehBrinde, setEhBrinde] = useState(false);
+  const [disponivelRevenda, setDisponivelRevenda] = useState(false);
   const [brindes, setBrindes] = useState([]);
   const [brindeSelecionado, setBrindeSelecionado] = useState(null);
   const [brindeTipoQtd, setBrindeTipoQtd] = useState("unidade");
@@ -101,6 +102,7 @@ export default function Products() {
       // Preenche agregados
       setAgregados(productToDuplicate.agregados || []);
       setEhBrinde(productToDuplicate.eh_brinde || false);
+      setDisponivelRevenda(productToDuplicate.disponivel_revenda || false);
       setBrindes(productToDuplicate.brindes || []);
 
       // Preenche ingredientes (itens)
@@ -419,6 +421,7 @@ export default function Products() {
       setAgregados(p.agregados || []);
       setBrindes(p.brindes || []);
       setEhBrinde(p.eh_brinde || false);
+      setDisponivelRevenda(p.disponivel_revenda || false);
       setItens(p.ingredientes?.map(ing => ({ ...ing, _tempId: Math.random() })) || []);
       setOcasiao(p.ocasiao ? p.ocasiao.split(",").filter(Boolean) : []);
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -466,6 +469,7 @@ export default function Products() {
       eh_agregado: ehAgregado,
       ocasiao: ocasiao.join(","),
       eh_brinde: ehBrinde,
+      disponivel_revenda: disponivelRevenda,
       brindes: brindes.map(b => ({ id: b.id, tipo_quantidade: b.tipo_quantidade })),
       ...(ehAgregado && {
         estoque: Number(estoqueManual),
@@ -587,6 +591,10 @@ export default function Products() {
           <FormControlLabel
             control={<Checkbox checked={ehBrinde} onChange={(e) => setEhBrinde(e.target.checked)} />}
             label="É Produto Brinde"
+          />
+          <FormControlLabel
+            control={<Checkbox checked={disponivelRevenda} onChange={(e) => setDisponivelRevenda(e.target.checked)} />}
+            label="Disponível para Revenda (produção sob demanda)"
           />
           {ehDestaque && (
             <TextField label="% Desconto" type="number" size="small" sx={{ width: 150 }} value={descontoDestaque} onChange={(e) => setDescontoDestaque(e.target.value)} />

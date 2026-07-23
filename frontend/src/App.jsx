@@ -358,12 +358,16 @@ export default function App() {
   // Funções do Carrinho
   const addToCart = async (product, quantity = 1) => {
     const dbId = product.original_id || product.id; // Usa original_id para agregados
+    const isRevenda = !!clientUser?.is_revendedor;
     try {
-      await api.post("/estoque/reservar", {
-        produto_id: dbId,
-        quantidade: quantity,
-        tipo: (product.itens?.length > 0) ? 'combo' : 'produto'
-      });
+      // Revenda produz sob demanda — não reserva estoque
+      if (!isRevenda) {
+        await api.post("/estoque/reservar", {
+          produto_id: dbId,
+          quantidade: quantity,
+          tipo: (product.itens?.length > 0) ? 'combo' : 'produto'
+        });
+      }
 
       // Captura se o carrinho estava vazio ANTES de adicionar (para iniciar o timer)
       const wasEmpty = cart.length === 0;
@@ -378,8 +382,8 @@ export default function App() {
         return [...prev, { ...product, quantidade: quantity }];
       });
 
-      // Inicia o temporizador ao adicionar o primeiro item
-      if (wasEmpty && !cartExpiry) {
+      // Inicia o temporizador ao adicionar o primeiro item (revenda não reserva, sem timer)
+      if (!isRevenda && wasEmpty && !cartExpiry) {
         const expiry = Date.now() + CART_TIMEOUT_MS;
         setCartExpiry(expiry);
         localStorage.setItem('cart_expiry', String(expiry));

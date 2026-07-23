@@ -49,6 +49,7 @@ const cardSx = {
 };
 
 export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clientUser, cart, addToCart, updateCartQuantity, removeFromCart, clearCart }) {
+  const isReseller = Boolean(clientUser?.is_revendedor);
   const navigate = useNavigate();
   const { scrollY } = useScroll();
   const yBg = useTransform(scrollY, [0, 500], [0, 200]); // Efeito Parallax: move o fundo mais devagar que o scroll
@@ -296,7 +297,8 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
   };
 
   const handleQtyChange = async (prodId, delta) => {
-    if (delta > 0 && !checkIfOpen(config)) {
+    // Revenda produz sob demanda: pode pedir mesmo com a loja fechada
+    if (delta > 0 && !isReseller && !checkIfOpen(config)) {
       setIsStoreOpen(false);
       alert("No momento estamos fechados. Volte dentro do horário de atendimento!");
       return;
@@ -312,11 +314,12 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
     if (!item) return;
 
     const currentQty = getQty(prodId);
-    const maxStock = Number(item.estoque) || 0;
+    // Revenda não tem limite de estoque (produção sob demanda)
+    const maxStock = isReseller ? Infinity : (Number(item.estoque) || 0);
     let next = currentQty + delta;
 
     if (next < 0) next = 0;
-    
+
     if (next > maxStock) {
       alert(`Estoque insuficiente para ${item.nome}. Disponível: ${maxStock} unidade(s).`);
       // Se o usuário tentou adicionar mais do que o estoque, ajusta para o máximo disponível
@@ -622,7 +625,7 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
       <Box sx={{ px: { xs: 3, md: '6vw' }, position: 'relative', zIndex: 1, pb: 0 }}>
 
             {/* SABOR DA SEMANA */}
-            {saborSemana && (
+            {!isReseller && saborSemana && (
               <Box
                 component={motion.div}
                 initial={{ opacity: 0, y: 20 }}
@@ -660,7 +663,7 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
             )}
 
             {/* 2. DESTAQUES (Mosaic Grid) */}
-            {featuredProduct && (
+            {!isReseller && featuredProduct && (
               <Box id="destaques-section" sx={{ mb: 8 }}>
                  <Typography variant="h5" fontWeight="900" gutterBottom sx={{ color: espresso, mb: 1 }}>
                     Destaques
@@ -683,7 +686,7 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
 
 
             {/* SEÇÃO PRESENTEIE COM AMOR */}
-            {(() => {
+            {!isReseller && (() => {
               // Ocasiões configuradas no admin, com fallback nas padrões
               const defaultOcasioes = [
                 { value: "aniversario", label: "Aniversário" },
@@ -778,7 +781,7 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
             })()}
 
             {/* ── COMBOS ───────────────────────────────────────────────── */}
-            {combos.length > 0 && (
+            {!isReseller && combos.length > 0 && (
               <Box id="combos-section" sx={{ mt: 10, mx: { xs: -3, md: '-6vw' }, px: { xs: 3, md: '6vw' }, py: { xs: 8, md: 12 }, bgcolor: 'var(--ink)' }}>
                 {/* Header 2-col */}
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 4, mb: 6, pb: 4, borderBottom: '1px solid rgba(251,246,236,.12)' }}>
@@ -877,18 +880,33 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
 
               {/* Label da seção */}
               <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '13px', fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--caramel)', mb: 4, display: 'block' }}>
-                § 01 — O Cardápio
+                {isReseller ? '§ 01 — Catálogo de Revenda' : '§ 01 — O Cardápio'}
               </Typography>
+              {isReseller && (
+                <Typography sx={{ fontFamily: 'Inter', fontSize: '14px', color: 'var(--ink)', opacity: 0.6, mb: 4, mt: -2 }}>
+                  Preços de revenda · produção sob demanda · entrega em até 48h. Você pode pedir mesmo com a loja fechada.
+                </Typography>
+              )}
+              {isReseller && products.filter(p => !combos.some(c => c.produto_vinculado_id === p.id) && Boolean(p.disponivel_revenda)).length === 0 && (
+                <Typography sx={{ fontFamily: 'Inter', fontSize: '14px', color: 'var(--ink)', opacity: 0.6, mb: 4 }}>
+                  Nenhum produto disponível para revenda no momento. Fale com a TKookies.
+                </Typography>
+              )}
 
               {/* Grid de produtos — editorial */}
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(3, 1fr)' }, gap: { xs: 2, md: 3 } }}>
-                {products.filter(p => !combos.some(c => c.produto_vinculado_id === p.id)).map((prod, idx) => {
+                {products.filter(p => !combos.some(c => c.produto_vinculado_id === p.id) && (!isReseller || Boolean(p.disponivel_revenda))).map((prod, idx) => {
                   const coverImage = prod.imagens?.find(img => img.eh_capa)?.imagem || prod.imagens?.[0]?.imagem;
                   const altImage = prod.imagens?.find(i => !i.eh_capa)?.imagem || prod.imagens?.[1]?.imagem;
                   const qty = getQty(prod.id);
-                  const precoFinal = Number(prod.desconto_destaque) > 0
-                    ? Number(prod.preco_venda) * (1 - Number(prod.desconto_destaque) / 100)
-                    : Number(prod.preco_venda);
+                  // Revenda: preço de revenda, sem descontos de consumidor; produção sob demanda
+                  const precoFinal = isReseller
+                    ? Number(prod.preco_revenda)
+                    : (Number(prod.desconto_destaque) > 0
+                      ? Number(prod.preco_venda) * (1 - Number(prod.desconto_destaque) / 100)
+                      : Number(prod.preco_venda));
+                  const semEstoque = Number(prod.estoque) <= 0;
+                  const podeAdicionar = isReseller || !semEstoque; // revenda sempre pode
                   return (
                     <Box
                       key={prod.id}
@@ -898,7 +916,7 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
                         borderRadius: '2px',
                         overflow: 'hidden',
                         bgcolor: 'var(--paper)',
-                        opacity: Number(prod.estoque) <= 0 ? 0.65 : 1,
+                        opacity: !podeAdicionar ? 0.65 : 1,
                         transition: 'border-color .4s cubic-bezier(.2,.8,.2,1)',
                         '&:hover': { borderColor: 'var(--caramel)' },
                       }}
@@ -931,10 +949,16 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
                           <Box component="img" src={altImage} sx={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0, opacity: hoveredCard === prod.id ? 1 : 0, transition: 'opacity .8s cubic-bezier(.2,.8,.2,1)' }} />
                         )}
 
-                        {/* Indisponível */}
-                        {Number(prod.estoque) <= 0 && (
+                        {/* Indisponível (apenas cliente final sem estoque) */}
+                        {!isReseller && semEstoque && (
                           <Box sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(26,15,8,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>
                             <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--paper)' }}>Indisponível</Typography>
+                          </Box>
+                        )}
+                        {/* Revenda: produção sob demanda */}
+                        {isReseller && (
+                          <Box sx={{ position: 'absolute', top: 10, right: 10, zIndex: 2, bgcolor: 'var(--paper)', borderRadius: 999, px: 1.5, py: 0.3 }}>
+                            <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--terracotta)' }}>Sob encomenda</Typography>
                           </Box>
                         )}
                       </Box>
@@ -950,11 +974,15 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
                         <Typography sx={{ fontFamily: 'Inter', fontSize: '13px', color: 'var(--ink)', opacity: 0.6, lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                           {prod.descricao}
                         </Typography>
-                        {Number(prod.estoque) > 0 && (
+                        {isReseller ? (
+                          <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink)', opacity: 0.45, mt: 0.5 }}>
+                            Produção sob demanda · entrega 48h
+                          </Typography>
+                        ) : Number(prod.estoque) > 0 ? (
                           <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink)', opacity: 0.45, mt: 0.5 }}>
                             {Number(prod.estoque)} un. disponíveis
                           </Typography>
-                        )}
+                        ) : null}
                       </Box>
 
                       {/* Footer */}
@@ -979,15 +1007,15 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
                           <IconButton size="small" onClick={() => toggleFavorite(prod)} sx={{ color: favorites.includes(Number(prod.id)) ? '#ef4444' : 'var(--ink)', opacity: 0.6, p: 0.5 }}>
                             {favorites.includes(Number(prod.id)) ? <Favorite sx={{ fontSize: 16 }} /> : <FavoriteBorder sx={{ fontSize: 16 }} />}
                           </IconButton>
-                          {Number(prod.estoque) <= 0 ? null : qty === 0 ? (
+                          {!podeAdicionar ? null : qty === 0 ? (
                             <Box
                               onClick={() => handleQtyChange(prod.id, 1)}
                               sx={{
                                 borderRadius: 999, px: { xs: 1.5, md: 2 }, py: 0.75,
                                 bgcolor: 'var(--ink)', color: 'var(--paper)',
                                 fontFamily: 'Inter', fontSize: '12px', fontWeight: 500,
-                                cursor: isStoreOpen ? 'pointer' : 'default',
-                                opacity: isStoreOpen ? 1 : 0.5,
+                                cursor: (isReseller || isStoreOpen) ? 'pointer' : 'default',
+                                opacity: (isReseller || isStoreOpen) ? 1 : 0.5,
                                 transition: 'all .3s',
                                 whiteSpace: 'nowrap',
                                 userSelect: 'none',
@@ -999,7 +1027,7 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
                             <Box sx={{ display: 'flex', alignItems: 'center', border: '1px solid var(--rule)', borderRadius: 999, overflow: 'hidden' }}>
                               <IconButton size="small" onClick={() => handleQtyChange(prod.id, -1)} sx={{ p: 0.5, borderRadius: 0 }}><Remove sx={{ fontSize: 14 }} /></IconButton>
                               <Typography sx={{ fontFamily: '"DM Mono", monospace', fontSize: '12px', px: 1, minWidth: 20, textAlign: 'center' }}>{qty}</Typography>
-                              <IconButton size="small" onClick={() => handleQtyChange(prod.id, 1)} disabled={!isStoreOpen} sx={{ p: 0.5, borderRadius: 0, bgcolor: 'var(--ink)', color: 'var(--paper)', '&:hover': { bgcolor: 'var(--ink)' } }}><Add sx={{ fontSize: 14 }} /></IconButton>
+                              <IconButton size="small" onClick={() => handleQtyChange(prod.id, 1)} disabled={!isReseller && !isStoreOpen} sx={{ p: 0.5, borderRadius: 0, bgcolor: 'var(--ink)', color: 'var(--paper)', '&:hover': { bgcolor: 'var(--ink)' } }}><Add sx={{ fontSize: 14 }} /></IconButton>
                             </Box>
                           )}
                         </Box>
@@ -1011,7 +1039,7 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
             </Box>
 
       {/* MONTE SEU KIT — full width, após cardápio */}
-      {products.length > 0 && (() => {
+      {!isReseller && products.length > 0 && (() => {
         let kitDesc = {};
         try { kitDesc = JSON.parse(config.kit_descontos || '{}'); } catch {}
         return (
@@ -1496,11 +1524,15 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
                   {selectedProduct.descricao || "Sem descrição disponível."}
                 </Typography>
 
-                {Number(selectedProduct.estoque) > 0 && (
+                {isReseller ? (
+                  <Typography variant="subtitle2" sx={{ color: terracotta, mb: 2, fontWeight: 'bold' }}>
+                    Produção sob demanda · entrega em até 48h
+                  </Typography>
+                ) : Number(selectedProduct.estoque) > 0 ? (
                   <Typography variant="subtitle2" sx={{ color: terracotta, mb: 2, fontWeight: 'bold' }}>
                     Disponibilidade: {Number(selectedProduct.estoque)} unidades
                   </Typography>
-                )}
+                ) : null}
 
                 {clientUser?.is_revendedor && (
                   <Chip label="Preço de Revenda" color="warning" size="small" sx={{ mb: 2 }} />
@@ -1515,7 +1547,7 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
                   </Typography>
                 </Box>
               </DialogContent>
-              {selectedProduct.estoque <= 0 && (
+              {!isReseller && selectedProduct.estoque <= 0 && (
                 <Alert severity="error" sx={{ mx: 3, mb: 2 }}>
                   Este produto está indisponível no momento.
                 </Alert>
@@ -1530,7 +1562,7 @@ export default function Home({ isLoggedIn, onLoginClick, onAdminLoginClick, clie
                     handleQtyChange(selectedProduct.id, 1);
                     setDetailsOpen(false);
                   }}
-                  disabled={selectedProduct.estoque <= 0 || !isStoreOpen}
+                  disabled={!isReseller && (selectedProduct.estoque <= 0 || !isStoreOpen)}
                   sx={{ borderRadius: '4px', px: 4, py: 1.5 }}
                 >
                   Adicionar ao Carrinho

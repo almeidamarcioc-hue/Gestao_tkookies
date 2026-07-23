@@ -112,7 +112,7 @@ router.get("/:id", async (req, res) => {
 
 // CRIAR PEDIDO
 router.post("/", async (req, res) => {
-  const { cliente_id, data_pedido, forma_pagamento, observacao, frete, desconto, status, tipo_cliente, itens, origem, cupom_codigo, desconto_fidelidade, desconto_cupom } = req.body;
+  const { cliente_id, data_pedido, forma_pagamento, observacao, frete, desconto, status, tipo_cliente, itens, origem, cupom_codigo, desconto_fidelidade, desconto_cupom, data_entrega_prevista } = req.body;
 
   // Detalhamento do desconto. Se o cliente novo enviar o breakdown, usa-o; senão
   // infere pelo cupom_codigo (compatibilidade com pedidos/clientes antigos).
@@ -134,9 +134,9 @@ router.post("/", async (req, res) => {
 
     const resPedido = await client.query(
       `INSERT INTO pedidos
-       (cliente_id, data_pedido, forma_pagamento, observacao, frete, desconto, valor_total, status, tipo_cliente, cupom_codigo, desconto_fidelidade, desconto_cupom)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
-      [cliente_id, data_pedido, forma_pagamento, observacao, frete || 0, desconto || 0, valor_total, status || 'Novo', tipo_cliente || 'consumidor', cupom_codigo || null, dFidelidade, dCupom]
+       (cliente_id, data_pedido, forma_pagamento, observacao, frete, desconto, valor_total, status, tipo_cliente, cupom_codigo, desconto_fidelidade, desconto_cupom, data_entrega_prevista)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id`,
+      [cliente_id, data_pedido, forma_pagamento, observacao, frete || 0, desconto || 0, valor_total, status || 'Novo', tipo_cliente || 'consumidor', cupom_codigo || null, dFidelidade, dCupom, data_entrega_prevista || null]
     );
     const pedidoId = resPedido.rows[0].id;
 
