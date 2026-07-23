@@ -1,9 +1,23 @@
 // Versão do sistema — atualizar a cada release antes do merge para main
 
-export const APP_VERSION = "1.00.07";
+export const APP_VERSION = "1.00.08";
 
 // Histórico de versões
 export const CHANGELOG = [
+  {
+    version: "1.00.08",
+    data: "2026-07-23",
+    descricao: "Portal de revenda: catálogo de atacado, produção sob demanda e melhorias de login",
+    itens: [
+      "Revenda: ao entrar como Parceiro, a loja mostra só os produtos marcados para revenda, com preço de revenda e badge 'Sob encomenda'",
+      "Revenda: pode fazer pedido mesmo sem estoque e com a loja fechada (produção sob demanda), com entrega prevista em até 48h",
+      "Produtos: nova opção 'Disponível para Revenda' no cadastro e um interruptor rápido na lista de produtos (sem abrir a edição)",
+      "Revenda: produto marcado para revenda aparece ao parceiro mesmo quando está inativo no cardápio",
+      "Login: um único botão 'Entrar' com seletor Cliente/Parceiro dentro do formulário (antes eram dois botões separados)",
+      "Perfil: botão 'Sair da conta' na página de perfil (facilita o logout no celular)",
+      "Correções de revenda: cadastro de parceiro, dados do revendedor no pedido, carrinho sem trava de estoque e favoritos ajustados",
+    ],
+  },
   {
     version: "1.00.07",
     data: "2026-06-29",
