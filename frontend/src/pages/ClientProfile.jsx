@@ -4,7 +4,7 @@ import api from "../services/api";
 import { Box, Typography, Paper, Container, Table, TableHead, TableBody, TableRow, TableCell, Chip, Button, TextField, Grid, IconButton, Tooltip, Card, CardContent, CardActions, Divider } from "@mui/material";
 import { Replay, AddShoppingCart, Star } from "@mui/icons-material";
 
-export default function ClientProfile({ user, onUserUpdate, addToCart }) {
+export default function ClientProfile({ user, onUserUpdate, addToCart, onLogout }) {
   const navigate = useNavigate();
   const [pedidos, setPedidos] = useState([]);
   const [maisComprados, setMaisComprados] = useState([]);
@@ -320,6 +320,19 @@ export default function ClientProfile({ user, onUserUpdate, addToCart }) {
           </TableBody>
         </Table>
       </Paper>
+
+      {onLogout && (
+        <Box display="flex" justifyContent="center" mt={2} mb={2}>
+          <Button
+            variant="outlined"
+            color="error"
+            onClick={onLogout}
+            sx={{ borderRadius: 50, px: 4, py: 1.2, fontWeight: 'bold' }}
+          >
+            Sair da conta
+          </Button>
+        </Box>
+      )}
     </Container>
   );
 }

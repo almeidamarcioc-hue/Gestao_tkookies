@@ -816,7 +816,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home isLoggedIn={isLoggedIn} onLoginClick={() => setClientLoginOpen(true)} onAdminLoginClick={() => setAdminLoginOpen(true)} clientUser={clientUser} cart={cart} addToCart={addToCart} updateCartQuantity={updateCartQuantity} removeFromCart={removeFromCart} clearCart={clearCart} />} />
           <Route path="/cadastro" element={<ClientRegister />} />
-          <Route path="/perfil" element={<ClientProfile user={clientUser} onUserUpdate={setClientUser} addToCart={addToCart} />} />
+          <Route path="/perfil" element={<ClientProfile user={clientUser} onUserUpdate={setClientUser} addToCart={addToCart} onLogout={handleLogout} />} />
           <Route path="/carrinho" element={<Cart cart={cart} updateQuantity={updateCartQuantity} removeFromCart={removeFromCart} clearCart={clearCart} clientUser={clientUser} addToCart={addToCart} cartTimeLeft={cartTimeLeft} />} />
           <Route path="/pedido-confirmado" element={<OrderConfirmation clearCart={clearCart} />} />
           <Route path="/meus-pedidos" element={<ProtectedRoute isAllowed={!!clientUser}><ClientOrders clientUser={clientUser} /></ProtectedRoute>} />
