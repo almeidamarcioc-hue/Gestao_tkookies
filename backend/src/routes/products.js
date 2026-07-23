@@ -590,6 +590,19 @@ router.patch("/:id/destaque", authenticateToken, requireRole('admin'), async (re
   }
 });
 
+// ALTERAR DISPONIBILIDADE PARA REVENDA (PATCH)
+router.patch("/:id/disponivel-revenda", authenticateToken, requireRole('admin'), async (req, res) => {
+  const { id } = req.params;
+  const { disponivel_revenda } = req.body;
+  try {
+    await pool.query("UPDATE produtos SET disponivel_revenda = $1 WHERE id = $2", [disponivel_revenda === true, id]);
+    invalidateProductsCache();
+    res.json({ message: "Disponibilidade para revenda atualizada!" });
+  } catch (error) {
+    res.status(500).json({ error: "Erro ao atualizar disponibilidade para revenda" });
+  }
+});
+
 // ALTERAR STATUS ATIVO/INATIVO (PATCH)
 router.patch("/:id/ativo", authenticateToken, requireRole('admin'), async (req, res) => {
   const { id } = req.params;

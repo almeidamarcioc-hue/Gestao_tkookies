@@ -27,7 +27,9 @@ import {
   Select,
   MenuItem,
   FormControl,
-  InputLabel
+  InputLabel,
+  Switch,
+  Tooltip
 } from "@mui/material";
 import { Edit, Delete, Add, CloudUpload, Star, StarBorder, Calculate, Refresh, ContentCopy, Visibility, VisibilityOff } from "@mui/icons-material";
 
@@ -436,6 +438,15 @@ export default function Dashboard() {
     }
   };
 
+  const handleToggleRevenda = async (prod) => {
+    try {
+      await api.patch(`/produtos/${prod.id}/disponivel-revenda`, { disponivel_revenda: !prod.disponivel_revenda });
+      loadData();
+    } catch (err) {
+      alert("Erro ao alterar disponibilidade para revenda.");
+    }
+  };
+
   return (
     <Container maxWidth="xl">
       <Typography variant="h4" mb={3} fontWeight="bold">Consulta Produto</Typography>
@@ -467,6 +478,7 @@ export default function Dashboard() {
               <TableCell rowSpan={2} align="center" sx={{ bgcolor: '#FFF', borderBottom: '1px solid #D7CCC8' }}><strong>Img</strong></TableCell>
               <TableCell rowSpan={2} align="center" sx={{ bgcolor: '#FFF', borderBottom: '1px solid #D7CCC8' }}><strong>Dest.</strong></TableCell>
               <TableCell rowSpan={2} align="center" sx={{ bgcolor: '#FFF', borderBottom: '1px solid #D7CCC8' }}><strong>Ativo</strong></TableCell>
+              <TableCell rowSpan={2} align="center" sx={{ bgcolor: '#FFF8E1', color: '#F57F17', borderBottom: '1px solid #FFE0B2' }}><strong>Revenda?</strong></TableCell>
               <TableCell colSpan={3} align="center" sx={{ bgcolor: '#FFF8E1', color: '#F57F17', borderBottom: '1px solid #FFE0B2' }}><strong>REVENDA</strong></TableCell>
               <TableCell colSpan={3} align="center" sx={{ bgcolor: '#EFEBE9', color: '#3E2723', borderBottom: '1px solid #D7CCC8' }}><strong>VENDA</strong></TableCell>
               <TableCell rowSpan={2} align="center" sx={{ bgcolor: '#FFF', borderBottom: '1px solid #D7CCC8' }}><strong>Ações</strong></TableCell>
@@ -518,6 +530,16 @@ export default function Dashboard() {
                       {prod.ativo ? <Visibility /> : <VisibilityOff />}
                     </IconButton>
                   </TableCell>
+                  <TableCell align="center" sx={{ bgcolor: '#FFF8E1' }}>
+                    <Tooltip title={prod.disponivel_revenda ? "Disponível para revenda (produção sob demanda)" : "Não disponível para revenda"}>
+                      <Switch
+                        size="small"
+                        color="warning"
+                        checked={!!prod.disponivel_revenda}
+                        onChange={() => handleToggleRevenda(prod)}
+                      />
+                    </Tooltip>
+                  </TableCell>
                   <TableCell align="right" sx={{ bgcolor: '#FFF8E1', color: '#E65100' }}>R$ {custoUnitarioRevenda.toFixed(2)}</TableCell>
                   <TableCell align="right" sx={{ bgcolor: '#FFF8E1', color: "secondary.main", fontWeight: 'bold' }}>R$ {precoRevenda.toFixed(2)}</TableCell>
                   <TableCell align="right" sx={{ bgcolor: '#FFF8E1' }}>{margemRevenda.toFixed(2)}%</TableCell>
@@ -545,7 +567,7 @@ export default function Dashboard() {
             })}
             {produtos.length === 0 && (
               <TableRow>
-                <TableCell colSpan={11} align="center">Nenhum produto cadastrado.</TableCell>
+                <TableCell colSpan={12} align="center">Nenhum produto cadastrado.</TableCell>
               </TableRow>
             )}
           </TableBody>
