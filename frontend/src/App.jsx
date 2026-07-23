@@ -715,36 +715,20 @@ export default function App() {
                     </Box>
                   </>
                 ) : (
-                  <>
-                    <Button
-                      onClick={() => handleOpenLogin('client')}
-                      sx={{
-                        fontSize: '12px', fontWeight: 500, ml: 1,
-                        color: 'rgba(26,15,8,.75)',
-                        border: '1px solid',
-                        borderColor: 'rgba(26,15,8,.2)',
-                        borderRadius: 999, px: 2, py: 0.5,
-                        '&:hover': { bgcolor: 'rgba(26,15,8,.05)', borderColor: 'rgba(26,15,8,.4)' },
-                        transition: 'all .3s',
-                      }}
-                    >
-                      Área do Cliente
-                    </Button>
-                    <Button
-                      onClick={() => handleOpenLogin('reseller')}
-                      sx={{
-                        fontSize: '12px', fontWeight: 500, ml: 0.75,
-                        bgcolor: '#1A0F08',
-                        color: '#FBF6EC',
-                        border: '1px solid transparent',
-                        borderRadius: 999, px: 2, py: 0.5,
-                        '&:hover': { opacity: 0.85 },
-                        transition: 'all .3s',
-                      }}
-                    >
-                      Área do Parceiro
-                    </Button>
-                  </>
+                  <Button
+                    onClick={() => handleOpenLogin('client')}
+                    sx={{
+                      fontSize: '12px', fontWeight: 500, ml: 1,
+                      bgcolor: '#1A0F08',
+                      color: '#FBF6EC',
+                      border: '1px solid transparent',
+                      borderRadius: 999, px: 3, py: 0.5,
+                      '&:hover': { opacity: 0.85 },
+                      transition: 'all .3s',
+                    }}
+                  >
+                    Entrar
+                  </Button>
                 )}
               </>
             )}
@@ -812,8 +796,7 @@ export default function App() {
                  </>
                ) : (
                  <>
-                   <ListItem disablePadding><ListItemButton onClick={() => handleOpenLogin('client')}><ListItemText primary="Área do Cliente" /></ListItemButton></ListItem>
-                   <ListItem disablePadding><ListItemButton onClick={() => handleOpenLogin('reseller')}><ListItemText primary="Área do Parceiro" sx={{ color: 'primary.main', fontWeight: 'bold' }} /></ListItemButton></ListItem>
+                   <ListItem disablePadding><ListItemButton onClick={() => handleOpenLogin('client')}><ListItemText primary="Entrar" /></ListItemButton></ListItem>
                  </>
                )
             )}
