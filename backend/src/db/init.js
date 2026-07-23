@@ -252,6 +252,9 @@ export async function initDatabase() {
     // Detalhamento do desconto (fidelidade vs cupom) para impressão e contabilização correta dos pontos
     logs.push(await addColumnSafe("pedidos", "desconto_fidelidade NUMERIC(10,2) DEFAULT 0"));
     logs.push(await addColumnSafe("pedidos", "desconto_cupom NUMERIC(10,2) DEFAULT 0"));
+    // Garante colunas de acesso do revendedor em tabelas antigas (criadas sem login/senha)
+    logs.push(await addColumnSafe("revendedores", "login VARCHAR(100)"));
+    logs.push(await addColumnSafe("revendedores", "senha VARCHAR(255)"));
 
     // Índices de performance
     const indices = [

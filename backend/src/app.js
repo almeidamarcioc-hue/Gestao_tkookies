@@ -143,7 +143,11 @@ app.use("/estoque", (req, res, next) => {
 }, inventoryRouter);
 app.use("/configuracoes", settingsRouter); // GET é público; POST é protegido internamente
 app.use("/financeiro", authenticateToken, requireRole('admin'), financialRouter);
-app.use("/revendedores", authenticateToken, requireRole('admin'), resellersRouter);
+// POST é público (formulário "Seja Parceiro" da loja); GET/PUT/DELETE exigem admin
+app.use("/revendedores", (req, res, next) => {
+  if (req.method === 'POST') return next();
+  authenticateToken(req, res, () => requireRole('admin')(req, res, next));
+}, resellersRouter);
 app.use("/favoritos", authenticateToken, favoritesRouter);
 app.use("/fidelidade", fidelidadeRouter);
 // Removemos os middlewares globais daqui porque relatoriosRoutes já possui proteção interna por rota

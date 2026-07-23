@@ -21,7 +21,7 @@ router.post("/", async (req, res) => {
   try {
     const hashedSenha = senha ? await hashPassword(senha) : null;
     await pool.query(
-      "INSERT INTO revendedores (razao_social, cpf_cnpj, nome_contato, telefone, cep, cidade, estado, login, senha) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO revendedores (razao_social, cpf_cnpj, nome_contato, telefone, cep, cidade, estado, login, senha) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
       [razao_social, cpf_cnpj, nome_contato, telefone, cep, cidade, estado, login, hashedSenha]
     );
     res.status(201).json({ message: "Solicitação enviada com sucesso!" });
@@ -39,7 +39,7 @@ router.put("/:id", async (req, res) => {
   try {
     const hashedSenha = senha ? await hashPassword(senha) : null;
     await pool.query(
-      "UPDATE revendedores SET razao_social=?, cpf_cnpj=?, nome_contato=?, telefone=?, cep=?, cidade=?, estado=?, login=?, senha=? WHERE id=?",
+      "UPDATE revendedores SET razao_social=$1, cpf_cnpj=$2, nome_contato=$3, telefone=$4, cep=$5, cidade=$6, estado=$7, login=$8, senha=COALESCE($9, senha) WHERE id=$10",
       [razao_social, cpf_cnpj, nome_contato, telefone, cep, cidade, estado, login, hashedSenha, id]
     );
     res.json({ message: "Revendedor atualizado com sucesso!" });
@@ -53,7 +53,7 @@ router.put("/:id", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   const { id } = req.params;
   try {
-    await pool.query("DELETE FROM revendedores WHERE id = ?", [id]);
+    await pool.query("DELETE FROM revendedores WHERE id = $1", [id]);
     res.json({ message: "Revendedor removido!" });
   } catch (error) {
     res.status(500).json({ error: "Erro ao remover revendedor" });
