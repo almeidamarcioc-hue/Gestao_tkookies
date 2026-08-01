@@ -1,9 +1,19 @@
 // Versão do sistema — atualizar a cada release antes do merge para main
 
-export const APP_VERSION = "1.00.09";
+export const APP_VERSION = "1.00.10";
 
 // Histórico de versões
 export const CHANGELOG = [
+  {
+    version: "1.00.10",
+    data: "2026-07-23",
+    descricao: "Aviso de 'Hoje somente retirada' na loja",
+    itens: [
+      "Configurações: nova opção 'Hoje somente retirada', ao lado da grade de horários",
+      "Loja: quando a opção está ligada, a barra de status mostra 'Hoje somente retirada 14–17h' no lugar de 'Entregas e Retiradas 14–17h', mantendo o horário de atendimento do dia",
+      "As configurações passam a ser recarregadas automaticamente, então mudanças no aviso aparecem sem precisar reabrir o navegador",
+    ],
+  },
   {
     version: "1.00.09",
     data: "2026-07-23",
