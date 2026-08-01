@@ -268,7 +268,7 @@ export default function App() {
     // Quando "Hoje somente retirada" está ligado nas configurações, substitui a
     // informação de entregas/retiradas — o horário do dia é mantido.
     const somenteRetirada = cfg.somente_retirada_hoje === 'true' || cfg.somente_retirada_hoje === true;
-    const infoEntrega = somenteRetirada ? 'Hoje somente retirada' : 'Entregas e Retiradas 14–17h';
+    const infoEntrega = somenteRetirada ? 'Hoje somente retirada 14–17h' : 'Entregas e Retiradas 14–17h';
 
     if (!cfg.opening_hours) return { open: null, label: infoEntrega };
     try {

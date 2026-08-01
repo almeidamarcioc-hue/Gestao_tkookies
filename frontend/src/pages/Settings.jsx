@@ -388,7 +388,7 @@ export default function Settings() {
                   <Box>
                     <Typography variant="body2" fontWeight={700}>Hoje somente retirada</Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Substitui &quot;Entregas e Retiradas 14–17h&quot; na loja, mantendo o horário do dia
+                      Na loja, mostra &quot;Hoje somente retirada 14–17h&quot; no lugar de &quot;Entregas e Retiradas 14–17h&quot;
                     </Typography>
                   </Box>
                 }
