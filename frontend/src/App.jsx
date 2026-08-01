@@ -256,26 +256,31 @@ export default function App() {
   // Config fetch para slim bar
   useEffect(() => {
     const cached = sessionStorage.getItem('_cfg');
+    // Usa o cache para pintar imediatamente, mas sempre revalida em segundo plano —
+    // assim mudanças do admin (ex: "Hoje somente retirada") aparecem sem limpar a sessão.
     if (cached) { try { setSiteConfig(JSON.parse(cached)); } catch {} }
-    else {
-      api.get('/configuracoes').then(res => {
-        if (res.data) { sessionStorage.setItem('_cfg', JSON.stringify(res.data)); setSiteConfig(res.data); }
-      }).catch(() => {});
-    }
+    api.get('/configuracoes').then(res => {
+      if (res.data) { sessionStorage.setItem('_cfg', JSON.stringify(res.data)); setSiteConfig(res.data); }
+    }).catch(() => {});
   }, []);
 
   const getStoreStatus = (cfg) => {
-    if (!cfg.opening_hours) return { open: null, label: 'Entregas e Retiradas 14–17h' };
+    // Quando "Hoje somente retirada" está ligado nas configurações, substitui a
+    // informação de entregas/retiradas — o horário do dia é mantido.
+    const somenteRetirada = cfg.somente_retirada_hoje === 'true' || cfg.somente_retirada_hoje === true;
+    const infoEntrega = somenteRetirada ? 'Hoje somente retirada' : 'Entregas e Retiradas 14–17h';
+
+    if (!cfg.opening_hours) return { open: null, label: infoEntrega };
     try {
       const schedule = typeof cfg.opening_hours === 'string' ? JSON.parse(cfg.opening_hours) : cfg.opening_hours;
       const now = new Date();
       const day = now.getDay();
       const current = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
       const today = schedule.find(s => Number(s.day) === day);
-      if (!today || !today.open) return { open: false, label: 'Fechado hoje · Entregas e Retiradas 14–17h' };
+      if (!today || !today.open) return { open: false, label: `Fechado hoje · ${infoEntrega}` };
       const isOpen = current >= today.open_time && current <= today.close_time;
-      return { open: isOpen, label: `${isOpen ? 'Aberto' : 'Fechado'} hoje das ${today.open_time} às ${today.close_time} · Entregas e Retiradas 14–17h` };
-    } catch { return { open: null, label: 'Entregas e Retiradas 14–17h' }; }
+      return { open: isOpen, label: `${isOpen ? 'Aberto' : 'Fechado'} hoje das ${today.open_time} às ${today.close_time} · ${infoEntrega}` };
+    } catch { return { open: null, label: infoEntrega }; }
   };
 
   const openCad = Boolean(anchorCad);

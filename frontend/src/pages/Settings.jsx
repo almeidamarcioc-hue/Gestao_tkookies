@@ -15,6 +15,7 @@ export default function Settings() {
   const [homeLocation, setHomeLocation] = useState("");
   const [homeBg, setHomeBg] = useState("");
   const [valorFrete, setValorFrete] = useState("");
+  const [somenteRetiradaHoje, setSomenteRetiradaHoje] = useState(false);
   const [pixKey, setPixKey] = useState("");
   const [pixName, setPixName] = useState("");
   const [pixCity, setPixCity] = useState("");
@@ -184,6 +185,7 @@ export default function Settings() {
         setHomeLocation(cfg.home_location || "");
         setHomeBg(cfg.home_bg || "");
         setValorFrete(cfg.valor_frete || "");
+        setSomenteRetiradaHoje(cfg.somente_retirada_hoje === 'true' || cfg.somente_retirada_hoje === true);
         setPixKey(cfg.pix_key || "");
         setPixName(cfg.pix_name || "");
         setPixCity(cfg.pix_city || "");
@@ -279,6 +281,7 @@ export default function Settings() {
         home_location: homeLocation,
         home_bg: homeBg,
         valor_frete: valorFrete,
+        somente_retirada_hoje: String(somenteRetiradaHoje),
         opening_hours: JSON.stringify(openingHours),
         // Mantém as chaves antigas para compatibilidade se necessário
         open_time: openingHours.find(h => h.open)?.open_time || "08:00",
@@ -371,7 +374,27 @@ export default function Settings() {
           </Grid>
 
           <Grid item xs={12}>
-            <Typography variant="h6" sx={{ mt: 2, mb: 2 }}>Grade de Horários por Dia</Typography>
+            <Box sx={{ mt: 2, mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
+              <Typography variant="h6">Grade de Horários por Dia</Typography>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={somenteRetiradaHoje}
+                    onChange={(e) => setSomenteRetiradaHoje(e.target.checked)}
+                    color="warning"
+                  />
+                }
+                label={
+                  <Box>
+                    <Typography variant="body2" fontWeight={700}>Hoje somente retirada</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Substitui &quot;Entregas e Retiradas 14–17h&quot; na loja, mantendo o horário do dia
+                    </Typography>
+                  </Box>
+                }
+                sx={{ bgcolor: '#FFF8E1', border: '1px solid #FFE082', borderRadius: 2, px: 1.5, py: 0.5, m: 0 }}
+              />
+            </Box>
             <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
               {openingHours.map((h, idx) => (
                 <Box key={h.day} sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: idx === 6 ? 0 : 2, flexWrap: 'wrap' }}>
