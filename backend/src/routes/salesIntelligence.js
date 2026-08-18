@@ -107,10 +107,10 @@ async function coletarDadosBanco() {
         MAX(p.data_pedido) AS ultimo_pedido
       FROM pedidos p
       LEFT JOIN clientes c ON p.cliente_id = c.id AND (p.tipo_cliente IS NULL OR p.tipo_cliente = 'consumidor')
-      LEFT JOIN revendedores r ON p.cliente_id = r.id AND p.tipo_cliente = 'revendedor'
+      LEFT JOIN revendedores r ON r.id = COALESCE(p.revendedor_id, CASE WHEN p.tipo_cliente = 'revendedor' THEN p.cliente_id END)
       WHERE p.data_pedido >= NOW() - INTERVAL '30 days'
         AND p.status != 'Cancelado'
-      GROUP BY p.cliente_id, p.tipo_cliente, c.nome, r.razao_social, c.telefone, r.telefone
+      GROUP BY p.cliente_id, p.revendedor_id, p.tipo_cliente, c.nome, r.razao_social, c.telefone, r.telefone
       ORDER BY total_gasto DESC
       LIMIT 10
     `),
@@ -126,9 +126,9 @@ async function coletarDadosBanco() {
         COALESCE(SUM(p.valor_total), 0) AS total_historico
       FROM pedidos p
       LEFT JOIN clientes c ON p.cliente_id = c.id AND (p.tipo_cliente IS NULL OR p.tipo_cliente = 'consumidor')
-      LEFT JOIN revendedores r ON p.cliente_id = r.id AND p.tipo_cliente = 'revendedor'
+      LEFT JOIN revendedores r ON r.id = COALESCE(p.revendedor_id, CASE WHEN p.tipo_cliente = 'revendedor' THEN p.cliente_id END)
       WHERE p.status != 'Cancelado'
-      GROUP BY p.cliente_id, p.tipo_cliente, c.nome, r.razao_social, c.telefone, r.telefone
+      GROUP BY p.cliente_id, p.revendedor_id, p.tipo_cliente, c.nome, r.razao_social, c.telefone, r.telefone
       HAVING MAX(p.data_pedido) < NOW() - INTERVAL '15 days'
         AND MAX(p.data_pedido) >= NOW() - INTERVAL '60 days'
       ORDER BY total_historico DESC
