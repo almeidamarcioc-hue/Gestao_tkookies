@@ -5,6 +5,10 @@ import Groq from "groq-sdk";
 
 const router = Router();
 
+// Modelo da Groq. Configurável por env para não exigir deploy quando a Groq
+// descontinuar um modelo (foi o caso do antigo llama-3.3-70b-versatile).
+const GROQ_MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
+
 const CACHE_TTL_MS = 10 * 60 * 1000;
 let dadosCache = null;
 let cacheTimestamp = 0;
@@ -418,10 +422,15 @@ router.get("/", requireRole('admin'), async (req, res) => {
     const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
     const stream = await client.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: GROQ_MODEL,
       messages: [{ role: "user", content: prompt }],
       stream: true,
-      max_tokens: 4096,
+      // Os tokens de raciocínio saem deste mesmo orçamento — 4096 truncava o relatório
+      max_tokens: 8192,
+      reasoning_effort: "low",
+      // Baixa temperatura: o relatório deve COPIAR os números já calculados no
+      // servidor, não variar. Reduz erro de transcrição e deixa o resultado estável.
+      temperature: 0.2,
     });
 
     for await (const chunk of stream) {

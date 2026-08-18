@@ -5,6 +5,9 @@ import Groq from "groq-sdk";
 
 const router = Router();
 
+// Modelo da Groq (configurável por env — ver salesIntelligence.js)
+const GROQ_MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
+
 // ─── Municípios num raio de ~50 km de Três de Maio, RS ───────────────────────
 const MUNICIPIOS_50KM = [
   { nome: "TRES DE MAIO",        dist: 0  },
@@ -531,10 +534,11 @@ Responda APENAS com um JSON válido neste formato (sem markdown, sem texto fora 
     const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
     const completion = await client.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: GROQ_MODEL,
       messages: [{ role: "user", content: prompt }],
       max_tokens: 4096,
       temperature: 0.3,
+      reasoning_effort: "low",
     });
 
     const rawContent = completion.choices[0]?.message?.content || "{}";
