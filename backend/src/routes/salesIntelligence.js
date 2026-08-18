@@ -425,8 +425,9 @@ router.get("/", requireRole('admin'), async (req, res) => {
       model: GROQ_MODEL,
       messages: [{ role: "user", content: prompt }],
       stream: true,
-      // Os tokens de raciocínio saem deste mesmo orçamento — 4096 truncava o relatório
-      max_tokens: 8192,
+      // O limite de tokens/minuto da conta Groq (8.000) conta prompt + max_tokens.
+      // O prompt gira em ~3.8k, então 4.000 aqui mantém a soma sob o teto.
+      max_tokens: 4000,
       reasoning_effort: "low",
       // Baixa temperatura: o relatório deve COPIAR os números já calculados no
       // servidor, não variar. Reduz erro de transcrição e deixa o resultado estável.
@@ -442,7 +443,15 @@ router.get("/", requireRole('admin'), async (req, res) => {
     res.end();
   } catch (err) {
     console.error("Erro na inteligência de vendas:", err);
-    res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
+    // Traduz erros comuns da Groq para algo acionável na tela
+    const raw = err.message || "";
+    let amigavel = raw;
+    if (raw.includes("rate_limit_exceeded") || err.status === 429 || err.status === 413) {
+      amigavel = "Limite de uso da IA atingido no momento. Aguarde 1 minuto e gere a análise novamente.";
+    } else if (raw.includes("model_not_found") || raw.includes("does not exist")) {
+      amigavel = "O modelo de IA configurado não está mais disponível. Ajuste a variável GROQ_MODEL no servidor.";
+    }
+    res.write(`data: ${JSON.stringify({ error: amigavel })}\n\n`);
     res.end();
   }
 });
