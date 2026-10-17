@@ -331,19 +331,13 @@ function montarPrompt(dados) {
   (dados.comprasRevendedores || []).forEach(c => {
     const unSemana = Number(c.total_un) / SEMANAS_90D;
     if (unSemana < 0.5) return; // ignora compras irrisórias (arredondariam para 0)
-    if (!porRevendedor[c.revendedor]) porRevendedor[c.revendedor] = { itens: [], totalUn: 0, pedidos: 0 };
-    const rend = rendimentoPorNome[c.produto] || 1;
-    porRevendedor[c.revendedor].itens.push({
-      produto: c.produto,
-      unSemana: Math.round(unSemana),
-      rend,
-      // fatia da demanda semanal daquele produto que vem deste revendedor
-      pctDemanda: demandaPorProduto[c.produto] > 0
-        ? Math.round((unSemana / demandaPorProduto[c.produto]) * 100)
-        : null,
-    });
-    porRevendedor[c.revendedor].totalUn += unSemana;
-    porRevendedor[c.revendedor].pedidos += Number(c.pedidos);
+    if (!porRevendedor[c.revendedor]) porRevendedor[c.revendedor] = { porProduto: {}, totalUn: 0, pedidos: 0 };
+    const reg = porRevendedor[c.revendedor];
+    // Soma por NOME do produto: evita linhas duplicadas quando existem
+    // cadastros diferentes com o mesmo nome.
+    reg.porProduto[c.produto] = (reg.porProduto[c.produto] || 0) + unSemana;
+    reg.totalUn += unSemana;
+    reg.pedidos += Number(c.pedidos);
   });
 
   const totalUnRevenda = Object.values(porRevendedor).reduce((a, r) => a + r.totalUn, 0);
@@ -351,13 +345,25 @@ function montarPrompt(dados) {
   const pctRevendaTotal = totalDemandaSemana > 0
     ? Math.round((totalUnRevenda / totalDemandaSemana) * 100) : 0;
 
+  // Top 8 revendedores; até 6 produtos cada (mantém o relatório dentro do
+  // limite de tokens da conta Groq sem perder o essencial)
   const tabelaRevendedores = Object.entries(porRevendedor)
     .sort((a, b) => b[1].totalUn - a[1].totalUn)
+    .slice(0, 8)
     .map(([nome, r]) => {
-      const itens = r.itens
+      const itens = Object.entries(r.porProduto)
+        .map(([produto, un]) => ({
+          produto,
+          unSemana: Math.round(un),
+          rend: rendimentoPorNome[produto] || 1,
+          pctDemanda: demandaPorProduto[produto] > 0
+            ? Math.round((un / demandaPorProduto[produto]) * 100)
+            : null,
+        }))
         .filter(i => i.unSemana > 0)
         .sort((a, b) => b.unSemana - a.unSemana)
-        .map(i => `    - ${i.produto}: ${i.unSemana}un/sem (${i.pctDemanda ?? '?'}% da demanda semanal do produto; ~${(i.unSemana / i.rend).toFixed(1)} receita)`)
+        .slice(0, 6)
+        .map(i => `    - ${i.produto}: ${i.unSemana}un/sem${i.pctDemanda != null ? ` (${i.pctDemanda}% da demanda do produto)` : ''} = ${(i.unSemana / i.rend).toFixed(1)} receita`)
         .join('\n');
       return `- ${nome} | ${Math.round(r.totalUn)}un/semana | ${r.pedidos} pedidos em 90 dias\n${itens}`;
     }).join('\n');
@@ -390,6 +396,10 @@ Você DEVE produzir exatamente 7 blocos na ordem abaixo. Nenhum bloco pode ser o
 **⚠️ REGRA GLOBAL: a loja NÃO vende no domingo.** Nunca cite domingo como dia de
 venda, nunca sugira promoção ou ação no domingo e nunca inclua domingo em tabelas.
 A semana comercial vai de **segunda a sábado**; o sábado também é o dia de produção.
+
+**⚠️ SEJA CONCISO.** Priorize tabelas e frases curtas; no máximo 3 itens por lista.
+Nada de parágrafos longos ou repetir dados já mostrados em tabela. É obrigatório
+chegar até o fim do BLOCO 7 — melhor cada bloco enxuto do que o relatório cortado.
 
 ---
 
@@ -524,8 +534,8 @@ ${tabelaMargens || 'Dados de custo não disponíveis — use estimativas conserv
 - Últimos 30 dias: ${dados.resumo30.total_pedidos} pedidos | Receita: R$ ${Number(dados.resumo30.receita_total).toFixed(2)} | Ticket médio: R$ ${Number(dados.resumo30.ticket_medio).toFixed(2)}
 - Últimos 90 dias: ${dados.resumo90.total_pedidos} pedidos | Receita: R$ ${Number(dados.resumo90.receita_total).toFixed(2)} | Semanas com pedido: ${dados.resumo90.semanas_com_pedido}
 
-**PRODUTOS (ordenados por volume — 90 dias):**
-${dados.topProdutos.map((p, i) =>
+**PRODUTOS (ordenados por volume — 90 dias, top 12):**
+${dados.topProdutos.slice(0, 12).map((p, i) =>
   `${i+1}. ${p.nome} — Vendido: ${p.total_vendido} un | Estoque: ${p.estoque_atual} un | Preço: R$ ${Number(p.preco_venda).toFixed(2)} | Custo: R$ ${Number(p.custo).toFixed(2)} | Lucro est.: R$ ${Number(p.lucro_estimado).toFixed(2)}`
 ).join('\n')}
 
