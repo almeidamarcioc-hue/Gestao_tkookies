@@ -343,6 +343,10 @@ Com base nos pedidos por dia da semana:
 
 ### 🏭 BLOCO 4 — PREVISÃO DE VENDAS E PLANO DE PRODUÇÃO — PRÓXIMAS 2 SEMANAS
 
+**⚠️ OBRIGATÓRIO: este bloco tem TRÊS tabelas — Passo 1 (previsão 2 semanas),
+Passo 2 (produção da SEMANA 1) e Passo 3 (produção da SEMANA 2).
+NUNCA omita o Passo 3. Mantenha os títulos "Passo 1", "Passo 2" e "Passo 3".**
+
 **Regra:** cookies produzidos 1 dia antes da venda.
 - Para vender na Terça → produzir na Segunda
 - Para vender na Segunda → produzir no Sábado anterior
