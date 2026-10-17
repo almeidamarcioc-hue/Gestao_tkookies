@@ -64,13 +64,30 @@ const markdownSx = {
     bgcolor: '#FFF8E1',
     py: 1, pr: 2, borderRadius: '0 8px 8px 0'
   },
-  '& table': { borderCollapse: 'collapse', width: '100%', my: 2 },
-  '& th': { bgcolor: ESPRESSO, color: 'white', p: '8px 12px', textAlign: 'left' },
-  '& td': { borderBottom: '1px solid #f0ebe8', p: '6px 12px' },
+  '& table': { borderCollapse: 'collapse', my: 2 },
+  // nowrap evita quebrar "Americano Brown Butter" em 3 linhas; a tabela rola na horizontal
+  '& th': { bgcolor: ESPRESSO, color: 'white', p: '8px 10px', textAlign: 'left', whiteSpace: 'nowrap' },
+  '& td': { borderBottom: '1px solid #f0ebe8', p: '6px 10px', whiteSpace: 'nowrap' },
+  // só a 1ª coluna (nome do produto) pode quebrar, se precisar
+  '& td:first-of-type': { whiteSpace: 'normal', minWidth: 150 },
   '& tr:nth-of-type(even) td': { bgcolor: '#FFF8F0' },
   '& ul,& ol': { pl: 3 },
   '& li': { mb: 0.5 },
   '& hr': { border: 'none', borderTop: '1px dashed #FFCC80', my: 2 },
+};
+
+// Envolve cada tabela num container com rolagem horizontal própria, para que
+// tabelas largas (previsão de 2 semanas = 14 colunas) não sejam cortadas.
+const mdComponents = {
+  table: (props) => (
+    <Box sx={{ width: '100%', overflowX: 'auto', my: 2 }}>
+      <Box
+        component="table"
+        sx={{ borderCollapse: 'collapse', minWidth: '100%', width: 'max-content' }}
+        {...props}
+      />
+    </Box>
+  ),
 };
 
 export default function InteligenciaVendas() {
@@ -147,7 +164,7 @@ export default function InteligenciaVendas() {
   const mostrarPaginado = !loading && blocos.length > 0;
 
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth="xl">
       <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
         <Box>
           <Typography variant="h4" fontWeight="bold" sx={{ color: ESPRESSO }}>
@@ -225,7 +242,7 @@ export default function InteligenciaVendas() {
           )}
 
           <Box sx={markdownSx}>
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{texto}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>{texto}</ReactMarkdown>
           </Box>
 
           {loading && texto && (
@@ -295,7 +312,7 @@ export default function InteligenciaVendas() {
             }}
           >
             <Box sx={markdownSx}>
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
                 {`### ${blocos[blocoAtual]?.titulo}\n\n${blocos[blocoAtual]?.conteudo}`}
               </ReactMarkdown>
             </Box>
