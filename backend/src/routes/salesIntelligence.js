@@ -264,16 +264,20 @@ function montarPrompt(dados) {
     const demandaSemana = diasOrdem.reduce((acc, d) => acc + (dias[d]?.media ?? 0), 0);
     const estoqueUn = estoquePorNome[nome] ?? 0;
 
+    // Arredonda a demanda ANTES de calcular as receitas: assim as unidades
+    // exibidas e as receitas batem entre si (evita casos como "0un → 1 rec").
+    const demandaArred = Math.round(demandaSemana);
+
     // Semana 1: desconta o estoque disponível hoje
-    const liquidoS1 = Math.max(0, demandaSemana - estoqueUn);
+    const liquidoS1 = Math.max(0, demandaArred - estoqueUn);
     const recS1 = liquidoS1 > 0 ? Math.ceil(liquidoS1 / rend) : 0;
     // Semana 2: demanda cheia (estoque já foi consumido na semana 1)
-    const recS2 = demandaSemana > 0 ? Math.ceil(demandaSemana / rend) : 0;
+    const recS2 = demandaArred > 0 ? Math.ceil(demandaArred / rend) : 0;
 
     return {
       nome, rend, estoqueUn, colsUn,
-      demandaSemana: Math.round(demandaSemana),
-      liquidoS1: Math.round(liquidoS1),
+      demandaSemana: demandaArred,
+      liquidoS1,
       recS1, recS2, recTotal: recS1 + recS2,
     };
   });
