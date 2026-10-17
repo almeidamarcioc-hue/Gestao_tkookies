@@ -251,16 +251,16 @@ function montarPrompt(dados) {
   const estoquePorNome = {};
   dados.topProdutos.forEach(p => { estoquePorNome[p.nome] = Number(p.estoque_atual); });
 
-  const diasOrdem = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  // Não há venda no domingo — ele fica fora da demanda e do planejamento
+  const diasOrdem = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
   // Previsão de DUAS semanas, com todos os números calculados aqui no servidor.
-  // A diferença real entre as semanas é o estoque: ele abate a produção da Semana 1
-  // (será consumido nela), então a Semana 2 parte da demanda cheia.
-  // Exibe mediaCeil por dia (planejamento diário), mas soma a média bruta para o total.
+  // Produção concentrada no SÁBADO anterior a cada semana, considerando o saldo
+  // de estoque: a sobra da Semana 1 abate a produção da Semana 2.
   const linhasPrevisao = Object.entries(porProduto).map(([nome, dias]) => {
     const rend = rendimentoPorNome[nome] || 1;
     const colsUn = diasOrdem.map(d => dias[d]?.mediaCeil ?? 0);
-    // soma das médias brutas (evita acumular overcounting de 7 CEILs)
+    // soma das médias brutas (evita acumular overcounting dos CEILs diários)
     const demandaSemana = diasOrdem.reduce((acc, d) => acc + (dias[d]?.media ?? 0), 0);
     const estoqueUn = estoquePorNome[nome] ?? 0;
 
@@ -268,26 +268,35 @@ function montarPrompt(dados) {
     // exibidas e as receitas batem entre si (evita casos como "0un → 1 rec").
     const demandaArred = Math.round(demandaSemana);
 
-    // Semana 1: desconta o estoque disponível hoje
-    const liquidoS1 = Math.max(0, demandaArred - estoqueUn);
-    const recS1 = liquidoS1 > 0 ? Math.ceil(liquidoS1 / rend) : 0;
-    // Semana 2: demanda cheia (estoque já foi consumido na semana 1)
-    const recS2 = demandaArred > 0 ? Math.ceil(demandaArred / rend) : 0;
+    // ── SEMANA 1 — produzir no sábado anterior, cobrindo o que falta no estoque
+    const faltaS1 = Math.max(0, demandaArred - estoqueUn); // quantidade faltante
+    const recS1 = faltaS1 > 0 ? Math.ceil(faltaS1 / rend) : 0;
+    const produzidoS1 = recS1 * rend;
+    const saldoFimS1 = estoqueUn + produzidoS1 - demandaArred; // sobra que entra na S2
+
+    // ── SEMANA 2 — parte do saldo que sobrou da semana 1
+    const faltaS2 = Math.max(0, demandaArred - saldoFimS1);
+    const recS2 = faltaS2 > 0 ? Math.ceil(faltaS2 / rend) : 0;
+    const produzidoS2 = recS2 * rend;
+    const saldoFimS2 = saldoFimS1 + produzidoS2 - demandaArred;
 
     return {
       nome, rend, estoqueUn, colsUn,
       demandaSemana: demandaArred,
-      liquidoS1,
-      recS1, recS2, recTotal: recS1 + recS2,
+      faltaS1, recS1, saldoFimS1,
+      faltaS2, recS2, saldoFimS2,
+      recTotal: recS1 + recS2,
     };
   });
 
   const tabelaVendas = linhasPrevisao.map(l =>
-    `${l.nome} | Rend: ${l.rend}un/rec | Estoque: ${l.estoqueUn}un | ${l.colsUn.join(' | ')} | Demanda/sem: ${l.demandaSemana}un | SEMANA 1: ${l.liquidoS1}un a produzir → ${l.recS1} rec | SEMANA 2: ${l.demandaSemana}un a produzir → ${l.recS2} rec | Total 2 semanas: ${l.recTotal} rec`
+    `${l.nome} | Rend: ${l.rend}un/rec | Estoque: ${l.estoqueUn}un | ${l.colsUn.join(' | ')} | Demanda/sem: ${l.demandaSemana}un | SEMANA 1: falta ${l.faltaS1}un → produzir ${l.recS1} rec (sobra ${l.saldoFimS1}un) | SEMANA 2: falta ${l.faltaS2}un → produzir ${l.recS2} rec (sobra ${l.saldoFimS2}un) | Total 2 semanas: ${l.recTotal} rec`
   ).join('\n');
 
   const totalRecS1 = linhasPrevisao.reduce((a, l) => a + l.recS1, 0);
   const totalRecS2 = linhasPrevisao.reduce((a, l) => a + l.recS2, 0);
+  // Produtos cujo estoque atual não cobre a semana (precisam de produção)
+  const faltantesS1 = linhasPrevisao.filter(l => l.faltaS1 > 0);
 
   const tabelaMargens = dados.topProdutos
     .filter(p => Number(p.preco_venda) > 0 && Number(p.custo) > 0 && Number(p.total_vendido) > 0)
@@ -313,6 +322,10 @@ Data da análise: ${dados.dataAnalise}
 ## INSTRUÇÕES OBRIGATÓRIAS
 
 Você DEVE produzir exatamente 6 blocos na ordem abaixo. Nenhum bloco pode ser omitido.
+
+**⚠️ REGRA GLOBAL: a loja NÃO vende no domingo.** Nunca cite domingo como dia de
+venda, nunca sugira promoção ou ação no domingo e nunca inclua domingo em tabelas.
+A semana comercial vai de **segunda a sábado**; o sábado também é o dia de produção.
 
 ---
 
@@ -347,18 +360,20 @@ Com base nos pedidos por dia da semana:
 Passo 2 (produção da SEMANA 1) e Passo 3 (produção da SEMANA 2).
 NUNCA omita o Passo 3. Mantenha os títulos "Passo 1", "Passo 2" e "Passo 3".**
 
-**Regra:** cookies produzidos 1 dia antes da venda.
-- Para vender na Terça → produzir na Segunda
-- Para vender na Segunda → produzir no Sábado anterior
+**Regras de operação:**
+- **NÃO há venda no domingo** — nunca inclua domingo em tabelas, previsões ou promoções
+- **A produção da semana é feita no SÁBADO anterior**, em um único lote por produto
+  (sábado produz o que será vendido de segunda a sábado da semana seguinte)
 
 **⚠️ REGRA DE CÁLCULO OBRIGATÓRIA:**
-- Os valores por dia são em **UNIDADES** (demanda média diária histórica) e valem para as duas semanas
-- As receitas de cada semana **já vêm calculadas** nos campos "SEMANA 1: ... → X rec" e "SEMANA 2: ... → Y rec" — **copie esses números, NÃO recalcule**
-- A Semana 1 já está com o estoque atual descontado; a Semana 2 considera a demanda cheia (o estoque terá sido consumido)
+- Os valores por dia são em **UNIDADES** (demanda média diária histórica), de segunda a sábado
+- Tudo já vem calculado em "SEMANA 1: falta Xun → produzir Y rec (sobra Zun)" — **copie, NÃO recalcule**
+- "falta" = quanto o estoque NÃO cobre da demanda da semana (é o que deve ser produzido)
+- A Semana 1 desconta o estoque atual; a Semana 2 parte da **sobra** da Semana 1
 - **NUNCA** aplique CEIL por dia e some depois — isso superestima a produção
 
-**Dados de entrada (unidades/dia, baseado em 90 dias de histórico):**
-Formato: Produto | Rend: Nun/rec | Estoque: Xun | Seg | Ter | Qua | Qui | Sex | Sáb | Dom | Demanda/sem | SEMANA 1 | SEMANA 2 | Total 2 semanas
+**Dados de entrada (unidades/dia, 90 dias de histórico, seg–sáb):**
+Formato: Produto | Rend: Nun/rec | Estoque: Xun | Seg | Ter | Qua | Qui | Sex | Sáb | Demanda/sem | SEMANA 1 | SEMANA 2 | Total 2 semanas
 
 ${tabelaVendas || 'Sem histórico de vendas por dia suficiente.'}
 
@@ -366,23 +381,28 @@ Totais já calculados: **Semana 1 = ${totalRecS1} receitas** | **Semana 2 = ${to
 
 **Passo 1 — Tabela PREVISÃO DE VENDAS (2 semanas):**
 
-| Produto | Rend (un/rec) | Estoque (un) | Seg | Ter | Qua | Qui | Sex | Sáb | Dom | Demanda/sem (un) | Receitas S1 | Receitas S2 | Total 2 sem |
-|---------|---------------|--------------|-----|-----|-----|-----|-----|-----|-----|------------------|-------------|-------------|-------------|
+| Produto | Rend (un/rec) | Estoque (un) | Seg | Ter | Qua | Qui | Sex | Sáb | Demanda/sem (un) | Falta S1 (un) | Receitas S1 | Sobra S1 (un) | Falta S2 (un) | Receitas S2 | Total 2 sem |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 (copie exatamente os valores da tabela acima — NÃO recalcule nenhum número)
 
-**Passo 2 — PLANO DE PRODUÇÃO — SEMANA 1** (use a coluna "Receitas S1"):
+**Passo 2 — PRODUÇÃO DO SÁBADO — para a SEMANA 1** (use "Receitas S1"):
 
-| Dia de Produção | Para Vender em | Produto | Receitas | Rende (unidades) |
-|-----------------|----------------|---------|----------|------------------|
-(inclua apenas receitas > 0; prefira agrupar produção em 1-2 dias por produto quando viável)
+| Produto | Falta (un) | Receitas a produzir | Rende (un) | Cobre a semana? |
+|---|---|---|---|---|
+(inclua apenas produtos com receitas > 0; tudo é produzido no sábado anterior)
 
-**Passo 3 — PLANO DE PRODUÇÃO — SEMANA 2** (use a coluna "Receitas S2"):
+**Passo 3 — PRODUÇÃO DO SÁBADO — para a SEMANA 2** (use "Receitas S2"):
 
-| Dia de Produção | Para Vender em | Produto | Receitas | Rende (unidades) |
-|-----------------|----------------|---------|----------|------------------|
-(mesma lógica da Semana 1)
+| Produto | Falta (un) | Receitas a produzir | Rende (un) | Cobre a semana? |
+|---|---|---|---|---|
+(mesma lógica da Semana 1, já considerando a sobra da semana anterior)
 
-**Após as tabelas:** uma linha comparando as duas semanas (por que a S2 costuma exigir mais produção: o estoque atual só cobre a S1) + mensagem motivadora curta + versículo bíblico sobre trabalho e colheita.
+**Passo 4 — REPOSIÇÃO (se o estoque não cobrir a semana):**
+${faltantesS1.length
+  ? `Estes produtos NÃO têm estoque suficiente para a Semana 1 — informe a quantidade faltante a produzir:\n${faltantesS1.map(l => `- ${l.nome}: faltam ${l.faltaS1}un (produzir ${l.recS1} receita(s) de ${l.rend}un)`).join('\n')}`
+  : 'Nenhum produto ficou descoberto: o estoque atual cobre toda a demanda da Semana 1. Informe isso ao usuário.'}
+
+**Após as tabelas:** uma linha comparando as duas semanas + mensagem motivadora curta + versículo bíblico sobre trabalho e colheita.
 
 ---
 
@@ -420,8 +440,8 @@ ${dados.topProdutos.map((p, i) =>
   `${i+1}. ${p.nome} — Vendido: ${p.total_vendido} un | Estoque: ${p.estoque_atual} un | Preço: R$ ${Number(p.preco_venda).toFixed(2)} | Custo: R$ ${Number(p.custo).toFixed(2)} | Lucro est.: R$ ${Number(p.lucro_estimado).toFixed(2)}`
 ).join('\n')}
 
-**PEDIDOS POR DIA DA SEMANA (90 dias):**
-${dados.pedidosPorDia.map(d =>
+**PEDIDOS POR DIA DA SEMANA (90 dias, seg–sáb — domingo não há venda):**
+${dados.pedidosPorDia.filter(d => d.dia_nome !== 'Sunday').map(d =>
   `- ${diasPT[d.dia_nome] || d.dia_nome}: ${d.total_pedidos} pedidos | Receita: R$ ${Number(d.receita).toFixed(2)} | Ticket médio: R$ ${Number(d.ticket_medio_dia).toFixed(2)} | Dias com pedido: ${d.dias_com_pedido}`
 ).join('\n')}
 
