@@ -8,6 +8,9 @@ const router = Router();
 // Modelo da Groq. Configurável por env para não exigir deploy quando a Groq
 // descontinuar um modelo (foi o caso do antigo llama-3.3-70b-versatile).
 const GROQ_MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
+// Teto de tokens por minuto da conta Groq (conta prompt + resposta) e margem de segurança
+const TPM_LIMITE = Number(process.env.GROQ_TPM_LIMITE) || 8000;
+const MARGEM_TPM = 400;
 
 const CACHE_TTL_MS = 10 * 60 * 1000;
 let dadosCache = null;
@@ -250,19 +253,37 @@ function montarPrompt(dados) {
 
   const diasOrdem = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 
-  // tabelaVendas em UNIDADES por dia + receitas calculadas UMA vez para a semana
-  // Exibe mediaCeil por dia (para planejamento diário), mas soma media bruta para o total
-  const tabelaVendas = Object.entries(porProduto).map(([nome, dias]) => {
+  // Previsão de DUAS semanas, com todos os números calculados aqui no servidor.
+  // A diferença real entre as semanas é o estoque: ele abate a produção da Semana 1
+  // (será consumido nela), então a Semana 2 parte da demanda cheia.
+  // Exibe mediaCeil por dia (planejamento diário), mas soma a média bruta para o total.
+  const linhasPrevisao = Object.entries(porProduto).map(([nome, dias]) => {
     const rend = rendimentoPorNome[nome] || 1;
-    // para exibição: unidades por dia arredondadas para cima (não subprovisionamento)
     const colsUn = diasOrdem.map(d => dias[d]?.mediaCeil ?? 0);
-    // para o total: soma das médias brutas (evita acumular overcounting de 7 CEILs)
-    const totalUnReal = diasOrdem.reduce((acc, d) => acc + (dias[d]?.media ?? 0), 0);
-    // CEIL aplicado UMA vez ao total real
-    const receitasSemana = totalUnReal > 0 ? Math.ceil(totalUnReal / rend) : 0;
+    // soma das médias brutas (evita acumular overcounting de 7 CEILs)
+    const demandaSemana = diasOrdem.reduce((acc, d) => acc + (dias[d]?.media ?? 0), 0);
     const estoqueUn = estoquePorNome[nome] ?? 0;
-    return `${nome} | Rend: ${rend}un/rec | Estoque: ${estoqueUn}un | ${colsUn.join(' | ')} | Total: ${Math.round(totalUnReal)}un → ${receitasSemana} rec/sem`;
-  }).join('\n');
+
+    // Semana 1: desconta o estoque disponível hoje
+    const liquidoS1 = Math.max(0, demandaSemana - estoqueUn);
+    const recS1 = liquidoS1 > 0 ? Math.ceil(liquidoS1 / rend) : 0;
+    // Semana 2: demanda cheia (estoque já foi consumido na semana 1)
+    const recS2 = demandaSemana > 0 ? Math.ceil(demandaSemana / rend) : 0;
+
+    return {
+      nome, rend, estoqueUn, colsUn,
+      demandaSemana: Math.round(demandaSemana),
+      liquidoS1: Math.round(liquidoS1),
+      recS1, recS2, recTotal: recS1 + recS2,
+    };
+  });
+
+  const tabelaVendas = linhasPrevisao.map(l =>
+    `${l.nome} | Rend: ${l.rend}un/rec | Estoque: ${l.estoqueUn}un | ${l.colsUn.join(' | ')} | Demanda/sem: ${l.demandaSemana}un | SEMANA 1: ${l.liquidoS1}un a produzir → ${l.recS1} rec | SEMANA 2: ${l.demandaSemana}un a produzir → ${l.recS2} rec | Total 2 semanas: ${l.recTotal} rec`
+  ).join('\n');
+
+  const totalRecS1 = linhasPrevisao.reduce((a, l) => a + l.recS1, 0);
+  const totalRecS2 = linhasPrevisao.reduce((a, l) => a + l.recS2, 0);
 
   const tabelaMargens = dados.topProdutos
     .filter(p => Number(p.preco_venda) > 0 && Number(p.custo) > 0 && Number(p.total_vendido) > 0)
@@ -316,36 +337,44 @@ Com base nos pedidos por dia da semana:
 
 ---
 
-### 🏭 BLOCO 4 — PLANO DE PRODUÇÃO — PRÓXIMA SEMANA
+### 🏭 BLOCO 4 — PREVISÃO DE VENDAS E PLANO DE PRODUÇÃO — PRÓXIMAS 2 SEMANAS
 
 **Regra:** cookies produzidos 1 dia antes da venda.
 - Para vender na Terça → produzir na Segunda
 - Para vender na Segunda → produzir no Sábado anterior
 
 **⚠️ REGRA DE CÁLCULO OBRIGATÓRIA:**
-- Os valores por dia são em **UNIDADES** (demanda média diária histórica)
-- O campo "Total: Xun → Y rec/sem" já mostra a conversão correta: CEIL(total_semana ÷ rendimento) — **use este número de receitas**
+- Os valores por dia são em **UNIDADES** (demanda média diária histórica) e valem para as duas semanas
+- As receitas de cada semana **já vêm calculadas** nos campos "SEMANA 1: ... → X rec" e "SEMANA 2: ... → Y rec" — **copie esses números, NÃO recalcule**
+- A Semana 1 já está com o estoque atual descontado; a Semana 2 considera a demanda cheia (o estoque terá sido consumido)
 - **NUNCA** aplique CEIL por dia e some depois — isso superestima a produção
-- Exemplo correto: demanda 5un/dia × 6 dias = 30un ÷ rend 11 = CEIL(2,7) = **3 receitas**, não 6
 
 **Dados de entrada (unidades/dia, baseado em 90 dias de histórico):**
-Formato: Produto | Rend: Nun/rec | Estoque: Xun | Seg | Ter | Qua | Qui | Sex | Sáb | Dom | Total: Xun → Y rec/sem
+Formato: Produto | Rend: Nun/rec | Estoque: Xun | Seg | Ter | Qua | Qui | Sex | Sáb | Dom | Demanda/sem | SEMANA 1 | SEMANA 2 | Total 2 semanas
 
 ${tabelaVendas || 'Sem histórico de vendas por dia suficiente.'}
 
-**Passo 1 — Tabela PREVISÃO DE VENDAS (próxima semana):**
+Totais já calculados: **Semana 1 = ${totalRecS1} receitas** | **Semana 2 = ${totalRecS2} receitas** | **Total 2 semanas = ${totalRecS1 + totalRecS2} receitas**
 
-| Produto | Rend (un/rec) | Estoque (un) | Seg | Ter | Qua | Qui | Sex | Sáb | Dom | Total (un) | Receitas/sem |
-|---------|---------------|--------------|-----|-----|-----|-----|-----|-----|-----|------------|--------------|
-(copie exatamente os valores da tabela acima; "Receitas/sem" = valor "Y rec/sem" já calculado — NÃO recalcule)
+**Passo 1 — Tabela PREVISÃO DE VENDAS (2 semanas):**
 
-**Passo 2 — Tabela PLANO DE PRODUÇÃO (em receitas, agrupando para minimizar dias de produção):**
+| Produto | Rend (un/rec) | Estoque (un) | Seg | Ter | Qua | Qui | Sex | Sáb | Dom | Demanda/sem (un) | Receitas S1 | Receitas S2 | Total 2 sem |
+|---------|---------------|--------------|-----|-----|-----|-----|-----|-----|-----|------------------|-------------|-------------|-------------|
+(copie exatamente os valores da tabela acima — NÃO recalcule nenhum número)
+
+**Passo 2 — PLANO DE PRODUÇÃO — SEMANA 1** (use a coluna "Receitas S1"):
 
 | Dia de Produção | Para Vender em | Produto | Receitas | Rende (unidades) |
 |-----------------|----------------|---------|----------|------------------|
-(inclua apenas receitas > 0; desconte o estoque em unidades do total semanal antes de calcular receitas; prefira agrupar produção em 1-2 dias por produto quando viável)
+(inclua apenas receitas > 0; prefira agrupar produção em 1-2 dias por produto quando viável)
 
-**Após as tabelas:** mensagem motivadora curta + versículo bíblico sobre trabalho e colheita.
+**Passo 3 — PLANO DE PRODUÇÃO — SEMANA 2** (use a coluna "Receitas S2"):
+
+| Dia de Produção | Para Vender em | Produto | Receitas | Rende (unidades) |
+|-----------------|----------------|---------|----------|------------------|
+(mesma lógica da Semana 1)
+
+**Após as tabelas:** uma linha comparando as duas semanas (por que a S2 costuma exigir mais produção: o estoque atual só cobre a S1) + mensagem motivadora curta + versículo bíblico sobre trabalho e colheita.
 
 ---
 
@@ -421,13 +450,19 @@ router.get("/", requireRole('admin'), async (req, res) => {
 
     const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
+    // O limite da conta Groq (8.000 tokens/min) conta prompt + max_tokens juntos.
+    // Estima o tamanho do prompt (~3,5 caracteres por token em pt-BR) e ajusta o
+    // teto da resposta: se o catálogo crescer, a resposta encolhe em vez de falhar
+    // com "Request too large".
+    const promptTokensEstimado = Math.ceil(prompt.length / 3.5);
+    const maxTokens = Math.max(1500, Math.min(4096, TPM_LIMITE - MARGEM_TPM - promptTokensEstimado));
+    console.log(`[IA vendas] prompt ~${promptTokensEstimado} tokens | max_tokens ${maxTokens}`);
+
     const stream = await client.chat.completions.create({
       model: GROQ_MODEL,
       messages: [{ role: "user", content: prompt }],
       stream: true,
-      // O limite de tokens/minuto da conta Groq (8.000) conta prompt + max_tokens.
-      // O prompt gira em ~3.8k, então 4.000 aqui mantém a soma sob o teto.
-      max_tokens: 4000,
+      max_tokens: maxTokens,
       reasoning_effort: "low",
       // Baixa temperatura: o relatório deve COPIAR os números já calculados no
       // servidor, não variar. Reduz erro de transcrição e deixa o resultado estável.
