@@ -51,6 +51,7 @@ async function coletarDadosBanco() {
     financeiro,
     vendasPorProdutoDia,
     ocorrenciasDias,
+    comprasRevendedores,
   ] = await Promise.all([
 
     // Resumo últimos 30 dias
@@ -201,6 +202,26 @@ async function coletarDadosBanco() {
       GROUP BY EXTRACT(DOW FROM d)::int
       ORDER BY dia_num
     `),
+
+    // Compras por revendedor x produto (90 dias) — base do resumo de revenda.
+    // O join aceita o formato novo (revendedor_id) e o antigo (cliente_id).
+    pool.query(`
+      SELECT
+        COALESCE(r.razao_social, r.nome_contato, 'Revendedor #' || r.id) AS revendedor,
+        pr.nome AS produto,
+        COALESCE(SUM(ip.quantidade), 0) AS total_un,
+        COUNT(DISTINCT ped.id) AS pedidos
+      FROM pedidos ped
+      JOIN revendedores r
+        ON r.id = COALESCE(ped.revendedor_id, CASE WHEN ped.tipo_cliente = 'revendedor' THEN ped.cliente_id END)
+      JOIN itens_pedido ip ON ip.pedido_id = ped.id
+      JOIN produtos pr ON pr.id = ip.produto_id
+      WHERE ped.data_pedido >= NOW() - INTERVAL '90 days'
+        AND ped.status != 'Cancelado'
+        AND pr.eh_agregado IS NOT TRUE
+      GROUP BY r.id, r.razao_social, r.nome_contato, pr.id, pr.nome
+      ORDER BY revendedor, total_un DESC
+    `),
   ]);
 
   return {
@@ -213,6 +234,7 @@ async function coletarDadosBanco() {
     financeiro: financeiro.rows,
     vendasPorProdutoDia: vendasPorProdutoDia.rows,
     ocorrenciasDias: ocorrenciasDias.rows,
+    comprasRevendedores: comprasRevendedores.rows,
     dataAnalise: new Date().toLocaleDateString('pt-BR'),
   };
 }
@@ -298,6 +320,48 @@ function montarPrompt(dados) {
   // Produtos cujo estoque atual não cobre a semana (precisam de produção)
   const faltantesS1 = linhasPrevisao.filter(l => l.faltaS1 > 0);
 
+  // ── RESUMO POR REVENDEDOR ────────────────────────────────────────────────
+  // Converte o histórico de 90 dias em média semanal por revendedor/produto e
+  // mede quanto dessa demanda consome a produção sugerida de cada produto.
+  const SEMANAS_90D = 90 / 7; // ~12,86 semanas
+  const demandaPorProduto = {};
+  linhasPrevisao.forEach(l => { demandaPorProduto[l.nome] = l.demandaSemana; });
+
+  const porRevendedor = {};
+  (dados.comprasRevendedores || []).forEach(c => {
+    const unSemana = Number(c.total_un) / SEMANAS_90D;
+    if (unSemana < 0.5) return; // ignora compras irrisórias (arredondariam para 0)
+    if (!porRevendedor[c.revendedor]) porRevendedor[c.revendedor] = { itens: [], totalUn: 0, pedidos: 0 };
+    const rend = rendimentoPorNome[c.produto] || 1;
+    porRevendedor[c.revendedor].itens.push({
+      produto: c.produto,
+      unSemana: Math.round(unSemana),
+      rend,
+      // fatia da demanda semanal daquele produto que vem deste revendedor
+      pctDemanda: demandaPorProduto[c.produto] > 0
+        ? Math.round((unSemana / demandaPorProduto[c.produto]) * 100)
+        : null,
+    });
+    porRevendedor[c.revendedor].totalUn += unSemana;
+    porRevendedor[c.revendedor].pedidos += Number(c.pedidos);
+  });
+
+  const totalUnRevenda = Object.values(porRevendedor).reduce((a, r) => a + r.totalUn, 0);
+  const totalDemandaSemana = linhasPrevisao.reduce((a, l) => a + l.demandaSemana, 0);
+  const pctRevendaTotal = totalDemandaSemana > 0
+    ? Math.round((totalUnRevenda / totalDemandaSemana) * 100) : 0;
+
+  const tabelaRevendedores = Object.entries(porRevendedor)
+    .sort((a, b) => b[1].totalUn - a[1].totalUn)
+    .map(([nome, r]) => {
+      const itens = r.itens
+        .filter(i => i.unSemana > 0)
+        .sort((a, b) => b.unSemana - a.unSemana)
+        .map(i => `    - ${i.produto}: ${i.unSemana}un/sem (${i.pctDemanda ?? '?'}% da demanda semanal do produto; ~${(i.unSemana / i.rend).toFixed(1)} receita)`)
+        .join('\n');
+      return `- ${nome} | ${Math.round(r.totalUn)}un/semana | ${r.pedidos} pedidos em 90 dias\n${itens}`;
+    }).join('\n');
+
   const tabelaMargens = dados.topProdutos
     .filter(p => Number(p.preco_venda) > 0 && Number(p.custo) > 0 && Number(p.total_vendido) > 0)
     .map(p => {
@@ -321,7 +385,7 @@ Data da análise: ${dados.dataAnalise}
 
 ## INSTRUÇÕES OBRIGATÓRIAS
 
-Você DEVE produzir exatamente 6 blocos na ordem abaixo. Nenhum bloco pode ser omitido.
+Você DEVE produzir exatamente 7 blocos na ordem abaixo. Nenhum bloco pode ser omitido.
 
 **⚠️ REGRA GLOBAL: a loja NÃO vende no domingo.** Nunca cite domingo como dia de
 venda, nunca sugira promoção ou ação no domingo e nunca inclua domingo em tabelas.
@@ -406,7 +470,32 @@ ${faltantesS1.length
 
 ---
 
-### 💰 BLOCO 5 — INTELIGÊNCIA FINANCEIRA
+### 🤝 BLOCO 5 — RESUMO POR REVENDEDOR (previsão semanal)
+
+Mostre **um item por revendedor, individualmente** — nunca agrupe todos numa linha só.
+Para cada revendedor, com base no histórico de compras dos últimos 90 dias:
+- Quantidade prevista por produto para a semana (un/semana)
+- Quanto isso representa da demanda semanal daquele produto (%)
+- Quanto consome da produção sugerida no BLOCO 4
+
+**Dados já calculados (NÃO recalcule, apenas organize em tabela):**
+${tabelaRevendedores || 'Nenhum revendedor com histórico de compras nos últimos 90 dias.'}
+
+Participação da revenda no total: **${Math.round(totalUnRevenda)}un/semana de ${totalDemandaSemana}un (${pctRevendaTotal}% da demanda semanal)**
+
+Formato da tabela (uma seção por revendedor):
+
+| Revendedor | Produto | Previsão (un/sem) | % da demanda do produto | Receitas consumidas |
+|---|---|---|---|---|
+
+Depois da tabela, acrescente:
+- Qual revendedor mais pesa na produção da semana
+- Se a produção sugerida no BLOCO 4 já cobre a demanda da revenda (compare os números)
+- Uma observação prática (ex.: reservar parte do lote de sábado para o revendedor X)
+
+---
+
+### 💰 BLOCO 6 — INTELIGÊNCIA FINANCEIRA
 
 Use a tabela abaixo com os dados REAIS de margem de cada produto.
 
@@ -421,7 +510,7 @@ ${tabelaMargens || 'Dados de custo não disponíveis — use estimativas conserv
 
 ---
 
-### ⚠️ BLOCO 6 — DECISÕES DIFÍCEIS
+### ⚠️ BLOCO 7 — DECISÕES DIFÍCEIS
 
 - Produto(s) candidato(s) a pausar ou reformular (menor saída + baixa margem)
 - Produto estrela em risco (alto volume mas estoque baixo)
