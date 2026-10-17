@@ -1,9 +1,22 @@
 // Versão do sistema — atualizar a cada release antes do merge para main
 
-export const APP_VERSION = "1.00.10";
+export const APP_VERSION = "1.00.11";
 
 // Histórico de versões
 export const CHANGELOG = [
+  {
+    version: "1.00.11",
+    data: "2026-07-23",
+    descricao: "Inteligência de vendas: previsão de 2 semanas e correções",
+    itens: [
+      "Previsão de vendas e plano de produção agora cobrem 2 semanas, separados em Semana 1 e Semana 2 — a Semana 1 já desconta o estoque atual e a Semana 2 parte da demanda cheia",
+      "Correção: a análise de vendas e a prospecção de revendedores voltaram a funcionar (o modelo de IA usado havia sido descontinuado pelo fornecedor)",
+      "Correção: revendedores apareciam como '(sem nome)' na análise — agora aparecem pela razão social, e cada parceiro é contabilizado separadamente",
+      "As tabelas da análise não são mais cortadas na tela: ganham rolagem lateral própria e aproveitam melhor a largura disponível",
+      "Números da previsão ficaram conferíveis: unidades e receitas usam o mesmo arredondamento (fim de linhas como '0un → 1 rec')",
+      "Mensagens de erro da IA mais claras (ex.: limite de uso atingido, tente novamente em 1 minuto)",
+    ],
+  },
   {
     version: "1.00.10",
     data: "2026-07-23",
