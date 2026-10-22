@@ -118,8 +118,17 @@ export default function TitheReport() {
             <Grid item xs={12} md={3}>
               <Card sx={{ bgcolor: '#e3f2fd' }}>
                 <CardContent>
-                  <Typography color="textSecondary" gutterBottom>Total Vendas</Typography>
+                  <Typography color="textSecondary" gutterBottom>Vendas Líquidas</Typography>
                   <Typography variant="h5" fontWeight="bold">{formatMoney(reportData.resumo.total_vendas)}</Typography>
+                  {reportData.resumo.total_descontos > 0 && (
+                    <Typography variant="caption" color="textSecondary" display="block" sx={{ mt: 0.5 }}>
+                      {formatMoney(reportData.resumo.total_vendas_bruto)} em produtos
+                      {' '}− {formatMoney(reportData.resumo.total_descontos)} de descontos
+                    </Typography>
+                  )}
+                  <Typography variant="caption" color="textSecondary" display="block">
+                    (frete não entra na base)
+                  </Typography>
                 </CardContent>
               </Card>
             </Grid>

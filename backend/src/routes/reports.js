@@ -56,6 +56,18 @@ router.get("/dizimo", async (req, res) => {
 
     const result = await pool.query(query, [startDate, endDate]);
 
+    // Descontos concedidos no período (pontos de fidelidade + cupons).
+    // São valores que o cliente NÃO pagou, então não podem compor a base do
+    // dízimo. O frete já fica de fora naturalmente (não está em itens_pedido).
+    const descontosRes = await pool.query(
+      `SELECT COALESCE(SUM(desconto), 0) AS total_descontos
+       FROM pedidos
+       WHERE status != 'Cancelado'
+         AND DATE(data_pedido) BETWEEN DATE($1) AND DATE($2)`,
+      [startDate, endDate]
+    );
+    const totalDescontos = Number(descontosRes.rows[0]?.total_descontos || 0);
+
     let totalVendas = 0;
     let totalCusto = 0;
 
@@ -88,13 +100,17 @@ router.get("/dizimo", async (req, res) => {
       };
     });
 
-    const lucroTotal = totalVendas - totalCusto;
+    // Venda líquida = soma dos produtos (sem frete) menos os descontos concedidos
+    const vendasLiquidas = totalVendas - totalDescontos;
+    const lucroTotal = vendasLiquidas - totalCusto;
     const dizimo = lucroTotal > 0 ? lucroTotal * 0.10 : 0;
 
     res.json({
       periodo: { start: startDate, end: endDate },
       resumo: {
-        total_vendas: totalVendas,
+        total_vendas_bruto: totalVendas,
+        total_descontos: totalDescontos,
+        total_vendas: vendasLiquidas,
         total_custo: totalCusto,
         lucro_operacional: lucroTotal,
         valor_dizimo: dizimo
